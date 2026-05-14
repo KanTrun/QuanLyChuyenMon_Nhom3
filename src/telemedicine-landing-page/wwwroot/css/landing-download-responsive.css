@@ -3,15 +3,15 @@
 
 .store-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 0.5rem; }
 .store-button {
-    background: var(--color-navy);
+    background: var(--color-ink);
     color: white;
     padding: 0.85rem 1.5rem;
-    border: 1px solid rgba(201, 168, 76, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     font-weight: 600;
 }
 .store-button:hover {
-    border-color: rgba(201, 168, 76, 0.4);
-    box-shadow: var(--shadow-gold);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: var(--shadow-medium);
 }
 
 .qr-panel { justify-self: end; max-width: 330px; }
@@ -25,12 +25,12 @@
     background: white;
 }
 .qr-code span { border-radius: 2px; background: var(--color-soft); }
-.qr-code .is-dark { background: var(--color-navy); }
+.qr-code .is-dark { background: var(--color-primary-deep); }
 
 /* ── Footer ── */
 .site-footer {
     padding: 3rem 0;
-    background: var(--color-navy);
+    background: var(--color-ink);
     color: rgba(255, 255, 255, 0.7);
     position: relative;
     overflow: hidden;
@@ -41,31 +41,31 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 2px;
-    background: var(--gradient-gold);
+    height: 3px;
+    background: var(--gradient-primary);
 }
 .footer-grid { display: flex; justify-content: space-between; gap: 2rem; }
 .footer-grid .brand-mark { color: white; }
 .footer-grid p { max-width: 38ch; margin: 0.75rem 0 0; color: rgba(255, 255, 255, 0.5); }
 .footer-grid nav { display: flex; flex-wrap: wrap; gap: 1.5rem; align-content: start; }
 .footer-grid a {
-    font-weight: 600;
+    font-weight: 500;
     text-decoration: none;
     color: rgba(255, 255, 255, 0.6);
     transition: color var(--motion-fast);
 }
-.footer-grid a:hover { color: var(--color-gold); }
+.footer-grid a:hover { color: var(--color-primary-light); }
 
-/* ── Tone Colors (updated for royal palette) ── */
+/* ── Tone Colors (Soft Healthcare) ── */
 .portrait-sky, .tone-sky {
-    background: linear-gradient(180deg, rgba(255,255,255,0), rgba(27,95,138,0.5)), linear-gradient(135deg, #e0f0ff, #6bb3d9);
+    background: linear-gradient(135deg, #EBF8FF, #90CDF4);
 }
 .portrait-mint, .tone-mint {
-    background: linear-gradient(180deg, rgba(255,255,255,0), rgba(13,110,110,0.4)), linear-gradient(135deg, #e0f5ee, #7dc9b8);
+    background: linear-gradient(135deg, #E6FFFA, #81E6D9);
 }
-.tone-blue { background: linear-gradient(135deg, #e0eeff, #b3d4f7); }
+.tone-blue { background: linear-gradient(135deg, #EBF8FF, #BEE3F8); }
 .tone-coral {
-    background: linear-gradient(180deg, rgba(255,255,255,0), rgba(188,83,49,0.35)), linear-gradient(135deg, #fff0e9, #f0a07e);
+    background: linear-gradient(135deg, #FFF5F5, #FEB2B2);
 }
 
 /* ── Responsive: Tablet ── */
@@ -86,6 +86,6 @@
 @media (max-width: 560px) {
     .hero-actions, .store-actions, .footer-grid { flex-direction: column; }
     .metric-strip, .consult-grid, .metric-card { grid-template-columns: 1fr; }
-    h1 { font-size: 2rem; }
-    h2 { font-size: 1.6rem; }
+    h1 { font-size: 2.2rem; }
+    h2 { font-size: 1.8rem; }
 }

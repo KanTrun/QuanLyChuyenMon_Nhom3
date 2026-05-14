@@ -1,83 +1,81 @@
 /* ═══════════════════════════════════════════════════
-   BỆNH VIỆN SỐ — Royal Hospital Design System
-   Color Palette: Royal Navy + Gold + Medical Trust
+   BỆNH VIỆN SỐ — Modern Healthcare Design System
+   Color Palette: Soft Medical Blue + Calming Teal + Clean UI
    ═══════════════════════════════════════════════════ */
 
 :root {
     color-scheme: light;
 
-    /* ── Royal Primary Palette ── */
-    --color-navy: #0C1D36;
-    --color-navy-light: #162D4F;
-    --color-navy-deep: #071425;
-    --color-gold: #C9A84C;
-    --color-gold-light: #DFC06E;
-    --color-gold-dark: #A88B2F;
-    --color-gold-soft: rgba(201, 168, 76, 0.12);
+    /* ── Primary Palette (Soft Medical) ── */
+    --color-primary: #3182CE;
+    --color-primary-light: #63B3ED;
+    --color-primary-deep: #2B6CB0;
+    
+    /* ── Secondary Palette (Calming Teal) ── */
+    --color-secondary: #319795;
+    --color-secondary-light: #4FD1C5;
+    --color-secondary-deep: #285E61;
 
-    /* ── Medical Trust Colors ── */
-    --color-medical-blue: #1B5F8A;
-    --color-medical-teal: #0D6E6E;
-    --color-medical-green: #2E7D5B;
+    /* ── Semantic Colors ── */
+    --color-accent: #ED8936; /* Soft Orange/Coral for highlights */
+    --color-success: #48BB78;
+    --color-warning: #ECC94B;
+    --color-danger: #F56565;
 
-    /* ── Surface & Background ── */
-    --color-ink: #0C1D36;
-    --color-muted: #4A5568;
-    --color-subtle: #CBD5E0;
-    --color-page: #F7F5EF;
+    /* ── Surface & Background (Soft UI) ── */
+    --color-ink: #2D3748;
+    --color-muted: #718096;
+    --color-subtle: #A0AEC0;
+    --color-page: #F7FAFC; /* Clean, very light blue/gray */
     --color-surface: #FFFFFF;
-    --color-soft: #F0EDE4;
-    --color-ivory: #FDFBF5;
-    --color-warm-gray: #E8E4DA;
+    --color-soft: #EDF2F7;
+    --color-ivory: #FFFFFF;
+    --color-warm-gray: #E2E8F0;
 
-    /* ── Semantic Accent Colors ── */
-    --color-primary: #1B5F8A;
-    --color-primary-strong: #0C1D36;
-    --color-teal: #0D6E6E;
-    --color-mint: #E8F5EE;
-    --color-sky: #E8F4FC;
-    --color-blue: #E0EEFF;
-    --color-coral: #D4654A;
-    --color-coral-soft: #FFF0E9;
+    /* ── Soft Accents ── */
+    --color-mint: #E6FFFA;
+    --color-sky: #EBF8FF;
+    --color-blue: #EBF8FF;
+    --color-coral-soft: #FFF5F5;
 
-    /* ── Glassmorphism ── */
-    --glass-bg: rgba(255, 255, 255, 0.72);
-    --glass-border: rgba(201, 168, 76, 0.18);
-    --glass-blur: blur(20px);
-    --glass-bg-dark: rgba(12, 29, 54, 0.85);
-    --glass-border-dark: rgba(201, 168, 76, 0.25);
+    /* ── Glassmorphism (Softer) ── */
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --glass-blur: blur(12px);
+    --glass-bg-dark: rgba(45, 55, 72, 0.85);
+    --glass-border-dark: rgba(255, 255, 255, 0.1);
 
-    /* ── Shadows ── */
-    --shadow-soft: 0 20px 60px rgba(12, 29, 54, 0.10);
-    --shadow-medium: 0 8px 32px rgba(12, 29, 54, 0.12);
-    --shadow-strong: 0 24px 80px rgba(12, 29, 54, 0.18);
-    --shadow-gold: 0 8px 32px rgba(201, 168, 76, 0.20);
-    --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
-    --shadow-glow: 0 0 40px rgba(201, 168, 76, 0.15);
-    --shadow-card-hover: 0 16px 48px rgba(12, 29, 54, 0.16), 0 0 0 1px rgba(201, 168, 76, 0.12);
+    /* ── Shadows (Soft UI) ── */
+    --shadow-soft: 0 10px 25px rgba(49, 130, 206, 0.05);
+    --shadow-medium: 0 10px 30px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+    --shadow-strong: 0 20px 40px rgba(0, 0, 0, 0.08);
+    --shadow-accent: 0 8px 20px rgba(49, 130, 206, 0.15);
+    --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+    --shadow-glow: 0 0 20px rgba(49, 130, 206, 0.1);
+    --shadow-card-hover: 0 15px 35px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(49, 130, 206, 0.05);
 
     /* ── Radius ── */
-    --radius-sm: 6px;
-    --radius-card: 12px;
-    --radius-lg: 16px;
+    --radius-sm: 8px;
+    --radius-card: 16px;
+    --radius-lg: 20px;
     --radius-xl: 24px;
     --radius-pill: 999px;
 
     /* ── Typography ── */
     --site-width: 1200px;
-    --font-heading: "Playfair Display", "Georgia", serif;
+    --font-heading: "Inter", "Segoe UI", sans-serif; /* Moving away from Serif for a cleaner, modern tech feel */
     --font-body: "Inter", "Segoe UI", sans-serif;
 
     /* ── Motion ── */
-    --motion-fast: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    --motion-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --motion-standard: 300ms cubic-bezier(0.4, 0, 0.2, 1);
     --motion-expressive: 500ms cubic-bezier(0.2, 0, 0, 1);
     --motion-spring: 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
     /* ── Gradients ── */
-    --gradient-royal: linear-gradient(135deg, #0C1D36, #1B3A5C);
-    --gradient-gold: linear-gradient(135deg, #C9A84C, #DFC06E);
-    --gradient-hero: linear-gradient(160deg, #0C1D36 0%, #162D4F 40%, #1B4F6E 100%);
-    --gradient-warm: linear-gradient(180deg, #F7F5EF, #FDFBF5);
-    --gradient-section: linear-gradient(180deg, rgba(247, 245, 239, 0), rgba(240, 237, 228, 0.6));
+    --gradient-primary: linear-gradient(135deg, #3182CE, #63B3ED);
+    --gradient-secondary: linear-gradient(135deg, #319795, #4FD1C5);
+    --gradient-hero: linear-gradient(160deg, #EBF8FF 0%, #F7FAFC 100%);
+    --gradient-warm: linear-gradient(180deg, #F7FAFC, #FFFFFF);
+    --gradient-section: linear-gradient(180deg, rgba(247, 250, 252, 0), rgba(237, 242, 247, 0.5));
 }

@@ -22,29 +22,30 @@
 .trust-item:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-card-hover);
-    border-color: rgba(201, 168, 76, 0.3);
+    border-color: rgba(49, 130, 206, 0.2);
 }
 
 .trust-item::before {
     content: '';
     display: block;
-    width: 6px;
-    height: 6px;
-    background: var(--color-gold);
+    width: 8px;
+    height: 8px;
+    background: var(--color-secondary);
     border-radius: 50%;
     margin-bottom: 1rem;
-    box-shadow: 0 0 12px rgba(201, 168, 76, 0.4);
+    box-shadow: 0 0 12px rgba(49, 151, 149, 0.4);
 }
 
 .trust-item strong {
     display: block;
     font-family: var(--font-heading);
-    font-size: 1.6rem;
-    color: var(--color-navy);
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-primary-deep);
     margin-bottom: 0.25rem;
 }
 
-.trust-item span { font-weight: 700; font-size: 0.85rem; color: var(--color-gold-dark); }
+.trust-item span { font-weight: 700; font-size: 0.85rem; color: var(--color-secondary-deep); }
 .trust-item p { margin-bottom: 0; font-size: 0.88rem; margin-top: 0.5rem; }
 
 /* ── Shared Card Styles ── */
@@ -79,7 +80,7 @@
     width: 450px;
     height: 450px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.06), transparent 70%);
+    background: radial-gradient(circle, rgba(49, 130, 206, 0.05), transparent 70%);
     pointer-events: none;
 }
 
@@ -94,10 +95,10 @@
 }
 
 .consult-header strong {
-    color: var(--color-medical-green);
+    color: var(--color-success);
     font-size: 0.78rem;
     padding: 0.3rem 0.7rem;
-    background: rgba(46, 125, 91, 0.08);
+    background: rgba(72, 187, 120, 0.1);
     border-radius: var(--radius-pill);
 }
 
@@ -118,6 +119,7 @@
     color: white;
     font-weight: 700;
     border-radius: var(--radius-card);
+    background: rgba(49, 130, 206, 0.05); /* Soft placeholder */
 }
 
 .consult-side { display: grid; gap: 0.75rem; }
@@ -132,15 +134,15 @@
 .vital-card {
     display: grid;
     align-content: end;
-    background: linear-gradient(135deg, rgba(201, 168, 76, 0.08), rgba(212, 101, 74, 0.06));
-    border: 1px solid rgba(201, 168, 76, 0.12);
+    background: linear-gradient(135deg, rgba(49, 151, 149, 0.05), rgba(49, 130, 206, 0.05));
+    border: 1px solid rgba(49, 130, 206, 0.1);
 }
 
-.vital-card strong { font-family: var(--font-heading); font-size: 1.3rem; color: var(--color-navy); }
+.vital-card strong { font-family: var(--font-heading); font-size: 1.3rem; color: var(--color-primary-deep); }
 
 .call-flow { border-top: 1px solid var(--glass-border); padding-top: 0.85rem; margin-top: 0.5rem; }
-.call-flow summary { min-height: 44px; cursor: pointer; font-weight: 700; color: var(--color-navy); font-size: 0.9rem; transition: color var(--motion-fast); }
-.call-flow summary:hover { color: var(--color-gold-dark); }
+.call-flow summary { min-height: 44px; cursor: pointer; font-weight: 700; color: var(--color-primary-deep); font-size: 0.9rem; transition: color var(--motion-fast); }
+.call-flow summary:hover { color: var(--color-primary); }
 .call-flow ol { padding-left: 1.25rem; margin-top: 0.75rem; }
 .call-flow li { font-size: 0.88rem; color: var(--color-muted); margin-bottom: 0.5rem; }
 

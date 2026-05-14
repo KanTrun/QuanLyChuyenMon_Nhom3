@@ -40,12 +40,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMb2dpbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/BenhVien_Nhom3/src/telemedicine-landing-page/Components/Pages/Register.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWdpc3Rlci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/BenhVien_Nhom3/src/telemedicine-landing-page/Components/Routes.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/BenhVien_Nhom3/src/telemedicine-landing-page/Components/Sections/AppDownloadSection.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTZWN0aW9uc1xBcHBEb3dubG9hZFNlY3Rpb24ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/BenhVien_Nhom3/src/telemedicine-landing-page/Components/Sections/CreativeFeaturesSection.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTZWN0aW9uc1xDcmVhdGl2ZUZlYXR1cmVzU2VjdGlvbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/BenhVien_Nhom3/src/telemedicine-landing-page/Components/Sections/FooterSection.razor]
