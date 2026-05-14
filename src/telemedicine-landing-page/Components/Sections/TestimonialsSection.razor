@@ -1,0 +1,70 @@
+<section class="testimonials-section section-band">
+    <div class="section-heading" style="text-align: center;">
+        <p class="eyebrow">Phan hoi benh nhan</p>
+        <h2>Duoc tin dung boi hang ngan nguoi benh.</h2>
+    </div>
+
+    <div class="testimonial-track">
+        @foreach (var item in _testimonials)
+        {
+            <div class="testimonial-card">
+                <div class="testimonial-avatar" style="background: linear-gradient(135deg, @item.AvatarColor, var(--color-secondary));">
+                    @item.Name[0]
+                </div>
+                <div class="rating-stars">
+                    @for (int i = 0; i < item.Rating; i++)
+                    {
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="#f59e0b"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.27l-4.77 2.51.91-5.32L2.27 6.69l5.34-.78L10 1z"/></svg>
+                    }
+                    @for (int i = item.Rating; i < 5; i++)
+                    {
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="#e5e7eb"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.27l-4.77 2.51.91-5.32L2.27 6.69l5.34-.78L10 1z"/></svg>
+                    }
+                </div>
+                <p class="testimonial-quote">@item.Quote</p>
+                <div class="testimonial-author">
+                    <strong>@item.Name</strong>
+                    <span>@item.Role</span>
+                </div>
+            </div>
+        }
+        @* Duplicate for seamless infinite scroll *@
+        @foreach (var item in _testimonials)
+        {
+            <div class="testimonial-card">
+                <div class="testimonial-avatar" style="background: linear-gradient(135deg, @item.AvatarColor, var(--color-secondary));">
+                    @item.Name[0]
+                </div>
+                <div class="rating-stars">
+                    @for (int i = 0; i < item.Rating; i++)
+                    {
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="#f59e0b"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.27l-4.77 2.51.91-5.32L2.27 6.69l5.34-.78L10 1z"/></svg>
+                    }
+                    @for (int i = item.Rating; i < 5; i++)
+                    {
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="#e5e7eb"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.27l-4.77 2.51.91-5.32L2.27 6.69l5.34-.78L10 1z"/></svg>
+                    }
+                </div>
+                <p class="testimonial-quote">@item.Quote</p>
+                <div class="testimonial-author">
+                    <strong>@item.Name</strong>
+                    <span>@item.Role</span>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private record TestimonialData(string Name, string Role, int Rating, string Quote, string AvatarColor);
+
+    private static readonly List<TestimonialData> _testimonials =
+    [
+        new("Nguyen Van A", "Benh nhan tim mach", 5, "Giao dien de su dung, bac si tan tam. Toi rat hai long voi dich vu kham tu xa nay.", "#3b82f6"),
+        new("Tran Thi B", "Benh nhan noi tiet", 5, "Tiet kiem thoi gian di lai. Bac si tu van rat ky va chuyen nghiep.", "#10b981"),
+        new("Le Van C", "Benh nhan nhi khoa", 4, "Ung dung tien loi, dat lich nhanh chong. Con toi duoc cham soc tot.", "#f59e0b"),
+        new("Pham Thi D", "Benh nhan da khoa", 5, "Bao mat thong tin tot, ket qua xet nghiem cap nhat nhanh chong.", "#8b5cf6"),
+        new("Hoang Van E", "Benh nhan than kinh", 5, "Dich vu ho tro 24/7 rat huu ich. Cam thay an tam hon nhieu.", "#ec4899"),
+        new("Vo Thi F", "Benh nhan co xuong khop", 4, "Theo doi suc khoe lien tuc giup toi kiem soat benh tot hon.", "#06b6d4")
+    ];
+}
