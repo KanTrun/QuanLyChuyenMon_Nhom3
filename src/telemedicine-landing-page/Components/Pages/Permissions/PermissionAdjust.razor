@@ -1,27 +1,27 @@
 @page "/permissions/adjust"
 @layout AppLayout
 
-<PageTitle>Dieu chinh Phan quyen - QLCM Pro</PageTitle>
+<PageTitle>Điều chỉnh Phân quyền - QLCM Pro</PageTitle>
 
 <!-- Page Header -->
 <div class="module-page__header">
     <div class="module-page__header-left">
-        <h1>Dieu chinh Phan quyen</h1>
-        <p>Tao yeu cau thay doi quyen truy cap cho nguoi dung hoac nhom</p>
+        <h1>Điều chỉnh Phân quyền</h1>
+        <p>Tạo yêu cầu thay đổi quyền truy cap cho người dùng hoac nhom</p>
     </div>
 </div>
 
 <div class="glass-card" style="padding: var(--space-8); border-radius: var(--radius-card);">
 
-    <!-- Section 1: Doi tuong -->
+    <!-- Section 1: Đối tượng -->
     <div class="form-section">
-        <h2 class="form-section__title">1. Doi tuong</h2>
+        <h2 class="form-section__title">1. Đối tượng</h2>
         <div class="radio-group">
-            <label class="radio-item"><input type="radio" name="target-type" checked /> Tai khoan ca nhan</label>
-            <label class="radio-item"><input type="radio" name="target-type" /> Nhom tai khoan</label>
+            <label class="radio-item"><input type="radio" name="target-type" checked /> Tài khoản cá nhân</label>
+            <label class="radio-item"><input type="radio" name="target-type" /> Nhóm tài khoản</label>
         </div>
         <div class="form-group">
-            <label>Tim kiem doi tuong</label>
+            <label>Tìm kiếm đối tượng</label>
             <div class="filter-bar__search" style="max-width: 100%;">
                 <span class="filter-bar__search-icon">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -31,26 +31,26 @@
         </div>
     </div>
 
-    <!-- Section 2: Quyen hien tai (read-only) -->
+    <!-- Section 2: Quyền hiện tại (read-only) -->
     <div class="form-section">
-        <h2 class="form-section__title">2. Quyen hien tai</h2>
+        <h2 class="form-section__title">2. Quyền hiện tại</h2>
         <div class="data-table-container" style="max-height: 200px; overflow-y: auto;">
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Chuc nang</th>
-                        <th>Quyen hien tai</th>
+                        <th>Chức năng</th>
+                        <th>Quyền hiện tại</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td>Xem quy trinh</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
-                    <tr><td>Tao quy trinh</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
-                    <tr><td>Sua quy trinh</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
-                    <tr><td>Xoa quy trinh</td><td><span class="status-badge status-badge--draft">Khong</span></td></tr>
-                    <tr><td>Gui duyet</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
-                    <tr><td>Phe duyet</td><td><span class="status-badge status-badge--draft">Khong</span></td></tr>
-                    <tr><td>Xem phac do</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
-                    <tr><td>Tao phac do</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
+                    <tr><td>Xem quy trình</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
+                    <tr><td>Tạo quy trình</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
+                    <tr><td>Sửa quy trình</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
+                    <tr><td>Xóa quy trình</td><td><span class="status-badge status-badge--draft">Khong</span></td></tr>
+                    <tr><td>Gửi duyệt</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
+                    <tr><td>Phê duyệt</td><td><span class="status-badge status-badge--draft">Khong</span></td></tr>
+                    <tr><td>Xem phác đồ</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
+                    <tr><td>Tạo phác đồ</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
                 </tbody>
             </table>
         </div>
@@ -63,19 +63,19 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Chuc nang</th>
+                        <th>Chức năng</th>
                         <th>Quyen</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td>Xem quy trinh</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Tao quy trinh</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Sua quy trinh</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Xoa quy trinh</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Gui duyet</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Phe duyet</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Xem phac do</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Tao phac do</td><td><input type="checkbox" style="accent-color: var(--color-primary);" /></td></tr>
+                    <tr><td>Xem quy trình</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
+                    <tr><td>Tạo quy trình</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
+                    <tr><td>Sửa quy trình</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
+                    <tr><td>Xóa quy trình</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
+                    <tr><td>Gửi duyệt</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
+                    <tr><td>Phê duyệt</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
+                    <tr><td>Xem phác đồ</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
+                    <tr><td>Tạo phác đồ</td><td><input type="checkbox" style="accent-color: var(--color-primary);" /></td></tr>
                 </tbody>
             </table>
         </div>
@@ -83,61 +83,61 @@
 
     <!-- Section 4: Diff Preview -->
     <div class="form-section">
-        <h2 class="form-section__title">4. Xem truoc thay doi</h2>
+        <h2 class="form-section__title">4. Xem trước thay đổi</h2>
         <div class="diff-preview">
             <div class="diff-preview__summary">
-                <span class="diff-preview__added">+3 quyen moi</span>
+                <span class="diff-preview__added">+3 quyền mới</span>
                 <span class="diff-preview__removed">-1 quyen bi thu hoi</span>
             </div>
             <table class="diff-preview__table">
                 <tbody>
                     <tr class="diff-preview__row--added">
                         <td class="diff-preview__indicator diff-preview__indicator--add">+</td>
-                        <td>Xoa quy trinh</td>
-                        <td><span class="status-badge status-badge--active">Them moi</span></td>
+                        <td>Xóa quy trình</td>
+                        <td><span class="status-badge status-badge--active">Thêm mới</span></td>
                     </tr>
                     <tr class="diff-preview__row--added">
                         <td class="diff-preview__indicator diff-preview__indicator--add">+</td>
-                        <td>Phe duyet</td>
-                        <td><span class="status-badge status-badge--active">Them moi</span></td>
+                        <td>Phê duyệt</td>
+                        <td><span class="status-badge status-badge--active">Thêm mới</span></td>
                     </tr>
                     <tr class="diff-preview__row--added">
                         <td class="diff-preview__indicator diff-preview__indicator--add">+</td>
-                        <td>Xem quyen</td>
-                        <td><span class="status-badge status-badge--active">Them moi</span></td>
+                        <td>Xem quyền</td>
+                        <td><span class="status-badge status-badge--active">Thêm mới</span></td>
                     </tr>
                     <tr class="diff-preview__row--removed">
                         <td class="diff-preview__indicator diff-preview__indicator--remove">-</td>
-                        <td>Tao phac do</td>
-                        <td><span class="status-badge status-badge--archived">Thu hoi</span></td>
+                        <td>Tạo phác đồ</td>
+                        <td><span class="status-badge status-badge--archived">Thu hồi</span></td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- Section 5: Ly do -->
+    <!-- Section 5: Lý do -->
     <div class="form-section">
-        <h2 class="form-section__title">5. Ly do dieu chinh</h2>
+        <h2 class="form-section__title">5. Lý do điều chỉnh</h2>
         <div class="form-group">
-            <textarea class="form-input form-input--textarea" placeholder="Nhap ly do dieu chinh quyen...">Bac si Tran Minh Duc duoc bo nhiem lam Pho khoa Ngoai, can bo sung quyen phe duyet va quan ly quy trinh.</textarea>
+            <textarea class="form-input form-input--textarea" placeholder="Nhập lý do điều chỉnh quyền...">Bác sĩ Trần Minh Đức được bổ nhiệm làm Phó khoa Ngoại, cần bổ sung quyền phê duyệt và quản lý quy trình.</textarea>
         </div>
     </div>
 
     <!-- Section 6: Hieu luc -->
     <div class="form-section">
-        <h2 class="form-section__title">6. Thoi gian hieu luc</h2>
+        <h2 class="form-section__title">6. Thời gian hiệu lực</h2>
         <div class="radio-group">
-            <label class="radio-item"><input type="radio" name="effective" checked /> Ap dung ngay</label>
-            <label class="radio-item"><input type="radio" name="effective" /> Hen gio</label>
+            <label class="radio-item"><input type="radio" name="effective" checked /> Áp dụng ngay</label>
+            <label class="radio-item"><input type="radio" name="effective" /> Hẹn giờ</label>
         </div>
         <div class="form-group">
-            <label>Thoi gian ap dung (neu hen gio)</label>
+            <label>Thời gian áp dụng (neu hen gio)</label>
             <input type="datetime-local" class="form-input" style="max-width: 300px;" />
         </div>
     </div>
 
-    <!-- Section 7: Xac nhan -->
+    <!-- Section 7: Xác nhận -->
     <div class="confirm-checkbox">
         <input type="checkbox" id="confirm-check" />
         <label for="confirm-check">Toi xac nhan da kiem tra cac thay doi tren va chiu trach nhiem ve yeu cau nay</label>
@@ -145,10 +145,10 @@
 
     <!-- Actions -->
     <div style="display: flex; gap: var(--space-4); justify-content: flex-end; margin-top: var(--space-6);">
-        <button class="btn-secondary">Huy bo</button>
+        <button class="btn-secondary">Hủy bỏ</button>
         <button class="btn-primary">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Gui yeu cau
+            Gửi yêu cầu
         </button>
     </div>
 </div>

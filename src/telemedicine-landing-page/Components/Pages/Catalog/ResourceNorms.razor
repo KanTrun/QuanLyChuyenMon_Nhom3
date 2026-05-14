@@ -1,13 +1,13 @@
 @page "/catalog/{ServiceId}/norms"
 @layout AppLayout
 
-<PageTitle>Dinh muc Tai nguyen - @ServiceId - QLCM Pro</PageTitle>
+<PageTitle>Định mức Tài nguyên - @ServiceId - QLCM Pro</PageTitle>
 
 <!-- Breadcrumb -->
 <nav class="breadcrumb" aria-label="Breadcrumb">
     <a href="/dashboard" class="breadcrumb__item">Dashboard</a>
     <span class="breadcrumb__separator" aria-hidden="true">/</span>
-    <a href="/catalog" class="breadcrumb__item">Danh muc</a>
+    <a href="/catalog" class="breadcrumb__item">Danh mục</a>
     <span class="breadcrumb__separator" aria-hidden="true">/</span>
     <span class="breadcrumb__current">@ServiceId</span>
 </nav>
@@ -15,14 +15,14 @@
 <!-- Page Header -->
 <div class="module-page__header">
     <div class="module-page__header-left">
-        <h1>Xet nghiem cong thuc mau</h1>
-        <p>@ServiceId &bull; Dinh muc tai nguyen cho dich vu ky thuat</p>
+        <h1>Xét nghiệm cong thuc mau</h1>
+        <p>@ServiceId &bull; Định mức tài nguyên cho dịch vụ kỹ thuật</p>
     </div>
     <div class="module-page__actions">
         <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
-        <button class="btn-primary" @onclick="ToggleAddForm" aria-label="Them dinh muc">
+        <button class="btn-primary" @onclick="ToggleAddForm" aria-label="Thêm định mức">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            Them dinh muc
+            Thêm định mức
         </button>
     </div>
 </div>
@@ -30,23 +30,23 @@
 <!-- Service Info Card -->
 <div class="service-info-card glass-card">
     <div class="service-info-card__item">
-        <label>Ten dich vu</label>
-        <span>Xet nghiem cong thuc mau</span>
+        <label>Tên dịch vụ</label>
+        <span>Xét nghiệm cong thuc mau</span>
     </div>
     <div class="service-info-card__item">
         <label>Loai</label>
-        <span>Xet nghiem</span>
+        <span>Xét nghiệm</span>
     </div>
     <div class="service-info-card__item">
-        <label>Khoa/Phong</label>
-        <span>Khoa Xet nghiem</span>
+        <label>Khoa/Phòng</label>
+        <span>Khoa Xét nghiệm</span>
     </div>
     <div class="service-info-card__item">
-        <label>Mo ta</label>
-        <span>Xet nghiem dem va phan loai te bao mau ngoai vi</span>
+        <label>Mô tả</label>
+        <span>Xét nghiệm dem va phan loai te bao mau ngoai vi</span>
     </div>
     <div class="service-info-card__item">
-        <label>Ngay cap nhat</label>
+        <label>Ngày cập nhật</label>
         <span>15/03/2024</span>
     </div>
 </div>
@@ -54,25 +54,25 @@
 <!-- Resource Norms Table -->
 <div class="glass-card" style="padding: var(--space-5);">
     <!-- Tab Filters -->
-    <div class="category-tabs" role="tablist" aria-label="Loc loai tai nguyen">
-        <button class="category-tab @(activeTab == "all" ? "category-tab--active" : "")" role="tab" @onclick='() => activeTab = "all"'>Tat ca <span class="category-tab__count">5</span></button>
-        <button class="category-tab @(activeTab == "vattu" ? "category-tab--active" : "")" role="tab" @onclick='() => activeTab = "vattu"'>Vat tu <span class="category-tab__count">3</span></button>
-        <button class="category-tab @(activeTab == "hoach" ? "category-tab--active" : "")" role="tab" @onclick='() => activeTab = "hoach"'>Thuoc/Hoa chat <span class="category-tab__count">1</span></button>
-        <button class="category-tab @(activeTab == "thietbi" ? "category-tab--active" : "")" role="tab" @onclick='() => activeTab = "thietbi"'>Thiet bi <span class="category-tab__count">1</span></button>
+    <div class="category-tabs" role="tablist" aria-label="Lọc loại tài nguyên">
+        <button class="category-tab @(activeTab == "all" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeTab == "all" ? "true" : "false")" @onclick='() => activeTab = "all"' >Tất cả <span class="category-tab__count">5</span></button>
+        <button class="category-tab @(activeTab == "vattu" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeTab == "vattu" ? "true" : "false")" @onclick='() => activeTab = "vattu"' >Vật tư <span class="category-tab__count">3</span></button>
+        <button class="category-tab @(activeTab == "hoach" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeTab == "hoach" ? "true" : "false")" @onclick='() => activeTab = "hoach"' >Thuốc/Hóa chất <span class="category-tab__count">1</span></button>
+        <button class="category-tab @(activeTab == "thietbi" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeTab == "thietbi" ? "true" : "false")" @onclick='() => activeTab = "thietbi"' >Thiết bị <span class="category-tab__count">1</span></button>
     </div>
 
-    <table class="data-table" aria-label="Danh sach dinh muc tai nguyen">
+    <table class="data-table" aria-label="Danh sách định mức tài nguyên">
         <thead>
             <tr>
                 <th>STT</th>
-                <th>Ma tai nguyen</th>
+                <th>Mã tài nguyên</th>
                 <th>Ten</th>
                 <th>Loai</th>
-                <th>Don vi</th>
-                <th>SL chuan</th>
-                <th>Ton kho</th>
-                <th>Trang thai</th>
-                <th>Thao tac</th>
+                <th>Đơn vị</th>
+                <th>SL chuẩn</th>
+                <th>Tồn kho</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
             </tr>
         </thead>
         <tbody>
@@ -80,7 +80,7 @@
                 <td>1</td>
                 <td><span class="data-table__code">VT-001</span></td>
                 <td><span class="data-table__name">Ong nghiem EDTA 3ml</span></td>
-                <td>Vat tu</td>
+                <td>Vật tư</td>
                 <td>Ong</td>
                 <td>2</td>
                 <td><span class="stock-indicator stock-indicator--ok">1,500</span></td>
@@ -96,7 +96,7 @@
                 <td>2</td>
                 <td><span class="data-table__code">VT-002</span></td>
                 <td><span class="data-table__name">Kim lay mau</span></td>
-                <td>Vat tu</td>
+                <td>Vật tư</td>
                 <td>Cai</td>
                 <td>1</td>
                 <td><span class="stock-indicator stock-indicator--ok">800</span></td>
@@ -111,12 +111,12 @@
             <tr>
                 <td>3</td>
                 <td><span class="data-table__code">HC-001</span></td>
-                <td><span class="data-table__name">Thuoc nhuom Wright</span></td>
-                <td>Hoa chat</td>
+                <td><span class="data-table__name">Thuốc nhuom Wright</span></td>
+                <td>Hóa chất</td>
                 <td>ml</td>
                 <td>5</td>
                 <td><span class="stock-indicator stock-indicator--low">50</span></td>
-                <td><span class="status-badge status-badge--warning"><span class="status-badge__dot"></span>Sap het</span></td>
+                <td><span class="status-badge status-badge--warning"><span class="status-badge__dot"></span>Sắp hết</span></td>
                 <td>
                     <div class="actions-cell">
                         <button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
@@ -128,11 +128,11 @@
                 <td>4</td>
                 <td><span class="data-table__code">TB-001</span></td>
                 <td><span class="data-table__name">May dem te bao tu dong</span></td>
-                <td>Thiet bi</td>
+                <td>Thiết bị</td>
                 <td>May</td>
                 <td>1</td>
                 <td><span class="stock-indicator stock-indicator--ok">3</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>San sang</span></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Sẵn sàng</span></td>
                 <td>
                     <div class="actions-cell">
                         <button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
@@ -144,7 +144,7 @@
                 <td>5</td>
                 <td><span class="data-table__code">VT-003</span></td>
                 <td><span class="data-table__name">Gang tay latex</span></td>
-                <td>Vat tu</td>
+                <td>Vật tư</td>
                 <td>Doi</td>
                 <td>2</td>
                 <td><span class="stock-indicator stock-indicator--out">200</span></td>
@@ -163,33 +163,33 @@
 <!-- Add Norm Collapsible Panel -->
 <div class="collapsible-panel @(showAddForm ? "collapsible-panel--open" : "")">
     <div class="collapsible-panel__header" @onclick="ToggleAddForm">
-        <span>Them dinh muc tai nguyen moi</span>
+        <span>Thêm định mức tài nguyên mới</span>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
     <div class="collapsible-panel__body">
         <div class="collapsible-panel__form">
             <div class="form-group">
-                <label>Ma tai nguyen</label>
+                <label>Mã tài nguyên</label>
                 <input type="text" placeholder="VD: VT-004" />
             </div>
             <div class="form-group">
-                <label>Ten tai nguyen</label>
-                <input type="text" placeholder="Nhap ten..." />
+                <label>Tên tài nguyên</label>
+                <input type="text" placeholder="Nhập tên..." />
             </div>
             <div class="form-group">
                 <label>Loai</label>
                 <select>
-                    <option>Vat tu</option>
-                    <option>Thuoc/Hoa chat</option>
-                    <option>Thiet bi</option>
+                    <option>Vật tư</option>
+                    <option>Thuốc/Hóa chất</option>
+                    <option>Thiết bị</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Don vi</label>
-                <input type="text" placeholder="VD: Ong, Cai, ml" />
+                <label>Đơn vị</label>
+                <input type="text" placeholder="VD: Ống, Cái, ml" />
             </div>
             <div class="form-group">
-                <label>So luong chuan</label>
+                <label>Số lượng chuẩn</label>
                 <input type="number" placeholder="0" min="1" />
             </div>
         </div>

@@ -1,13 +1,13 @@
 @page "/protocols/suggest"
 @layout AppLayout
 
-<PageTitle>Goi y Phac do theo Chan doan - QLCM Pro</PageTitle>
+<PageTitle>Gợi ý Phác đồ theo Chẩn đoán - QLCM Pro</PageTitle>
 
 <!-- Page Header -->
 <div class="module-page__header" style="justify-content:center;text-align:center;">
     <div class="module-page__header-left" style="align-items:center;">
-        <h1>Goi y Phac do theo Chan doan</h1>
-        <p>Nhap ma ICD hoac chan doan de tim phac do phu hop</p>
+        <h1>Gợi ý Phác đồ theo Chẩn đoán</h1>
+        <p>Nhập mã ICD hoặc chẩn đoán de tim phác đồ phù hợp</p>
     </div>
 </div>
 
@@ -17,12 +17,12 @@
         <span class="suggestion-search__icon">
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="10" cy="10" r="6.5" stroke="currentColor" stroke-width="2"/><path d="M15 15l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </span>
-        <input type="text" class="suggestion-search__input" placeholder="Nhap ma ICD hoac ten benh..." value="@searchQuery" @oninput="OnSearchInput" aria-label="Tim kiem ICD hoac chan doan" />
+        <input type="text" class="suggestion-search__input" placeholder="Nhập mã ICD hoặc tên bệnh..." value="@searchQuery" @oninput="OnSearchInput" aria-label="Tìm kiếm ICD hoặc chẩn đoán" />
     </div>
     <p class="suggestion-search__examples">VD: J18.9 - Viem phoi, E11.9 - Dai thao duong type 2, C34.9 - Ung thu phoi</p>
     <button class="btn-primary" style="margin-top:var(--space-4);padding:var(--space-3) var(--space-8);" @onclick="DoSearch">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Tim kiem
+        Tìm kiếm
     </button>
 </div>
 
@@ -32,32 +32,32 @@
     <!-- Patient Info (optional context) -->
     <div class="glass-card" style="padding:var(--space-4) var(--space-5);margin-bottom:var(--space-5);">
         <div style="display:flex;align-items:center;gap:var(--space-6);flex-wrap:wrap;font-size:var(--text-sm);">
-            <span style="color:var(--color-muted);">Benh nhan: <strong style="color:var(--color-ink);">Nguyen Van X</strong></span>
+            <span style="color:var(--color-muted);">Bệnh nhân: <strong style="color:var(--color-ink);">Nguyen Van X</strong></span>
             <span style="color:var(--color-muted);">Tuoi: <strong style="color:var(--color-ink);">58</strong></span>
             <span style="color:var(--color-muted);">Gioi: <strong style="color:var(--color-ink);">Nam</strong></span>
-            <span style="color:var(--color-muted);">Tien su: <strong style="color:var(--color-ink);">Tang huyet ap, Dai thao duong type 2</strong></span>
+            <span style="color:var(--color-muted);">Tiền sử: <strong style="color:var(--color-ink);">Tăng huyết áp, Đái tháo đường type 2</strong></span>
         </div>
     </div>
 
-    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--color-ink);margin-bottom:var(--space-5);">Tim thay 3 phac do phu hop voi J18.9 - Viem phoi khong xac dinh</h3>
+    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--color-ink);margin-bottom:var(--space-5);">Tim thay 3 phác đồ phù hợp voi J18.9 - Viêm phổi không xác định</h3>
 
     <!-- Result 1 -->
     <div class="suggestion-result">
         <div class="suggestion-result__header">
             <div>
-                <div class="suggestion-result__name">Phac do dieu tri viem phoi cong dong</div>
+                <div class="suggestion-result__name">Phác đồ điều trị viem phoi cong dong</div>
                 <div style="display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-1);font-size:var(--text-xs);color:var(--color-muted);">
                     <span>v2.0</span>
                     <span>Ap dung: 128 lan</span>
-                    <span class="protocol-card__type-badge protocol-card__type-badge--treatment" style="font-size:10px;">Phac do</span>
+                    <span class="protocol-card__type-badge protocol-card__type-badge--treatment" style="font-size:10px;">Phác đồ</span>
                 </div>
             </div>
-            <span class="suggestion-result__match suggestion-result__match--high">95% phu hop</span>
+            <span class="suggestion-result__match suggestion-result__match--high">95% phù hợp</span>
         </div>
-        <div class="suggestion-result__reason">Phu hop ICD J18.9, khong co chong chi dinh voi tien su benh nhan</div>
+        <div class="suggestion-result__reason">Phu hop ICD J18.9, khong co chống chỉ định voi tien su bệnh nhân</div>
         <div class="suggestion-result__actions">
             <button class="btn-primary" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Ap dung</button>
-            <a href="/protocols/PD-001" class="btn-ghost" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Xem chi tiet</a>
+            <a href="/protocols/PD-001" class="btn-ghost" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Xem chi tiết</a>
         </div>
     </div>
 
@@ -65,19 +65,19 @@
     <div class="suggestion-result">
         <div class="suggestion-result__header">
             <div>
-                <div class="suggestion-result__name">Phac do khang sinh kinh nghiem</div>
+                <div class="suggestion-result__name">Phác đồ khang sinh kinh nghiem</div>
                 <div style="display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-1);font-size:var(--text-xs);color:var(--color-muted);">
                     <span>v4.0</span>
                     <span>Ap dung: 256 lan</span>
-                    <span class="protocol-card__type-badge protocol-card__type-badge--treatment" style="font-size:10px;">Phac do</span>
+                    <span class="protocol-card__type-badge protocol-card__type-badge--treatment" style="font-size:10px;">Phác đồ</span>
                 </div>
             </div>
-            <span class="suggestion-result__match suggestion-result__match--medium">78% phu hop</span>
+            <span class="suggestion-result__match suggestion-result__match--medium">78% phù hợp</span>
         </div>
-        <div class="suggestion-result__reason">Ap dung cho nhiem trung ho hap noi chung, bao gom viem phoi</div>
+        <div class="suggestion-result__reason">Áp dụng cho nhiễm trùng hô hấp nói chung, bao gồm viêm phổi</div>
         <div class="suggestion-result__actions">
             <button class="btn-primary" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Ap dung</button>
-            <a href="/protocols/PD-008" class="btn-ghost" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Xem chi tiet</a>
+            <a href="/protocols/PD-008" class="btn-ghost" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Xem chi tiết</a>
         </div>
     </div>
 
@@ -85,23 +85,23 @@
     <div class="suggestion-result">
         <div class="suggestion-result__header">
             <div>
-                <div class="suggestion-result__name">Cham soc benh nhan tho may</div>
+                <div class="suggestion-result__name">Chăm sóc bệnh nhân tho may</div>
                 <div style="display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-1);font-size:var(--text-xs);color:var(--color-muted);">
                     <span>v2.0</span>
                     <span>Ap dung: 34 lan</span>
-                    <span class="protocol-card__type-badge protocol-card__type-badge--care" style="font-size:10px;">Cham soc</span>
+                    <span class="protocol-card__type-badge protocol-card__type-badge--care" style="font-size:10px;">Chăm sóc</span>
                 </div>
             </div>
-            <span class="suggestion-result__match suggestion-result__match--low">45% phu hop</span>
+            <span class="suggestion-result__match suggestion-result__match--low">45% phù hợp</span>
         </div>
-        <div class="suggestion-result__reason">Ap dung neu viem phoi nang can tho may ho tro</div>
+        <div class="suggestion-result__reason">Áp dụng nếu viêm phổi nặng cần thở máy hỗ trợ</div>
         <span class="suggestion-result__warning">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1l5 9H1l5-9z" stroke="currentColor" stroke-width="1.2"/><path d="M6 5v2M6 8.5v.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-            Can danh gia them
+            Cần đánh giá thêm
         </span>
         <div class="suggestion-result__actions" style="margin-top:var(--space-3);">
             <button class="btn-secondary" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Ap dung</button>
-            <a href="/protocols/PD-007" class="btn-ghost" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Xem chi tiet</a>
+            <a href="/protocols/PD-007" class="btn-ghost" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Xem chi tiết</a>
         </div>
     </div>
 }

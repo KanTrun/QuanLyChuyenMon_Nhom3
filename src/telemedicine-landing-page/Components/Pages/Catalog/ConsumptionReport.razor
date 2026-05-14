@@ -1,18 +1,18 @@
 @page "/catalog/reports"
 @layout AppLayout
 
-<PageTitle>Bao cao Tieu thu Tai nguyen - QLCM Pro</PageTitle>
+<PageTitle>Báo cáo Tiêu thụ Tài nguyên - QLCM Pro</PageTitle>
 
 <!-- Page Header -->
 <div class="module-page__header">
     <div class="module-page__header-left">
-        <h1>Bao cao Tieu thu Tai nguyen</h1>
-        <p>So sanh dinh muc va tieu thu thuc te</p>
+        <h1>Báo cáo Tiêu thụ Tài nguyên</h1>
+        <p>So sánh định mức và tiêu thụ thực tế</p>
     </div>
     <div class="module-page__actions">
-        <button class="btn-secondary" aria-label="Xuat bao cao">
+        <button class="btn-secondary" aria-label="Xuất báo cáo">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3M3 12v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Xuat bao cao
+            Xuất báo cáo
         </button>
     </div>
 </div>
@@ -24,19 +24,19 @@
         <span style="color:var(--color-muted);font-size:var(--text-sm);">den</span>
         <input type="date" value="2024-03-31" aria-label="Den ngay" />
     </div>
-    <select class="filter-bar__select" aria-label="Loc khoa">
-        <option>Tat ca khoa/phong</option>
-        <option>Xet nghiem</option>
-        <option>Chan doan hinh anh</option>
-        <option>Ngoai khoa</option>
-        <option>Noi khoa</option>
+    <select class="filter-bar__select" aria-label="Lọc khoa">
+        <option>Tất cả khoa/phòng</option>
+        <option>Xét nghiệm</option>
+        <option>Chẩn đoán hình ảnh</option>
+        <option>Ngoại khoa</option>
+        <option>Nội khoa</option>
     </select>
-    <select class="filter-bar__select" aria-label="Loai dich vu">
-        <option>Tat ca loai</option>
-        <option>Xet nghiem</option>
+    <select class="filter-bar__select" aria-label="Loại dịch vụ">
+        <option>Tất cả loai</option>
+        <option>Xét nghiệm</option>
         <option>CDHA</option>
-        <option>Phau thuat</option>
-        <option>Thu thuat</option>
+        <option>Phẫu thuật</option>
+        <option>Thủ thuật</option>
     </select>
     <button class="btn-primary" style="padding:var(--space-2) var(--space-4);">Loc</button>
 </div>
@@ -44,26 +44,26 @@
 <!-- Summary Cards -->
 <div class="stats-row">
     <div class="stat-card-mini">
-        <div class="stat-card-mini__label">Tong tieu thu</div>
+        <div class="stat-card-mini__label">Tổng tiêu thụ</div>
         <div class="stat-card-mini__value stat-card-mini__value--primary">15,432 don vi</div>
     </div>
     <div class="stat-card-mini">
-        <div class="stat-card-mini__label">Vuot dinh muc</div>
+        <div class="stat-card-mini__label">Vượt định mức</div>
         <div class="stat-card-mini__value stat-card-mini__value--danger">8.3%</div>
     </div>
     <div class="stat-card-mini">
-        <div class="stat-card-mini__label">Tiet kiem</div>
+        <div class="stat-card-mini__label">Tiết kiệm</div>
         <div class="stat-card-mini__value stat-card-mini__value--success">12.1%</div>
     </div>
     <div class="stat-card-mini">
-        <div class="stat-card-mini__label">Chi phi</div>
+        <div class="stat-card-mini__label">Chi phí</div>
         <div class="stat-card-mini__value">2.1 ty VND</div>
     </div>
 </div>
 
 <!-- Comparison Chart Section -->
 <div class="glass-card" style="padding:var(--space-6);margin-bottom:var(--space-6);">
-    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--color-ink);margin-bottom:var(--space-5);">So sanh Dinh muc vs Thuc te - Top 8 dich vu</h3>
+    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--color-ink);margin-bottom:var(--space-5);">So sánh Định mức vs Thực tế - Top 8 dich vu</h3>
     <div class="consumption-chart">
         <div class="consumption-chart__row">
             <span class="consumption-chart__label">XN Cong thuc mau</span>
@@ -82,7 +82,7 @@
             <span class="consumption-chart__percent consumption-chart__percent--under">-8.3%</span>
         </div>
         <div class="consumption-chart__row">
-            <span class="consumption-chart__label">Mo noi soi tui mat</span>
+            <span class="consumption-chart__label">Mo nội soi tui mat</span>
             <div class="consumption-chart__bars">
                 <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 85%;"></div>
                 <div class="consumption-chart__bar consumption-chart__bar--exceed" style="width: 98%;"></div>
@@ -90,7 +90,7 @@
             <span class="consumption-chart__percent consumption-chart__percent--over">+15.3%</span>
         </div>
         <div class="consumption-chart__row">
-            <span class="consumption-chart__label">Noi soi da day</span>
+            <span class="consumption-chart__label">Nội soi da day</span>
             <div class="consumption-chart__bars">
                 <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 70%;"></div>
                 <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 65%;"></div>
@@ -131,27 +131,27 @@
         </div>
     </div>
     <div class="consumption-chart__legend">
-        <div class="consumption-chart__legend-item"><span class="consumption-chart__legend-dot consumption-chart__legend-dot--norm"></span> Dinh muc</div>
+        <div class="consumption-chart__legend-item"><span class="consumption-chart__legend-dot consumption-chart__legend-dot--norm"></span> Định mức</div>
         <div class="consumption-chart__legend-item"><span class="consumption-chart__legend-dot consumption-chart__legend-dot--actual"></span> Thuc te</div>
     </div>
 </div>
 
 <!-- Detail Table -->
 <div class="data-table-container glass-card">
-    <table class="data-table" aria-label="Chi tiet tieu thu tai nguyen">
+    <table class="data-table" aria-label="Chi tiết tiêu thụ tài nguyên">
         <thead>
             <tr>
-                <th>Dich vu</th>
-                <th>Dinh muc (SL)</th>
-                <th>Thuc te (SL)</th>
-                <th>Chenh lech</th>
-                <th>Ty le (%)</th>
-                <th>Xu huong</th>
+                <th>Dịch vụ</th>
+                <th>Định mức (SL)</th>
+                <th>Thực tế (SL)</th>
+                <th>Chênh lệch</th>
+                <th>Tỷ lệ (%)</th>
+                <th>Xu hướng</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td><span class="data-table__name">Xet nghiem cong thuc mau</span></td>
+                <td><span class="data-table__name">Xét nghiệm cong thuc mau</span></td>
                 <td>2,400</td>
                 <td>2,623</td>
                 <td><span class="deviation-up">+223</span></td>
@@ -167,7 +167,7 @@
                 <td><span class="deviation-down">&#8595;</span></td>
             </tr>
             <tr>
-                <td><span class="data-table__name">Mo noi soi tui mat</span></td>
+                <td><span class="data-table__name">Mo nội soi tui mat</span></td>
                 <td>960</td>
                 <td>1,107</td>
                 <td><span class="deviation-up">+147</span></td>
@@ -175,7 +175,7 @@
                 <td><span class="deviation-up">&#8593;</span></td>
             </tr>
             <tr>
-                <td><span class="data-table__name">Noi soi da day</span></td>
+                <td><span class="data-table__name">Nội soi da day</span></td>
                 <td>1,400</td>
                 <td>1,301</td>
                 <td><span class="deviation-down">-99</span></td>
@@ -207,7 +207,7 @@
                 <td><span class="deviation-neutral">&#8594;</span></td>
             </tr>
             <tr>
-                <td><span class="data-table__name">Phau thuat thay khop hang</span></td>
+                <td><span class="data-table__name">Phẫu thuật thay khop hang</span></td>
                 <td>1,080</td>
                 <td>1,020</td>
                 <td><span class="deviation-down">-60</span></td>

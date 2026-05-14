@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@inject NavigationManager Navigation
 
 @* AppLayout.razor - Authenticated area layout with sidebar + header + content *@
 
@@ -29,7 +30,22 @@
 @code {
     private bool sidebarCollapsed = false;
     private bool mobileMenuOpen = false;
-    private string pageTitle = "Dashboard";
+
+    private string pageTitle => GetPageTitle();
+
+    private string GetPageTitle()
+    {
+        var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0].Split('#')[0];
+        if (path.StartsWith("/dashboard")) return "Tổng quan";
+        if (path.StartsWith("/procedures")) return "Quy trình Kỹ thuật";
+        if (path.StartsWith("/permissions")) return "Phân quyền";
+        if (path.StartsWith("/catalog")) return "Danh mục Kỹ thuật";
+        if (path.StartsWith("/protocols")) return "Phác đồ Lâm sàng";
+        if (path.StartsWith("/notifications")) return "Thông báo";
+        if (path.StartsWith("/reports")) return "Báo cáo";
+        if (path.StartsWith("/settings")) return "Cài đặt";
+        return "Tổng quan";
+    }
 
     private void OnSidebarCollapsedChanged(bool collapsed)
     {

@@ -6,10 +6,10 @@
 
 <div class="dashboard">
     <!-- Row 1: Welcome Banner -->
-    <section class="dashboard__welcome reveal" aria-label="Chao mung">
+    <section class="dashboard__welcome reveal is-visible" aria-label="Chào mừng">
         <div class="dashboard__welcome-left">
             <h1 class="dashboard__greeting">@GetGreeting(), <span class="dashboard__greeting-name">BS. Nguyen Van A</span></h1>
-            <p class="dashboard__subtitle">Day la tong quan hoat dong hom nay cua ban</p>
+            <p class="dashboard__subtitle">Đây là tổng quan hoạt động hôm nay của bạn</p>
         </div>
         <div class="dashboard__welcome-right">
             <div class="dashboard__date">
@@ -20,23 +20,23 @@
     </section>
 
     <!-- Row 2: Stats Cards -->
-    <section class="dashboard__stats reveal" aria-label="Thong ke tong quan">
-        <StatCard Title="Quy trinh Active" Value="128" TrendText="+5 thang nay" TrendDirection="up" ColorClass="primary">
+    <section class="dashboard__stats reveal is-visible" aria-label="Thống kê tổng quan">
+        <StatCard Title="Quy trình Active" Value="128" TrendText="+5 thang nay" TrendDirection="up" ColorClass="primary">
             <Icon>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.5" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </Icon>
         </StatCard>
-        <StatCard Title="Cho phe duyet" Value="12" TrendText="3 khan cap" TrendDirection="neutral" ColorClass="warning">
+        <StatCard Title="Chờ phê duyệt" Value="12" TrendText="3 khan cap" TrendDirection="neutral" ColorClass="warning">
             <Icon>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </Icon>
         </StatCard>
-        <StatCard Title="Phac do lam sang" Value="45" TrendText="+2 moi" TrendDirection="up" ColorClass="success">
+        <StatCard Title="Phác đồ lâm sàng" Value="45" TrendText="+2 moi" TrendDirection="up" ColorClass="success">
             <Icon>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 4a4 4 0 014 4v1h2a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7a2 2 0 012-2h2V8a4 4 0 014-4z" stroke="currentColor" stroke-width="1.5"/><path d="M10 14h4M12 12v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </Icon>
         </StatCard>
-        <StatCard Title="Thong bao" Value="7" TrendText="3 chua doc" TrendDirection="neutral" ColorClass="info">
+        <StatCard Title="Thông báo" Value="7" TrendText="3 chưa đọc" TrendDirection="neutral" ColorClass="info">
             <Icon>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 016 6v4l2 2H4l2-2V9a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5"/><path d="M10 17a2 2 0 004 0" stroke="currentColor" stroke-width="1.5"/></svg>
             </Icon>
@@ -54,7 +54,7 @@
         <div class="dashboard__approvals-col">
             <div class="dashboard__approvals">
                 <div class="dashboard__approvals-header">
-                    <h3>Phe duyet cho xu ly</h3>
+                    <h3>Phê duyệt chờ xử lý</h3>
                     <span class="dashboard__approvals-badge">5</span>
                 </div>
                 <div class="dashboard__approvals-list">
@@ -67,9 +67,9 @@
                             </div>
                             <span class="dashboard__approval-priority dashboard__approval-priority--@approval.Priority">@approval.PriorityLabel</span>
                             <div class="dashboard__approval-actions">
-                                <button class="dashboard__btn dashboard__btn--approve" title="Phe duyet" aria-label="Phe duyet @approval.Name">Duyet</button>
-                                <button class="dashboard__btn dashboard__btn--reject" title="Tu choi" aria-label="Tu choi @approval.Name">Tu choi</button>
-                                <button class="dashboard__btn dashboard__btn--view" title="Xem chi tiet" aria-label="Xem @approval.Name">Xem</button>
+                                <button class="dashboard__btn dashboard__btn--approve" title="Phê duyệt" aria-label="Phê duyệt @approval.Name">Duyệt</button>
+                                <button class="dashboard__btn dashboard__btn--reject" title="Từ chối" aria-label="Từ chối @approval.Name">Từ chối</button>
+                                <button class="dashboard__btn dashboard__btn--view" title="Xem chi tiết" aria-label="Xem @approval.Name">Xem</button>
                             </div>
                         </div>
                     }
@@ -79,8 +79,8 @@
     </section>
 
     <!-- Row 4: Quick Access Grid -->
-    <section class="dashboard__quick-access reveal" aria-label="Truy cap nhanh">
-        <h3 class="dashboard__section-title">Truy cap nhanh</h3>
+    <section class="dashboard__quick-access reveal" aria-label="Truy cập nhanh">
+        <h3 class="dashboard__section-title">Truy cập nhanh</h3>
         <div class="dashboard__modules-grid">
             @foreach (var module in modules)
             {
@@ -101,7 +101,7 @@
         <!-- Schedule Widget -->
         <div class="dashboard__schedule-col">
             <div class="dashboard__schedule">
-                <h3 class="dashboard__schedule-title">Lich trinh sap toi</h3>
+                <h3 class="dashboard__schedule-title">Lịch trình sắp tới</h3>
                 <div class="dashboard__schedule-list">
                     @foreach (var evt in scheduleEvents)
                     {
@@ -123,16 +123,16 @@
         <!-- Mini Bar Chart -->
         <div class="dashboard__chart-col">
             <div class="dashboard__chart">
-                <h3 class="dashboard__chart-title">Thong ke nhanh</h3>
-                <p class="dashboard__chart-subtitle">So luong quy trinh theo khoa</p>
-                <div class="dashboard__bar-chart" role="img" aria-label="Bieu do quy trinh theo khoa">
+                <h3 class="dashboard__chart-title">Thống kê nhanh</h3>
+                <p class="dashboard__chart-subtitle">Số lượng quy trình theo khoa</p>
+                <div class="dashboard__bar-chart" role="img" aria-label="Bieu do quy trình theo khoa">
                     <div class="dashboard__bar-row">
-                        <span class="dashboard__bar-label">Noi khoa</span>
+                        <span class="dashboard__bar-label">Nội khoa</span>
                         <div class="dashboard__bar-track"><div class="dashboard__bar-fill dashboard__bar-fill--1" style="width: 85%;"></div></div>
                         <span class="dashboard__bar-value">34</span>
                     </div>
                     <div class="dashboard__bar-row">
-                        <span class="dashboard__bar-label">Ngoai khoa</span>
+                        <span class="dashboard__bar-label">Ngoại khoa</span>
                         <div class="dashboard__bar-track"><div class="dashboard__bar-fill dashboard__bar-fill--2" style="width: 70%;"></div></div>
                         <span class="dashboard__bar-value">28</span>
                     </div>
@@ -166,55 +166,55 @@
     private string GetGreeting()
     {
         var hour = DateTime.Now.Hour;
-        if (hour < 12) return "Chao buoi sang";
-        if (hour < 18) return "Chao buoi chieu";
-        return "Chao buoi toi";
+        if (hour < 12) return "Chào buổi sáng";
+        if (hour < 18) return "Chào buổi chiều";
+        return "Chào buổi tối";
     }
 
     private List<ActivityFeed.ActivityItem> activities = new()
     {
-        new() { Type = "procedure_updated", Title = "Cap nhat quy trinh", Description = "Quy trinh phau thuat noi soi da day phien ban 3.2 da duoc cap nhat", User = "BS. Tran Minh Duc", Timestamp = "5 phut truoc" },
-        new() { Type = "protocol_approved", Title = "Phe duyet phac do", Description = "Phac do dieu tri viem phoi cong dong da duoc Hoi dong phe duyet", User = "PGS.TS. Le Van Hoa", Timestamp = "32 phut truoc" },
-        new() { Type = "permission_changed", Title = "Thay doi quyen", Description = "Quyen thuc hien ky thuat noi soi duoc cap cho Khoa Noi", User = "Admin He Thong", Timestamp = "1 gio truoc" },
-        new() { Type = "version_published", Title = "Ban hanh phien ban", Description = "Quy trinh dat noi khi quan phien ban 2.0 da duoc ban hanh chinh thuc", User = "TS. Nguyen Thi Mai", Timestamp = "2 gio truoc" },
-        new() { Type = "procedure_updated", Title = "Sua doi quy trinh", Description = "Cap nhat dinh muc vat tu cho quy trinh mo tim ho - Khoa Tim mach", User = "BS. Pham Quoc Viet", Timestamp = "3 gio truoc" },
-        new() { Type = "permission_changed", Title = "Gia han quyen", Description = "Quyen phe duyet quy trinh Khoa Ngoai gia han them 6 thang", User = "Admin He Thong", Timestamp = "4 gio truoc" },
-        new() { Type = "protocol_approved", Title = "Phac do moi", Description = "Phac do xu tri soc phan ve tai phong kham da duoc them vao he thong", User = "PGS.TS. Hoang Anh", Timestamp = "5 gio truoc" },
-        new() { Type = "version_published", Title = "Xuat ban tai lieu", Description = "Huong dan su dung may tho cho benh nhan COVID-19 da xuat ban", User = "DS. Tran Thi Lan", Timestamp = "6 gio truoc" },
-        new() { Type = "procedure_updated", Title = "Cap nhat SOP", Description = "SOP ve sinh khu trung phong mo da cap nhat theo tieu chuan JCI 2024", User = "CN. Vo Van Nam", Timestamp = "Hom qua" },
-        new() { Type = "permission_changed", Title = "Thu hoi quyen", Description = "Quyen chinh sua phac do cua BS. Nguyen X da het han va duoc thu hoi", User = "Admin He Thong", Timestamp = "Hom qua" },
+        new() { Type = "procedure_updated", Title = "Cập nhật quy trình", Description = "Quy trình phẫu thuật nội soi dạ dày phiên bản 3.2 đã được cập nhật", User = "BS. Tran Minh Duc", Timestamp = "5 phút trước" },
+        new() { Type = "protocol_approved", Title = "Phê duyệt phác đồ", Description = "Phác đồ điều trị viêm phổi cộng đồng đã được Hội đồng phê duyệt", User = "PGS.TS. Le Van Hoa", Timestamp = "32 phút trước" },
+        new() { Type = "permission_changed", Title = "Thay đổi quyền", Description = "Quyền thực hiện kỹ thuật nội soi được cấp cho Khoa Nội", User = "Admin He Thong", Timestamp = "1 gio trước" },
+        new() { Type = "version_published", Title = "Ban hành phiên bản", Description = "Quy trình đặt nội khí quản phiên bản 2.0 đã được ban hành chính thức", User = "TS. Nguyen Thi Mai", Timestamp = "2 gio trước" },
+        new() { Type = "procedure_updated", Title = "Sửa đổi quy trình", Description = "Cập nhật định mức vật tư cho quy trình mổ tim hở - Khoa Tim mạch", User = "BS. Pham Quoc Viet", Timestamp = "3 gio trước" },
+        new() { Type = "permission_changed", Title = "Gia hạn quyền", Description = "Quyền phê duyệt quy trình Khoa Ngoại gia hạn thêm 6 tháng", User = "Admin He Thong", Timestamp = "4 gio trước" },
+        new() { Type = "protocol_approved", Title = "Phác đồ mới", Description = "Phác đồ xử trí sốc phản vệ tại phòng khám đã được thêm vào hệ thống", User = "PGS.TS. Hoang Anh", Timestamp = "5 gio trước" },
+        new() { Type = "version_published", Title = "Xuất bản tài liệu", Description = "Hướng dẫn sử dụng máy thở cho bệnh nhân COVID-19 đã xuất bản", User = "DS. Tran Thi Lan", Timestamp = "6 gio trước" },
+        new() { Type = "procedure_updated", Title = "Cập nhật SOP", Description = "SOP vệ sinh khử trùng phòng mổ đã cập nhật theo tiêu chuẩn JCI 2024", User = "CN. Vo Van Nam", Timestamp = "Hom qua" },
+        new() { Type = "permission_changed", Title = "Thu hồi quyền", Description = "Quyền chỉnh sửa phác đồ của BS. Nguyễn X đã hết hạn và được thu hồi", User = "Admin He Thong", Timestamp = "Hom qua" },
     };
 
     private record ApprovalItem(string Name, string Requester, string Date, string Priority, string PriorityLabel);
 
     private List<ApprovalItem> pendingApprovals = new()
     {
-        new("QT Phau thuat noi soi gan", "BS. Tran Van Binh", "12/05/2025", "high", "Khan cap"),
-        new("Phac do dieu tri ung thu phoi", "PGS. Nguyen Thi Hoa", "11/05/2025", "high", "Khan cap"),
-        new("QT Xet nghiem HIV nhanh", "BS. Le Minh Tuan", "10/05/2025", "medium", "Binh thuong"),
-        new("Dinh muc vat tu mo tim", "DS. Pham Anh Thu", "09/05/2025", "medium", "Binh thuong"),
-        new("QT Cham soc benh nhan ICU", "DD. Hoang Thi Mai", "08/05/2025", "low", "Thap"),
+        new("QT Phẫu thuật nội soi gan", "BS. Tran Van Binh", "12/05/2025", "high", "Khẩn cấp"),
+        new("Phác đồ điều trị ung thu phoi", "PGS. Nguyen Thi Hoa", "11/05/2025", "high", "Khẩn cấp"),
+        new("QT Xét nghiệm HIV nhanh", "BS. Le Minh Tuan", "10/05/2025", "medium", "Bình thường"),
+        new("Định mức vật tư mo tim", "DS. Pham Anh Thu", "09/05/2025", "medium", "Bình thường"),
+        new("QT Chăm sóc bệnh nhân ICU", "DD. Hoang Thi Mai", "08/05/2025", "low", "Thấp"),
     };
 
     private record ModuleItem(string Name, string Description, string Route, string Color, string IconSvg);
 
     private List<ModuleItem> modules = new()
     {
-        new("Quy trinh Ky thuat", "Quan ly quy trinh, soan thao va theo doi trang thai phien ban", "/procedures", "primary", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M5 4h18v20H5z' stroke='currentColor' stroke-width='1.5' rx='2'/><path d='M9 9h10M9 13h10M9 17h6' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/></svg>"),
-        new("Phan quyen RBAC", "Thiet lap va dieu chinh quyen han truy cap theo vai tro", "/permissions", "indigo", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M14 3l9 5v7c0 4.5-3.6 8.5-9 10.5-5.4-2-9-6-9-10.5V8l9-5z' stroke='currentColor' stroke-width='1.5'/><path d='M10 14l3 3 5-5' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
-        new("Danh muc & Dinh muc", "Quan ly danh muc ky thuat, vat tu va dinh muc tieu chuan", "/catalog", "teal", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M4 7a2 2 0 012-2h16a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V7z' stroke='currentColor' stroke-width='1.5'/><path d='M4 11h20M10 11v12' stroke='currentColor' stroke-width='1.5'/></svg>"),
-        new("Phac do Lam sang", "Soan thao, phe duyet va tra cuu phac do dieu tri", "/protocols", "green", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M14 3a5 5 0 015 5v2h2a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V12a2 2 0 012-2h2V8a5 5 0 015-5z' stroke='currentColor' stroke-width='1.5'/><path d='M12 16h4M14 14v4' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/></svg>"),
-        new("Ban hanh & Phe duyet", "Quy trinh phe duyet va ban hanh tai lieu chinh thuc", "/procedures/publish", "orange", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M14 4v12M8 10l6-6 6 6M5 18v3a2 2 0 002 2h14a2 2 0 002-2v-3' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
-        new("Bao cao & Thong ke", "Bao cao tieu thu, thong ke hoat dong va phan tich xu huong", "/reports", "purple", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M4 4v20h20' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/><path d='M8 18l5-5 4 3 7-8' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
+        new("Quy trình Kỹ thuật", "Quản lý quy trình, soạn thảo và theo dõi trạng thái phiên bản", "/procedures", "primary", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M5 4h18v20H5z' stroke='currentColor' stroke-width='1.5' rx='2'/><path d='M9 9h10M9 13h10M9 17h6' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/></svg>"),
+        new("Phân quyền RBAC", "Thiết lập và điều chỉnh quyền hạn truy cập theo vai trò", "/permissions", "indigo", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M14 3l9 5v7c0 4.5-3.6 8.5-9 10.5-5.4-2-9-6-9-10.5V8l9-5z' stroke='currentColor' stroke-width='1.5'/><path d='M10 14l3 3 5-5' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
+        new("Danh mục &amp; Định mức", "Quản lý danh mục kỹ thuật, vật tư và định mức tiêu chuẩn", "/catalog", "teal", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M4 7a2 2 0 012-2h16a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V7z' stroke='currentColor' stroke-width='1.5'/><path d='M4 11h20M10 11v12' stroke='currentColor' stroke-width='1.5'/></svg>"),
+        new("Phác đồ Lâm sàng", "Soạn thảo, phê duyệt và tra cứu phác đồ điều trị", "/protocols", "green", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M14 3a5 5 0 015 5v2h2a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V12a2 2 0 012-2h2V8a5 5 0 015-5z' stroke='currentColor' stroke-width='1.5'/><path d='M12 16h4M14 14v4' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/></svg>"),
+        new("Ban hành &amp; Phê duyệt", "Quy trình phê duyệt và ban hành tài liệu chính thức", "/procedures/publish", "orange", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M14 4v12M8 10l6-6 6 6M5 18v3a2 2 0 002 2h14a2 2 0 002-2v-3' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
+        new("Báo cáo &amp; Thống kê", "Báo cáo tiêu thụ, thống kê hoạt động và phân tích xu hướng", "/reports", "purple", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M4 4v20h20' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/><path d='M8 18l5-5 4 3 7-8' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
     };
 
     private record ScheduleEvent(string Day, string Month, string Title, string Description);
 
     private List<ScheduleEvent> scheduleEvents = new()
     {
-        new("15", "Th5", "Het han quyen Khoa Ngoai", "Quyen chinh sua quy trinh se het han, can gia han"),
-        new("18", "Th5", "Hop Hoi dong Phac do", "Xet duyet 3 phac do moi va cap nhat 2 phac do hien hanh"),
-        new("20", "Th5", "Review quy trinh ICU", "Danh gia lai quy trinh cham soc dac biet tai ICU"),
-        new("25", "Th5", "Kiem tra tuan thu JCI", "Kiem tra dinh ky tieu chuan JCI cho cac khoa lam sang"),
+        new("15", "Th5", "Hết hạn quyền Khoa Ngoại", "Quyền chỉnh sửa quy trình sẽ hết hạn, cần gia hạn"),
+        new("18", "Th5", "Họp Hội đồng Phác đồ", "Xét duyệt 3 phác đồ mới và cập nhật 2 phác đồ hiện hành"),
+        new("20", "Th5", "Review quy trình ICU", "Đánh giá lại quy trình chăm sóc đặc biệt tại ICU"),
+        new("25", "Th5", "Kiểm tra tuân thủ JCI", "Kiểm tra định kỳ tiêu chuẩn JCI cho các khoa lâm sàng"),
     };
 }

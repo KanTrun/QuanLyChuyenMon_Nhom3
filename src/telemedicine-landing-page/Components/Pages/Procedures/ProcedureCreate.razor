@@ -1,13 +1,13 @@
 @page "/procedures/create"
 @layout AppLayout
 
-<PageTitle>Tao Quy trinh moi - QLCM Pro</PageTitle>
+<PageTitle>Tạo Quy trình mới - QLCM Pro</PageTitle>
 
 <!-- Page Header -->
 <div class="module-page__header">
     <div class="module-page__header-left">
-        <h1>Tao Quy trinh moi</h1>
-        <p>Thiet lap quy trinh ky thuat chuyen mon theo tung buoc</p>
+        <h1>Tạo Quy trình mới</h1>
+        <p>Thiết lập quy trình kỹ thuật chuyên môn theo tung buoc</p>
     </div>
 </div>
 
@@ -15,27 +15,27 @@
 <div class="wizard-steps">
     <div class="wizard-step @(currentStep == 1 ? "wizard-step--active" : (currentStep > 1 ? "wizard-step--completed" : ""))">
         <span class="wizard-step__circle">@(currentStep > 1 ? "\u2713" : "1")</span>
-        <span class="wizard-step__label">Thong tin co ban</span>
+        <span class="wizard-step__label">Thông tin cơ bản</span>
     </div>
     <span class="wizard-step__connector"></span>
     <div class="wizard-step @(currentStep == 2 ? "wizard-step--active" : (currentStep > 2 ? "wizard-step--completed" : ""))">
         <span class="wizard-step__circle">@(currentStep > 2 ? "\u2713" : "2")</span>
-        <span class="wizard-step__label">Dinh nghia buoc</span>
+        <span class="wizard-step__label">Định nghĩa bước</span>
     </div>
     <span class="wizard-step__connector"></span>
     <div class="wizard-step @(currentStep == 3 ? "wizard-step--active" : (currentStep > 3 ? "wizard-step--completed" : ""))">
         <span class="wizard-step__circle">@(currentStep > 3 ? "\u2713" : "3")</span>
-        <span class="wizard-step__label">Dieu kien &amp; SLA</span>
+        <span class="wizard-step__label">Điều kiện &amp; SLA</span>
     </div>
     <span class="wizard-step__connector"></span>
     <div class="wizard-step @(currentStep == 4 ? "wizard-step--active" : (currentStep > 4 ? "wizard-step--completed" : ""))">
         <span class="wizard-step__circle">@(currentStep > 4 ? "\u2713" : "4")</span>
-        <span class="wizard-step__label">Anh xa chuc nang</span>
+        <span class="wizard-step__label">Ánh xạ chức năng</span>
     </div>
     <span class="wizard-step__connector"></span>
     <div class="wizard-step @(currentStep == 5 ? "wizard-step--active" : "")">
         <span class="wizard-step__circle">5</span>
-        <span class="wizard-step__label">Xac nhan &amp; Luu</span>
+        <span class="wizard-step__label">Xác nhận &amp; Lưu</span>
     </div>
 </div>
 
@@ -44,62 +44,62 @@
 
     @if (currentStep == 1)
     {
-        <!-- Step 1: Thong tin co ban -->
+        <!-- Step 1: Thông tin cơ bản -->
         <div class="form-section">
-            <h2 class="form-section__title">Thong tin co ban</h2>
+            <h2 class="form-section__title">Thông tin cơ bản</h2>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Ma quy trinh</label>
-                    <input type="text" class="form-input" value="QT-011" placeholder="Tu dong tao hoac nhap thu cong" />
+                    <label>Mã quy trình</label>
+                    <input type="text" class="form-input" value="QT-011" placeholder="Tự động tạo hoặc nhập thủ công" />
                 </div>
                 <div class="form-group">
-                    <label>Ten quy trinh</label>
-                    <input type="text" class="form-input" placeholder="Nhap ten quy trinh..." />
+                    <label>Tên quy trình</label>
+                    <input type="text" class="form-input" placeholder="Nhập tên quy trình..." />
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Loai quy trinh</label>
+                    <label>Loại quy trình</label>
                     <select class="form-select">
-                        <option value="">-- Chon loai --</option>
-                        <option>Ky thuat</option>
-                        <option>Cham soc</option>
-                        <option>Phau thuat</option>
-                        <option>Thu thuat</option>
-                        <option>Hanh chinh</option>
+                        <option value="">-- Chọn loại --</option>
+                        <option>Kỹ thuật</option>
+                        <option>Chăm sóc</option>
+                        <option>Phẫu thuật</option>
+                        <option>Thủ thuật</option>
+                        <option>Hành chính</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Khoa/Phong ap dung</label>
+                    <label>Khoa/Phòng áp dụng</label>
                     <div style="display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); max-height: 140px; overflow-y: auto;">
-                        <label class="form-checkbox"><input type="checkbox" /> Ngoai tong hop</label>
-                        <label class="form-checkbox"><input type="checkbox" /> Noi tong hop</label>
-                        <label class="form-checkbox"><input type="checkbox" /> Xet nghiem</label>
-                        <label class="form-checkbox"><input type="checkbox" /> Chan doan hinh anh</label>
-                        <label class="form-checkbox"><input type="checkbox" /> San phu khoa</label>
+                        <label class="form-checkbox"><input type="checkbox" /> Ngoại tổng hợp</label>
+                        <label class="form-checkbox"><input type="checkbox" /> Nội tổng hợp</label>
+                        <label class="form-checkbox"><input type="checkbox" /> Xét nghiệm</label>
+                        <label class="form-checkbox"><input type="checkbox" /> Chẩn đoán hình ảnh</label>
+                        <label class="form-checkbox"><input type="checkbox" /> Sản phụ khoa</label>
                         <label class="form-checkbox"><input type="checkbox" /> Nhi khoa</label>
-                        <label class="form-checkbox"><input type="checkbox" /> Tim mach</label>
-                        <label class="form-checkbox"><input type="checkbox" /> Phau thuat</label>
-                        <label class="form-checkbox"><input type="checkbox" /> Cap cuu</label>
+                        <label class="form-checkbox"><input type="checkbox" /> Tim mạch</label>
+                        <label class="form-checkbox"><input type="checkbox" /> Phẫu thuật</label>
+                        <label class="form-checkbox"><input type="checkbox" /> Cấp cứu</label>
                     </div>
                 </div>
             </div>
             <div class="form-group">
-                <label>Mo ta</label>
-                <textarea class="form-input form-input--textarea" placeholder="Mo ta chi tiet quy trinh..."></textarea>
+                <label>Mô tả</label>
+                <textarea class="form-input form-input--textarea" placeholder="Mô tả chi tiết quy trình..."></textarea>
             </div>
             <div class="form-group">
-                <label>Ghi chu</label>
-                <textarea class="form-input form-input--textarea" placeholder="Ghi chu them (tuy chon)..." style="min-height: 60px;"></textarea>
+                <label>Ghi chú</label>
+                <textarea class="form-input form-input--textarea" placeholder="Ghi chú thêm (tùy chọn)..." style="min-height: 60px;"></textarea>
             </div>
         </div>
     }
 
     @if (currentStep == 2)
     {
-        <!-- Step 2: Dinh nghia buoc -->
+        <!-- Step 2: Định nghĩa bước -->
         <div class="form-section">
-            <h2 class="form-section__title">Dinh nghia cac buoc thuc hien</h2>
+            <h2 class="form-section__title">Định nghĩa các bước thuc hien</h2>
             <div class="step-list">
                 <div class="step-list__item">
                     <div class="step-list__handle">
@@ -108,26 +108,26 @@
                     </div>
                     <div class="step-list__fields">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Ten buoc</label>
-                            <input type="text" class="form-input" placeholder="VD: Tiep nhan benh nhan" />
+                            <label>Tên bước</label>
+                            <input type="text" class="form-input" placeholder="VD: Tiếp nhận bệnh nhân" />
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Vai tro thuc hien</label>
+                            <label>Vai trò thuc hien</label>
                             <select class="form-select">
-                                <option value="">-- Chon vai tro --</option>
-                                <option>Bac si</option>
-                                <option>Dieu duong</option>
-                                <option>Duoc si</option>
-                                <option>Ky thuat vien</option>
-                                <option>Hanh chinh</option>
+                                <option value="">-- Chon vai trò --</option>
+                                <option>Bác sĩ</option>
+                                <option>Điều dưỡng</option>
+                                <option>Dược sĩ</option>
+                                <option>Kỹ thuật viên</option>
+                                <option>Hành chính</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom: 0; grid-column: 1 / -1;">
-                            <label>Mo ta buoc</label>
-                            <textarea class="form-input form-input--textarea" style="min-height: 60px;" placeholder="Mo ta chi tiet..."></textarea>
+                            <label>Mô tả buoc</label>
+                            <textarea class="form-input form-input--textarea" style="min-height: 60px;" placeholder="Mô tả chi tiết..."></textarea>
                         </div>
                     </div>
-                    <button class="step-list__remove" title="Xoa buoc">
+                    <button class="step-list__remove" title="Xóa bước">
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                     </button>
                 </div>
@@ -138,32 +138,32 @@
                     </div>
                     <div class="step-list__fields">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Ten buoc</label>
-                            <input type="text" class="form-input" placeholder="VD: Kham lam sang" />
+                            <label>Tên bước</label>
+                            <input type="text" class="form-input" placeholder="VD: Kham lâm sàng" />
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Vai tro thuc hien</label>
+                            <label>Vai trò thuc hien</label>
                             <select class="form-select">
-                                <option value="">-- Chon vai tro --</option>
-                                <option>Bac si</option>
-                                <option>Dieu duong</option>
-                                <option>Duoc si</option>
-                                <option>Ky thuat vien</option>
-                                <option>Hanh chinh</option>
+                                <option value="">-- Chon vai trò --</option>
+                                <option>Bác sĩ</option>
+                                <option>Điều dưỡng</option>
+                                <option>Dược sĩ</option>
+                                <option>Kỹ thuật viên</option>
+                                <option>Hành chính</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom: 0; grid-column: 1 / -1;">
-                            <label>Mo ta buoc</label>
-                            <textarea class="form-input form-input--textarea" style="min-height: 60px;" placeholder="Mo ta chi tiet..."></textarea>
+                            <label>Mô tả buoc</label>
+                            <textarea class="form-input form-input--textarea" style="min-height: 60px;" placeholder="Mô tả chi tiết..."></textarea>
                         </div>
                     </div>
-                    <button class="step-list__remove" title="Xoa buoc">
+                    <button class="step-list__remove" title="Xóa bước">
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                     </button>
                 </div>
                 <button class="step-list__add">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                    Them buoc moi
+                    Thêm bước mới
                 </button>
             </div>
         </div>
@@ -171,30 +171,30 @@
 
     @if (currentStep == 3)
     {
-        <!-- Step 3: Dieu kien & SLA -->
+        <!-- Step 3: Điều kiện &amp; SLA -->
         <div class="form-section">
-            <h2 class="form-section__title">Dieu kien va SLA cho tung buoc</h2>
+            <h2 class="form-section__title">Điều kiện va SLA cho tung buoc</h2>
             <div class="step-list">
                 <div class="step-list__item" style="grid-template-columns: auto 1fr;">
                     <span class="step-list__num">1</span>
                     <div class="step-list__fields">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Buoc: Tiep nhan benh nhan</label>
+                            <label>Bước: Tiếp nhận bệnh nhân</label>
                             <div style="display: flex; gap: var(--space-2); align-items: center;">
                                 <input type="number" class="form-input" style="width: 80px;" placeholder="15" />
                                 <select class="form-select" style="width: 100px;">
-                                    <option>phut</option>
+                                    <option>phút</option>
                                     <option>gio</option>
                                     <option>ngay</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Dieu kien chuyen buoc</label>
-                            <input type="text" class="form-input" placeholder="VD: Benh nhan co giay gioi thieu" />
+                            <label>Điều kiện chuyen buoc</label>
+                            <input type="text" class="form-input" placeholder="VD: Bệnh nhân co giay gioi thieu" />
                         </div>
                         <div class="form-group" style="margin-bottom: 0; grid-column: 1 / -1;">
-                            <label class="form-checkbox"><input type="checkbox" checked /> Canh bao khi vuot SLA</label>
+                            <label class="form-checkbox"><input type="checkbox" checked /> Cảnh báo khi vượt SLA</label>
                         </div>
                     </div>
                 </div>
@@ -202,22 +202,22 @@
                     <span class="step-list__num">2</span>
                     <div class="step-list__fields">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Buoc: Kham lam sang</label>
+                            <label>Bước: Khám lâm sàng</label>
                             <div style="display: flex; gap: var(--space-2); align-items: center;">
                                 <input type="number" class="form-input" style="width: 80px;" placeholder="30" />
                                 <select class="form-select" style="width: 100px;">
-                                    <option>phut</option>
+                                    <option>phút</option>
                                     <option>gio</option>
                                     <option>ngay</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Dieu kien chuyen buoc</label>
-                            <input type="text" class="form-input" placeholder="VD: Hoan thanh tiep nhan" />
+                            <label>Điều kiện chuyen buoc</label>
+                            <input type="text" class="form-input" placeholder="VD: Hoàn thành tiếp nhận" />
                         </div>
                         <div class="form-group" style="margin-bottom: 0; grid-column: 1 / -1;">
-                            <label class="form-checkbox"><input type="checkbox" checked /> Canh bao khi vuot SLA</label>
+                            <label class="form-checkbox"><input type="checkbox" checked /> Cảnh báo khi vượt SLA</label>
                         </div>
                     </div>
                 </div>
@@ -227,36 +227,36 @@
 
     @if (currentStep == 4)
     {
-        <!-- Step 4: Anh xa chuc nang -->
+        <!-- Step 4: Ánh xạ chức năng -->
         <div class="form-section">
-            <h2 class="form-section__title">Anh xa chuc nang man hinh</h2>
-            <p style="font-size: var(--text-sm); color: var(--color-muted); margin-bottom: var(--space-5);">Lien ket quy trinh voi cac man hinh/chuc nang trong he thong</p>
+            <h2 class="form-section__title">Ánh xạ chức năng man hinh</h2>
+            <p style="font-size: var(--text-sm); color: var(--color-muted); margin-bottom: var(--space-5);">Lien ket quy trình voi cac man hinh/chuc nang trong hệ thống</p>
             <div class="step-list">
                 <div class="step-list__item" style="grid-template-columns: 1fr auto;">
                     <div class="step-list__fields" style="grid-template-columns: 1fr 1fr 1fr;">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Ma man hinh</label>
+                            <label>Mã màn hình</label>
                             <input type="text" class="form-input" placeholder="VD: SCR-001" />
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Ten chuc nang</label>
-                            <input type="text" class="form-input" placeholder="VD: Man hinh tiep nhan" />
+                            <label>Tên chức năng</label>
+                            <input type="text" class="form-input" placeholder="VD: Màn hình tiếp nhận" />
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Che do</label>
+                            <label>Chế độ</label>
                             <select class="form-select">
-                                <option>Canh bao</option>
-                                <option>Chan cung</option>
+                                <option>Cảnh báo</option>
+                                <option>Chặn cứng</option>
                             </select>
                         </div>
                     </div>
-                    <button class="step-list__remove" title="Xoa dong">
+                    <button class="step-list__remove" title="Xóa dòng">
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                     </button>
                 </div>
                 <button class="step-list__add">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                    Them anh xa moi
+                    Thêm ánh xạ mới
                 </button>
             </div>
         </div>
@@ -264,34 +264,34 @@
 
     @if (currentStep == 5)
     {
-        <!-- Step 5: Xac nhan -->
+        <!-- Step 5: Xác nhận -->
         <div class="form-section">
-            <h2 class="form-section__title">Xac nhan thong tin quy trinh</h2>
+            <h2 class="form-section__title">Xác nhận thông tin quy trình</h2>
             <div class="summary-card">
-                <div class="summary-card__title">Thong tin co ban</div>
-                <div class="summary-card__row"><span class="summary-card__label">Ma quy trinh</span><span class="summary-card__value">QT-011</span></div>
-                <div class="summary-card__row"><span class="summary-card__label">Ten</span><span class="summary-card__value">Quy trinh mau</span></div>
-                <div class="summary-card__row"><span class="summary-card__label">Loai</span><span class="summary-card__value">Ky thuat</span></div>
-                <div class="summary-card__row"><span class="summary-card__label">Khoa/Phong</span><span class="summary-card__value">Ngoai tong hop</span></div>
+                <div class="summary-card__title">Thông tin cơ bản</div>
+                <div class="summary-card__row"><span class="summary-card__label">Mã quy trình</span><span class="summary-card__value">QT-011</span></div>
+                <div class="summary-card__row"><span class="summary-card__label">Ten</span><span class="summary-card__value">Quy trình mẫu</span></div>
+                <div class="summary-card__row"><span class="summary-card__label">Loai</span><span class="summary-card__value">Kỹ thuật</span></div>
+                <div class="summary-card__row"><span class="summary-card__label">Khoa/Phòng</span><span class="summary-card__value">Ngoại tổng hợp</span></div>
             </div>
             <div class="summary-card">
-                <div class="summary-card__title">Cac buoc (2 buoc)</div>
-                <div class="summary-card__row"><span class="summary-card__label">B1</span><span class="summary-card__value">Tiep nhan benh nhan - Dieu duong - 15 phut</span></div>
-                <div class="summary-card__row"><span class="summary-card__label">B2</span><span class="summary-card__value">Kham lam sang - Bac si - 30 phut</span></div>
+                <div class="summary-card__title">Các bước (2 buoc)</div>
+                <div class="summary-card__row"><span class="summary-card__label">B1</span><span class="summary-card__value">Tiep nhan bệnh nhân - Điều dưỡng - 15 phút</span></div>
+                <div class="summary-card__row"><span class="summary-card__label">B2</span><span class="summary-card__value">Kham lâm sàng - Bác sĩ - 30 phút</span></div>
             </div>
             <div class="summary-card">
-                <div class="summary-card__title">Anh xa chuc nang (1 anh xa)</div>
-                <div class="summary-card__row"><span class="summary-card__label">SCR-001</span><span class="summary-card__value">Man hinh tiep nhan - Canh bao</span></div>
+                <div class="summary-card__title">Ánh xạ chức năng (1 anh xa)</div>
+                <div class="summary-card__row"><span class="summary-card__label">SCR-001</span><span class="summary-card__value">Màn hình tiếp nhận - Cảnh báo</span></div>
             </div>
         </div>
         <div style="display: flex; gap: var(--space-4); justify-content: center; margin-top: var(--space-6);">
             <button class="btn-secondary">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2h10v10H2z" stroke="currentColor" stroke-width="1.5" rx="1"/><path d="M4 6h6M4 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                Luu nhap
+                Lưu nháp
             </button>
             <button class="btn-primary">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Gui duyet
+                Gửi duyệt
             </button>
         </div>
     }
@@ -303,7 +303,7 @@
     {
         <button class="btn-secondary" @onclick="PrevStep">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 3L4 7l5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Truoc
+            Trước
         </button>
     }
     else
@@ -313,7 +313,7 @@
     @if (currentStep < 5)
     {
         <button class="btn-primary" @onclick="NextStep">
-            Tiep theo
+            Tiếp theo
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l5 4-5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
     }

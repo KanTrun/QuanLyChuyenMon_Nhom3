@@ -1,18 +1,18 @@
 @page "/procedures"
 @layout AppLayout
 
-<PageTitle>Quy trinh Ky thuat Chuyen mon - QLCM Pro</PageTitle>
+<PageTitle>Quy trình Kỹ thuật Chuyên môn - QLCM Pro</PageTitle>
 
 <!-- Page Header -->
 <div class="module-page__header">
     <div class="module-page__header-left">
-        <h1>Quy trinh Ky thuat Chuyen mon</h1>
-        <p>Quan ly toan bo quy trinh hoat dong chuyen mon</p>
+        <h1>Quy trình Kỹ thuật Chuyên môn</h1>
+        <p>Quản lý toàn bộ quy trình hoạt động chuyên môn</p>
     </div>
     <div class="module-page__actions">
         <a href="/procedures/create" class="btn-primary">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            Tao quy trinh moi
+            Tạo quy trình mới
         </a>
     </div>
 </div>
@@ -23,31 +23,31 @@
         <span class="filter-bar__search-icon">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </span>
-        <input type="text" placeholder="Tim kiem quy trinh..." />
+        <input type="text" placeholder="Tìm kiếm quy trình..." />
     </div>
     <div class="filter-bar__chips">
-        <span class="filter-chip filter-chip--active">Tat ca <span class="filter-chip__count">128</span></span>
+        <span class="filter-chip filter-chip--active">Tất cả <span class="filter-chip__count">128</span></span>
         <span class="filter-chip">Nhap <span class="filter-chip__count">23</span></span>
-        <span class="filter-chip">Cho duyet <span class="filter-chip__count">15</span></span>
-        <span class="filter-chip">Hoat dong <span class="filter-chip__count">78</span></span>
-        <span class="filter-chip">Luu tru <span class="filter-chip__count">12</span></span>
+        <span class="filter-chip">Chờ duyệt <span class="filter-chip__count">15</span></span>
+        <span class="filter-chip">Hoạt động <span class="filter-chip__count">78</span></span>
+        <span class="filter-chip">Lưu trữ <span class="filter-chip__count">12</span></span>
     </div>
     <select class="filter-bar__select">
-        <option>Tat ca khoa/phong</option>
-        <option>Ngoai tong hop</option>
-        <option>Noi tong hop</option>
-        <option>Xet nghiem</option>
-        <option>Chan doan hinh anh</option>
-        <option>San phu khoa</option>
+        <option>Tất cả khoa/phòng</option>
+        <option>Ngoại tổng hợp</option>
+        <option>Nội tổng hợp</option>
+        <option>Xét nghiệm</option>
+        <option>Chẩn đoán hình ảnh</option>
+        <option>Sản phụ khoa</option>
         <option>Nhi khoa</option>
-        <option>Tim mach</option>
-        <option>Phau thuat</option>
+        <option>Tim mạch</option>
+        <option>Phẫu thuật</option>
     </select>
     <select class="filter-bar__select">
-        <option>Moi nhat</option>
+        <option>Mới nhất</option>
         <option>Ten A-Z</option>
         <option>Ten Z-A</option>
-        <option>Phien ban</option>
+        <option>Phiên bản</option>
     </select>
 </div>
 
@@ -57,162 +57,162 @@
         <thead>
             <tr>
                 <th>Ma QT</th>
-                <th>Ten quy trinh</th>
-                <th>Khoa/Phong ap dung</th>
-                <th>Trang thai</th>
-                <th>Phien ban</th>
-                <th>Ngay cap nhat</th>
-                <th>Thao tac</th>
+                <th>Tên quy trình</th>
+                <th>Khoa/Phòng áp dụng</th>
+                <th>Trạng thái</th>
+                <th>Phiên bản</th>
+                <th>Ngày cập nhật</th>
+                <th>Thao tác</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td><span class="data-table__code">QT-001</span></td>
-                <td><span class="data-table__name">Quy trinh mo noi soi o bung</span></td>
-                <td><span class="data-table__dept">Ngoai tong hop</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></td>
+                <td><span class="data-table__name">Quy trình mo nội soi o bung</span></td>
+                <td><span class="data-table__dept">Ngoại tổng hợp</span></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoạt động</span></td>
                 <td>v2.1</td>
                 <td>15/03/2024</td>
                 <td>
                     <div class="actions-cell">
-                        <a href="/procedures/QT-001" class="action-btn" title="Xem chi tiet"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chinh sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Luu tru"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+                        <a href="/procedures/QT-001" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td><span class="data-table__code">QT-002</span></td>
-                <td><span class="data-table__name">Quy trinh xet nghiem dong mau</span></td>
-                <td><span class="data-table__dept">Xet nghiem</span></td>
+                <td><span class="data-table__name">Quy trình xét nghiệm dong mau</span></td>
+                <td><span class="data-table__dept">Xét nghiệm</span></td>
                 <td><span class="status-badge status-badge--draft"><span class="status-badge__dot"></span>Nhap</span></td>
                 <td>v1.0</td>
                 <td>10/04/2024</td>
                 <td>
                     <div class="actions-cell">
-                        <a href="/procedures/QT-002" class="action-btn" title="Xem chi tiet"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chinh sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Luu tru"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+                        <a href="/procedures/QT-002" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td><span class="data-table__code">QT-003</span></td>
-                <td><span class="data-table__name">Quy trinh truyen mau va che pham mau</span></td>
-                <td><span class="data-table__dept">Huyet hoc</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></td>
+                <td><span class="data-table__name">Quy trình truyen mau va che pham mau</span></td>
+                <td><span class="data-table__dept">Huyết học</span></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoạt động</span></td>
                 <td>v3.2</td>
                 <td>22/02/2024</td>
                 <td>
                     <div class="actions-cell">
-                        <a href="/procedures/QT-003" class="action-btn" title="Xem chi tiet"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chinh sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Luu tru"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+                        <a href="/procedures/QT-003" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td><span class="data-table__code">QT-004</span></td>
-                <td><span class="data-table__name">Quy trinh phau thuat noi soi khop goi</span></td>
-                <td><span class="data-table__dept">Chinh hinh</span></td>
-                <td><span class="status-badge status-badge--pending"><span class="status-badge__dot"></span>Cho duyet</span></td>
+                <td><span class="data-table__name">Quy trình phẫu thuật nội soi khop goi</span></td>
+                <td><span class="data-table__dept">Chỉnh hình</span></td>
+                <td><span class="status-badge status-badge--pending"><span class="status-badge__dot"></span>Chờ duyệt</span></td>
                 <td>v1.2</td>
                 <td>05/04/2024</td>
                 <td>
                     <div class="actions-cell">
-                        <a href="/procedures/QT-004" class="action-btn" title="Xem chi tiet"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chinh sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Luu tru"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+                        <a href="/procedures/QT-004" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td><span class="data-table__code">QT-005</span></td>
-                <td><span class="data-table__name">Quy trinh cham soc vet thuong man tinh</span></td>
-                <td><span class="data-table__dept">Dieu duong</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></td>
+                <td><span class="data-table__name">Quy trình chăm sóc vet thuong man tinh</span></td>
+                <td><span class="data-table__dept">Điều dưỡng</span></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoạt động</span></td>
                 <td>v3.0</td>
                 <td>18/03/2024</td>
                 <td>
                     <div class="actions-cell">
-                        <a href="/procedures/QT-005" class="action-btn" title="Xem chi tiet"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chinh sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Luu tru"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+                        <a href="/procedures/QT-005" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td><span class="data-table__code">QT-006</span></td>
-                <td><span class="data-table__name">Quy trinh sieu am tim qua thanh nguc</span></td>
-                <td><span class="data-table__dept">Tim mach</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></td>
+                <td><span class="data-table__name">Quy trình sieu am tim qua thanh nguc</span></td>
+                <td><span class="data-table__dept">Tim mạch</span></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoạt động</span></td>
                 <td>v2.0</td>
                 <td>01/03/2024</td>
                 <td>
                     <div class="actions-cell">
-                        <a href="/procedures/QT-006" class="action-btn" title="Xem chi tiet"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chinh sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Luu tru"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+                        <a href="/procedures/QT-006" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td><span class="data-table__code">QT-007</span></td>
-                <td><span class="data-table__name">Quy trinh cap cuu ngung tuan hoan</span></td>
-                <td><span class="data-table__dept">Cap cuu</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></td>
+                <td><span class="data-table__name">Quy trình cấp cứu ngung tuan hoan</span></td>
+                <td><span class="data-table__dept">Cấp cứu</span></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoạt động</span></td>
                 <td>v4.1</td>
                 <td>28/01/2024</td>
                 <td>
                     <div class="actions-cell">
-                        <a href="/procedures/QT-007" class="action-btn" title="Xem chi tiet"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chinh sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Luu tru"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+                        <a href="/procedures/QT-007" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td><span class="data-table__code">QT-008</span></td>
-                <td><span class="data-table__name">Quy trinh sinh thiet gan duoi huong dan sieu am</span></td>
-                <td><span class="data-table__dept">Tieu hoa</span></td>
-                <td><span class="status-badge status-badge--pending"><span class="status-badge__dot"></span>Cho duyet</span></td>
+                <td><span class="data-table__name">Quy trình sinh thiet gan duoi huong dan sieu am</span></td>
+                <td><span class="data-table__dept">Tiêu hóa</span></td>
+                <td><span class="status-badge status-badge--pending"><span class="status-badge__dot"></span>Chờ duyệt</span></td>
                 <td>v1.1</td>
                 <td>12/04/2024</td>
                 <td>
                     <div class="actions-cell">
-                        <a href="/procedures/QT-008" class="action-btn" title="Xem chi tiet"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chinh sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Luu tru"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+                        <a href="/procedures/QT-008" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td><span class="data-table__code">QT-009</span></td>
-                <td><span class="data-table__name">Quy trinh dat catheter tinh mach trung tam</span></td>
-                <td><span class="data-table__dept">Hoi suc tich cuc</span></td>
-                <td><span class="status-badge status-badge--archived"><span class="status-badge__dot"></span>Luu tru</span></td>
+                <td><span class="data-table__name">Quy trình dat catheter tinh mach trung tam</span></td>
+                <td><span class="data-table__dept">Hồi sức tich cuc</span></td>
+                <td><span class="status-badge status-badge--archived"><span class="status-badge__dot"></span>Lưu trữ</span></td>
                 <td>v1.0</td>
                 <td>20/12/2023</td>
                 <td>
                     <div class="actions-cell">
-                        <a href="/procedures/QT-009" class="action-btn" title="Xem chi tiet"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chinh sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Luu tru"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+                        <a href="/procedures/QT-009" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td><span class="data-table__code">QT-010</span></td>
-                <td><span class="data-table__name">Quy trinh xet nghiem PCR chan doan benh truyen nhiem</span></td>
+                <td><span class="data-table__name">Quy trình xét nghiệm PCR chẩn đoán benh truyen nhiem</span></td>
                 <td><span class="data-table__dept">Vi sinh</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoạt động</span></td>
                 <td>v2.3</td>
                 <td>08/03/2024</td>
                 <td>
                     <div class="actions-cell">
-                        <a href="/procedures/QT-010" class="action-btn" title="Xem chi tiet"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chinh sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Luu tru"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+                        <a href="/procedures/QT-010" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
                     </div>
                 </td>
             </tr>
@@ -220,7 +220,7 @@
     </table>
     <!-- Pagination -->
     <div class="pagination">
-        <span class="pagination__info">Hien thi 1-10 / 128 quy trinh</span>
+        <span class="pagination__info">Hiển thị 1-10 / 128 quy trình</span>
         <div class="pagination__buttons">
             <button class="pagination__btn" disabled>&laquo;</button>
             <button class="pagination__btn pagination__btn--active">1</button>
@@ -238,6 +238,6 @@
     <div class="empty-state__icon">
         <svg width="80" height="80" viewBox="0 0 80 80" fill="none"><rect x="16" y="12" width="48" height="56" rx="4" stroke="currentColor" stroke-width="2"/><path d="M28 28h24M28 36h24M28 44h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </div>
-    <div class="empty-state__title">Chua co quy trinh nao</div>
-    <div class="empty-state__desc">Bat dau tao quy trinh ky thuat chuyen mon dau tien cho benh vien cua ban</div>
+    <div class="empty-state__title">Chưa có quy trình nào</div>
+    <div class="empty-state__desc">Bắt đầu tạo quy trình kỹ thuật chuyên môn đầu tiên cho bệnh viện của bạn</div>
 </div>

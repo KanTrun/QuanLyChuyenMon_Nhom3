@@ -1,13 +1,13 @@
 @page "/settings"
 @layout AppLayout
 
-<PageTitle>Cai dat He thong - QLCM Pro</PageTitle>
+<PageTitle>Cài đặt Hệ thống - QLCM Pro</PageTitle>
 
 <!-- Page Header -->
 <div class="module-page__header">
     <div class="module-page__header-left">
-        <h1>Cai dat He thong</h1>
-        <p>Quan ly cau hinh va thong tin he thong</p>
+        <h1>Cài đặt Hệ thống</h1>
+        <p>Quản lý cấu hình va thong tin hệ thống</p>
     </div>
 </div>
 
@@ -15,25 +15,25 @@
 <div class="settings-layout">
     <!-- Vertical Tabs -->
     <div class="settings-tabs">
-        <button class="settings-tab @(activeTab == "general" ? "settings-tab--active" : "")" @onclick='() => activeTab = "general"'>
+        <button class="settings-tab @(activeTab == "general" ? "settings-tab--active" : "")" role="tab" aria-selected="@(activeTab == "general" ? "true" : "false")" @onclick='() => activeTab = "general"'>
             <span class="settings-tab__icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M9 2v2M9 14v2M2 9h2M14 9h2M4.2 4.2l1.4 1.4M12.4 12.4l1.4 1.4M4.2 13.8l1.4-1.4M12.4 5.6l1.4-1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>
-            Thong tin chung
+            Thông tin chung
         </button>
-        <button class="settings-tab @(activeTab == "roles" ? "settings-tab--active" : "")" @onclick='() => activeTab = "roles"'>
+        <button class="settings-tab @(activeTab == "roles" ? "settings-tab--active" : "")" role="tab" aria-selected="@(activeTab == "roles" ? "true" : "false")" @onclick='() => activeTab = "roles"'>
             <span class="settings-tab__icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="5" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M3 16c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>
-            Vai tro &amp; Nhom
+            Vai trò &amp; Nhóm
         </button>
-        <button class="settings-tab @(activeTab == "departments" ? "settings-tab--active" : "")" @onclick='() => activeTab = "departments"'>
+        <button class="settings-tab @(activeTab == "departments" ? "settings-tab--active" : "")" role="tab" aria-selected="@(activeTab == "departments" ? "true" : "false")" @onclick='() => activeTab = "departments"'>
             <span class="settings-tab__icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="3" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M2 7h14M7 7v8" stroke="currentColor" stroke-width="1.3"/></svg></span>
-            Khoa/Phong
+            Khoa/Phòng
         </button>
-        <button class="settings-tab @(activeTab == "notifications" ? "settings-tab--active" : "")" @onclick='() => activeTab = "notifications"'>
+        <button class="settings-tab @(activeTab == "notifications" ? "settings-tab--active" : "")" role="tab" aria-selected="@(activeTab == "notifications" ? "true" : "false")" @onclick='() => activeTab = "notifications"'>
             <span class="settings-tab__icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2a4.5 4.5 0 014.5 4.5v2.5l2 2H2.5l2-2V6.5A4.5 4.5 0 019 2z" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 13.5a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.3"/></svg></span>
-            Thong bao
+            Thông báo
         </button>
-        <button class="settings-tab @(activeTab == "logs" ? "settings-tab--active" : "")" @onclick='() => activeTab = "logs"'>
+        <button class="settings-tab @(activeTab == "logs" ? "settings-tab--active" : "")" role="tab" aria-selected="@(activeTab == "logs" ? "true" : "false")" @onclick='() => activeTab = "logs"'>
             <span class="settings-tab__icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 3h12v12H3z" stroke="currentColor" stroke-width="1.3" rx="2"/><path d="M6 7h6M6 10h4M6 13h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>
-            Nhat ky
+            Nhật ký
         </button>
     </div>
 
@@ -41,109 +41,109 @@
     <div class="settings-content">
         @if (activeTab == "general")
         {
-            <h2 class="settings-content__title">Thong tin chung</h2>
+            <h2 class="settings-content__title">Thông tin chung</h2>
             <div class="settings-form">
                 <div class="form-group">
-                    <label>Ten he thong</label>
-                    <input type="text" value="QLCM Pro - He thong Quan ly Chuyen mon" />
+                    <label>Tên hệ thống</label>
+                    <input type="text" value="QLCM Pro - Hệ thống Quản lý Chuyên môn" />
                 </div>
                 <div class="form-group">
-                    <label>Phien ban</label>
+                    <label>Phiên bản</label>
                     <input type="text" value="2.4.1" readonly />
                 </div>
                 <div class="form-group">
-                    <label>Ten benh vien</label>
+                    <label>Tên bệnh viện</label>
                     <input type="text" value="Benh vien Da khoa Trung uong" />
                 </div>
                 <div class="form-group">
-                    <label>Dia chi</label>
+                    <label>Địa chỉ</label>
                     <input type="text" value="40 Trang Thi, Hoan Kiem, Ha Noi" />
                 </div>
                 <div class="form-group">
-                    <label>Dien thoai</label>
+                    <label>Điện thoại</label>
                     <input type="tel" value="024-3825-3531" />
                 </div>
                 <div class="form-group">
-                    <label>Email lien he</label>
+                    <label>Email liên hệ</label>
                     <input type="email" value="admin@bvdktw.vn" />
                 </div>
             </div>
             <div style="margin-top:var(--space-6);padding-top:var(--space-5);border-top:1px solid var(--color-border-light);">
-                <label style="display:block;font-size:var(--text-sm);font-weight:500;color:var(--color-ink);margin-bottom:var(--space-3);">Logo benh vien</label>
-                <div style="width:120px;height:120px;border:2px dashed var(--color-border);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--color-subtle);cursor:pointer;transition:all var(--motion-fast);" title="Tai logo len">
+                <label style="display:block;font-size:var(--text-sm);font-weight:500;color:var(--color-ink);margin-bottom:var(--space-3);">Logo bệnh viện</label>
+                <div style="width:120px;height:120px;border:2px dashed var(--color-border);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--color-subtle);cursor:pointer;transition:all var(--motion-fast);" title="Tải logo lên">
                     <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 8v12M10 14l6-6 6 6M6 24h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
             </div>
             <div style="margin-top:var(--space-6);">
-                <button class="btn-primary">Luu thay doi</button>
+                <button class="btn-primary">Lưu thay đổi</button>
             </div>
         }
 
         @if (activeTab == "roles")
         {
-            <h2 class="settings-content__title">Vai tro &amp; Nhom nguoi dung</h2>
+            <h2 class="settings-content__title">Vai trò &amp; Nhóm người dùng</h2>
             <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-4);">
                 <button class="btn-primary" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                    Them vai tro
+                    Thêm vai trò
                 </button>
             </div>
-            <table class="data-table" aria-label="Danh sach vai tro">
+            <table class="data-table" aria-label="Danh sách vai trò">
                 <thead>
                     <tr>
-                        <th>Ten vai tro</th>
-                        <th>Mo ta</th>
-                        <th>So nguoi dung</th>
-                        <th>Trang thai</th>
-                        <th>Thao tac</th>
+                        <th>Tên vai trò</th>
+                        <th>Mô tả</th>
+                        <th>Số người dùng</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><span class="data-table__name">Quan tri vien</span></td>
-                        <td>Toan quyen quan ly he thong</td>
+                        <td><span class="data-table__name">Quản trị viên</span></td>
+                        <td>Toàn quyền quản lý hệ thống</td>
                         <td>3</td>
                         <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
                         <td><div class="actions-cell"><button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button></div></td>
                     </tr>
                     <tr>
-                        <td><span class="data-table__name">Truong Khoa</span></td>
-                        <td>Quan ly quy trinh va nhan su khoa</td>
+                        <td><span class="data-table__name">Trưởng Khoa</span></td>
+                        <td>Quản lý quy trình và nhân sự khoa</td>
                         <td>12</td>
                         <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
                         <td><div class="actions-cell"><button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button><button class="action-btn action-btn--danger" title="Xoa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5h10l-1 9H4L3 5zM6 2h4M2 5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td>
                     </tr>
                     <tr>
-                        <td><span class="data-table__name">Bac si</span></td>
-                        <td>Thuc hien va theo doi quy trinh</td>
+                        <td><span class="data-table__name">Bác sĩ</span></td>
+                        <td>Thực hiện và theo dõi quy trình</td>
                         <td>45</td>
                         <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
                         <td><div class="actions-cell"><button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button><button class="action-btn action-btn--danger" title="Xoa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5h10l-1 9H4L3 5zM6 2h4M2 5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td>
                     </tr>
                     <tr>
-                        <td><span class="data-table__name">Dieu duong</span></td>
-                        <td>Thuc hien cham soc va ghi nhan</td>
+                        <td><span class="data-table__name">Điều dưỡng</span></td>
+                        <td>Thực hiện chăm sóc và ghi nhận</td>
                         <td>78</td>
                         <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
                         <td><div class="actions-cell"><button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button><button class="action-btn action-btn--danger" title="Xoa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5h10l-1 9H4L3 5zM6 2h4M2 5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td>
                     </tr>
                     <tr>
-                        <td><span class="data-table__name">Duoc si</span></td>
-                        <td>Quan ly thuoc va dinh muc</td>
+                        <td><span class="data-table__name">Dược sĩ</span></td>
+                        <td>Quản lý thuốc và định mức</td>
                         <td>15</td>
                         <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
                         <td><div class="actions-cell"><button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button><button class="action-btn action-btn--danger" title="Xoa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5h10l-1 9H4L3 5zM6 2h4M2 5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td>
                     </tr>
                     <tr>
-                        <td><span class="data-table__name">Ky thuat vien</span></td>
-                        <td>Van hanh thiet bi va xet nghiem</td>
+                        <td><span class="data-table__name">Kỹ thuật viên</span></td>
+                        <td>Vận hành thiết bị và xét nghiệm</td>
                         <td>22</td>
                         <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
                         <td><div class="actions-cell"><button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button><button class="action-btn action-btn--danger" title="Xoa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5h10l-1 9H4L3 5zM6 2h4M2 5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td>
                     </tr>
                     <tr>
-                        <td><span class="data-table__name">Nguoi xem</span></td>
-                        <td>Chi doc, khong chinh sua</td>
+                        <td><span class="data-table__name">Người xem</span></td>
+                        <td>Chỉ đọc, không chỉnh sửa</td>
                         <td>8</td>
                         <td><span class="status-badge status-badge--draft"><span class="status-badge__dot"></span>Inactive</span></td>
                         <td><div class="actions-cell"><button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button><button class="action-btn action-btn--danger" title="Xoa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5h10l-1 9H4L3 5zM6 2h4M2 5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td>
@@ -154,145 +154,145 @@
 
         @if (activeTab == "departments")
         {
-            <h2 class="settings-content__title">Khoa / Phong ban</h2>
+            <h2 class="settings-content__title">Khoa / Phòng ban</h2>
             <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-4);">
                 <button class="btn-primary" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                    Them khoa/phong
+                    Thêm khoa/phòng
                 </button>
             </div>
-            <table class="data-table" aria-label="Danh sach khoa phong">
+            <table class="data-table" aria-label="Danh sách khoa phòng">
                 <thead>
                     <tr>
                         <th>Ten</th>
                         <th>Ma</th>
-                        <th>So nhan vien</th>
-                        <th>Truong khoa</th>
-                        <th>Trang thai</th>
+                        <th>Số nhân viên</th>
+                        <th>Trưởng khoa</th>
+                        <th>Trạng thái</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td><span class="data-table__name">Noi tong hop</span></td><td><span class="data-table__code">NOI-TH</span></td><td>32</td><td>PGS. Nguyen Van B</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
-                    <tr><td><span class="data-table__name">Ngoai tong hop</span></td><td><span class="data-table__code">NGOAI-TH</span></td><td>28</td><td>TS. Tran Van C</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
-                    <tr><td><span class="data-table__name">Xet nghiem</span></td><td><span class="data-table__code">XN</span></td><td>18</td><td>TS. Le Thi D</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
-                    <tr><td><span class="data-table__name">Chan doan hinh anh</span></td><td><span class="data-table__code">CDHA</span></td><td>15</td><td>BS. Pham Van E</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
-                    <tr><td><span class="data-table__name">Hoi suc cap cuu</span></td><td><span class="data-table__code">HSCC</span></td><td>24</td><td>PGS. Vo Van F</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
-                    <tr><td><span class="data-table__name">San phu khoa</span></td><td><span class="data-table__code">SPK</span></td><td>20</td><td>TS. Hoang Thi G</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
+                    <tr><td><span class="data-table__name">Nội tổng hợp</span></td><td><span class="data-table__code">NOI-TH</span></td><td>32</td><td>PGS. Nguyen Van B</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
+                    <tr><td><span class="data-table__name">Ngoại tổng hợp</span></td><td><span class="data-table__code">NGOAI-TH</span></td><td>28</td><td>TS. Tran Van C</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
+                    <tr><td><span class="data-table__name">Xét nghiệm</span></td><td><span class="data-table__code">XN</span></td><td>18</td><td>TS. Le Thi D</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
+                    <tr><td><span class="data-table__name">Chẩn đoán hình ảnh</span></td><td><span class="data-table__code">CDHA</span></td><td>15</td><td>BS. Pham Van E</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
+                    <tr><td><span class="data-table__name">Hồi sức cấp cứu</span></td><td><span class="data-table__code">HSCC</span></td><td>24</td><td>PGS. Vo Van F</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
+                    <tr><td><span class="data-table__name">Sản phụ khoa</span></td><td><span class="data-table__code">SPK</span></td><td>20</td><td>TS. Hoang Thi G</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
                     <tr><td><span class="data-table__name">Nhi khoa</span></td><td><span class="data-table__code">NHI</span></td><td>16</td><td>BS. Dang Van H</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
-                    <tr><td><span class="data-table__name">Tim mach</span></td><td><span class="data-table__code">TM</span></td><td>22</td><td>PGS. Bui Van I</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
-                    <tr><td><span class="data-table__name">Ung buou</span></td><td><span class="data-table__code">UB</span></td><td>14</td><td>TS. Ngo Van K</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
+                    <tr><td><span class="data-table__name">Tim mạch</span></td><td><span class="data-table__code">TM</span></td><td>22</td><td>PGS. Bui Van I</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
+                    <tr><td><span class="data-table__name">Ung bướu</span></td><td><span class="data-table__code">UB</span></td><td>14</td><td>TS. Ngo Van K</td><td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td></tr>
                 </tbody>
             </table>
         }
 
         @if (activeTab == "notifications")
         {
-            <h2 class="settings-content__title">Cau hinh Thong bao</h2>
+            <h2 class="settings-content__title">Cấu hình Thông báo</h2>
             <div style="max-width:500px;">
-                <h3 style="font-size:var(--text-sm);font-weight:600;color:var(--color-ink);margin-bottom:var(--space-4);">Kenh thong bao</h3>
+                <h3 style="font-size:var(--text-sm);font-weight:600;color:var(--color-ink);margin-bottom:var(--space-4);">Kênh thông báo</h3>
                 <div class="toggle-row">
-                    <span class="toggle-row__label">Email thong bao</span>
-                    <div class="toggle-switch toggle-switch--on" role="switch" aria-checked="true" aria-label="Email thong bao"></div>
+                    <span class="toggle-row__label">Email thông báo</span>
+                    <div class="toggle-switch toggle-switch--on" role="switch" aria-checked="true" aria-label="Email thông báo"></div>
                 </div>
                 <div class="toggle-row">
-                    <span class="toggle-row__label">Thong bao trinh duyet</span>
-                    <div class="toggle-switch toggle-switch--on" role="switch" aria-checked="true" aria-label="Thong bao trinh duyet"></div>
+                    <span class="toggle-row__label">Thông báo trình duyệt</span>
+                    <div class="toggle-switch toggle-switch--on" role="switch" aria-checked="true" aria-label="Thông báo trình duyệt"></div>
                 </div>
                 <div class="toggle-row">
-                    <span class="toggle-row__label">Thong bao in-app</span>
-                    <div class="toggle-switch toggle-switch--on" role="switch" aria-checked="true" aria-label="Thong bao in-app"></div>
+                    <span class="toggle-row__label">Thông báo in-app</span>
+                    <div class="toggle-switch toggle-switch--on" role="switch" aria-checked="true" aria-label="Thông báo in-app"></div>
                 </div>
 
-                <h3 style="font-size:var(--text-sm);font-weight:600;color:var(--color-ink);margin:var(--space-6) 0 var(--space-4);">Loai su kien</h3>
+                <h3 style="font-size:var(--text-sm);font-weight:600;color:var(--color-ink);margin:var(--space-6) 0 var(--space-4);">Loại sự kiện</h3>
                 <div class="toggle-row">
-                    <span class="toggle-row__label">Thay doi quyen truy cap</span>
+                    <span class="toggle-row__label">Thay đổi quyền truy cập</span>
                     <div class="toggle-switch toggle-switch--on" role="switch" aria-checked="true"></div>
                 </div>
                 <div class="toggle-row">
-                    <span class="toggle-row__label">Ban hanh quy trinh moi</span>
+                    <span class="toggle-row__label">Ban hành quy trình mới</span>
                     <div class="toggle-switch toggle-switch--on" role="switch" aria-checked="true"></div>
                 </div>
                 <div class="toggle-row">
-                    <span class="toggle-row__label">Canh bao SLA</span>
+                    <span class="toggle-row__label">Cảnh báo SLA</span>
                     <div class="toggle-switch toggle-switch--on" role="switch" aria-checked="true"></div>
                 </div>
                 <div class="toggle-row">
-                    <span class="toggle-row__label">Ton kho thap</span>
+                    <span class="toggle-row__label">Tồn kho thấp</span>
                     <div class="toggle-switch" role="switch" aria-checked="false"></div>
                 </div>
                 <div class="toggle-row">
-                    <span class="toggle-row__label">Phe duyet moi</span>
+                    <span class="toggle-row__label">Phê duyệt mới</span>
                     <div class="toggle-switch toggle-switch--on" role="switch" aria-checked="true"></div>
                 </div>
             </div>
             <div style="margin-top:var(--space-6);">
-                <button class="btn-primary">Luu cau hinh</button>
+                <button class="btn-primary">Lưu cấu hình</button>
             </div>
         }
 
         @if (activeTab == "logs")
         {
-            <h2 class="settings-content__title">Nhat ky He thong</h2>
+            <h2 class="settings-content__title">Nhật ký Hệ thống</h2>
             <div class="log-viewer">
                 <div class="log-entry">
                     <span class="log-entry__time">2024-03-15 14:32</span>
                     <span class="log-entry__level log-entry__level--info">Info</span>
                     <span class="log-entry__module">Auth</span>
-                    <span class="log-entry__detail">Dang nhap thanh cong: BS. Nguyen Van A</span>
+                    <span class="log-entry__detail">Đăng nhập thanh cong: BS. Nguyen Van A</span>
                 </div>
                 <div class="log-entry">
                     <span class="log-entry__time">2024-03-15 14:28</span>
                     <span class="log-entry__level log-entry__level--warning">Warning</span>
                     <span class="log-entry__module">Inventory</span>
-                    <span class="log-entry__detail">Ton kho thap: Amoxicillin 1g (con 50 vien)</span>
+                    <span class="log-entry__detail">Tồn kho thấp: Amoxicillin 1g (con 50 vien)</span>
                 </div>
                 <div class="log-entry">
                     <span class="log-entry__time">2024-03-15 14:15</span>
                     <span class="log-entry__level log-entry__level--info">Info</span>
                     <span class="log-entry__module">Procedure</span>
-                    <span class="log-entry__detail">QT-015 da ban hanh v3.0 boi Admin Tran</span>
+                    <span class="log-entry__detail">QT-015 đã ban hành v3.0 boi Admin Tran</span>
                 </div>
                 <div class="log-entry">
                     <span class="log-entry__time">2024-03-15 13:45</span>
                     <span class="log-entry__level log-entry__level--error">Error</span>
                     <span class="log-entry__module">Sync</span>
-                    <span class="log-entry__detail">Dong bo HIS that bai: timeout after 30s</span>
+                    <span class="log-entry__detail">Đồng bộ HIS thất bại: timeout after 30s</span>
                 </div>
                 <div class="log-entry">
                     <span class="log-entry__time">2024-03-15 13:30</span>
                     <span class="log-entry__level log-entry__level--info">Info</span>
                     <span class="log-entry__module">Permission</span>
-                    <span class="log-entry__detail">Cap nhat quyen: Nhom Dieu duong +3 quyen moi</span>
+                    <span class="log-entry__detail">Cập nhật quyen: Nhom Điều dưỡng +3 quyền mới</span>
                 </div>
                 <div class="log-entry">
                     <span class="log-entry__time">2024-03-15 12:00</span>
                     <span class="log-entry__level log-entry__level--info">Info</span>
                     <span class="log-entry__module">System</span>
-                    <span class="log-entry__detail">Sao luu tu dong hoan tat (2.3 GB)</span>
+                    <span class="log-entry__detail">Sao lưu tự động hoàn tất (2.3 GB)</span>
                 </div>
                 <div class="log-entry">
                     <span class="log-entry__time">2024-03-15 11:45</span>
                     <span class="log-entry__level log-entry__level--warning">Warning</span>
                     <span class="log-entry__module">Protocol</span>
-                    <span class="log-entry__detail">Phac do PD-006 het han xem xet (30 ngay)</span>
+                    <span class="log-entry__detail">Phác đồ PD-006 hết hạn xem xét (30 ngay)</span>
                 </div>
                 <div class="log-entry">
                     <span class="log-entry__time">2024-03-15 10:20</span>
                     <span class="log-entry__level log-entry__level--info">Info</span>
                     <span class="log-entry__module">Auth</span>
-                    <span class="log-entry__detail">Dang nhap thanh cong: Admin Tran Van A</span>
+                    <span class="log-entry__detail">Đăng nhập thanh cong: Admin Tran Van A</span>
                 </div>
                 <div class="log-entry">
                     <span class="log-entry__time">2024-03-15 09:00</span>
                     <span class="log-entry__level log-entry__level--error">Error</span>
                     <span class="log-entry__module">Email</span>
-                    <span class="log-entry__detail">Gui email that bai: SMTP connection refused</span>
+                    <span class="log-entry__detail">Gửi email thất bại: SMTP connection refused</span>
                 </div>
                 <div class="log-entry">
                     <span class="log-entry__time">2024-03-15 02:00</span>
                     <span class="log-entry__level log-entry__level--info">Info</span>
                     <span class="log-entry__module">System</span>
-                    <span class="log-entry__detail">Bao tri dinh ky hoan tat, restart thanh cong</span>
+                    <span class="log-entry__detail">Bảo trì định kỳ hoàn tất, restart thành công</span>
                 </div>
             </div>
         }
