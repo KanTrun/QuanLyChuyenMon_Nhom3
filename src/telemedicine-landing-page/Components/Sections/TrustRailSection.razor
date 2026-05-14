@@ -1,7 +1,8 @@
 <section class="trust-rail site-shell" aria-label="Tin cậy và vận hành">
+    @{ var index = 0; }
     @foreach (var signal in Signals)
     {
-        <article class="trust-item reveal">
+        <article class="trust-item reveal stagger-@(++index)">
             <strong>@signal.Value</strong>
             <span>@signal.Label</span>
             <p>@signal.Detail</p>

@@ -48,6 +48,6 @@ public sealed class LandingPageLinksOptions
             return false;
         }
 
-        return uri.Scheme is Uri.UriSchemeHttps or Uri.UriSchemeHttp or Uri.UriSchemeMailto or "tel";
+        return uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeMailto || uri.Scheme == "tel";
     }
 }

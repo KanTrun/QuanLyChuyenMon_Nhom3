@@ -14,10 +14,6 @@ D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\telemedicine-la
 D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\TelemedicineLandingPage.MvcApplicationPartsAssemblyInfo.cache
 D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\telemedicine-landing-page.sourcelink.json
 D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\scopedcss\bundle\TelemedicineLandingPage.styles.css
-D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\o4u6gh8ri8-ofhq1t4i7j.gz
-D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\crnbpr8pfs-c4gg9mqx0s.gz
-D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\susjwig8sl-3e0ybz3jwd.gz
-D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\ub56i21yrk-dn7qdblr0l.gz
 D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\staticwebassets.build.json
 D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\staticwebassets.development.json
 D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\staticwebassets.build.endpoints.json
@@ -32,5 +28,12 @@ D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\refint\Telemedi
 D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\TelemedicineLandingPage.pdb
 D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\telemedicine-landing-page.genruntimeconfig.cache
 D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\ref\TelemedicineLandingPage.dll
-D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\x8yc0i4dko-4x78475g5v.gz
-D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\9ywmv6kd8b-vsdh90xpff.gz
+D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\cq5oqmwkfo-puv41a7af3.gz
+D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\x8yc0i4dko-fu76bzd8xj.gz
+D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\o4u6gh8ri8-n74yh0eqpi.gz
+D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\crnbpr8pfs-udemzzuuxz.gz
+D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\susjwig8sl-ka1a6n9uag.gz
+D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\9ywmv6kd8b-xlrtdz8j8e.gz
+D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\ub56i21yrk-9v8cvcpqg5.gz
+D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\v4y6qbcjj4-0qa7smvm3k.gz
+D:\BenhVien_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\p91jz875tl-xoe6si5h0u.gz

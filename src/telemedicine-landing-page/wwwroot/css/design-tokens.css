@@ -1,25 +1,83 @@
+/* ═══════════════════════════════════════════════════
+   BỆNH VIỆN SỐ — Royal Hospital Design System
+   Color Palette: Royal Navy + Gold + Medical Trust
+   ═══════════════════════════════════════════════════ */
+
 :root {
     color-scheme: light;
-    --color-ink: #17324d;
-    --color-muted: #5f7084;
-    --color-subtle: #d6e4ee;
-    --color-page: #f5f9fb;
-    --color-surface: #ffffff;
-    --color-soft: #edf6f8;
-    --color-primary: #1677a8;
-    --color-primary-strong: #0d5d83;
-    --color-teal: #179c8e;
-    --color-mint: #dff6ec;
-    --color-sky: #e2f3fb;
-    --color-blue: #dfeeff;
-    --color-coral: #e9794f;
-    --color-coral-soft: #fff0e9;
-    --shadow-soft: 0 20px 60px rgba(23, 50, 77, 0.12);
+
+    /* ── Royal Primary Palette ── */
+    --color-navy: #0C1D36;
+    --color-navy-light: #162D4F;
+    --color-navy-deep: #071425;
+    --color-gold: #C9A84C;
+    --color-gold-light: #DFC06E;
+    --color-gold-dark: #A88B2F;
+    --color-gold-soft: rgba(201, 168, 76, 0.12);
+
+    /* ── Medical Trust Colors ── */
+    --color-medical-blue: #1B5F8A;
+    --color-medical-teal: #0D6E6E;
+    --color-medical-green: #2E7D5B;
+
+    /* ── Surface & Background ── */
+    --color-ink: #0C1D36;
+    --color-muted: #4A5568;
+    --color-subtle: #CBD5E0;
+    --color-page: #F7F5EF;
+    --color-surface: #FFFFFF;
+    --color-soft: #F0EDE4;
+    --color-ivory: #FDFBF5;
+    --color-warm-gray: #E8E4DA;
+
+    /* ── Semantic Accent Colors ── */
+    --color-primary: #1B5F8A;
+    --color-primary-strong: #0C1D36;
+    --color-teal: #0D6E6E;
+    --color-mint: #E8F5EE;
+    --color-sky: #E8F4FC;
+    --color-blue: #E0EEFF;
+    --color-coral: #D4654A;
+    --color-coral-soft: #FFF0E9;
+
+    /* ── Glassmorphism ── */
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(201, 168, 76, 0.18);
+    --glass-blur: blur(20px);
+    --glass-bg-dark: rgba(12, 29, 54, 0.85);
+    --glass-border-dark: rgba(201, 168, 76, 0.25);
+
+    /* ── Shadows ── */
+    --shadow-soft: 0 20px 60px rgba(12, 29, 54, 0.10);
+    --shadow-medium: 0 8px 32px rgba(12, 29, 54, 0.12);
+    --shadow-strong: 0 24px 80px rgba(12, 29, 54, 0.18);
+    --shadow-gold: 0 8px 32px rgba(201, 168, 76, 0.20);
     --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
-    --radius-card: 8px;
+    --shadow-glow: 0 0 40px rgba(201, 168, 76, 0.15);
+    --shadow-card-hover: 0 16px 48px rgba(12, 29, 54, 0.16), 0 0 0 1px rgba(201, 168, 76, 0.12);
+
+    /* ── Radius ── */
+    --radius-sm: 6px;
+    --radius-card: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
     --radius-pill: 999px;
-    --site-width: 1180px;
-    --font-heading: "Figtree", "Noto Sans", sans-serif;
-    --font-body: "Noto Sans", "Segoe UI", sans-serif;
-    --motion-standard: 240ms ease;
+
+    /* ── Typography ── */
+    --site-width: 1200px;
+    --font-heading: "Playfair Display", "Georgia", serif;
+    --font-body: "Inter", "Segoe UI", sans-serif;
+
+    /* ── Motion ── */
+    --motion-fast: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    --motion-standard: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --motion-expressive: 500ms cubic-bezier(0.2, 0, 0, 1);
+    --motion-spring: 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* ── Gradients ── */
+    --gradient-royal: linear-gradient(135deg, #0C1D36, #1B3A5C);
+    --gradient-gold: linear-gradient(135deg, #C9A84C, #DFC06E);
+    --gradient-hero: linear-gradient(160deg, #0C1D36 0%, #162D4F 40%, #1B4F6E 100%);
+    --gradient-warm: linear-gradient(180deg, #F7F5EF, #FDFBF5);
+    --gradient-section: linear-gradient(180deg, rgba(247, 245, 239, 0), rgba(240, 237, 228, 0.6));
 }

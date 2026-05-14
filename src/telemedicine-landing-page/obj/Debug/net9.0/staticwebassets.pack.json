@@ -1,6 +1,10 @@
 {
   "Files": [
     {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css",
+      "PackagePath": "staticwebassets\\css\\animations.css"
+    },
+    {
       "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css",
       "PackagePath": "staticwebassets\\css\\base-layout.css"
     },
@@ -25,8 +29,16 @@
       "PackagePath": "staticwebassets\\css\\landing-sections.css"
     },
     {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css",
+      "PackagePath": "staticwebassets\\css\\login.css"
+    },
+    {
       "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\favicon.png",
       "PackagePath": "staticwebassets\\favicon.png"
+    },
+    {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js",
+      "PackagePath": "staticwebassets\\js\\animations.js"
     },
     {
       "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.TelemedicineLandingPage.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",

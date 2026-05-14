@@ -1,0 +1,356 @@
+/* ═══════════════════════════════════════════════════
+   ANIMATION SYSTEM — Royal Hospital
+   Scroll-reveal, floating, shimmer, particles
+   ═══════════════════════════════════════════════════ */
+
+/* ── Scroll Reveal Base ── */
+.reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity var(--motion-expressive), transform var(--motion-expressive);
+}
+
+.reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity var(--motion-expressive), transform var(--motion-expressive);
+}
+
+.reveal-left.is-visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity var(--motion-expressive), transform var(--motion-expressive);
+}
+
+.reveal-right.is-visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.reveal-scale {
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity var(--motion-expressive), transform var(--motion-spring);
+}
+
+.reveal-scale.is-visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* ── Stagger Delays ── */
+.stagger-1 { transition-delay: 80ms; }
+.stagger-2 { transition-delay: 160ms; }
+.stagger-3 { transition-delay: 240ms; }
+.stagger-4 { transition-delay: 320ms; }
+.stagger-5 { transition-delay: 400ms; }
+.stagger-6 { transition-delay: 480ms; }
+
+/* ── Hero Entry Animations ── */
+@keyframes hero-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes hero-fade-right {
+    from {
+        opacity: 0;
+        transform: translateX(60px) rotate(1.5deg);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) rotate(1.5deg);
+    }
+}
+
+@keyframes shimmer-line {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+@keyframes float-gentle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+
+@keyframes float-slow {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    33% { transform: translateY(-8px) rotate(1deg); }
+    66% { transform: translateY(-4px) rotate(-0.5deg); }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+@keyframes orb-drift-1 {
+    0% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(30px, -20px) scale(1.05); }
+    50% { transform: translate(-10px, -35px) scale(0.98); }
+    75% { transform: translate(-25px, -10px) scale(1.02); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes orb-drift-2 {
+    0% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(-20px, 15px) scale(0.96); }
+    50% { transform: translate(25px, 30px) scale(1.04); }
+    75% { transform: translate(15px, -15px) scale(0.98); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes gold-line-draw {
+    from { width: 0; }
+    to { width: 60px; }
+}
+
+@keyframes counter-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    14% { transform: scale(1.1); }
+    28% { transform: scale(1); }
+    42% { transform: scale(1.08); }
+    56% { transform: scale(1); }
+}
+
+/* ── Floating Orbs (Hero Background) ── */
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    will-change: transform;
+}
+
+.orb-1 {
+    width: 400px;
+    height: 400px;
+    top: -10%;
+    right: -5%;
+    background: radial-gradient(circle, rgba(201, 168, 76, 0.12), transparent 70%);
+    animation: orb-drift-1 18s ease-in-out infinite;
+}
+
+.orb-2 {
+    width: 300px;
+    height: 300px;
+    bottom: 10%;
+    left: -8%;
+    background: radial-gradient(circle, rgba(27, 95, 138, 0.15), transparent 70%);
+    animation: orb-drift-2 22s ease-in-out infinite;
+}
+
+.orb-3 {
+    width: 200px;
+    height: 200px;
+    top: 40%;
+    right: 30%;
+    background: radial-gradient(circle, rgba(201, 168, 76, 0.08), transparent 70%);
+    animation: orb-drift-1 15s ease-in-out infinite reverse;
+}
+
+/* ── Gold Decorative Line ── */
+.gold-line {
+    display: block;
+    height: 3px;
+    width: 60px;
+    background: var(--gradient-gold);
+    border-radius: var(--radius-pill);
+    margin-top: 1rem;
+}
+
+.gold-line.is-visible {
+    animation: gold-line-draw 800ms ease-out forwards;
+}
+
+/* ── Shimmer Effect ── */
+.shimmer {
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(201, 168, 76, 0.08) 50%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-line 3s ease-in-out infinite;
+}
+
+/* ── Card Hover Micro-interactions ── */
+.card-hover {
+    transition: transform var(--motion-standard),
+                box-shadow var(--motion-standard),
+                border-color var(--motion-standard);
+    cursor: pointer;
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: rgba(201, 168, 76, 0.28);
+}
+
+/* ── Button Micro-interactions ── */
+.btn-animate {
+    position: relative;
+    overflow: hidden;
+    transition: transform var(--motion-fast),
+                box-shadow var(--motion-standard),
+                background var(--motion-standard);
+}
+
+.btn-animate::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.15),
+        transparent
+    );
+    transform: translateX(-100%);
+    transition: transform 500ms ease;
+}
+
+.btn-animate:hover::after {
+    transform: translateX(100%);
+}
+
+.btn-animate:hover {
+    transform: translateY(-2px);
+}
+
+.btn-animate:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* ── Number Counter Animation ── */
+.counter-animate {
+    display: inline-block;
+    animation: counter-up 500ms ease-out both;
+}
+
+/* ── Login Page Specific ── */
+@keyframes login-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes login-form-in {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes medical-cross-pulse {
+    0%, 100% {
+        opacity: 0.12;
+        transform: rotate(45deg) scale(1);
+    }
+    50% {
+        opacity: 0.18;
+        transform: rotate(45deg) scale(1.02);
+    }
+}
+
+@keyframes particle-float {
+    0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.6;
+    }
+    90% {
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateY(-10vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* ── Section Divider ── */
+.section-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 0.5rem 0;
+}
+
+.section-divider::before,
+.section-divider::after {
+    content: '';
+    height: 1px;
+    width: 60px;
+    background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+}
+
+.section-divider-icon {
+    width: 8px;
+    height: 8px;
+    background: var(--color-gold);
+    transform: rotate(45deg);
+    opacity: 0.5;
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .reveal,
+    .reveal-left,
+    .reveal-right,
+    .reveal-scale {
+        opacity: 1;
+        transform: none;
+    }
+
+    .orb {
+        display: none;
+    }
+}
