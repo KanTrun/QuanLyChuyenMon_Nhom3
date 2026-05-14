@@ -1,3 +1,8 @@
+/* dark-mode.css: Targeted selector overrides for components that use hardcoded
+   colors (rgba values, gradients) instead of CSS custom properties from design-tokens.css.
+   When possible, refactor components to use var(--color-*) tokens and remove rules here.
+   design-tokens.css [data-theme="dark"] handles all token-based colors automatically. */
+
 /* ═══════════════════════════════════════════════════
    DARK MODE — Complete Theme Override
    Full dark theme coverage for all surfaces, cards,

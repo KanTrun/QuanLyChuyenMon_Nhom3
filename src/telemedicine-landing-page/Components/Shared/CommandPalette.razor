@@ -1,14 +1,18 @@
 @* CommandPalette.razor - Cmd+K modal overlay for quick navigation *@
+@* Visibility is controlled entirely via JS (Ctrl+K toggles .is-open class). No Blazor state needed for SSR. *@
 
-<div class="command-palette @(isOpen ? "command-palette--open" : "")" data-command-palette aria-modal="true" role="dialog" aria-label="Tim kiem nhanh">
-    <div class="command-palette__backdrop" @onclick="Close"></div>
+<div class="command-palette" data-command-palette aria-modal="true" role="dialog" aria-label="Tim kiem nhanh">
+    <div class="command-palette__backdrop" onclick="document.querySelector('.command-palette').classList.remove('is-open')"></div>
     <div class="command-palette__modal">
         <div class="command-palette__search">
             <svg class="command-palette__search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                 <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5"/>
                 <path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
-            <input type="text" class="command-palette__input" placeholder="Tìm kiếm quy trình, phác đồ, người dùng..." @bind="searchQuery" @bind:event="oninput" autocomplete="off" />
+            <input type="text" class="command-palette__input" placeholder="Tìm kiếm quy trình, phác đồ, người dùng..." autocomplete="off" />
+            <button type="button" class="command-palette__close" onclick="document.querySelector('.command-palette').classList.remove('is-open')" aria-label="Dong">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
             <kbd class="command-palette__kbd">Esc</kbd>
         </div>
         <div class="command-palette__results">
@@ -97,17 +101,4 @@
     </div>
 </div>
 
-@code {
-    private bool isOpen = false;
-    private string searchQuery = "";
-
-    private void Close()
-    {
-        isOpen = false;
-    }
-
-    private void Toggle()
-    {
-        isOpen = !isOpen;
-    }
-}
+@* TODO: When SignalR interactivity is enabled, add @code block with search filtering logic *@

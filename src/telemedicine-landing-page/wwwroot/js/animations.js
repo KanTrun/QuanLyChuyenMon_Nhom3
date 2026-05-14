@@ -56,30 +56,14 @@
 
         var mainContent = document.querySelector('main') || document.querySelector('.page-body') || document.body;
 
-        // Add entrance animation to current page
+        // Add entrance animation to current page on initial load
         if (mainContent && !mainContent.classList.contains('page-enter')) {
             mainContent.classList.add('page-enter');
         }
 
-        // Intercept internal link clicks for page transitions
-        document.addEventListener('click', function (e) {
-            var link = e.target.closest('a[href]');
-            if (!link) return;
-
-            var href = link.getAttribute('href');
-            // Only handle internal navigation (not anchors, external, or javascript:)
-            if (!href || href.startsWith('#') || href.startsWith('javascript:') ||
-                href.startsWith('http://') || href.startsWith('https://') ||
-                link.hasAttribute('target') || link.hasAttribute('download')) {
-                return;
-            }
-
-            // Let Blazor enhanced navigation handle it, but add exit animation
-            if (mainContent) {
-                mainContent.classList.remove('page-enter');
-                mainContent.classList.add('page-exit');
-            }
-        });
+        // NOTE: Page-exit animation removed intentionally.
+        // Blazor enhanced navigation (SSR) replaces DOM in-place via fetch+diff,
+        // which conflicts with exit animations. Only page-enter on initial load is safe.
     }
 
     // ========================================================================
@@ -623,6 +607,49 @@
     }
 
     // ========================================================================
+    // PASSWORD STRENGTH METER
+    // Calculates strength from [data-password-strength] inputs and updates
+    // adjacent .password-strength__segment elements with active/level classes
+    // ========================================================================
+    function initPasswordStrength() {
+        var inputs = document.querySelectorAll('[data-password-strength]');
+        if (!inputs.length) return;
+
+        inputs.forEach(function (input) {
+            var formGroup = input.closest('.form-group');
+            if (!formGroup) return;
+            var meter = formGroup.querySelector('.password-strength');
+            if (!meter) return;
+            var segments = meter.querySelectorAll('.password-strength__segment');
+            var textEl = meter.querySelector('.password-strength__text');
+
+            input.addEventListener('input', function () {
+                var val = input.value;
+                var score = 0;
+                if (val.length >= 6) score++;
+                if (val.length >= 10) score++;
+                if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+                if (/[0-9]/.test(val)) score++;
+                if (/[^A-Za-z0-9]/.test(val)) score++;
+                score = Math.min(score, 4);
+
+                segments.forEach(function (seg, i) {
+                    seg.classList.toggle('password-strength__segment--active', i < score);
+                    seg.classList.toggle('password-strength__segment--weak', score <= 1 && i < score);
+                    seg.classList.toggle('password-strength__segment--fair', score === 2 && i < score);
+                    seg.classList.toggle('password-strength__segment--good', score === 3 && i < score);
+                    seg.classList.toggle('password-strength__segment--strong', score >= 4 && i < score);
+                });
+
+                if (textEl) {
+                    var labels = ['Nhap mat khau de kiem tra do manh', 'Yeu', 'Trung binh', 'Manh', 'Rat manh'];
+                    textEl.textContent = labels[score] || labels[0];
+                }
+            });
+        });
+    }
+
+    // ========================================================================
     // INITIALIZATION
     // ========================================================================
     function init() {
@@ -649,6 +676,9 @@
 
         // Keyboard
         initKeyboardShortcuts();
+
+        // Forms
+        initPasswordStrength();
     }
 
     // Wait for DOM ready

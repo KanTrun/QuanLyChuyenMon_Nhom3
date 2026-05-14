@@ -197,10 +197,10 @@
 
 /* Command Palette */
 .command-palette { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: flex-start; justify-content: center; padding-top: 15vh; pointer-events: none; opacity: 0; transition: opacity var(--motion-fast); }
-.command-palette--open { pointer-events: all; opacity: 1; }
+.command-palette.is-open { pointer-events: all; opacity: 1; }
 .command-palette__backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
 .command-palette__modal { position: relative; width: 100%; max-width: 560px; background: var(--glass-bg, rgba(255,255,255,0.95)); backdrop-filter: blur(var(--glass-blur, 20px)); border: 1px solid var(--glass-border, rgba(255,255,255,0.2)); border-radius: var(--radius-xl); box-shadow: 0 25px 60px rgba(0,0,0,0.2); overflow: hidden; transform: scale(0.95) translateY(-10px); transition: transform var(--motion-standard); }
-.command-palette--open .command-palette__modal { transform: scale(1) translateY(0); }
+.command-palette.is-open .command-palette__modal { transform: scale(1) translateY(0); }
 .command-palette__search { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--color-border-light); }
 .command-palette__search-icon { color: var(--color-muted); flex-shrink: 0; }
 .command-palette__input { flex: 1; border: none; background: transparent; font-size: var(--text-base); color: var(--color-ink); outline: none; }
