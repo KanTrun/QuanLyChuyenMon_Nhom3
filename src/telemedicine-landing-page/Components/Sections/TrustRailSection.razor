@@ -1,13 +1,24 @@
-<section class="trust-rail site-shell" aria-label="Tin cậy và vận hành">
-    @{ var index = 0; }
-    @foreach (var signal in Signals)
-    {
-        <article class="trust-item reveal stagger-@(++index)">
-            <strong>@signal.Value</strong>
-            <span>@signal.Label</span>
-            <p>@signal.Detail</p>
-        </article>
-    }
+<!-- ═══ Trust Ticker — Horizontal Infinite Scroll ═══ -->
+<section class="trust-ticker" aria-label="Tin cay va van hanh">
+    <div class="ticker-track">
+        @foreach (var signal in Signals)
+        {
+            <article class="ticker-card reveal">
+                <strong>@signal.Value</strong>
+                <span>@signal.Label</span>
+                <p>@signal.Detail</p>
+            </article>
+        }
+        <!-- Duplicate for seamless infinite loop -->
+        @foreach (var signal in Signals)
+        {
+            <article class="ticker-card" aria-hidden="true">
+                <strong>@signal.Value</strong>
+                <span>@signal.Label</span>
+                <p>@signal.Detail</p>
+            </article>
+        }
+    </div>
 </section>
 
 @code {

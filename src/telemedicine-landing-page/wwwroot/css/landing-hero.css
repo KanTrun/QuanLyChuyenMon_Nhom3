@@ -1,13 +1,14 @@
 /* ═══════════════════════════════════════════════════
-   HERO SECTION — Soft UI Healthcare Landing
-   Header navigation + Clean hero section
+   HERO SECTION — Cinematic Awwwards-Level Design
+   Animated gradient mesh, 3D device card, glass nav
    ═══════════════════════════════════════════════════ */
 
+/* ── Page Container ── */
 .landing-page {
     overflow: hidden;
 }
 
-/* ── Floating Navbar ── */
+/* ═══ Floating Glass Navbar ═══ */
 .site-header {
     position: fixed;
     top: 1rem;
@@ -20,23 +21,27 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0 1.5rem;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border-strong);
     border-radius: var(--radius-xl);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-soft);
     color: var(--color-ink);
     transition: background var(--motion-standard),
-                box-shadow var(--motion-standard);
+                box-shadow var(--motion-standard),
+                border-color var(--motion-standard);
     max-width: var(--site-width);
     margin: 0 auto;
 }
 
 .site-header.scrolled {
-    background: rgba(255, 255, 255, 0.98);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    background: var(--glass-bg-heavy);
+    box-shadow: var(--shadow-medium);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
+/* ── Brand Mark ── */
 .brand-mark {
     display: inline-flex;
     align-items: center;
@@ -47,6 +52,11 @@
     text-decoration: none;
     color: var(--color-primary-deep);
     letter-spacing: -0.01em;
+    transition: transform var(--motion-fast);
+}
+
+.brand-mark:hover {
+    transform: scale(1.02);
 }
 
 .brand-symbol {
@@ -59,7 +69,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.2);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 .brand-symbol::before {
@@ -70,6 +80,7 @@
     line-height: 1;
 }
 
+/* ── Header Navigation ── */
 .header-nav {
     display: flex;
     gap: 0.25rem;
@@ -81,12 +92,37 @@
     text-decoration: none;
     padding: 0.5rem 0.85rem;
     border-radius: var(--radius-pill);
-    transition: background var(--motion-fast), color var(--motion-fast);
+    transition: background var(--motion-fast),
+                color var(--motion-fast),
+                transform var(--motion-fast);
     color: var(--color-muted);
 }
 
 .header-nav a:hover {
     background: var(--color-sky);
+    color: var(--color-primary-deep);
+    transform: translateY(-1px);
+}
+
+/* ── Header Auth Buttons ── */
+.header-auth {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.header-login {
+    color: var(--color-ink);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-pill);
+    transition: background var(--motion-fast), color var(--motion-fast);
+}
+
+.header-login:hover {
+    background: var(--color-soft);
     color: var(--color-primary-deep);
 }
 
@@ -96,42 +132,50 @@
     padding: 0.6rem 1.2rem;
     font-weight: 600;
     font-size: 0.85rem;
+    border-radius: var(--radius-pill);
     box-shadow: var(--shadow-soft);
     border: 1px solid var(--color-warm-gray);
     letter-spacing: 0.01em;
+    text-decoration: none;
+    transition: border-color var(--motion-fast),
+                box-shadow var(--motion-fast),
+                transform var(--motion-fast);
 }
 
 .header-action:hover {
     border-color: var(--color-primary-light);
-    box-shadow: 0 6px 16px rgba(49, 130, 206, 0.1);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.12);
+    transform: translateY(-1px);
 }
 
-/* ── Hero Section ── */
+/* ═══ Hero Section ═══ */
 .hero-section {
     position: relative;
     min-height: 100dvh;
     padding: 10rem 0 6rem;
     display: grid;
     align-items: center;
-    background: var(--gradient-hero);
+    background: linear-gradient(180deg, var(--color-page) 0%, var(--color-sky) 50%, var(--color-page) 100%);
     overflow: hidden;
 }
 
+/* ── Gradient Mesh Layer ── */
 .hero-layer {
     position: absolute;
     inset: 0;
     pointer-events: none;
 }
 
-/* Gradient mesh overlay */
+/* Gradient overlay mesh */
 .hero-layer::before {
     content: '';
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(ellipse at 20% 80%, rgba(49, 151, 149, 0.08), transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(49, 130, 206, 0.08), transparent 45%),
-        radial-gradient(ellipse at 60% 60%, rgba(237, 137, 54, 0.05), transparent 50%);
+        radial-gradient(ellipse 600px 600px at 20% 80%, rgba(13, 148, 136, 0.1), transparent 70%),
+        radial-gradient(ellipse 500px 500px at 80% 20%, rgba(37, 99, 235, 0.1), transparent 60%),
+        radial-gradient(ellipse 400px 400px at 60% 60%, rgba(249, 115, 22, 0.06), transparent 50%),
+        radial-gradient(ellipse 350px 350px at 30% 30%, rgba(99, 102, 241, 0.05), transparent 60%);
 }
 
 /* Grid pattern overlay */
@@ -140,31 +184,27 @@
     position: absolute;
     inset: 0;
     background-image:
-        linear-gradient(rgba(49, 130, 206, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(49, 130, 206, 0.03) 1px, transparent 1px);
+        linear-gradient(rgba(37, 99, 235, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 99, 235, 0.025) 1px, transparent 1px);
     background-size: 80px 80px;
-    mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%);
-    -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%);
+    mask-image: radial-gradient(ellipse at 50% 50%, black 20%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black 20%, transparent 75%);
 }
 
+/* ── Hero Content Grid ── */
 .hero-content {
     position: relative;
     z-index: 2;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
     align-items: center;
     gap: clamp(3rem, 6vw, 6rem);
 }
 
+/* ── Hero Copy (Left Column) ── */
 .hero-copy {
     padding-bottom: 2rem;
     animation: hero-fade-up 800ms ease-out both;
-}
-
-.hero-copy h1 {
-    color: var(--color-primary-deep);
-    max-width: 16ch;
-    margin-bottom: 1.5rem;
 }
 
 .hero-copy .eyebrow {
@@ -174,6 +214,13 @@
 
 .hero-copy .eyebrow::before {
     background: var(--gradient-secondary);
+}
+
+.hero-copy h1 {
+    color: var(--color-primary-deep);
+    max-width: 16ch;
+    margin-bottom: 1.5rem;
+    line-height: 1.1;
 }
 
 .hero-lede {
@@ -190,23 +237,73 @@
     margin-top: 2.5rem;
 }
 
-/* ── Hero Device Card ── */
-.hero-device {
-    min-height: 520px;
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(20px);
-    box-shadow: 0 24px 80px rgba(49, 130, 206, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    padding: 1.25rem;
-    transform: rotate(1.5deg);
-    animation: hero-fade-right 900ms ease-out 200ms both;
+/* ── Social Proof Strip ── */
+.social-proof-strip {
+    margin-top: 3rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
-.device-topbar,
-.consult-header,
-.panel-header {
+.avatar-stack {
+    display: flex;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid white;
+    margin-left: -0.5rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.avatar:first-child {
+    margin-left: 0;
+}
+
+.avatar-1 { background: var(--color-primary-light); }
+.avatar-2 { background: var(--color-secondary-light); }
+.avatar-3 { background: var(--color-accent); }
+.avatar-4 { background: var(--color-info); }
+
+.social-proof-text {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+}
+
+.social-proof-text strong {
+    color: var(--color-primary-deep);
+}
+
+/* ═══ Hero 3D Device Card ═══ */
+.hero-device {
+    min-height: 520px;
+    border: 1px solid var(--glass-border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur-heavy);
+    -webkit-backdrop-filter: var(--glass-blur-heavy);
+    box-shadow:
+        0 24px 80px rgba(37, 99, 235, 0.1),
+        0 8px 32px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    padding: 1.25rem;
+    transform: perspective(1200px) rotateY(-3deg) rotateX(1deg);
+    animation: hero-fade-right 900ms ease-out 200ms both;
+    transition: transform var(--motion-standard), box-shadow var(--motion-standard);
+}
+
+.hero-device:hover {
+    transform: perspective(1200px) rotateY(-1deg) rotateX(0.5deg);
+    box-shadow:
+        0 32px 100px rgba(37, 99, 235, 0.14),
+        0 12px 40px rgba(0, 0, 0, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* ── Device Topbar ── */
+.device-topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -220,6 +317,7 @@
     color: var(--color-ink);
 }
 
+/* ── Video Preview Area ── */
 .video-preview {
     position: relative;
     min-height: 360px;
@@ -227,15 +325,27 @@
     overflow: hidden;
     border-radius: var(--radius-card);
     background: linear-gradient(150deg, var(--color-sky), var(--color-mint));
-    border: 1px solid rgba(0,0,0,0.02);
+    border: 1px solid rgba(0, 0, 0, 0.02);
 }
 
-.doctor-frame,
-.consult-main {
+.doctor-frame {
     position: absolute;
     inset: 1rem 1rem 5rem;
     border-radius: var(--radius-card);
-    background: rgba(49, 130, 206, 0.05); /* Placeholder */
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(13, 148, 136, 0.04));
+}
+
+.doctor-label {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
 .patient-frame {
@@ -246,10 +356,11 @@
     aspect-ratio: 4 / 3;
     border: 3px solid white;
     border-radius: var(--radius-card);
-    background: rgba(49, 151, 149, 0.05);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.06), rgba(37, 99, 235, 0.04));
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
+/* ── Call Status Badge ── */
 .call-status {
     position: absolute;
     left: 1.25rem;
@@ -260,23 +371,22 @@
     padding: 0.5rem 1rem;
     font-weight: 600;
     font-size: 0.85rem;
-    box-shadow: 0 8px 24px rgba(49, 130, 206, 0.1);
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.1);
     display: flex;
     align-items: center;
+    gap: 0.5rem;
 }
 
-.call-status::before {
-    content: '';
+.pulse-dot {
     display: inline-block;
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: var(--color-success);
-    margin-right: 0.5rem;
     animation: pulse-glow 2s ease-in-out infinite;
 }
 
-/* ── Hero Stat Strip ── */
+/* ── Metric Strip (Stats) ── */
 .metric-strip {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -284,7 +394,7 @@
     margin-top: 0.75rem;
 }
 
-.metric-strip span {
+.metric-item {
     display: grid;
     gap: 0.15rem;
     border-radius: var(--radius-sm);
@@ -293,11 +403,45 @@
     padding: 0.65rem;
     color: var(--color-muted);
     font-size: 0.75rem;
+    transition: border-color var(--motion-fast), box-shadow var(--motion-fast);
 }
 
-.metric-strip strong {
+.metric-item:hover {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+}
+
+.metric-item strong {
     color: var(--color-primary-deep);
     font-size: 1rem;
+    font-family: var(--font-heading);
+}
+
+/* ═══ Scroll Indicator ═══ */
+.scroll-indicator {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur-light);
+    -webkit-backdrop-filter: var(--glass-blur-light);
+    border: 1px solid var(--glass-border);
+    color: var(--color-muted);
+    animation: float-gentle 2s ease-in-out infinite;
+    cursor: pointer;
+    transition: color var(--motion-fast);
+}
+
+.scroll-indicator:hover {
+    color: var(--color-primary);
 }
 
 /* ── Hero Bottom Gradient Fade ── */
@@ -311,4 +455,64 @@
     background: linear-gradient(to bottom, transparent, var(--color-page));
     pointer-events: none;
     z-index: 3;
+}
+
+/* ═══ Responsive ═══ */
+@media (max-width: 1024px) {
+    .hero-content {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+
+    .hero-device {
+        transform: none;
+        min-height: 400px;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .hero-device:hover {
+        transform: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .site-header {
+        top: 0.5rem;
+        left: 0.75rem;
+        right: 0.75rem;
+        padding: 0 1rem;
+        min-height: 52px;
+    }
+
+    .header-nav {
+        display: none;
+    }
+
+    .hero-section {
+        min-height: auto;
+        padding: 8rem 0 4rem;
+    }
+
+    .hero-copy h1 {
+        max-width: none;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+    }
+
+    .social-proof-strip {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .metric-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .scroll-indicator {
+        display: none;
+    }
 }

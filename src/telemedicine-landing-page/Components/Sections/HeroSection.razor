@@ -1,67 +1,93 @@
-<header class="site-shell site-header" id="site-header" aria-label="Điều hướng chính">
-    <a class="brand-mark" href="/" aria-label="Trang chủ Bệnh viện số">
+<!-- ═══ Floating Glass Navbar ═══ -->
+<header class="site-shell site-header" id="site-header" aria-label="Dieu huong chinh">
+    <a class="brand-mark" href="/" aria-label="Trang chu Benh vien so">
         <span class="brand-symbol" aria-hidden="true"></span>
-        <span>Bệnh viện số</span>
+        <span>Benh vien so</span>
     </a>
-    <nav class="header-nav" aria-label="Điều hướng nội dung">
-        <a href="#consultation">Tư vấn video</a>
-        <a href="#specialists">Chuyên khoa</a>
-        <a href="#tracking">Theo dõi sức khỏe</a>
+    <nav class="header-nav" aria-label="Dieu huong noi dung">
+        <a href="#consultation">Tu van video</a>
+        <a href="#specialists">Chuyen khoa</a>
+        <a href="#tracking">Theo doi suc khoe</a>
     </nav>
-    <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <a class="header-nav" href="/login" style="color: var(--color-ink); text-decoration: none; font-weight: 500; font-size: 0.9rem; padding: 0.5rem 1rem;">Đăng nhập</a>
-        <a class="header-action" href="/register">Đăng ký ngay</a>
+    <div class="header-auth">
+        <a class="header-login" href="/login">Dang nhap</a>
+        <a class="header-action" href="/register">Dang ky</a>
     </div>
 </header>
 
+<!-- ═══ Cinematic Hero Section ═══ -->
 <section class="hero-section" aria-labelledby="hero-title">
+    <!-- Animated Gradient Mesh Background -->
     <div class="hero-layer" aria-hidden="true">
         <div class="orb orb-1"></div>
         <div class="orb orb-2"></div>
         <div class="orb orb-3"></div>
+        <div class="orb orb-4"></div>
     </div>
+
+    <!-- Hero Content: 2-column grid -->
     <div class="site-shell hero-content">
-        <div class="hero-copy">
-            <p class="eyebrow">Nền tảng y tế từ xa thế hệ mới</p>
-            <h1 id="hero-title">Sức khỏe của bạn, được chăm sóc mọi lúc mọi nơi.</h1>
+        <!-- Left Column: Copy -->
+        <div class="hero-copy reveal">
+            <p class="eyebrow">Nen tang y te tu xa the he moi</p>
+            <h1 id="hero-title" class="text-reveal">
+                Suc khoe cua ban, duoc cham soc moi luc moi noi.
+            </h1>
             <p class="hero-lede">
-                Tiếp cận các chuyên gia y tế hàng đầu qua các phiên khám video bảo mật cao. Quản lý hồ sơ sức khỏe và theo dõi chỉ số sống một cách dễ dàng với giao diện thân thiện, hiện đại.
+                Tiep can cac chuyen gia y te hang dau qua cac phien kham video bao mat cao.
+                Quan ly ho so suc khoe va theo doi chi so song mot cach de dang voi giao dien
+                than thien, hien dai.
             </p>
-            <div class="hero-actions" aria-label="Hành động chính">
-                <a class="button button-primary" href="@Links.StartVisitUrl">Đặt lịch khám ngay</a>
-                <a class="button button-secondary" href="@Links.FindSpecialistUrl">Tìm bác sĩ</a>
+            <div class="hero-actions" aria-label="Hanh dong chinh">
+                <a class="button button-primary" href="@Links.StartVisitUrl">Dat lich kham ngay</a>
+                <a class="button button-secondary" href="@Links.FindSpecialistUrl">Tim bac si</a>
             </div>
-            
-            <div style="margin-top: 3rem; display: flex; align-items: center; gap: 1rem; color: var(--color-muted); font-size: 0.85rem;">
-                <div style="display: flex; margin-left: 0.5rem;">
-                    <!-- Placeholder avatar stack -->
-                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--color-primary-light); border: 2px solid white; margin-left: -0.5rem;"></div>
-                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--color-secondary-light); border: 2px solid white; margin-left: -0.5rem;"></div>
-                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--color-accent); border: 2px solid white; margin-left: -0.5rem;"></div>
+
+            <!-- Social Proof Strip -->
+            <div class="social-proof-strip">
+                <div class="avatar-stack" aria-hidden="true">
+                    <span class="avatar avatar-1"></span>
+                    <span class="avatar avatar-2"></span>
+                    <span class="avatar avatar-3"></span>
+                    <span class="avatar avatar-4"></span>
                 </div>
-                <span>Được tin dùng bởi hơn <strong>10,000+</strong> bệnh nhân</span>
+                <span class="social-proof-text">Duoc tin dung boi hon <strong data-counter="10000">10,000+</strong> benh nhan</span>
             </div>
         </div>
 
-        <div class="hero-device" aria-label="Màn hình xem trước ứng dụng khám từ xa">
+        <!-- Right Column: 3D Device Mockup -->
+        <div class="hero-device reveal-right" data-parallax-speed="0.3" aria-label="Man hinh xem truoc ung dung kham tu xa">
             <div class="device-topbar">
-                <span>Phòng khám trực tuyến</span>
+                <span>Phong kham truc tuyen</span>
                 <strong>09:40 AM</strong>
             </div>
             <div class="video-preview">
-                <div class="doctor-frame portrait-sky">
-                    <div style="position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.5); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; backdrop-filter: blur(4px);">ThS. BS Trần Minh An</div>
+                <div class="doctor-frame">
+                    <div class="doctor-label">ThS. BS Tran Minh An</div>
                 </div>
-                <div class="patient-frame portrait-mint"></div>
-                <div class="call-status">Đang kết nối...</div>
+                <div class="patient-frame"></div>
+                <div class="call-status">
+                    <span class="pulse-dot" aria-hidden="true"></span>
+                    Dang ket noi...
+                </div>
             </div>
             <div class="metric-strip">
                 @foreach (var stat in Stats)
                 {
-                    <span><strong>@stat.Value</strong>@stat.Label</span>
+                    <span class="metric-item">
+                        <strong data-counter="@stat.Value">@stat.Value</strong>
+                        @stat.Label
+                    </span>
                 }
             </div>
         </div>
+    </div>
+
+    <!-- Scroll Indicator -->
+    <div class="scroll-indicator" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
     </div>
 </section>
 
