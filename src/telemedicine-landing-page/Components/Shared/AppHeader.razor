@@ -23,7 +23,7 @@
             <circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/>
             <path d="M12.5 12.5L16 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        <input type="search" class="app-header__search-input" placeholder="Tìm kiếm quy trình, người dùng, phác đồ..." aria-label="Tìm kiếm" />
+        <input type="search" class="app-header__search-input" placeholder="Tìm kiếm quy trình, người dùng, phác đồ..." aria-label="Tìm kiếm" data-command-palette-trigger />
         <kbd class="app-header__search-kbd" aria-hidden="true">Ctrl+K</kbd>
     </div>
 
@@ -77,6 +77,21 @@
                 </div>
             </div>
         }
+
+        <!-- Dark Mode Toggle -->
+        <button class="app-header__action-btn" onclick="window.toggleDarkMode && window.toggleDarkMode()" aria-label="Chuyen che do sang/toi" title="Dark mode">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M10 2a1 1 0 011 1v1a1 1 0 01-2 0V3a1 1 0 011-1zM10 15a1 1 0 011 1v1a1 1 0 01-2 0v-1a1 1 0 011-1zM18 10a1 1 0 01-1 1h-1a1 1 0 010-2h1a1 1 0 011 1zM5 10a1 1 0 01-1 1H3a1 1 0 010-2h1a1 1 0 011 1zM15.07 4.93a1 1 0 010 1.41l-.7.7a1 1 0 01-1.42-1.41l.71-.7a1 1 0 011.41 0zM7.05 12.95a1 1 0 010 1.41l-.7.7a1 1 0 01-1.42-1.41l.71-.7a1 1 0 011.41 0zM15.07 15.07a1 1 0 01-1.41 0l-.7-.7a1 1 0 011.41-1.42l.7.71a1 1 0 010 1.41zM7.05 7.05a1 1 0 01-1.41 0l-.7-.7a1 1 0 011.41-1.42l.7.71a1 1 0 010 1.41z" fill="currentColor"/>
+                <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" fill="none"/>
+            </svg>
+        </button>
+
+        <!-- Fullscreen Toggle -->
+        <button class="app-header__action-btn" onclick="document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()" aria-label="Toan man hinh" title="Fullscreen">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3 7V4a1 1 0 011-1h3M13 3h3a1 1 0 011 1v3M17 13v3a1 1 0 01-1 1h-3M7 17H4a1 1 0 01-1-1v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
 
         <!-- User Menu -->
         <button class="app-header__user-btn" @onclick="ToggleUserMenu" aria-label="Menu người dùng" title="Menu tài khoản">

@@ -1,8 +1,13 @@
 @page "/login"
 
-<PageTitle>Đăng nhập | QLCM Pro</PageTitle>
+<PageTitle>Dang nhap | QLCM Pro</PageTitle>
 
-<div class="login-page">
+<HeadContent>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="Dang nhap he thong QLCM Pro - Quan ly quy trinh ky thuat chuyen mon benh vien." />
+</HeadContent>
+
+<div class="login-page login-page--animated-bg">
     <!-- Left: Branding Panel -->
     <div class="login-brand">
         <div class="orb orb-1"></div>
@@ -10,29 +15,29 @@
 
         <div class="login-brand-content">
             <div class="login-logo">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
             </div>
-            <h1>Hệ thống Quản lý Chuyên môn</h1>
-            <p>Nền tảng quản lý quy trình kỹ thuật, phân quyền và kiểm soát chất lượng chuyên môn cho bệnh viện.</p>
+            <h1>He thong Quan ly Chuyen mon</h1>
+            <p>Nen tang quan ly quy trinh ky thuat, phan quyen va kiem soat chat luong chuyen mon cho benh vien.</p>
 
             <div class="login-features">
                 <div class="login-feature">
-                    <span class="login-feature-icon">
+                    <span class="login-feature-icon" aria-hidden="true">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
                     </span>
-                    <span>Kiểm soát quy trình kỹ thuật chuyên môn</span>
+                    <span>Kiem soat quy trinh ky thuat chuyen mon</span>
                 </div>
                 <div class="login-feature">
-                    <span class="login-feature-icon">
+                    <span class="login-feature-icon" aria-hidden="true">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
                     </span>
-                    <span>Phân quyền RBAC đa tầng theo vai trò</span>
+                    <span>Phan quyen RBAC da tang theo vai tro</span>
                 </div>
                 <div class="login-feature">
-                    <span class="login-feature-icon">
+                    <span class="login-feature-icon" aria-hidden="true">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                     </span>
-                    <span>Audit trail và tuân thủ bất biến</span>
+                    <span>Audit trail va tuan thu bat bien</span>
                 </div>
             </div>
         </div>
@@ -42,48 +47,72 @@
     <div class="login-form-panel">
         <div class="login-form-wrapper">
             <div class="login-form-header">
-                <p class="eyebrow">Chào mừng trở lại</p>
-                <h2>Đăng nhập tài khoản</h2>
-                <p>Nhập thông tin đăng nhập để truy cập hệ thống quản lý chuyên môn.</p>
+                <p class="eyebrow">Chao mung tro lai</p>
+                <h2>Dang nhap tai khoan</h2>
+                <p>Nhap thong tin dang nhap de truy cap he thong quan ly chuyen mon.</p>
             </div>
 
-            <form class="login-form" action="/dashboard" method="post">
-                <div class="form-group">
-                    <label for="login-email">Email hoặc Mã nhân viên</label>
-                    <input type="text" id="login-email" name="email" placeholder="nguyenvana@benhvien.vn" autocomplete="username" required />
+            <form class="login-form" action="/dashboard" method="post" novalidate>
+                <div class="form-group form-group--floating">
+                    <input type="text" id="login-email" name="email" placeholder=" " autocomplete="username" required class="form-input" />
+                    <label for="login-email" class="form-label--floating">Email hoac Ma nhan vien</label>
+                    <span class="form-error" aria-live="polite">Vui long nhap email hoac ma nhan vien</span>
                 </div>
 
-                <div class="form-group">
-                    <label for="login-password">Mật khẩu</label>
-                    <input type="password" id="login-password" name="password" placeholder="Nhập mật khẩu" autocomplete="current-password" required />
+                <div class="form-group form-group--floating">
+                    <div class="form-input-wrapper">
+                        <input type="password" id="login-password" name="password" placeholder=" " autocomplete="current-password" required class="form-input" />
+                        <label for="login-password" class="form-label--floating">Mat khau</label>
+                        <button type="button" class="form-password-toggle" onclick="(function(btn){var i=btn.previousElementSibling.previousElementSibling;i.type=i.type==='password'?'text':'password';btn.setAttribute('aria-label',i.type==='password'?'Hien mat khau':'An mat khau')})(this)" aria-label="Hien mat khau" title="Hien/An mat khau">
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M1 9s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.5"/></svg>
+                        </button>
+                    </div>
+                    <span class="form-error" aria-live="polite">Vui long nhap mat khau</span>
+                    <!-- Password Strength Meter -->
+                    <div class="password-strength" aria-label="Do manh mat khau">
+                        <div class="password-strength__bar">
+                            <span class="password-strength__segment"></span>
+                            <span class="password-strength__segment"></span>
+                            <span class="password-strength__segment"></span>
+                            <span class="password-strength__segment"></span>
+                        </div>
+                        <span class="password-strength__text">Nhap mat khau de kiem tra do manh</span>
+                    </div>
                 </div>
 
                 <div class="form-options">
-                    <label>
+                    <label class="toggle-switch">
                         <input type="checkbox" name="remember" />
-                        Ghi nhớ đăng nhập
+                        <span class="toggle-switch__slider"></span>
+                        <span class="toggle-switch__label">Ghi nho dang nhap</span>
                     </label>
-                    <a href="#">Quên mật khẩu?</a>
+                    <a href="javascript:void(0)" class="form-link">Quen mat khau?</a>
                 </div>
 
-                <button type="submit" class="login-submit">Đăng nhập</button>
+                <button type="submit" class="login-submit" aria-label="Dang nhap he thong">
+                    <span class="login-submit__text">Dang nhap</span>
+                    <span class="login-submit__spinner" aria-hidden="true"></span>
+                </button>
             </form>
 
-            <div class="login-divider"><span>Hoặc tiếp tục với</span></div>
+            <!-- Divider -->
+            <div class="login-divider"><span>Hoac dang nhap bang</span></div>
 
+            <!-- Social Login -->
             <div class="social-login">
-                <button type="button" class="social-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                <button type="button" class="social-btn" aria-label="Dang nhap bang Google">
+                    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                     Google
                 </button>
-                <button type="button" class="social-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                    SSO Bệnh viện
+                <button type="button" class="social-btn social-btn--disabled" disabled aria-label="Dang nhap bang Microsoft - Sap co">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.4 2H2v9.4h9.4V2zM22 2h-9.4v9.4H22V2zM11.4 12.6H2V22h9.4v-9.4zM22 12.6h-9.4V22H22v-9.4z"/></svg>
+                    Microsoft
+                    <span class="social-btn__badge">Sap co</span>
                 </button>
             </div>
 
             <p class="login-footer">
-                Chưa có tài khoản? <a href="/register">Đăng ký ngay</a>
+                Chua co tai khoan? <a href="/register">Dang ky ngay</a>
             </p>
         </div>
     </div>

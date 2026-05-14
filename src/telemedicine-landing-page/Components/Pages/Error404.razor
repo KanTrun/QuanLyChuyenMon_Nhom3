@@ -1,0 +1,281 @@
+@page "/404"
+@page "/not-found"
+@layout null
+
+<PageTitle>404 - Trang khong ton tai | QLCM Pro</PageTitle>
+
+<HeadContent>
+    <meta name="robots" content="noindex, nofollow" />
+</HeadContent>
+
+<div class="error-404-page" data-theme-aware="true">
+    <!-- Background Orbs -->
+    <div class="orb orb-1" aria-hidden="true"></div>
+    <div class="orb orb-2" aria-hidden="true"></div>
+    <div class="orb orb-3" aria-hidden="true"></div>
+
+    <main class="error-404-page__content" role="main" aria-labelledby="error-heading">
+        <!-- Animated SVG Illustration -->
+        <div class="error-404-page__illustration" aria-hidden="true">
+            <svg width="280" height="200" viewBox="0 0 280 200" fill="none" class="error-404-page__svg">
+                <!-- Document -->
+                <rect class="error-404-page__doc" x="80" y="30" width="120" height="150" rx="8" stroke="var(--color-primary, #2563eb)" stroke-width="2" fill="none"/>
+                <line class="error-404-page__doc-line" x1="100" y1="60" x2="180" y2="60" stroke="var(--color-primary, #2563eb)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                <line class="error-404-page__doc-line" x1="100" y1="80" x2="170" y2="80" stroke="var(--color-primary, #2563eb)" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+                <line class="error-404-page__doc-line" x1="100" y1="100" x2="160" y2="100" stroke="var(--color-primary, #2563eb)" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+                <line class="error-404-page__doc-line" x1="100" y1="120" x2="150" y2="120" stroke="var(--color-primary, #2563eb)" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+                <!-- Magnifying Glass -->
+                <g class="error-404-page__magnifier">
+                    <circle cx="190" cy="130" r="28" stroke="var(--color-primary, #2563eb)" stroke-width="3" fill="none"/>
+                    <line x1="210" y1="150" x2="235" y2="175" stroke="var(--color-primary, #2563eb)" stroke-width="4" stroke-linecap="round"/>
+                    <!-- Question mark inside -->
+                    <path d="M185 122c0-3 2-6 5-6s5 3 5 6c0 2-2 3-5 4v3" stroke="var(--color-primary, #2563eb)" stroke-width="2" stroke-linecap="round" fill="none"/>
+                    <circle cx="190" cy="135" r="1.5" fill="var(--color-primary, #2563eb)"/>
+                </g>
+            </svg>
+        </div>
+
+        <!-- Error Text -->
+        <h1 id="error-heading" class="error-404-page__title">404</h1>
+        <h2 class="error-404-page__subtitle">Trang ban tim kiem khong ton tai</h2>
+        <p class="error-404-page__description">Co the trang da bi di chuyen, xoa hoac ban da nhap sai dia chi.</p>
+
+        <!-- Search -->
+        <div class="error-404-page__search">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                <circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M12.5 12.5L16 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <input type="search" placeholder="Thu tim kiem..." aria-label="Tim kiem trang" class="error-404-page__search-input" />
+        </div>
+
+        <!-- Quick Links -->
+        <nav class="error-404-page__links" aria-label="Lien ket nhanh">
+            <a href="/dashboard" class="error-404-page__link">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+                Dashboard
+            </a>
+            <a href="/procedures" class="error-404-page__link">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2h10a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/><path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                Quy trinh
+            </a>
+            <a href="/protocols" class="error-404-page__link">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2a3 3 0 013 3v1h1a1.5 1.5 0 011.5 1.5v5A1.5 1.5 0 0112 14H4a1.5 1.5 0 01-1.5-1.5v-5A1.5 1.5 0 014 6h1V5a3 3 0 013-3z" stroke="currentColor" stroke-width="1.5"/></svg>
+                Phac do
+            </a>
+            <a href="/" class="error-404-page__link">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8l6-5 6 5v5a1 1 0 01-1 1H3a1 1 0 01-1-1V8z" stroke="currentColor" stroke-width="1.5"/></svg>
+                Trang chu
+            </a>
+        </nav>
+
+        <!-- Action Buttons -->
+        <div class="error-404-page__actions">
+            <button onclick="history.back()" class="button button-secondary error-404-page__btn" aria-label="Quay lai trang truoc">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Quay lai trang truoc
+            </button>
+            <a href="/" class="button button-primary error-404-page__btn" aria-label="Ve trang chu">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8l6-5 6 5v5a1 1 0 01-1 1H3a1 1 0 01-1-1V8z" stroke="currentColor" stroke-width="1.5"/></svg>
+                Ve trang chu
+            </a>
+        </div>
+    </main>
+</div>
+
+<style>
+    .error-404-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--color-bg-primary, #f8fafc);
+        position: relative;
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+        padding: 2rem;
+    }
+
+    [data-theme="dark"] .error-404-page {
+        background: var(--color-bg-dark, #0f172a);
+    }
+
+    .error-404-page__content {
+        text-align: center;
+        max-width: 560px;
+        z-index: 1;
+    }
+
+    .error-404-page__illustration {
+        margin-bottom: 2rem;
+    }
+
+    .error-404-page__svg {
+        width: 100%;
+        max-width: 280px;
+        height: auto;
+    }
+
+    .error-404-page__doc {
+        animation: docFloat 3s ease-in-out infinite;
+    }
+
+    .error-404-page__magnifier {
+        animation: magnifierSearch 4s ease-in-out infinite;
+        transform-origin: 190px 130px;
+    }
+
+    .error-404-page__title {
+        font-size: clamp(4rem, 10vw, 8rem);
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--color-primary, #2563eb), var(--color-accent, #06b6d4));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 0 0 0.5rem;
+        line-height: 1;
+    }
+
+    .error-404-page__subtitle {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--color-text-primary, #1e293b);
+        margin: 0 0 0.75rem;
+    }
+
+    [data-theme="dark"] .error-404-page__subtitle {
+        color: var(--color-text-dark, #f1f5f9);
+    }
+
+    .error-404-page__description {
+        color: var(--color-text-secondary, #64748b);
+        font-size: 1rem;
+        margin: 0 0 2rem;
+        line-height: 1.6;
+    }
+
+    .error-404-page__search {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--color-bg-secondary, #ffffff);
+        border: 1px solid var(--color-border, #e2e8f0);
+        border-radius: 12px;
+        padding: 0.75rem 1.25rem;
+        margin: 0 auto 2rem;
+        max-width: 400px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .error-404-page__search:focus-within {
+        border-color: var(--color-primary, #2563eb);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .error-404-page__search-input {
+        border: none;
+        outline: none;
+        background: transparent;
+        flex: 1;
+        font-size: 0.95rem;
+        color: var(--color-text-primary, #1e293b);
+    }
+
+    .error-404-page__links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+
+    .error-404-page__link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        background: var(--color-bg-secondary, #ffffff);
+        border: 1px solid var(--color-border, #e2e8f0);
+        color: var(--color-text-primary, #1e293b);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .error-404-page__link:hover {
+        border-color: var(--color-primary, #2563eb);
+        color: var(--color-primary, #2563eb);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    }
+
+    .error-404-page__actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .error-404-page__btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        border: none;
+    }
+
+    .error-404-page__btn.button-primary {
+        background: var(--color-primary, #2563eb);
+        color: white;
+    }
+
+    .error-404-page__btn.button-primary:hover {
+        background: var(--color-primary-dark, #1d4ed8);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+    }
+
+    .error-404-page__btn.button-secondary {
+        background: var(--color-bg-secondary, #ffffff);
+        color: var(--color-text-primary, #1e293b);
+        border: 1px solid var(--color-border, #e2e8f0);
+    }
+
+    .error-404-page__btn.button-secondary:hover {
+        border-color: var(--color-primary, #2563eb);
+        color: var(--color-primary, #2563eb);
+    }
+
+    @@keyframes docFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+
+    @@keyframes magnifierSearch {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(-5px, -3px) rotate(-3deg); }
+        50% { transform: translate(5px, 2px) rotate(3deg); }
+        75% { transform: translate(-3px, 4px) rotate(-2deg); }
+    }
+
+    @@media (max-width: 640px) {
+        .error-404-page__title {
+            font-size: 4rem;
+        }
+        .error-404-page__subtitle {
+            font-size: 1.2rem;
+        }
+        .error-404-page__actions {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+</style>

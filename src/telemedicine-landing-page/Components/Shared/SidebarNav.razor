@@ -1,6 +1,6 @@
 @* SidebarNav.razor - Collapsible sidebar navigation for authenticated area *@
 
-<aside class="sidebar @(IsCollapsed ? "sidebar--collapsed" : "")" aria-label="Menu điều hướng chính">
+<aside class="sidebar @(IsCollapsed ? "sidebar--collapsed" : "")" aria-label="Menu điều hướng chính" aria-expanded="@(!IsCollapsed ? "true" : "false")">
     <!-- Logo & Collapse Toggle -->
     <div class="sidebar__header">
         @if (!IsCollapsed)
@@ -72,7 +72,7 @@
                 <span class="sidebar__item-icon">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3v8M6 7l4-4 4 4M4 13v2a2 2 0 002 2h8a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
-                @if (!IsCollapsed) { <span class="sidebar__item-label">Ban hành</span> }
+                @if (!IsCollapsed) { <span class="sidebar__item-label">Ban hành</span> <span class="sidebar__item-badge">5</span> }
             </a>
         </div>
 
@@ -89,7 +89,7 @@
                 <span class="sidebar__item-icon">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="5" r="2" fill="currentColor"/><circle cx="14" cy="10" r="2" fill="currentColor"/><circle cx="6" cy="15" r="2" fill="currentColor"/></svg>
                 </span>
-                @if (!IsCollapsed) { <span class="sidebar__item-label">Điều chỉnh</span> }
+                @if (!IsCollapsed) { <span class="sidebar__item-label">Điều chỉnh</span> <span class="sidebar__item-badge">2</span> }
             </a>
             <a href="/permissions/audit" class="sidebar__item @(IsActive("/permissions/audit") ? "sidebar__item--active" : "")">
                 <span class="sidebar__item-icon">
@@ -140,7 +140,7 @@
                 <span class="sidebar__item-icon">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2a5 5 0 015 5v3l2 2H3l2-2V7a5 5 0 015-5z" stroke="currentColor" stroke-width="1.5"/><path d="M8 15a2 2 0 004 0" stroke="currentColor" stroke-width="1.5"/></svg>
                 </span>
-                @if (!IsCollapsed) { <span class="sidebar__item-label">Thông báo</span> }
+                @if (!IsCollapsed) { <span class="sidebar__item-label">Thông báo</span> <span class="sidebar__item-badge">3</span> }
             </a>
             <a href="/reports" class="sidebar__item @(IsActive("/reports") ? "sidebar__item--active" : "")">
                 <span class="sidebar__item-icon">

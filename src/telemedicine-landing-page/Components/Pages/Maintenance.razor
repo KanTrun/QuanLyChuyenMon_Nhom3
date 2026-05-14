@@ -1,0 +1,213 @@
+@page "/maintenance"
+@layout null
+
+<PageTitle>Bao tri he thong | QLCM Pro</PageTitle>
+
+<HeadContent>
+    <meta name="robots" content="noindex, nofollow" />
+</HeadContent>
+
+<div class="maintenance-page" data-theme-aware="true">
+    <main class="maintenance-page__content" role="main" aria-labelledby="maintenance-heading">
+        <!-- Animated Gear SVG -->
+        <div class="maintenance-page__illustration" aria-hidden="true">
+            <svg width="200" height="200" viewBox="0 0 200 200" fill="none" class="maintenance-page__svg">
+                <!-- Large Gear -->
+                <g class="maintenance-page__gear-large">
+                    <path d="M100 55a45 45 0 110 90 45 45 0 010-90z" stroke="var(--color-primary, #2563eb)" stroke-width="2.5" fill="none"/>
+                    <circle cx="100" cy="100" r="18" stroke="var(--color-primary, #2563eb)" stroke-width="2.5" fill="none"/>
+                    <!-- Gear teeth -->
+                    <rect x="96" y="38" width="8" height="14" rx="2" fill="var(--color-primary, #2563eb)" opacity="0.7"/>
+                    <rect x="96" y="148" width="8" height="14" rx="2" fill="var(--color-primary, #2563eb)" opacity="0.7"/>
+                    <rect x="38" y="96" width="14" height="8" rx="2" fill="var(--color-primary, #2563eb)" opacity="0.7"/>
+                    <rect x="148" y="96" width="14" height="8" rx="2" fill="var(--color-primary, #2563eb)" opacity="0.7"/>
+                    <rect x="56" y="56" width="12" height="8" rx="2" fill="var(--color-primary, #2563eb)" opacity="0.7" transform="rotate(45 62 60)"/>
+                    <rect x="132" y="56" width="12" height="8" rx="2" fill="var(--color-primary, #2563eb)" opacity="0.7" transform="rotate(-45 138 60)"/>
+                    <rect x="56" y="136" width="12" height="8" rx="2" fill="var(--color-primary, #2563eb)" opacity="0.7" transform="rotate(-45 62 140)"/>
+                    <rect x="132" y="136" width="12" height="8" rx="2" fill="var(--color-primary, #2563eb)" opacity="0.7" transform="rotate(45 138 140)"/>
+                </g>
+                <!-- Small Gear -->
+                <g class="maintenance-page__gear-small">
+                    <circle cx="155" cy="60" r="20" stroke="var(--color-accent, #06b6d4)" stroke-width="2" fill="none"/>
+                    <circle cx="155" cy="60" r="8" stroke="var(--color-accent, #06b6d4)" stroke-width="2" fill="none"/>
+                    <rect x="152" y="35" width="6" height="10" rx="2" fill="var(--color-accent, #06b6d4)" opacity="0.6"/>
+                    <rect x="152" y="75" width="6" height="10" rx="2" fill="var(--color-accent, #06b6d4)" opacity="0.6"/>
+                    <rect x="130" y="57" width="10" height="6" rx="2" fill="var(--color-accent, #06b6d4)" opacity="0.6"/>
+                    <rect x="170" y="57" width="10" height="6" rx="2" fill="var(--color-accent, #06b6d4)" opacity="0.6"/>
+                </g>
+            </svg>
+        </div>
+
+        <!-- Content -->
+        <h1 id="maintenance-heading" class="maintenance-page__title">He thong dang bao tri</h1>
+        <p class="maintenance-page__message">Chung toi dang nang cap he thong de mang den trai nghiem tot hon. Vui long quay lai sau.</p>
+
+        <!-- Estimated Time -->
+        <div class="maintenance-page__time" aria-label="Thoi gian du kien hoan thanh">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M9 5v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <span>Du kien hoan thanh: <strong>14:00 - 15/05/2025</strong></span>
+        </div>
+
+        <!-- Progress Bar (indeterminate) -->
+        <div class="maintenance-page__progress" aria-label="Dang tien hanh bao tri" role="progressbar" aria-valuetext="Dang xu ly">
+            <div class="maintenance-page__progress-bar"></div>
+        </div>
+
+        <!-- Contact -->
+        <div class="maintenance-page__contact">
+            <p>Lien he ho tro: <a href="mailto:hotro@qlcmpro.vn">hotro&#64;qlcmpro.vn</a> | <a href="tel:02812345678">028-1234-5678</a></p>
+        </div>
+
+        <!-- Auto Refresh -->
+        <div class="maintenance-page__refresh" aria-live="polite">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M14 8A6 6 0 112 8a6 6 0 0112 0z" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M14 3v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Trang se tu dong tai lai khi he thong san sang</span>
+        </div>
+    </main>
+</div>
+
+<style>
+    .maintenance-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        position: relative;
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+        padding: 2rem;
+        color: #f1f5f9;
+    }
+
+    .maintenance-page__content {
+        text-align: center;
+        max-width: 520px;
+        z-index: 1;
+    }
+
+    .maintenance-page__illustration {
+        margin-bottom: 2rem;
+    }
+
+    .maintenance-page__svg {
+        width: 160px;
+        height: 160px;
+    }
+
+    .maintenance-page__gear-large {
+        animation: gearRotate 8s linear infinite;
+        transform-origin: 100px 100px;
+    }
+
+    .maintenance-page__gear-small {
+        animation: gearRotateReverse 5s linear infinite;
+        transform-origin: 155px 60px;
+    }
+
+    .maintenance-page__title {
+        font-size: clamp(1.75rem, 4vw, 2.5rem);
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0 0 1rem;
+    }
+
+    .maintenance-page__message {
+        font-size: 1.1rem;
+        color: #94a3b8;
+        line-height: 1.7;
+        margin: 0 0 2rem;
+    }
+
+    .maintenance-page__time {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(37, 99, 235, 0.15);
+        border: 1px solid rgba(37, 99, 235, 0.3);
+        border-radius: 10px;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
+        color: #93c5fd;
+        margin-bottom: 2rem;
+    }
+
+    .maintenance-page__progress {
+        width: 100%;
+        max-width: 300px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 0 auto 2rem;
+    }
+
+    .maintenance-page__progress-bar {
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(90deg, var(--color-primary, #2563eb), var(--color-accent, #06b6d4));
+        border-radius: 4px;
+        animation: indeterminate 1.5s ease-in-out infinite;
+    }
+
+    .maintenance-page__contact {
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+
+    .maintenance-page__contact a {
+        color: #93c5fd;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .maintenance-page__contact a:hover {
+        color: #60a5fa;
+        text-decoration: underline;
+    }
+
+    .maintenance-page__refresh {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: #475569;
+    }
+
+    .maintenance-page__refresh svg {
+        animation: spin 2s linear infinite;
+    }
+
+    @@keyframes gearRotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    @@keyframes gearRotateReverse {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(-360deg); }
+    }
+
+    @@keyframes indeterminate {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(350%); }
+    }
+
+    @@keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    @@media (max-width: 640px) {
+        .maintenance-page__title {
+            font-size: 1.5rem;
+        }
+    }
+</style>

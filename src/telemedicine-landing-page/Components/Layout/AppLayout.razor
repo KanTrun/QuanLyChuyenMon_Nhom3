@@ -3,7 +3,10 @@
 
 @* AppLayout.razor - Authenticated area layout with sidebar + header + content *@
 
-<div class="app-layout @(sidebarCollapsed ? "app-layout--sidebar-collapsed" : "")">
+<!-- Skip to content (accessibility) -->
+<a href="#main-content" class="skip-to-content">Chuyen den noi dung chinh</a>
+
+<div class="app-layout @(sidebarCollapsed ? "app-layout--sidebar-collapsed" : "")" data-layout="app">
     <!-- Mobile Overlay Backdrop -->
     @if (mobileMenuOpen)
     {
@@ -11,26 +14,34 @@
     }
 
     <!-- Sidebar -->
-    <div class="app-layout__sidebar @(mobileMenuOpen ? "app-layout__sidebar--mobile-open" : "")">
+    <aside class="app-layout__sidebar @(mobileMenuOpen ? "app-layout__sidebar--mobile-open" : "")" role="navigation" aria-label="Menu dieu huong">
         <SidebarNav IsCollapsed="@sidebarCollapsed" IsCollapsedChanged="OnSidebarCollapsedChanged" />
-    </div>
+    </aside>
 
     <!-- Main Content Area -->
     <div class="app-layout__main">
         <!-- Header -->
         <AppHeader PageTitle="@pageTitle" OnHamburgerClicked="ToggleMobileMenu" />
 
+        <!-- Scroll Progress Bar -->
+        <div class="scroll-progress-bar" aria-hidden="true"></div>
+
         <!-- Page Content -->
-        <main class="app-layout__content" id="main-content" role="main">
+        <main class="app-layout__content" id="main-content" role="main" aria-label="Noi dung chinh">
             @Body
         </main>
     </div>
-</div>
 
-<!-- Global Overlays -->
-<CommandPalette />
-<FloatingActionButton />
-<ToastContainer />
+    <!-- Global Overlays -->
+    <CommandPalette />
+    <FloatingActionButton />
+    <ToastContainer />
+
+    <!-- Scroll to Top -->
+    <button class="scroll-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Cuon len dau trang" title="Len dau trang">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 16V4M5 9l5-5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+</div>
 
 @code {
     private bool sidebarCollapsed = false;
@@ -41,15 +52,15 @@
     private string GetPageTitle()
     {
         var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0].Split('#')[0];
-        if (path.StartsWith("/dashboard")) return "Tổng quan";
-        if (path.StartsWith("/procedures")) return "Quy trình Kỹ thuật";
-        if (path.StartsWith("/permissions")) return "Phân quyền";
-        if (path.StartsWith("/catalog")) return "Danh mục Kỹ thuật";
-        if (path.StartsWith("/protocols")) return "Phác đồ Lâm sàng";
-        if (path.StartsWith("/notifications")) return "Thông báo";
-        if (path.StartsWith("/reports")) return "Báo cáo";
-        if (path.StartsWith("/settings")) return "Cài đặt";
-        return "Tổng quan";
+        if (path.StartsWith("/dashboard")) return "Tong quan";
+        if (path.StartsWith("/procedures")) return "Quy trinh Ky thuat";
+        if (path.StartsWith("/permissions")) return "Phan quyen";
+        if (path.StartsWith("/catalog")) return "Danh muc Ky thuat";
+        if (path.StartsWith("/protocols")) return "Phac do Lam sang";
+        if (path.StartsWith("/notifications")) return "Thong bao";
+        if (path.StartsWith("/reports")) return "Bao cao";
+        if (path.StartsWith("/settings")) return "Cai dat";
+        return "Tong quan";
     }
 
     private void OnSidebarCollapsedChanged(bool collapsed)

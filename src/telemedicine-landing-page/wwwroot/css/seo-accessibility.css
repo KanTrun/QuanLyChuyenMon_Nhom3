@@ -1,0 +1,325 @@
+/* ====================================================================
+   seo-accessibility.css - Accessibility, focus, reduced-motion, print
+   ==================================================================== */
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Selection Colors */
+::selection {
+    background: rgba(37, 99, 235, 0.2);
+    color: var(--color-text-primary, #1e293b);
+}
+
+/* ====================================================================
+   Focus Visible Outlines
+   ==================================================================== */
+:focus-visible {
+    outline: 2px solid var(--color-primary, #2563eb);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--color-primary, #2563eb);
+    outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline-offset: 0;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Remove default focus ring for mouse users */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* ====================================================================
+   Skip to Content Link
+   ==================================================================== */
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 1rem;
+    z-index: 10000;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-primary, #2563eb);
+    color: white;
+    border-radius: 0 0 8px 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+    top: 0;
+    outline: 2px solid white;
+    outline-offset: 2px;
+}
+
+/* ====================================================================
+   Screen Reader Only
+   ==================================================================== */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: inherit;
+    margin: inherit;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+}
+
+/* ====================================================================
+   Focus Within Enhancements
+   ==================================================================== */
+.form-group:focus-within label {
+    color: var(--color-primary, #2563eb);
+}
+
+.form-group:focus-within .form-input {
+    border-color: var(--color-primary, #2563eb);
+}
+
+/* ====================================================================
+   Form Validation States
+   ==================================================================== */
+.is-invalid {
+    border-color: var(--color-danger, #ef4444) !important;
+}
+
+.is-invalid:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.is-valid {
+    border-color: var(--color-success, #10b981) !important;
+}
+
+.is-valid:focus {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}
+
+/* ====================================================================
+   Link Styles
+   ==================================================================== */
+a {
+    color: var(--color-primary, #2563eb);
+    transition: color 0.2s;
+}
+
+a:visited {
+    color: var(--color-primary-dark, #1d4ed8);
+}
+
+a:hover {
+    color: var(--color-primary-dark, #1d4ed8);
+}
+
+a:focus {
+    outline-color: var(--color-primary, #2563eb);
+}
+
+/* ====================================================================
+   High Contrast Mode
+   ==================================================================== */
+@media (forced-colors: active) {
+    .button,
+    .login-submit,
+    .social-btn {
+        border: 2px solid ButtonText;
+    }
+
+    .sidebar__item--active::before {
+        background: Highlight;
+    }
+
+    .app-header__badge {
+        border: 1px solid ButtonText;
+    }
+
+    .password-strength__segment {
+        border: 1px solid ButtonText;
+    }
+
+    .toggle-switch__slider {
+        border: 2px solid ButtonText;
+    }
+
+    :focus-visible {
+        outline: 2px solid Highlight;
+    }
+}
+
+/* ====================================================================
+   Reduced Motion
+   ==================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    html {
+        scroll-behavior: auto;
+    }
+
+    .orb,
+    .error-404-page__magnifier,
+    .error-404-page__doc,
+    .maintenance-page__gear-large,
+    .maintenance-page__gear-small,
+    .session-expired-page__lock,
+    .maintenance-page__progress-bar,
+    .maintenance-page__refresh svg {
+        animation: none !important;
+    }
+}
+
+/* ====================================================================
+   Print Styles (Comprehensive)
+   ==================================================================== */
+@media print {
+    /* Hide non-essential UI */
+    .app-layout__sidebar,
+    .app-header,
+    .scroll-to-top,
+    .scroll-progress-bar,
+    .skip-to-content,
+    .skip-link,
+    .fab,
+    .floating-action-button,
+    .toast-container,
+    .command-palette,
+    .welcome-navbar,
+    .orb,
+    nav,
+    footer {
+        display: none !important;
+    }
+
+    /* Reset layout */
+    .app-layout {
+        display: block !important;
+    }
+
+    .app-layout__main {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .app-layout__content {
+        margin: 0 !important;
+        padding: 1rem !important;
+        width: 100% !important;
+    }
+
+    /* Colors */
+    body {
+        color: #000 !important;
+        background: #fff !important;
+        font-size: 12pt;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: #000 !important;
+        page-break-after: avoid;
+    }
+
+    p, li {
+        orphans: 3;
+        widows: 3;
+    }
+
+    /* Links */
+    a[href^="http"]::after {
+        content: " (" attr(href) ")";
+        font-size: 0.8em;
+        color: #555;
+    }
+
+    a[href^="#"]::after,
+    a[href^="javascript"]::after {
+        content: "";
+    }
+
+    /* Tables */
+    table {
+        border-collapse: collapse;
+    }
+
+    table, th, td {
+        border: 1px solid #999;
+    }
+
+    /* Page breaks */
+    .welcome-feature-card,
+    .welcome-why-card {
+        page-break-inside: avoid;
+    }
+
+    /* Remove shadows and backgrounds */
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+}
+
+/* ====================================================================
+   Landmark Styling Helpers
+   ==================================================================== */
+.landmark-main {
+    min-height: 100vh;
+}
+
+.landmark-nav {
+    position: relative;
+}
+
+.landmark-aside {
+    position: relative;
+}
+
+/* ====================================================================
+   Accessibility Color Contrast Helpers
+   ==================================================================== */
+[data-theme="dark"] a {
+    color: #93c5fd;
+}
+
+[data-theme="dark"] a:hover {
+    color: #bfdbfe;
+}
+
+[data-theme="dark"] .form-group:focus-within label {
+    color: #93c5fd;
+}
