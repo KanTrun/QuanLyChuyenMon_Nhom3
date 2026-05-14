@@ -1,0 +1,40 @@
+@* FloatingActionButton.razor - Floating bottom-right quick action menu *@
+
+<div class="fab @(isOpen ? "fab--open" : "")" aria-label="Hành động nhanh">
+    @if (isOpen)
+    {
+        <div class="fab__backdrop" @onclick="Toggle"></div>
+    }
+    <div class="fab__menu">
+        <button class="fab__action fab__action--blue" title="Tạo quy trình" onclick="window.location.href='/procedures/create'">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 3h12v14H4z" stroke="currentColor" stroke-width="1.5" rx="2"/><path d="M7 8h6M7 11h6M7 14h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            <span class="fab__tooltip">Tạo quy trình</span>
+        </button>
+        <button class="fab__action fab__action--green" title="Phê duyệt" onclick="window.location.href='/procedures/publish'">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M7 10l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="fab__tooltip">Phê duyệt</span>
+        </button>
+        <button class="fab__action fab__action--orange" title="Thông báo" onclick="window.location.href='/notifications'">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3a5 5 0 015 5v3l2 2H3l2-2V8a5 5 0 015-5z" stroke="currentColor" stroke-width="1.5"/><path d="M8 15a2 2 0 004 0" stroke="currentColor" stroke-width="1.5"/></svg>
+            <span class="fab__tooltip">Thông báo</span>
+        </button>
+        <button class="fab__action fab__action--purple" title="Dark mode" onclick="window.toggleDarkMode && window.toggleDarkMode()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3a7 7 0 100 14 5.5 5.5 0 010-14z" stroke="currentColor" stroke-width="1.5"/></svg>
+            <span class="fab__tooltip">Dark mode</span>
+        </button>
+    </div>
+    <button class="fab__trigger magnetic-hover" @onclick="Toggle" aria-label="Menu hành động nhanh" aria-expanded="@isOpen">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="fab__icon">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+    </button>
+</div>
+
+@code {
+    private bool isOpen = false;
+
+    private void Toggle()
+    {
+        isOpen = !isOpen;
+    }
+}

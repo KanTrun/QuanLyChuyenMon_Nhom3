@@ -1,163 +1,314 @@
 @page "/dashboard"
 @layout AppLayout
-@using TelemedicineLandingPage.Components.Shared
 
-@* Dashboard.razor - World-class post-login dashboard *@
+@* Dashboard.razor - World-class post-login dashboard with KPIs, charts, heatmap, calendar *@
 
 <div class="dashboard">
-    <!-- Row 1: Welcome Banner -->
-    <section class="dashboard__welcome reveal is-visible" aria-label="Chào mừng">
+    <!-- Section 1: Welcome Banner -->
+    <section class="dashboard__welcome reveal" aria-label="Chào mừng">
         <div class="dashboard__welcome-left">
-            <h1 class="dashboard__greeting">@GetGreeting(), <span class="dashboard__greeting-name">BS. Nguyen Van A</span></h1>
-            <p class="dashboard__subtitle">Đây là tổng quan hoạt động hôm nay của bạn</p>
+            <h1 class="dashboard__greeting">@GetGreeting(), <span class="dashboard__greeting-name">BS. Nguyễn Văn An</span></h1>
+            <p class="dashboard__subtitle typewriter">Hệ thống quản lý chuyên môn hoạt động ổn định</p>
+            <div class="dashboard__date">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M2 6h12M5 1v3M11 1v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                <span>@DateTime.Now.ToString("dddd, dd/MM/yyyy")</span>
+                <span class="dashboard__refresh-indicator" title="Tự động cập nhật"></span>
+            </div>
         </div>
         <div class="dashboard__welcome-right">
-            <div class="dashboard__date">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="2" y="3" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M2 7h14M6 1v4M12 1v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <span>@DateTime.Now.ToString("dddd, dd/MM/yyyy")</span>
+            <div class="dashboard__quick-actions">
+                <a href="/procedures/create" class="dashboard__quick-btn">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4.5v5M4.5 7h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    Tạo quy trình
+                </a>
+                <a href="/procedures/publish" class="dashboard__quick-btn">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 7l2.5 2.5L10 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Phê duyệt
+                </a>
+                <a href="/reports" class="dashboard__quick-btn">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3v8h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M5 9l2-2 2 1.5 3-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Báo cáo
+                </a>
             </div>
         </div>
     </section>
 
-    <!-- Row 2: Stats Cards -->
-    <section class="dashboard__stats reveal is-visible" aria-label="Thống kê tổng quan">
-        <StatCard Title="Quy trình Active" Value="128" TrendText="+5 tháng này" TrendDirection="up" ColorClass="primary">
-            <Icon>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.5" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            </Icon>
-        </StatCard>
-        <StatCard Title="Chờ phê duyệt" Value="12" TrendText="3 khẩn cấp" TrendDirection="neutral" ColorClass="warning">
-            <Icon>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            </Icon>
-        </StatCard>
-        <StatCard Title="Phác đồ lâm sàng" Value="45" TrendText="+2 mới" TrendDirection="up" ColorClass="success">
-            <Icon>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 4a4 4 0 014 4v1h2a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7a2 2 0 012-2h2V8a4 4 0 014-4z" stroke="currentColor" stroke-width="1.5"/><path d="M10 14h4M12 12v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            </Icon>
-        </StatCard>
-        <StatCard Title="Thông báo" Value="7" TrendText="3 chưa đọc" TrendDirection="neutral" ColorClass="info">
-            <Icon>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 016 6v4l2 2H4l2-2V9a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5"/><path d="M10 17a2 2 0 004 0" stroke="currentColor" stroke-width="1.5"/></svg>
-            </Icon>
-        </StatCard>
-    </section>
-
-    <!-- Row 3: Activity + Approvals -->
-    <section class="dashboard__row-3 reveal">
-        <!-- Activity Feed -->
-        <div class="dashboard__activity-col">
-            <ActivityFeed Activities="@activities" />
-        </div>
-
-        <!-- Pending Approvals -->
-        <div class="dashboard__approvals-col">
-            <div class="dashboard__approvals">
-                <div class="dashboard__approvals-header">
-                    <h3>Phê duyệt chờ xử lý</h3>
-                    <span class="dashboard__approvals-badge">5</span>
+    <!-- Section 2: KPI Cards -->
+    <section class="dashboard__kpi-row reveal stagger-children" aria-label="Chỉ số KPI">
+        @foreach (var kpi in kpiCards)
+        {
+            <div class="kpi-card">
+                <div class="kpi-card__header">
+                    <div class="kpi-card__icon kpi-card__icon--@kpi.Color">
+                        @((MarkupString)kpi.IconSvg)
+                    </div>
+                    <span class="kpi-card__title">@kpi.Title</span>
                 </div>
-                <div class="dashboard__approvals-list">
-                    @foreach (var approval in pendingApprovals)
+                <span class="kpi-card__value counter-animate" data-target="@kpi.Value" data-suffix="@kpi.Suffix">0</span>
+                <span class="kpi-card__trend kpi-card__trend--@kpi.Trend">
+                    @if (kpi.Trend == "up")
                     {
-                        <div class="dashboard__approval-item">
-                            <div class="dashboard__approval-info">
-                                <span class="dashboard__approval-name">@approval.Name</span>
-                                <span class="dashboard__approval-meta">@approval.Requester &bull; @approval.Date</span>
-                            </div>
-                            <span class="dashboard__approval-priority dashboard__approval-priority--@approval.Priority">@approval.PriorityLabel</span>
-                            <div class="dashboard__approval-actions">
-                                <button class="dashboard__btn dashboard__btn--approve" title="Phê duyệt" aria-label="Phê duyệt @approval.Name">Duyệt</button>
-                                <button class="dashboard__btn dashboard__btn--reject" title="Từ chối" aria-label="Từ chối @approval.Name">Từ chối</button>
-                                <button class="dashboard__btn dashboard__btn--view" title="Xem chi tiết" aria-label="Xem @approval.Name">Xem</button>
-                            </div>
-                        </div>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 9V3M3.5 5L6 2.5 8.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     }
+                    else if (kpi.Trend == "down")
+                    {
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 3v6M3.5 7L6 9.5 8.5 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    }
+                    @kpi.TrendText
+                </span>
+                <svg class="kpi-card__sparkline" viewBox="0 0 80 32" fill="none" aria-hidden="true">
+                    <polyline class="sparkline__path" points="@kpi.SparklinePoints" stroke="@kpi.SparklineColor" />
+                </svg>
+            </div>
+        }
+    </section>
+
+    <!-- Section 3: Donut Chart + Area Trend -->
+    <section class="dashboard__charts-row reveal" aria-label="Biểu đồ">
+        <!-- Donut Chart -->
+        <div class="dashboard__chart-panel">
+            <h3 class="dashboard__chart-title">Phân bố trạng thái quy trình</h3>
+            <div class="donut-chart">
+                <div class="donut-chart__ring" style="background: conic-gradient(var(--color-primary) 0deg 223.2deg, var(--color-warning) 223.2deg 266.4deg, var(--color-subtle) 266.4deg 331.2deg, var(--color-border) 331.2deg 360deg);">
+                    <div class="donut-chart__center">
+                        <span class="donut-chart__center-value counter-animate" data-target="128">0</span>
+                        <span class="donut-chart__center-label">Tổng</span>
+                    </div>
+                </div>
+                <div class="donut-chart__legend">
+                    <div class="donut-chart__legend-item">
+                        <span class="donut-chart__legend-dot" style="background: var(--color-primary);"></span>
+                        <span>Hoạt động (62%)</span>
+                    </div>
+                    <div class="donut-chart__legend-item">
+                        <span class="donut-chart__legend-dot" style="background: var(--color-warning);"></span>
+                        <span>Chờ duyệt (12%)</span>
+                    </div>
+                    <div class="donut-chart__legend-item">
+                        <span class="donut-chart__legend-dot" style="background: var(--color-subtle);"></span>
+                        <span>Nháp (18%)</span>
+                    </div>
+                    <div class="donut-chart__legend-item">
+                        <span class="donut-chart__legend-dot" style="background: var(--color-border);"></span>
+                        <span>Lưu trữ (8%)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Area Trend Chart -->
+        <div class="dashboard__chart-panel">
+            <h3 class="dashboard__chart-title">Xu hướng hoạt động</h3>
+            <p class="dashboard__chart-subtitle">Số quy trình được cập nhật theo tuần (12 tuần gần nhất)</p>
+            <div class="area-chart__container">
+                <svg class="area-chart__svg" viewBox="0 0 480 180" preserveAspectRatio="none">
+                    <polygon class="area-chart__fill" points="0,180 0,140 40,130 80,120 120,110 160,90 200,100 240,80 280,70 320,60 360,50 400,40 440,30 480,20 480,180" fill="url(#areaGradient)" />
+                    <polyline class="area-chart__line sparkline__path" points="0,140 40,130 80,120 120,110 160,90 200,100 240,80 280,70 320,60 360,50 400,40 440,30 480,20" stroke="var(--color-primary)" />
+                    <defs>
+                        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="var(--color-primary)" stop-opacity="0.3"/>
+                            <stop offset="100%" stop-color="var(--color-primary)" stop-opacity="0.02"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <div class="area-chart__labels">
+                <span class="area-chart__label">T1</span>
+                <span class="area-chart__label">T3</span>
+                <span class="area-chart__label">T5</span>
+                <span class="area-chart__label">T7</span>
+                <span class="area-chart__label">T9</span>
+                <span class="area-chart__label">T11</span>
+                <span class="area-chart__label">T12</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Activity Heatmap -->
+    <section class="dashboard__heatmap reveal" aria-label="Hoạt động">
+        <h3 class="heatmap__title">Hoạt động 5 tuần gần nhất</h3>
+        <div class="heatmap__grid">
+            <span class="heatmap__day-label">T2</span>
+            <span class="heatmap__day-label">T3</span>
+            <span class="heatmap__day-label">T4</span>
+            <span class="heatmap__day-label">T5</span>
+            <span class="heatmap__day-label">T6</span>
+            <span class="heatmap__day-label">T7</span>
+            <span class="heatmap__day-label">CN</span>
+            @foreach (var cell in heatmapData)
+            {
+                <div class="heatmap__cell heatmap__cell--@cell.Level" data-tooltip="@cell.Count hoạt động"></div>
+            }
+        </div>
+        <div class="heatmap__legend">
+            <span>Ít</span>
+            <div class="heatmap__legend-cell heatmap__cell--0"></div>
+            <div class="heatmap__legend-cell heatmap__cell--1"></div>
+            <div class="heatmap__legend-cell heatmap__cell--2"></div>
+            <div class="heatmap__legend-cell heatmap__cell--3"></div>
+            <div class="heatmap__legend-cell heatmap__cell--4"></div>
+            <span>Nhiều</span>
+        </div>
+    </section>
+
+    <!-- Section 5: Approval Queue + Calendar -->
+    <section class="dashboard__two-col reveal" aria-label="Phê duyệt và lịch">
+        <!-- Approval Queue -->
+        <div class="approval-queue">
+            <div class="approval-queue__header">
+                <h3 class="approval-queue__title">Phê duyệt chờ xử lý</h3>
+                <span class="approval-queue__badge">5</span>
+            </div>
+            <div class="approval-queue__list">
+                @foreach (var item in approvalItems)
+                {
+                    <div class="approval-queue__item approval-queue__item--@item.Priority">
+                        <span class="approval-queue__priority approval-queue__priority--@item.Priority">@item.PriorityLabel</span>
+                        <div class="approval-queue__avatar" style="background: @item.AvatarBg;">@item.Initials</div>
+                        <div class="approval-queue__info">
+                            <span class="approval-queue__name">@item.Name</span>
+                            <span class="approval-queue__meta">@item.Requester</span>
+                        </div>
+                        <span class="approval-queue__time">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1"/><path d="M6 4v2.5l1.5 1" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+                            @item.TimeRemaining
+                        </span>
+                        <div class="approval-queue__actions">
+                            <button class="approval-queue__btn approval-queue__btn--approve" title="Phê duyệt">Duyệt</button>
+                            <button class="approval-queue__btn approval-queue__btn--reject" title="Từ chối">Từ chối</button>
+                            <button class="approval-queue__btn approval-queue__btn--view" title="Xem chi tiết">Xem</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Calendar Widget -->
+        <div class="calendar">
+            <div class="calendar__header">
+                <span class="calendar__month-label">@GetCurrentMonthLabel()</span>
+                <div class="calendar__nav">
+                    <button class="calendar__nav-btn calendar__nav--prev" aria-label="Tháng trước">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 3L5 7l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <button class="calendar__nav-btn calendar__nav--next" aria-label="Tháng sau">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="calendar__weekdays">
+                <span class="calendar__weekday">T2</span>
+                <span class="calendar__weekday">T3</span>
+                <span class="calendar__weekday">T4</span>
+                <span class="calendar__weekday">T5</span>
+                <span class="calendar__weekday">T6</span>
+                <span class="calendar__weekday">T7</span>
+                <span class="calendar__weekday">CN</span>
+            </div>
+            <div class="calendar__days">
+                @foreach (var day in calendarDays)
+                {
+                    <span class="calendar__day @day.CssClass">@day.Label</span>
+                }
+            </div>
+            <div class="calendar__events">
+                <h4 class="calendar__events-title">Sự kiện sắp tới</h4>
+                <div class="calendar__event-item">
+                    <span class="calendar__event-dot calendar__event-dot--blue"></span>
+                    <span>15/05 - Hết hạn quyền Khoa Ngoại</span>
+                </div>
+                <div class="calendar__event-item">
+                    <span class="calendar__event-dot calendar__event-dot--green"></span>
+                    <span>18/05 - Họp Hội đồng Phác đồ</span>
+                </div>
+                <div class="calendar__event-item">
+                    <span class="calendar__event-dot calendar__event-dot--orange"></span>
+                    <span>20/05 - Review quy trình ICU</span>
+                </div>
+                <div class="calendar__event-item">
+                    <span class="calendar__event-dot calendar__event-dot--purple"></span>
+                    <span>25/05 - Kiểm tra tuân thủ JCI</span>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Row 4: Quick Access Grid -->
+    <!-- Section 6: System Health -->
+    <section class="dashboard__health-row reveal stagger-children" aria-label="Sức khỏe hệ thống">
+        <div class="health-card">
+            <div class="health-card__ring">
+                <svg viewBox="0 0 100 100">
+                    <circle class="health-ring__bg" cx="50" cy="50" r="40"/>
+                    <circle class="health-ring__progress health-ring__progress--green" cx="50" cy="50" r="40" data-percent="45"/>
+                </svg>
+                <span class="health-card__percent counter-animate" data-target="45" data-suffix="%">0%</span>
+            </div>
+            <span class="health-card__label">CPU</span>
+            <span class="health-card__status">Hoạt động bình thường</span>
+        </div>
+        <div class="health-card">
+            <div class="health-card__ring">
+                <svg viewBox="0 0 100 100">
+                    <circle class="health-ring__bg" cx="50" cy="50" r="40"/>
+                    <circle class="health-ring__progress health-ring__progress--yellow" cx="50" cy="50" r="40" data-percent="68"/>
+                </svg>
+                <span class="health-card__percent counter-animate" data-target="68" data-suffix="%">0%</span>
+            </div>
+            <span class="health-card__label">Memory</span>
+            <span class="health-card__status">Mức sử dụng trung bình</span>
+        </div>
+        <div class="health-card">
+            <div class="health-card__ring">
+                <svg viewBox="0 0 100 100">
+                    <circle class="health-ring__bg" cx="50" cy="50" r="40"/>
+                    <circle class="health-ring__progress health-ring__progress--green" cx="50" cy="50" r="40" data-percent="99.9"/>
+                </svg>
+                <span class="health-card__percent counter-animate" data-target="99.9" data-suffix="%">0%</span>
+            </div>
+            <span class="health-card__label">Uptime</span>
+            <span class="health-card__status">Cực kỳ ổn định</span>
+        </div>
+    </section>
+
+    <!-- Section 7: Quick Access Modules -->
     <section class="dashboard__quick-access reveal" aria-label="Truy cập nhanh">
         <h3 class="dashboard__section-title">Truy cập nhanh</h3>
         <div class="dashboard__modules-grid">
             @foreach (var module in modules)
             {
-                <a href="@module.Route" class="dashboard__module-card">
+                <a href="@module.Route" class="dashboard__module-card tilt-card">
                     <div class="dashboard__module-icon dashboard__module-icon--@module.Color">
                         @((MarkupString)module.IconSvg)
                     </div>
                     <h4 class="dashboard__module-name">@module.Name</h4>
                     <p class="dashboard__module-desc">@module.Description</p>
-                    <span class="dashboard__module-link">Truy cập <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <div class="dashboard__module-footer">
+                        <span class="dashboard__module-link">Truy cập <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                        <span class="dashboard__module-shortcut">@module.Shortcut</span>
+                    </div>
                 </a>
             }
         </div>
     </section>
 
-    <!-- Row 5: Schedule + Chart -->
-    <section class="dashboard__row-5 reveal">
-        <!-- Schedule Widget -->
-        <div class="dashboard__schedule-col">
-            <div class="dashboard__schedule">
-                <h3 class="dashboard__schedule-title">Lịch trình sắp tới</h3>
-                <div class="dashboard__schedule-list">
-                    @foreach (var evt in scheduleEvents)
-                    {
-                        <div class="dashboard__schedule-item">
-                            <div class="dashboard__schedule-date-badge">
-                                <span class="dashboard__schedule-day">@evt.Day</span>
-                                <span class="dashboard__schedule-month">@evt.Month</span>
-                            </div>
-                            <div class="dashboard__schedule-info">
-                                <span class="dashboard__schedule-event-title">@evt.Title</span>
-                                <span class="dashboard__schedule-event-desc">@evt.Description</span>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
+    <!-- Section 8: Recent Activity Feed -->
+    <section class="dashboard__activity-feed reveal" aria-label="Hoạt động gần đây">
+        <div class="activity-feed-v2__header">
+            <h3 class="activity-feed-v2__title">Hoạt động gần đây</h3>
+            <a href="/reports" class="activity-feed-v2__link">Xem tất cả</a>
         </div>
-
-        <!-- Mini Bar Chart -->
-        <div class="dashboard__chart-col">
-            <div class="dashboard__chart">
-                <h3 class="dashboard__chart-title">Thống kê nhanh</h3>
-                <p class="dashboard__chart-subtitle">Số lượng quy trình theo khoa</p>
-                <div class="dashboard__bar-chart" role="img" aria-label="Biểu đồ quy trình theo khoa">
-                    <div class="dashboard__bar-row">
-                        <span class="dashboard__bar-label">Nội khoa</span>
-                        <div class="dashboard__bar-track"><div class="dashboard__bar-fill dashboard__bar-fill--1" style="width: 85%;"></div></div>
-                        <span class="dashboard__bar-value">34</span>
-                    </div>
-                    <div class="dashboard__bar-row">
-                        <span class="dashboard__bar-label">Ngoại khoa</span>
-                        <div class="dashboard__bar-track"><div class="dashboard__bar-fill dashboard__bar-fill--2" style="width: 70%;"></div></div>
-                        <span class="dashboard__bar-value">28</span>
-                    </div>
-                    <div class="dashboard__bar-row">
-                        <span class="dashboard__bar-label">Sản khoa</span>
-                        <div class="dashboard__bar-track"><div class="dashboard__bar-fill dashboard__bar-fill--3" style="width: 55%;"></div></div>
-                        <span class="dashboard__bar-value">22</span>
-                    </div>
-                    <div class="dashboard__bar-row">
-                        <span class="dashboard__bar-label">Nhi khoa</span>
-                        <div class="dashboard__bar-track"><div class="dashboard__bar-fill dashboard__bar-fill--4" style="width: 45%;"></div></div>
-                        <span class="dashboard__bar-value">18</span>
-                    </div>
-                    <div class="dashboard__bar-row">
-                        <span class="dashboard__bar-label">CĐHA</span>
-                        <div class="dashboard__bar-track"><div class="dashboard__bar-fill dashboard__bar-fill--5" style="width: 40%;"></div></div>
-                        <span class="dashboard__bar-value">16</span>
-                    </div>
-                    <div class="dashboard__bar-row">
-                        <span class="dashboard__bar-label">Dược</span>
-                        <div class="dashboard__bar-track"><div class="dashboard__bar-fill dashboard__bar-fill--6" style="width: 25%;"></div></div>
-                        <span class="dashboard__bar-value">10</span>
+        <div class="activity-feed-v2__list stagger-children">
+            @foreach (var activity in recentActivities)
+            {
+                <div class="activity-feed-v2__item activity-feed-v2__item--@activity.Type">
+                    <div class="activity-feed-v2__avatar" style="background: @activity.AvatarBg;">@activity.Initials</div>
+                    <div class="activity-feed-v2__content">
+                        <p class="activity-feed-v2__item-title">@activity.Title</p>
+                        <p class="activity-feed-v2__item-desc">@activity.Description</p>
+                        <span class="activity-feed-v2__item-time">@activity.Timestamp</span>
                     </div>
                 </div>
-            </div>
+            }
         </div>
     </section>
 </div>
@@ -171,50 +322,77 @@
         return "Chào buổi tối";
     }
 
-    private List<ActivityFeed.ActivityItem> activities = new()
+    private string GetCurrentMonthLabel()
     {
-        new() { Type = "procedure_updated", Title = "Cập nhật quy trình", Description = "Quy trình phẫu thuật nội soi dạ dày phiên bản 3.2 đã được cập nhật", User = "BS. Tran Minh Duc", Timestamp = "5 phút trước" },
-        new() { Type = "protocol_approved", Title = "Phê duyệt phác đồ", Description = "Phác đồ điều trị viêm phổi cộng đồng đã được Hội đồng phê duyệt", User = "PGS.TS. Le Van Hoa", Timestamp = "32 phút trước" },
-        new() { Type = "permission_changed", Title = "Thay đổi quyền", Description = "Quyền thực hiện kỹ thuật nội soi được cấp cho Khoa Nội", User = "Admin Hệ thống", Timestamp = "1 giờ trước" },
-        new() { Type = "version_published", Title = "Ban hành phiên bản", Description = "Quy trình đặt nội khí quản phiên bản 2.0 đã được ban hành chính thức", User = "TS. Nguyen Thi Mai", Timestamp = "2 giờ trước" },
-        new() { Type = "procedure_updated", Title = "Sửa đổi quy trình", Description = "Cập nhật định mức vật tư cho quy trình mổ tim hở - Khoa Tim mạch", User = "BS. Pham Quoc Viet", Timestamp = "3 giờ trước" },
-        new() { Type = "permission_changed", Title = "Gia hạn quyền", Description = "Quyền phê duyệt quy trình Khoa Ngoại gia hạn thêm 6 tháng", User = "Admin Hệ thống", Timestamp = "4 giờ trước" },
-        new() { Type = "protocol_approved", Title = "Phác đồ mới", Description = "Phác đồ xử trí sốc phản vệ tại phòng khám đã được thêm vào hệ thống", User = "PGS.TS. Hoang Anh", Timestamp = "5 giờ trước" },
-        new() { Type = "version_published", Title = "Xuất bản tài liệu", Description = "Hướng dẫn sử dụng máy thở cho bệnh nhân COVID-19 đã xuất bản", User = "DS. Tran Thi Lan", Timestamp = "6 giờ trước" },
-        new() { Type = "procedure_updated", Title = "Cập nhật SOP", Description = "SOP vệ sinh khử trùng phòng mổ đã cập nhật theo tiêu chuẩn JCI 2024", User = "CN. Vo Van Nam", Timestamp = "Hôm qua" },
-        new() { Type = "permission_changed", Title = "Thu hồi quyền", Description = "Quyền chỉnh sửa phác đồ của BS. Nguyễn X đã hết hạn và được thu hồi", User = "Admin Hệ thống", Timestamp = "Hôm qua" },
+        var months = new[] { "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12" };
+        return months[DateTime.Now.Month - 1] + " " + DateTime.Now.Year;
+    }
+
+    private record KpiCard(string Title, string Value, string Suffix, string Trend, string TrendText, string Color, string IconSvg, string SparklinePoints, string SparklineColor);
+
+    private List<KpiCard> kpiCards = new()
+    {
+        new("Quy trình Active", "128", "", "up", "+5 tháng này", "primary", "<svg width='18' height='18' viewBox='0 0 18 18' fill='none'><path d='M3 3h12v12H3z' stroke='currentColor' stroke-width='1.3' rx='2'/><path d='M6 7h6M6 9.5h6M6 12h4' stroke='currentColor' stroke-width='1.2' stroke-linecap='round'/></svg>", "5,28 15,24 25,26 40,22 55,18 65,16 75,12", "var(--color-primary)"),
+        new("Chờ phê duyệt", "12", "", "neutral", "3 khẩn cấp", "warning", "<svg width='18' height='18' viewBox='0 0 18 18' fill='none'><circle cx='9' cy='9' r='7' stroke='currentColor' stroke-width='1.3'/><path d='M9 5.5v4l2.5 1.5' stroke='currentColor' stroke-width='1.3' stroke-linecap='round'/></svg>", "5,16 15,18 25,16 40,17 55,16 65,18 75,16", "var(--color-warning)"),
+        new("Phác đồ lâm sàng", "45", "", "up", "+2 mới", "success", "<svg width='18' height='18' viewBox='0 0 18 18' fill='none'><path d='M9 3a3.5 3.5 0 013.5 3.5V8h1.5a1.5 1.5 0 011.5 1.5v5a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 014 14.5v-5A1.5 1.5 0 015.5 8H7V6.5A3.5 3.5 0 019 3z' stroke='currentColor' stroke-width='1.3'/></svg>", "5,26 15,24 25,22 40,20 55,18 65,14 75,10", "var(--color-success)"),
+        new("Thông báo chưa đọc", "7", "", "down", "3 ưu tiên", "info", "<svg width='18' height='18' viewBox='0 0 18 18' fill='none'><path d='M9 3a5 5 0 015 5v3l1.5 1.5H3.5L5 11V8a5 5 0 015-5z' stroke='currentColor' stroke-width='1.3'/><path d='M7.5 14a1.5 1.5 0 003 0' stroke='currentColor' stroke-width='1.3'/></svg>", "5,10 15,14 25,18 40,20 55,22 65,26 75,28", "var(--color-info)"),
+        new("Nhân viên trực tuyến", "234", "", "up", "+12 vs hôm qua", "teal", "<svg width='18' height='18' viewBox='0 0 18 18' fill='none'><circle cx='9' cy='6' r='3' stroke='currentColor' stroke-width='1.3'/><path d='M3 15c0-3 3-5.5 6-5.5s6 2.5 6 5.5' stroke='currentColor' stroke-width='1.3' stroke-linecap='round'/></svg>", "5,24 15,22 25,18 40,16 55,14 65,12 75,8", "var(--color-secondary)"),
+        new("Tuân thủ quy trình", "96.5", "%", "up", "+1.2% vs tháng trước", "purple", "<svg width='18' height='18' viewBox='0 0 18 18' fill='none'><path d='M9 2l6 3.5v5c0 3.5-2.5 6-6 7.5-3.5-1.5-6-4-6-7.5v-5L9 2z' stroke='currentColor' stroke-width='1.3'/><path d='M6.5 9l2 2 3.5-3.5' stroke='currentColor' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg>", "5,20 15,18 25,16 40,14 55,12 65,10 75,6", "#8b5cf6")
     };
 
-    private record ApprovalItem(string Name, string Requester, string Date, string Priority, string PriorityLabel);
-
-    private List<ApprovalItem> pendingApprovals = new()
+    private record HeatmapCell(int Level, int Count);
+    private List<HeatmapCell> heatmapData = new()
     {
-        new("QT Phẫu thuật nội soi gan", "BS. Tran Van Binh", "12/05/2025", "high", "Khẩn cấp"),
-        new("Phác đồ điều trị ung thư phổi", "PGS. Nguyen Thi Hoa", "11/05/2025", "high", "Khẩn cấp"),
-        new("QT Xét nghiệm HIV nhanh", "BS. Le Minh Tuan", "10/05/2025", "medium", "Bình thường"),
-        new("Định mức vật tư mổ tim", "DS. Pham Anh Thu", "09/05/2025", "medium", "Bình thường"),
-        new("QT Chăm sóc bệnh nhân ICU", "DD. Hoang Thi Mai", "08/05/2025", "low", "Thấp"),
+        new(2,5), new(3,8), new(1,2), new(4,12), new(3,9), new(1,3), new(0,0),
+        new(1,3), new(2,6), new(3,7), new(2,5), new(4,14), new(2,4), new(0,0),
+        new(3,8), new(4,11), new(2,6), new(3,9), new(1,2), new(1,3), new(0,1),
+        new(2,5), new(1,2), new(4,13), new(3,8), new(2,6), new(0,1), new(0,0),
+        new(4,15), new(3,9), new(2,4), new(4,12), new(3,7), new(1,2), new(0,0)
     };
 
-    private record ModuleItem(string Name, string Description, string Route, string Color, string IconSvg);
+    private record ApprovalItem(string Name, string Requester, string Priority, string PriorityLabel, string Initials, string AvatarBg, string TimeRemaining);
+    private List<ApprovalItem> approvalItems = new()
+    {
+        new("QT Phẫu thuật nội soi gan", "BS. Trần Văn Bình", "urgent", "Khẩn cấp", "TB", "#ef4444", "2 giờ"),
+        new("Phác đồ điều trị ung thư phổi", "PGS. Nguyễn Thị Hoa", "urgent", "Khẩn cấp", "NH", "#f97316", "5 giờ"),
+        new("QT Xét nghiệm HIV nhanh", "BS. Lê Minh Tuấn", "normal", "Bình thường", "LT", "#2563eb", "1 ngày"),
+        new("Định mức vật tư mổ tim", "DS. Phạm Anh Thư", "normal", "Bình thường", "PT", "#0d9488", "2 ngày"),
+        new("QT Chăm sóc bệnh nhân ICU", "DD. Hoàng Thị Mai", "low", "Thấp", "HM", "#64748b", "5 ngày")
+    };
 
+    private record CalendarDay(string Label, string CssClass);
+    private List<CalendarDay> calendarDays = new()
+    {
+        new("28", "calendar__day--other"), new("29", "calendar__day--other"), new("30", "calendar__day--other"), new("1", ""), new("2", ""), new("3", ""), new("4", ""),
+        new("5", ""), new("6", ""), new("7", ""), new("8", ""), new("9", ""), new("10", ""), new("11", ""),
+        new("12", ""), new("13", ""), new("14", "calendar__day--today"), new("15", "calendar__day--event"), new("16", ""), new("17", ""), new("18", "calendar__day--event"),
+        new("19", ""), new("20", "calendar__day--event"), new("21", ""), new("22", ""), new("23", ""), new("24", ""), new("25", "calendar__day--event"),
+        new("26", ""), new("27", ""), new("28", ""), new("29", ""), new("30", ""), new("31", ""), new("1", "calendar__day--other")
+    };
+
+    private record ModuleItem(string Name, string Description, string Route, string Color, string IconSvg, string Shortcut);
     private List<ModuleItem> modules = new()
     {
-        new("Quy trình Kỹ thuật", "Quản lý quy trình, soạn thảo và theo dõi trạng thái phiên bản", "/procedures", "primary", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M5 4h18v20H5z' stroke='currentColor' stroke-width='1.5' rx='2'/><path d='M9 9h10M9 13h10M9 17h6' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/></svg>"),
-        new("Phân quyền RBAC", "Thiết lập và điều chỉnh quyền hạn truy cập theo vai trò", "/permissions", "indigo", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M14 3l9 5v7c0 4.5-3.6 8.5-9 10.5-5.4-2-9-6-9-10.5V8l9-5z' stroke='currentColor' stroke-width='1.5'/><path d='M10 14l3 3 5-5' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
-        new("Danh mục &amp; Định mức", "Quản lý danh mục kỹ thuật, vật tư và định mức tiêu chuẩn", "/catalog", "teal", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M4 7a2 2 0 012-2h16a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V7z' stroke='currentColor' stroke-width='1.5'/><path d='M4 11h20M10 11v12' stroke='currentColor' stroke-width='1.5'/></svg>"),
-        new("Phác đồ Lâm sàng", "Soạn thảo, phê duyệt và tra cứu phác đồ điều trị", "/protocols", "green", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M14 3a5 5 0 015 5v2h2a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V12a2 2 0 012-2h2V8a5 5 0 015-5z' stroke='currentColor' stroke-width='1.5'/><path d='M12 16h4M14 14v4' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/></svg>"),
-        new("Ban hành &amp; Phê duyệt", "Quy trình phê duyệt và ban hành tài liệu chính thức", "/procedures/publish", "orange", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M14 4v12M8 10l6-6 6 6M5 18v3a2 2 0 002 2h14a2 2 0 002-2v-3' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
-        new("Báo cáo &amp; Thống kê", "Báo cáo tiêu thụ, thống kê hoạt động và phân tích xu hướng", "/reports", "purple", "<svg width='28' height='28' viewBox='0 0 28 28' fill='none'><path d='M4 4v20h20' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/><path d='M8 18l5-5 4 3 7-8' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
+        new("Quy trình Kỹ thuật", "Quản lý quy trình, soạn thảo và theo dõi trạng thái phiên bản", "/procedures", "primary", "<svg width='24' height='24' viewBox='0 0 24 24' fill='none'><path d='M4 4h16v16H4z' stroke='currentColor' stroke-width='1.5' rx='2'/><path d='M8 8h8M8 12h8M8 16h5' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/></svg>", "Alt+1"),
+        new("Phân quyền RBAC", "Thiết lập và điều chỉnh quyền hạn truy cập theo vai trò", "/permissions", "indigo", "<svg width='24' height='24' viewBox='0 0 24 24' fill='none'><path d='M12 3l8 4.5v6c0 4-3 7.5-8 9.5-5-2-8-5.5-8-9.5v-6L12 3z' stroke='currentColor' stroke-width='1.5'/><path d='M9 12l2 2 4-4' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>", "Alt+2"),
+        new("Danh mục & Định mức", "Quản lý danh mục kỹ thuật, vật tư và định mức tiêu chuẩn", "/catalog", "teal", "<svg width='24' height='24' viewBox='0 0 24 24' fill='none'><path d='M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z' stroke='currentColor' stroke-width='1.5'/><path d='M4 10h16M10 10v10' stroke='currentColor' stroke-width='1.5'/></svg>", "Alt+3"),
+        new("Phác đồ Lâm sàng", "Soạn thảo, phê duyệt và tra cứu phác đồ điều trị", "/protocols", "green", "<svg width='24' height='24' viewBox='0 0 24 24' fill='none'><path d='M12 3a5 5 0 015 5v2h2a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2v-7a2 2 0 012-2h2V8a5 5 0 015-5z' stroke='currentColor' stroke-width='1.5'/><path d='M10 15h4M12 13v4' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/></svg>", "Alt+4"),
+        new("Báo cáo & Thống kê", "Báo cáo tiêu thụ, thống kê hoạt động và phân tích xu hướng", "/reports", "purple", "<svg width='24' height='24' viewBox='0 0 24 24' fill='none'><path d='M4 4v16h16' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/><path d='M8 16l4-4 3 2 5-6' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>", "Alt+5"),
+        new("Cài đặt Hệ thống", "Cấu hình hệ thống, quản lý người dùng và bảo mật", "/settings", "orange", "<svg width='24' height='24' viewBox='0 0 24 24' fill='none'><circle cx='12' cy='12' r='3' stroke='currentColor' stroke-width='1.5'/><path d='M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/></svg>", "Alt+6")
     };
 
-    private record ScheduleEvent(string Day, string Month, string Title, string Description);
-
-    private List<ScheduleEvent> scheduleEvents = new()
+    private record ActivityItem(string Type, string Title, string Description, string Initials, string AvatarBg, string Timestamp);
+    private List<ActivityItem> recentActivities = new()
     {
-        new("15", "Th5", "Hết hạn quyền Khoa Ngoại", "Quyền chỉnh sửa quy trình sẽ hết hạn, cần gia hạn"),
-        new("18", "Th5", "Họp Hội đồng Phác đồ", "Xét duyệt 3 phác đồ mới và cập nhật 2 phác đồ hiện hành"),
-        new("20", "Th5", "Review quy trình ICU", "Đánh giá lại quy trình chăm sóc đặc biệt tại ICU"),
-        new("25", "Th5", "Kiểm tra tuân thủ JCI", "Kiểm tra định kỳ tiêu chuẩn JCI cho các khoa lâm sàng"),
+        new("procedure", "Cập nhật quy trình phẫu thuật nội soi", "Phiên bản 3.2 - Cập nhật bước chuẩn bị bệnh nhân và kiểm tra thiết bị", "TD", "#2563eb", "5 phút trước"),
+        new("protocol", "Phê duyệt phác đồ viêm phổi cộng đồng", "Hội đồng Phác đồ phê duyệt lần cuối - Áp dụng từ 01/06", "LH", "#10b981", "32 phút trước"),
+        new("permission", "Cấp quyền nội soi cho Khoa Nội", "Quyền thực hiện kỹ thuật nội soi tiêu hóa được cấp", "AD", "#f97316", "1 giờ trước"),
+        new("version", "Ban hành QT đặt nội khí quản v2.0", "Phiên bản chính thức áp dụng toàn viện từ 15/05", "NM", "#8b5cf6", "2 giờ trước"),
+        new("procedure", "Cập nhật định mức vật tư mổ tim", "Khoa Tim mạch cập nhật danh sách vật tư tiêu chuẩn", "PV", "#2563eb", "3 giờ trước"),
+        new("permission", "Gia hạn quyền phê duyệt Khoa Ngoại", "Quyền được gia hạn thêm 6 tháng theo quy định", "AD", "#f97316", "4 giờ trước"),
+        new("protocol", "Thêm phác đồ sốc phản vệ", "Phác đồ xử trí sốc phản vệ tại phòng khám được thêm mới", "HA", "#10b981", "5 giờ trước"),
+        new("version", "Xuất bản hướng dẫn máy thở COVID-19", "Tài liệu hướng dẫn sử dụng máy thở cho BN COVID-19", "TL", "#8b5cf6", "6 giờ trước"),
+        new("procedure", "Cập nhật SOP vệ sinh phòng mổ", "Theo tiêu chuẩn JCI 2024 - Áp dụng cho tất cả phòng mổ", "VN", "#2563eb", "Hôm qua"),
+        new("permission", "Thu hồi quyền BS. Nguyễn X", "Quyền chỉnh sửa phác đồ hết hạn và được thu hồi tự động", "AD", "#f97316", "Hôm qua")
     };
 }

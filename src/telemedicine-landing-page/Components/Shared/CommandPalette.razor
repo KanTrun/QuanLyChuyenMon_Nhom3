@@ -1,0 +1,113 @@
+@* CommandPalette.razor - Cmd+K modal overlay for quick navigation *@
+
+<div class="command-palette @(isOpen ? "command-palette--open" : "")" data-command-palette aria-modal="true" role="dialog" aria-label="Tim kiem nhanh">
+    <div class="command-palette__backdrop" @onclick="Close"></div>
+    <div class="command-palette__modal">
+        <div class="command-palette__search">
+            <svg class="command-palette__search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <input type="text" class="command-palette__input" placeholder="Tìm kiếm quy trình, phác đồ, người dùng..." @bind="searchQuery" @bind:event="oninput" autocomplete="off" />
+            <kbd class="command-palette__kbd">Esc</kbd>
+        </div>
+        <div class="command-palette__results">
+            <div class="command-palette__group">
+                <span class="command-palette__group-title">Trang</span>
+                <a href="/dashboard" class="command-palette__item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M2 6h12M6 6v8" stroke="currentColor" stroke-width="1.2"/></svg>
+                    <span>Dashboard</span>
+                    <kbd>Alt+D</kbd>
+                </a>
+                <a href="/procedures" class="command-palette__item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 3h8v10H4z" stroke="currentColor" stroke-width="1.2" rx="1"/><path d="M6 6h4M6 8h4M6 10h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    <span>Quy trình</span>
+                    <kbd>Alt+1</kbd>
+                </a>
+                <a href="/permissions" class="command-palette__item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l5 3v4c0 3-2 5-5 6.5C5 14.5 3 12 3 9V5l5-3z" stroke="currentColor" stroke-width="1.2"/></svg>
+                    <span>Phân quyền</span>
+                    <kbd>Alt+2</kbd>
+                </a>
+                <a href="/catalog" class="command-palette__item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M2 6h12M6 6v7" stroke="currentColor" stroke-width="1.2"/></svg>
+                    <span>Danh mục</span>
+                    <kbd>Alt+3</kbd>
+                </a>
+                <a href="/protocols" class="command-palette__item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    <span>Phác đồ</span>
+                    <kbd>Alt+4</kbd>
+                </a>
+                <a href="/reports" class="command-palette__item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 13V3h10v10H3z" stroke="currentColor" stroke-width="1.2"/><path d="M5 10l3-3 2 2 3-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Báo cáo</span>
+                    <kbd>Alt+5</kbd>
+                </a>
+                <a href="/settings" class="command-palette__item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M4 4l1.5 1.5M10.5 10.5L12 12M12 4l-1.5 1.5M5.5 10.5L4 12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    <span>Cài đặt</span>
+                    <kbd>Alt+6</kbd>
+                </a>
+            </div>
+            <div class="command-palette__group">
+                <span class="command-palette__group-title">Hành động</span>
+                <a href="/procedures/create" class="command-palette__item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    <span>Tạo quy trình mới</span>
+                    <kbd>Ctrl+N</kbd>
+                </a>
+                <a href="/procedures/publish" class="command-palette__item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M5 8l3 3 3-3M8 3v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1h10v-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    <span>Phê duyệt chờ xử lý</span>
+                    <kbd>Ctrl+P</kbd>
+                </a>
+                <button class="command-palette__item" onclick="window.toggleDarkMode && window.toggleDarkMode()">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a6 6 0 100 12 5 5 0 010-12z" stroke="currentColor" stroke-width="1.2"/></svg>
+                    <span>Chuyển Dark mode</span>
+                    <kbd>Ctrl+D</kbd>
+                </button>
+                <a href="/reports" class="command-palette__item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3v10h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M6 11V8M9 11V6M12 11V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    <span>Xuất báo cáo</span>
+                    <kbd>Ctrl+E</kbd>
+                </a>
+            </div>
+            <div class="command-palette__group">
+                <span class="command-palette__group-title">Gần đây</span>
+                <a href="/procedures" class="command-palette__item command-palette__item--recent">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v3l2 1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    <span>QT Phẫu thuật nội soi dạ dày v3.2</span>
+                </a>
+                <a href="/protocols" class="command-palette__item command-palette__item--recent">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v3l2 1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    <span>Phác đồ điều trị viêm phổi cộng đồng</span>
+                </a>
+                <a href="/permissions" class="command-palette__item command-palette__item--recent">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v3l2 1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    <span>Quyền nội soi - Khoa Nội</span>
+                </a>
+            </div>
+        </div>
+        <div class="command-palette__footer">
+            <span><kbd>↑↓</kbd> Di chuyển</span>
+            <span><kbd>Enter</kbd> Chọn</span>
+            <span><kbd>Esc</kbd> Đóng</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isOpen = false;
+    private string searchQuery = "";
+
+    private void Close()
+    {
+        isOpen = false;
+    }
+
+    private void Toggle()
+    {
+        isOpen = !isOpen;
+    }
+}
