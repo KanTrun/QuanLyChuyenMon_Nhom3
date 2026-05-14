@@ -1,0 +1,219 @@
+@page "/catalog/reports"
+@layout AppLayout
+
+<PageTitle>Bao cao Tieu thu Tai nguyen - QLCM Pro</PageTitle>
+
+<!-- Page Header -->
+<div class="module-page__header">
+    <div class="module-page__header-left">
+        <h1>Bao cao Tieu thu Tai nguyen</h1>
+        <p>So sanh dinh muc va tieu thu thuc te</p>
+    </div>
+    <div class="module-page__actions">
+        <button class="btn-secondary" aria-label="Xuat bao cao">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3M3 12v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Xuat bao cao
+        </button>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="filter-bar__date-range">
+        <input type="date" value="2024-03-01" aria-label="Tu ngay" />
+        <span style="color:var(--color-muted);font-size:var(--text-sm);">den</span>
+        <input type="date" value="2024-03-31" aria-label="Den ngay" />
+    </div>
+    <select class="filter-bar__select" aria-label="Loc khoa">
+        <option>Tat ca khoa/phong</option>
+        <option>Xet nghiem</option>
+        <option>Chan doan hinh anh</option>
+        <option>Ngoai khoa</option>
+        <option>Noi khoa</option>
+    </select>
+    <select class="filter-bar__select" aria-label="Loai dich vu">
+        <option>Tat ca loai</option>
+        <option>Xet nghiem</option>
+        <option>CDHA</option>
+        <option>Phau thuat</option>
+        <option>Thu thuat</option>
+    </select>
+    <button class="btn-primary" style="padding:var(--space-2) var(--space-4);">Loc</button>
+</div>
+
+<!-- Summary Cards -->
+<div class="stats-row">
+    <div class="stat-card-mini">
+        <div class="stat-card-mini__label">Tong tieu thu</div>
+        <div class="stat-card-mini__value stat-card-mini__value--primary">15,432 don vi</div>
+    </div>
+    <div class="stat-card-mini">
+        <div class="stat-card-mini__label">Vuot dinh muc</div>
+        <div class="stat-card-mini__value stat-card-mini__value--danger">8.3%</div>
+    </div>
+    <div class="stat-card-mini">
+        <div class="stat-card-mini__label">Tiet kiem</div>
+        <div class="stat-card-mini__value stat-card-mini__value--success">12.1%</div>
+    </div>
+    <div class="stat-card-mini">
+        <div class="stat-card-mini__label">Chi phi</div>
+        <div class="stat-card-mini__value">2.1 ty VND</div>
+    </div>
+</div>
+
+<!-- Comparison Chart Section -->
+<div class="glass-card" style="padding:var(--space-6);margin-bottom:var(--space-6);">
+    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--color-ink);margin-bottom:var(--space-5);">So sanh Dinh muc vs Thuc te - Top 8 dich vu</h3>
+    <div class="consumption-chart">
+        <div class="consumption-chart__row">
+            <span class="consumption-chart__label">XN Cong thuc mau</span>
+            <div class="consumption-chart__bars">
+                <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 75%;"></div>
+                <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 82%;"></div>
+            </div>
+            <span class="consumption-chart__percent consumption-chart__percent--over">+9.3%</span>
+        </div>
+        <div class="consumption-chart__row">
+            <span class="consumption-chart__label">Chup X-quang nguc</span>
+            <div class="consumption-chart__bars">
+                <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 60%;"></div>
+                <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 55%;"></div>
+            </div>
+            <span class="consumption-chart__percent consumption-chart__percent--under">-8.3%</span>
+        </div>
+        <div class="consumption-chart__row">
+            <span class="consumption-chart__label">Mo noi soi tui mat</span>
+            <div class="consumption-chart__bars">
+                <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 85%;"></div>
+                <div class="consumption-chart__bar consumption-chart__bar--exceed" style="width: 98%;"></div>
+            </div>
+            <span class="consumption-chart__percent consumption-chart__percent--over">+15.3%</span>
+        </div>
+        <div class="consumption-chart__row">
+            <span class="consumption-chart__label">Noi soi da day</span>
+            <div class="consumption-chart__bars">
+                <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 70%;"></div>
+                <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 65%;"></div>
+            </div>
+            <span class="consumption-chart__percent consumption-chart__percent--under">-7.1%</span>
+        </div>
+        <div class="consumption-chart__row">
+            <span class="consumption-chart__label">Sinh thiet gan</span>
+            <div class="consumption-chart__bars">
+                <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 50%;"></div>
+                <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 52%;"></div>
+            </div>
+            <span class="consumption-chart__percent consumption-chart__percent--over">+4.0%</span>
+        </div>
+        <div class="consumption-chart__row">
+            <span class="consumption-chart__label">XN Sinh hoa</span>
+            <div class="consumption-chart__bars">
+                <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 65%;"></div>
+                <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 58%;"></div>
+            </div>
+            <span class="consumption-chart__percent consumption-chart__percent--under">-10.8%</span>
+        </div>
+        <div class="consumption-chart__row">
+            <span class="consumption-chart__label">CT Scanner bung</span>
+            <div class="consumption-chart__bars">
+                <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 45%;"></div>
+                <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 48%;"></div>
+            </div>
+            <span class="consumption-chart__percent consumption-chart__percent--over">+6.7%</span>
+        </div>
+        <div class="consumption-chart__row">
+            <span class="consumption-chart__label">Thay khop hang</span>
+            <div class="consumption-chart__bars">
+                <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 90%;"></div>
+                <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 85%;"></div>
+            </div>
+            <span class="consumption-chart__percent consumption-chart__percent--under">-5.6%</span>
+        </div>
+    </div>
+    <div class="consumption-chart__legend">
+        <div class="consumption-chart__legend-item"><span class="consumption-chart__legend-dot consumption-chart__legend-dot--norm"></span> Dinh muc</div>
+        <div class="consumption-chart__legend-item"><span class="consumption-chart__legend-dot consumption-chart__legend-dot--actual"></span> Thuc te</div>
+    </div>
+</div>
+
+<!-- Detail Table -->
+<div class="data-table-container glass-card">
+    <table class="data-table" aria-label="Chi tiet tieu thu tai nguyen">
+        <thead>
+            <tr>
+                <th>Dich vu</th>
+                <th>Dinh muc (SL)</th>
+                <th>Thuc te (SL)</th>
+                <th>Chenh lech</th>
+                <th>Ty le (%)</th>
+                <th>Xu huong</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="data-table__name">Xet nghiem cong thuc mau</span></td>
+                <td>2,400</td>
+                <td>2,623</td>
+                <td><span class="deviation-up">+223</span></td>
+                <td><span class="deviation-up">+9.3%</span></td>
+                <td><span class="deviation-up">&#8593;</span></td>
+            </tr>
+            <tr>
+                <td><span class="data-table__name">Chup X-quang nguc</span></td>
+                <td>1,800</td>
+                <td>1,651</td>
+                <td><span class="deviation-down">-149</span></td>
+                <td><span class="deviation-down">-8.3%</span></td>
+                <td><span class="deviation-down">&#8595;</span></td>
+            </tr>
+            <tr>
+                <td><span class="data-table__name">Mo noi soi tui mat</span></td>
+                <td>960</td>
+                <td>1,107</td>
+                <td><span class="deviation-up">+147</span></td>
+                <td><span class="deviation-up">+15.3%</span></td>
+                <td><span class="deviation-up">&#8593;</span></td>
+            </tr>
+            <tr>
+                <td><span class="data-table__name">Noi soi da day</span></td>
+                <td>1,400</td>
+                <td>1,301</td>
+                <td><span class="deviation-down">-99</span></td>
+                <td><span class="deviation-down">-7.1%</span></td>
+                <td><span class="deviation-down">&#8595;</span></td>
+            </tr>
+            <tr>
+                <td><span class="data-table__name">Sinh thiet gan</span></td>
+                <td>500</td>
+                <td>520</td>
+                <td><span class="deviation-up">+20</span></td>
+                <td><span class="deviation-up">+4.0%</span></td>
+                <td><span class="deviation-neutral">&#8594;</span></td>
+            </tr>
+            <tr>
+                <td><span class="data-table__name">XN Sinh hoa mau</span></td>
+                <td>2,000</td>
+                <td>1,784</td>
+                <td><span class="deviation-down">-216</span></td>
+                <td><span class="deviation-down">-10.8%</span></td>
+                <td><span class="deviation-down">&#8595;</span></td>
+            </tr>
+            <tr>
+                <td><span class="data-table__name">CT Scanner bung</span></td>
+                <td>600</td>
+                <td>640</td>
+                <td><span class="deviation-up">+40</span></td>
+                <td><span class="deviation-up">+6.7%</span></td>
+                <td><span class="deviation-neutral">&#8594;</span></td>
+            </tr>
+            <tr>
+                <td><span class="data-table__name">Phau thuat thay khop hang</span></td>
+                <td>1,080</td>
+                <td>1,020</td>
+                <td><span class="deviation-down">-60</span></td>
+                <td><span class="deviation-down">-5.6%</span></td>
+                <td><span class="deviation-down">&#8595;</span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

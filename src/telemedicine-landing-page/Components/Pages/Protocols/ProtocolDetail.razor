@@ -1,0 +1,264 @@
+@page "/protocols/{Id}"
+@layout AppLayout
+
+<PageTitle>Chi tiet Phac do - QLCM Pro</PageTitle>
+
+<!-- Page Header -->
+<div class="module-page__header">
+    <div class="module-page__header-left">
+        <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2);flex-wrap:wrap;">
+            <span class="protocol-card__type-badge protocol-card__type-badge--treatment">Phac do</span>
+            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
+            <span style="font-size:var(--text-xs);color:var(--color-muted);">v2.0</span>
+        </div>
+        <h1>Phac do dieu tri viem phoi cong dong</h1>
+        <p>Ma: PD-001 &bull; Khoa Noi khoa &bull; Ban hanh: 01/01/2024</p>
+    </div>
+    <div class="module-page__actions">
+        <button class="btn-primary" aria-label="Ap dung cho benh nhan">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a4 4 0 014 4v1h1a1.5 1.5 0 011.5 1.5v4A1.5 1.5 0 0113 14H3a1.5 1.5 0 01-1.5-1.5v-4A1.5 1.5 0 013 7h1V6a4 4 0 014-4z" stroke="currentColor" stroke-width="1.5"/><path d="M6 10h4M8 8v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Ap dung cho benh nhan
+        </button>
+    </div>
+</div>
+
+<!-- Detail Tabs -->
+<div class="detail-tabs" role="tablist" aria-label="Chi tiet phac do">
+    <button class="detail-tab @(activeTab == "overview" ? "detail-tab--active" : "")" @onclick='() => activeTab = "overview"' role="tab">Tong quan</button>
+    <button class="detail-tab @(activeTab == "steps" ? "detail-tab--active" : "")" @onclick='() => activeTab = "steps"' role="tab">Buoc thuc hien</button>
+    <button class="detail-tab @(activeTab == "icd" ? "detail-tab--active" : "")" @onclick='() => activeTab = "icd"' role="tab">ICD &amp; Doi tuong</button>
+    <button class="detail-tab @(activeTab == "contra" ? "detail-tab--active" : "")" @onclick='() => activeTab = "contra"' role="tab">Chong chi dinh</button>
+    <button class="detail-tab @(activeTab == "history" ? "detail-tab--active" : "")" @onclick='() => activeTab = "history"' role="tab">Lich su</button>
+    <button class="detail-tab @(activeTab == "stats" ? "detail-tab--active" : "")" @onclick='() => activeTab = "stats"' role="tab">Thong ke</button>
+</div>
+
+<!-- Tab: Tong quan -->
+@if (activeTab == "overview")
+{
+    <div class="service-info-card glass-card">
+        <div class="service-info-card__item"><label>Ma phac do</label><span>PD-001</span></div>
+        <div class="service-info-card__item"><label>Ten</label><span>Phac do dieu tri viem phoi cong dong</span></div>
+        <div class="service-info-card__item"><label>Loai</label><span>Phac do dieu tri</span></div>
+        <div class="service-info-card__item"><label>Khoa</label><span>Noi khoa</span></div>
+        <div class="service-info-card__item"><label>ICD lien quan</label><span>J18.9, J15.0, J15.1</span></div>
+        <div class="service-info-card__item"><label>Ngay ban hanh</label><span>01/01/2024</span></div>
+        <div class="service-info-card__item"><label>Nguoi tao</label><span>PGS. TS. Nguyen Van B</span></div>
+        <div class="service-info-card__item"><label>Trang thai</label><span>Active - Phien ban 2.0</span></div>
+    </div>
+    <div class="glass-card" style="padding:var(--space-5);margin-top:var(--space-5);">
+        <h3 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-3);color:var(--color-ink);">Mo ta</h3>
+        <p style="font-size:var(--text-sm);color:var(--color-muted);line-height:1.7;">Phac do nay ap dung cho benh nhan viem phoi cong dong muc do trung binh den nang, nhap vien dieu tri. Bao gom phac do khang sinh theo kinh nghiem, theo doi dap ung lam sang va dieu chinh phac do sau 48-72 gio.</p>
+    </div>
+}
+
+<!-- Tab: Buoc thuc hien -->
+@if (activeTab == "steps")
+{
+    <div class="stepper-vertical">
+        <div class="stepper-step">
+            <div class="stepper-step__marker"></div>
+            <div class="stepper-step__content">
+                <div class="stepper-step__title">Buoc 1: Danh gia ban dau</div>
+                <div class="stepper-step__meta">
+                    <span class="stepper-step__meta-item">Bac si</span>
+                    <span class="stepper-step__meta-item">20 phut</span>
+                </div>
+                <div class="stepper-step__resources">Vat tu: Ong nghe, nhiet ke, huyet ap ke</div>
+            </div>
+        </div>
+        <div class="stepper-step">
+            <div class="stepper-step__marker"></div>
+            <div class="stepper-step__content">
+                <div class="stepper-step__title">Buoc 2: Chi dinh xet nghiem</div>
+                <div class="stepper-step__meta">
+                    <span class="stepper-step__meta-item">Bac si</span>
+                    <span class="stepper-step__meta-item">10 phut</span>
+                </div>
+                <div class="stepper-step__resources">XN: CTM, CRP, Pro-calcitonin, Cay dom, X-quang nguc</div>
+            </div>
+        </div>
+        <div class="stepper-step">
+            <div class="stepper-step__marker"></div>
+            <div class="stepper-step__content">
+                <div class="stepper-step__title">Buoc 3: Bat dau khang sinh kinh nghiem</div>
+                <div class="stepper-step__meta">
+                    <span class="stepper-step__meta-item">Dieu duong</span>
+                    <span class="stepper-step__meta-item">15 phut</span>
+                </div>
+                <div class="stepper-step__resources">Thuoc: Amoxicillin/Clavulanate 1.2g IV q8h + Azithromycin 500mg PO daily</div>
+            </div>
+        </div>
+        <div class="stepper-step">
+            <div class="stepper-step__marker"></div>
+            <div class="stepper-step__content">
+                <div class="stepper-step__title">Buoc 4: Theo doi dap ung lam sang</div>
+                <div class="stepper-step__meta">
+                    <span class="stepper-step__meta-item">Dieu duong</span>
+                    <span class="stepper-step__meta-item">24 gio</span>
+                </div>
+                <div class="stepper-step__resources">Theo doi: Nhiet do, SpO2, nhip tho, CRP moi 24h</div>
+            </div>
+        </div>
+        <div class="stepper-step">
+            <div class="stepper-step__marker"></div>
+            <div class="stepper-step__content">
+                <div class="stepper-step__title">Buoc 5: Danh gia lai sau 48-72h</div>
+                <div class="stepper-step__meta">
+                    <span class="stepper-step__meta-item">Bac si</span>
+                    <span class="stepper-step__meta-item">15 phut</span>
+                </div>
+                <div class="stepper-step__resources">Quyet dinh: Tiep tuc / Doi khang sinh / Chuyen ICU</div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Tab: ICD & Doi tuong -->
+@if (activeTab == "icd")
+{
+    <div class="glass-card" style="padding:var(--space-5);margin-bottom:var(--space-5);">
+        <h3 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-4);color:var(--color-ink);">Ma ICD ap dung</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);">
+            <span class="icd-chip">J18.9 - Viem phoi khong xac dinh</span>
+            <span class="icd-chip">J15.0 - Viem phoi do Klebsiella</span>
+            <span class="icd-chip">J15.1 - Viem phoi do Pseudomonas</span>
+            <span class="icd-chip">J13 - Viem phoi do Pneumococcus</span>
+        </div>
+    </div>
+    <div class="glass-card" style="padding:var(--space-5);margin-bottom:var(--space-5);">
+        <h3 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-4);color:var(--color-ink);">Tieu chi benh nhan</h3>
+        <div class="service-info-card" style="padding:0;border:none;background:none;">
+            <div class="service-info-card__item"><label>Do tuoi</label><span>18 - 80 tuoi</span></div>
+            <div class="service-info-card__item"><label>Gioi tinh</label><span>Tat ca</span></div>
+            <div class="service-info-card__item"><label>Dieu kien</label><span>Viem phoi cong dong, nhap vien, khong suy ho hap nang</span></div>
+            <div class="service-info-card__item"><label>CURB-65</label><span>Score 1-3 (nhap vien)</span></div>
+        </div>
+    </div>
+}
+
+<!-- Tab: Chong chi dinh -->
+@if (activeTab == "contra")
+{
+    <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+        <div class="warning-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2);">
+                <span class="warning-card__title">Di ung Penicillin</span>
+                <span class="warning-card__severity warning-card__severity--serious">Nghiem trong</span>
+            </div>
+            <p style="font-size:var(--text-sm);color:var(--color-muted);margin-top:var(--space-2);">Benh nhan co tien su di ung Penicillin hoac Cephalosporin. Chuyen sang phac do thay the (Fluoroquinolone).</p>
+        </div>
+        <div class="warning-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2);">
+                <span class="warning-card__title">Suy than man giai doan 4-5</span>
+                <span class="warning-card__severity warning-card__severity--relative">Tuong doi</span>
+            </div>
+            <p style="font-size:var(--text-sm);color:var(--color-muted);margin-top:var(--space-2);">Can hieu chinh lieu theo GFR. Tham van bac si than truoc khi ap dung.</p>
+        </div>
+        <div class="warning-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2);">
+                <span class="warning-card__title">Phu nu co thai 3 thang dau</span>
+                <span class="warning-card__severity warning-card__severity--absolute">Tuyet doi</span>
+            </div>
+            <p style="font-size:var(--text-sm);color:var(--color-muted);margin-top:var(--space-2);">Khong su dung Fluoroquinolone va Tetracycline. Chuyen sang phac do an toan cho thai ky.</p>
+        </div>
+    </div>
+}
+
+<!-- Tab: Lich su -->
+@if (activeTab == "history")
+{
+    <div class="stepper-vertical">
+        <div class="stepper-step">
+            <div class="stepper-step__marker" style="background:var(--color-primary);"></div>
+            <div class="stepper-step__content">
+                <div class="stepper-step__title">v2.0 - Cap nhat phac do khang sinh</div>
+                <div class="stepper-step__meta">
+                    <span class="stepper-step__meta-item">01/01/2024</span>
+                    <span class="stepper-step__meta-item">PGS. Nguyen Van B</span>
+                </div>
+                <div class="stepper-step__resources">Thay doi: Bo sung Azithromycin cho phac do ket hop</div>
+            </div>
+        </div>
+        <div class="stepper-step">
+            <div class="stepper-step__marker" style="background:var(--color-subtle);"></div>
+            <div class="stepper-step__content">
+                <div class="stepper-step__title">v1.5 - Dieu chinh lieu</div>
+                <div class="stepper-step__meta">
+                    <span class="stepper-step__meta-item">15/08/2023</span>
+                    <span class="stepper-step__meta-item">TS. Tran Van C</span>
+                </div>
+                <div class="stepper-step__resources">Thay doi: Tang lieu Amoxicillin/Clavulanate</div>
+            </div>
+        </div>
+        <div class="stepper-step">
+            <div class="stepper-step__marker" style="background:var(--color-subtle);"></div>
+            <div class="stepper-step__content">
+                <div class="stepper-step__title">v1.0 - Phien ban dau tien</div>
+                <div class="stepper-step__meta">
+                    <span class="stepper-step__meta-item">01/03/2023</span>
+                    <span class="stepper-step__meta-item">PGS. Nguyen Van B</span>
+                </div>
+                <div class="stepper-step__resources">Phac do goc duoc Hoi dong Thuoc va Dieu tri phe duyet</div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Tab: Thong ke -->
+@if (activeTab == "stats")
+{
+    <div class="stats-row">
+        <div class="stat-card-mini">
+            <div class="stat-card-mini__label">So lan ap dung</div>
+            <div class="stat-card-mini__value stat-card-mini__value--primary">128</div>
+        </div>
+        <div class="stat-card-mini">
+            <div class="stat-card-mini__label">Ty le thanh cong</div>
+            <div class="stat-card-mini__value stat-card-mini__value--success">87.5%</div>
+        </div>
+        <div class="stat-card-mini">
+            <div class="stat-card-mini__label">Thoi gian TB</div>
+            <div class="stat-card-mini__value">5.2 ngay</div>
+        </div>
+    </div>
+    <div class="glass-card" style="padding:var(--space-5);">
+        <h3 style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-4);color:var(--color-ink);">Ap dung theo thang (6 thang gan nhat)</h3>
+        <div class="mini-bar-chart">
+            <div class="mini-bar-chart__row">
+                <span class="mini-bar-chart__label">Thang 10</span>
+                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:45%;"></div></div>
+                <span class="mini-bar-chart__value">18</span>
+            </div>
+            <div class="mini-bar-chart__row">
+                <span class="mini-bar-chart__label">Thang 11</span>
+                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:60%;"></div></div>
+                <span class="mini-bar-chart__value">24</span>
+            </div>
+            <div class="mini-bar-chart__row">
+                <span class="mini-bar-chart__label">Thang 12</span>
+                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:55%;"></div></div>
+                <span class="mini-bar-chart__value">22</span>
+            </div>
+            <div class="mini-bar-chart__row">
+                <span class="mini-bar-chart__label">Thang 1</span>
+                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:70%;"></div></div>
+                <span class="mini-bar-chart__value">28</span>
+            </div>
+            <div class="mini-bar-chart__row">
+                <span class="mini-bar-chart__label">Thang 2</span>
+                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:80%;"></div></div>
+                <span class="mini-bar-chart__value">32</span>
+            </div>
+            <div class="mini-bar-chart__row">
+                <span class="mini-bar-chart__label">Thang 3</span>
+                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:50%;"></div></div>
+                <span class="mini-bar-chart__value">20</span>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = "PD-001";
+    private string activeTab = "overview";
+}

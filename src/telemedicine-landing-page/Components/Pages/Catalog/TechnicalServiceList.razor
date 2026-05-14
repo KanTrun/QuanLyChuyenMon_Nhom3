@@ -1,0 +1,251 @@
+@page "/catalog"
+@layout AppLayout
+
+<PageTitle>Danh muc Ky thuat - QLCM Pro</PageTitle>
+
+<!-- Page Header -->
+<div class="module-page__header">
+    <div class="module-page__header-left">
+        <h1>Danh muc Ky thuat &amp; Dinh muc</h1>
+        <p>Quan ly dich vu ky thuat va dinh muc tai nguyen</p>
+    </div>
+    <div class="module-page__actions">
+        <button class="btn-primary" aria-label="Them dich vu moi">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Them dich vu
+        </button>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row">
+    <div class="stat-card-mini">
+        <div class="stat-card-mini__label">Tong dich vu</div>
+        <div class="stat-card-mini__value stat-card-mini__value--primary">48</div>
+    </div>
+    <div class="stat-card-mini">
+        <div class="stat-card-mini__label">Dang hoat dong</div>
+        <div class="stat-card-mini__value stat-card-mini__value--success">42</div>
+    </div>
+    <div class="stat-card-mini">
+        <div class="stat-card-mini__label">Tong dinh muc</div>
+        <div class="stat-card-mini__value">312</div>
+    </div>
+    <div class="stat-card-mini">
+        <div class="stat-card-mini__label">Canh bao ton kho</div>
+        <div class="stat-card-mini__value stat-card-mini__value--danger">5</div>
+    </div>
+</div>
+
+<!-- Category Tabs -->
+<div class="category-tabs" role="tablist" aria-label="Danh muc dich vu">
+    <button class="category-tab @(activeCategory == "all" ? "category-tab--active" : "")" role="tab" @onclick='() => activeCategory = "all"'>Tat ca <span class="category-tab__count">48</span></button>
+    <button class="category-tab @(activeCategory == "xn" ? "category-tab--active" : "")" role="tab" @onclick='() => activeCategory = "xn"'>Xet nghiem <span class="category-tab__count">15</span></button>
+    <button class="category-tab @(activeCategory == "cdha" ? "category-tab--active" : "")" role="tab" @onclick='() => activeCategory = "cdha"'>Chan doan hinh anh <span class="category-tab__count">10</span></button>
+    <button class="category-tab @(activeCategory == "tt" ? "category-tab--active" : "")" role="tab" @onclick='() => activeCategory = "tt"'>Thu thuat <span class="category-tab__count">8</span></button>
+    <button class="category-tab @(activeCategory == "pt" ? "category-tab--active" : "")" role="tab" @onclick='() => activeCategory = "pt"'>Phau thuat <span class="category-tab__count">9</span></button>
+    <button class="category-tab @(activeCategory == "ns" ? "category-tab--active" : "")" role="tab" @onclick='() => activeCategory = "ns"'>Noi soi <span class="category-tab__count">6</span></button>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="filter-bar__search">
+        <span class="filter-bar__search-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </span>
+        <input type="text" placeholder="Tim kiem dich vu..." aria-label="Tim kiem dich vu" />
+    </div>
+    <select class="filter-bar__select" aria-label="Loc theo khoa">
+        <option>Tat ca khoa/phong</option>
+        <option>Xet nghiem</option>
+        <option>Chan doan hinh anh</option>
+        <option>Ngoai khoa</option>
+        <option>Noi khoa</option>
+    </select>
+    <select class="filter-bar__select" aria-label="Loc theo trang thai">
+        <option>Tat ca trang thai</option>
+        <option>Active</option>
+        <option>Draft</option>
+    </select>
+    <div class="view-toggle" role="group" aria-label="Che do hien thi">
+        <button class="view-toggle__btn view-toggle__btn--active" aria-label="Danh sach" title="Danh sach">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <button class="view-toggle__btn" aria-label="Luoi" title="Luoi">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="data-table-container glass-card">
+    <table class="data-table" aria-label="Danh sach dich vu ky thuat">
+        <thead>
+            <tr>
+                <th>Ma DV</th>
+                <th>Ten dich vu</th>
+                <th>Loai</th>
+                <th>Khoa/Phong</th>
+                <th>Dinh muc VT</th>
+                <th>Trang thai</th>
+                <th>Thao tac</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="data-table__code">DV-XN-001</span></td>
+                <td><span class="data-table__name">Xet nghiem cong thuc mau</span></td>
+                <td>Xet nghiem</td>
+                <td><span class="data-table__dept">Xet nghiem</span></td>
+                <td><a href="/catalog/DV-XN-001/norms" class="data-table__link">5 items</a></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="/catalog/DV-XN-001/norms" class="action-btn" title="Xem"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <a href="/catalog/DV-XN-001/norms" class="action-btn" title="Them dinh muc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><span class="data-table__code">DV-CDHA-002</span></td>
+                <td><span class="data-table__name">Chup X-quang nguc</span></td>
+                <td>CDHA</td>
+                <td><span class="data-table__dept">Chan doan hinh anh</span></td>
+                <td><a href="/catalog/DV-CDHA-002/norms" class="data-table__link">3 items</a></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="/catalog/DV-CDHA-002/norms" class="action-btn" title="Xem"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <a href="/catalog/DV-CDHA-002/norms" class="action-btn" title="Them dinh muc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><span class="data-table__code">DV-PT-003</span></td>
+                <td><span class="data-table__name">Mo noi soi tui mat</span></td>
+                <td>Phau thuat</td>
+                <td><span class="data-table__dept">Ngoai khoa</span></td>
+                <td><a href="/catalog/DV-PT-003/norms" class="data-table__link">12 items</a></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="/catalog/DV-PT-003/norms" class="action-btn" title="Xem"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <a href="/catalog/DV-PT-003/norms" class="action-btn" title="Them dinh muc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><span class="data-table__code">DV-NS-004</span></td>
+                <td><span class="data-table__name">Noi soi da day</span></td>
+                <td>Noi soi</td>
+                <td><span class="data-table__dept">Noi khoa</span></td>
+                <td><a href="/catalog/DV-NS-004/norms" class="data-table__link">8 items</a></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="/catalog/DV-NS-004/norms" class="action-btn" title="Xem"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <a href="/catalog/DV-NS-004/norms" class="action-btn" title="Them dinh muc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><span class="data-table__code">DV-TT-005</span></td>
+                <td><span class="data-table__name">Sinh thiet gan</span></td>
+                <td>Thu thuat</td>
+                <td><span class="data-table__dept">Noi khoa</span></td>
+                <td><a href="/catalog/DV-TT-005/norms" class="data-table__link">7 items</a></td>
+                <td><span class="status-badge status-badge--draft"><span class="status-badge__dot"></span>Draft</span></td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="/catalog/DV-TT-005/norms" class="action-btn" title="Xem"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <a href="/catalog/DV-TT-005/norms" class="action-btn" title="Them dinh muc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><span class="data-table__code">DV-XN-006</span></td>
+                <td><span class="data-table__name">Xet nghiem sinh hoa mau</span></td>
+                <td>Xet nghiem</td>
+                <td><span class="data-table__dept">Xet nghiem</span></td>
+                <td><a href="/catalog/DV-XN-006/norms" class="data-table__link">6 items</a></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="/catalog/DV-XN-006/norms" class="action-btn" title="Xem"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <a href="/catalog/DV-XN-006/norms" class="action-btn" title="Them dinh muc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><span class="data-table__code">DV-CDHA-007</span></td>
+                <td><span class="data-table__name">CT Scanner bung</span></td>
+                <td>CDHA</td>
+                <td><span class="data-table__dept">Chan doan hinh anh</span></td>
+                <td><a href="/catalog/DV-CDHA-007/norms" class="data-table__link">4 items</a></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="/catalog/DV-CDHA-007/norms" class="action-btn" title="Xem"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <a href="/catalog/DV-CDHA-007/norms" class="action-btn" title="Them dinh muc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><span class="data-table__code">DV-PT-008</span></td>
+                <td><span class="data-table__name">Phau thuat thay khop hang</span></td>
+                <td>Phau thuat</td>
+                <td><span class="data-table__dept">Chinh hinh</span></td>
+                <td><a href="/catalog/DV-PT-008/norms" class="data-table__link">18 items</a></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="/catalog/DV-PT-008/norms" class="action-btn" title="Xem"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <a href="/catalog/DV-PT-008/norms" class="action-btn" title="Them dinh muc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><span class="data-table__code">DV-XN-009</span></td>
+                <td><span class="data-table__name">Xet nghiem nuoc tieu toan phan</span></td>
+                <td>Xet nghiem</td>
+                <td><span class="data-table__dept">Xet nghiem</span></td>
+                <td><a href="/catalog/DV-XN-009/norms" class="data-table__link">3 items</a></td>
+                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span></td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="/catalog/DV-XN-009/norms" class="action-btn" title="Xem"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <a href="/catalog/DV-XN-009/norms" class="action-btn" title="Them dinh muc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><span class="data-table__code">DV-NS-010</span></td>
+                <td><span class="data-table__name">Noi soi dai trang</span></td>
+                <td>Noi soi</td>
+                <td><span class="data-table__dept">Noi khoa</span></td>
+                <td><a href="/catalog/DV-NS-010/norms" class="data-table__link">9 items</a></td>
+                <td><span class="status-badge status-badge--draft"><span class="status-badge__dot"></span>Draft</span></td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="/catalog/DV-NS-010/norms" class="action-btn" title="Xem"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
+                        <button class="action-btn" title="Sua"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+                        <a href="/catalog/DV-NS-010/norms" class="action-btn" title="Them dinh muc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private string activeCategory = "all";
+}

@@ -1,0 +1,203 @@
+@page "/notifications"
+@layout AppLayout
+
+<PageTitle>Trung tam Thong bao - QLCM Pro</PageTitle>
+
+<!-- Page Header -->
+<div class="module-page__header">
+    <div class="module-page__header-left">
+        <h1>Trung tam Thong bao</h1>
+        <p>Thong bao he thong va cap nhat moi nhat</p>
+    </div>
+    <div class="module-page__actions">
+        <button class="btn-ghost" aria-label="Doc danh dau tat ca">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8l4 4 8-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Doc danh dau tat ca
+        </button>
+    </div>
+</div>
+
+<!-- Notification Tabs -->
+<div class="category-tabs" role="tablist" aria-label="Loc thong bao">
+    <button class="category-tab @(activeFilter == "all" ? "category-tab--active" : "")" role="tab" @onclick='() => activeFilter = "all"'>Tat ca <span class="category-tab__count">15</span></button>
+    <button class="category-tab @(activeFilter == "unread" ? "category-tab--active" : "")" role="tab" @onclick='() => activeFilter = "unread"'>Chua doc <span class="category-tab__count">7</span></button>
+    <button class="category-tab @(activeFilter == "permission" ? "category-tab--active" : "")" role="tab" @onclick='() => activeFilter = "permission"'>Quyen <span class="category-tab__count">3</span></button>
+    <button class="category-tab @(activeFilter == "procedure" ? "category-tab--active" : "")" role="tab" @onclick='() => activeFilter = "procedure"'>Quy trinh <span class="category-tab__count">5</span></button>
+    <button class="category-tab @(activeFilter == "protocol" ? "category-tab--active" : "")" role="tab" @onclick='() => activeFilter = "protocol"'>Phac do <span class="category-tab__count">2</span></button>
+    <button class="category-tab @(activeFilter == "system" ? "category-tab--active" : "")" role="tab" @onclick='() => activeFilter = "system"'>He thong <span class="category-tab__count">5</span></button>
+</div>
+
+<!-- Notification List -->
+<div class="notification-list glass-card" style="padding:var(--space-4);">
+    <!-- Group: Hom nay -->
+    <div class="notification-group__title">Hom nay</div>
+
+    <div class="notification-item notification-item--unread">
+        <div class="notification-item__icon notification-item__icon--permission">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l5.5 3v4c0 2.8-2.2 5.2-5.5 6.5-3.3-1.3-5.5-3.7-5.5-6.5v-4L8 1.5z" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Quyen truy cap da duoc cap nhat</div>
+            <div class="notification-item__desc">Quyen doi voi ban da thay doi boi Admin Tran Van A. Kiem tra phan quyen moi.</div>
+        </div>
+        <span class="notification-item__time">2 gio truoc</span>
+    </div>
+
+    <div class="notification-item notification-item--unread">
+        <div class="notification-item__icon notification-item__icon--procedure">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 2.5h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 8.5h4M6 11h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Quy trinh moi duoc ban hanh</div>
+            <div class="notification-item__desc">QT-015 "Quy trinh mo tim ho" da duoc ban hanh phien ban v3.0</div>
+        </div>
+        <span class="notification-item__time">3 gio truoc</span>
+    </div>
+
+    <div class="notification-item notification-item--unread">
+        <div class="notification-item__icon notification-item__icon--alert">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l6 10H2L8 2z" stroke="currentColor" stroke-width="1.2"/><path d="M8 7v2.5M8 11.5v.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Cho phe duyet</div>
+            <div class="notification-item__desc">QT-008 can ban phe duyet truoc 20/04/2024. Vui long kiem tra va phe duyet.</div>
+        </div>
+        <span class="notification-item__time">4 gio truoc</span>
+    </div>
+
+    <div class="notification-item notification-item--unread">
+        <div class="notification-item__icon notification-item__icon--system">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l6 10H2L8 2z" stroke="currentColor" stroke-width="1.2"/><path d="M8 7v2.5M8 11.5v.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Canh bao ton kho</div>
+            <div class="notification-item__desc">Thuoc Amoxicillin 1g sap het (con 50 vien). Can dat hang bo sung.</div>
+        </div>
+        <span class="notification-item__time">5 gio truoc</span>
+    </div>
+
+    <!-- Group: Hom qua -->
+    <div class="notification-group__title">Hom qua</div>
+
+    <div class="notification-item notification-item--unread">
+        <div class="notification-item__icon notification-item__icon--protocol">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a3 3 0 013 3v.5h.5a1.5 1.5 0 011.5 1.5v5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 013 12V7a1.5 1.5 0 011.5-1.5H5V5a3 3 0 013-3z" stroke="currentColor" stroke-width="1.2"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Phac do da cap nhat</div>
+            <div class="notification-item__desc">Phac do dieu tri DTD type 2 phien ban 1.5 da chinh thuc ban hanh</div>
+        </div>
+        <span class="notification-item__time">Hom qua 14:30</span>
+    </div>
+
+    <div class="notification-item notification-item--unread">
+        <div class="notification-item__icon notification-item__icon--permission">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l5.5 3v4c0 2.8-2.2 5.2-5.5 6.5-3.3-1.3-5.5-3.7-5.5-6.5v-4L8 1.5z" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Yeu cau thay doi quyen da duoc duyet</div>
+            <div class="notification-item__desc">Yeu cau cap quyen chinh sua cho nhom Dieu duong da duoc Admin phe duyet</div>
+        </div>
+        <span class="notification-item__time">Hom qua 10:15</span>
+    </div>
+
+    <div class="notification-item notification-item--unread">
+        <div class="notification-item__icon notification-item__icon--procedure">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 2.5h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 8.5h4M6 11h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Quy trinh can xem xet lai</div>
+            <div class="notification-item__desc">QT-003 "Quy trinh lay mau xet nghiem" da qua han xem xet 30 ngay</div>
+        </div>
+        <span class="notification-item__time">Hom qua 09:00</span>
+    </div>
+
+    <!-- Group: Tuan nay -->
+    <div class="notification-group__title">Tuan nay</div>
+
+    <div class="notification-item">
+        <div class="notification-item__icon notification-item__icon--system">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Bao tri he thong thanh cong</div>
+            <div class="notification-item__desc">He thong da duoc nang cap len phien ban 2.4.1</div>
+        </div>
+        <span class="notification-item__time">2 ngay truoc</span>
+    </div>
+
+    <div class="notification-item">
+        <div class="notification-item__icon notification-item__icon--procedure">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 2.5h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 8.5h4M6 11h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Quy trinh moi da tao thanh cong</div>
+            <div class="notification-item__desc">QT-020 "Quy trinh cap cuu dot quy" da luu nhap thanh cong</div>
+        </div>
+        <span class="notification-item__time">3 ngay truoc</span>
+    </div>
+
+    <div class="notification-item">
+        <div class="notification-item__icon notification-item__icon--permission">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l5.5 3v4c0 2.8-2.2 5.2-5.5 6.5-3.3-1.3-5.5-3.7-5.5-6.5v-4L8 1.5z" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Vai tro moi duoc them</div>
+            <div class="notification-item__desc">Vai tro "Truong Khoa" da duoc them vao he thong voi 15 quyen co ban</div>
+        </div>
+        <span class="notification-item__time">3 ngay truoc</span>
+    </div>
+
+    <div class="notification-item">
+        <div class="notification-item__icon notification-item__icon--system">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Sao luu du lieu tu dong</div>
+            <div class="notification-item__desc">Sao luu du lieu dinh ky da hoan tat luc 02:00 AM</div>
+        </div>
+        <span class="notification-item__time">4 ngay truoc</span>
+    </div>
+
+    <div class="notification-item">
+        <div class="notification-item__icon notification-item__icon--protocol">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a3 3 0 013 3v.5h.5a1.5 1.5 0 011.5 1.5v5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 013 12V7a1.5 1.5 0 011.5-1.5H5V5a3 3 0 013-3z" stroke="currentColor" stroke-width="1.2"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Phac do cham soc moi</div>
+            <div class="notification-item__desc">"Cham soc benh nhan sau mo tim" v1.2 dang cho phe duyet</div>
+        </div>
+        <span class="notification-item__time">5 ngay truoc</span>
+    </div>
+
+    <div class="notification-item">
+        <div class="notification-item__icon notification-item__icon--procedure">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 2.5h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 8.5h4M6 11h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">SLA sap het han</div>
+            <div class="notification-item__desc">QT-012 "Quy trinh tham kham ngoai tru" can review truoc 25/03/2024</div>
+        </div>
+        <span class="notification-item__time">5 ngay truoc</span>
+    </div>
+
+    <div class="notification-item">
+        <div class="notification-item__icon notification-item__icon--system">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="notification-item__content">
+            <div class="notification-item__title">Thong bao bao tri he thong</div>
+            <div class="notification-item__desc">He thong se bao tri vao 02:00 AM ngay 20/03/2024. Du kien 30 phut.</div>
+        </div>
+        <span class="notification-item__time">6 ngay truoc</span>
+    </div>
+</div>
+
+<!-- Load More -->
+<div style="text-align:center;margin-top:var(--space-6);">
+    <button class="btn-ghost">Tai them thong bao</button>
+</div>
+
+@code {
+    private string activeFilter = "all";
+}

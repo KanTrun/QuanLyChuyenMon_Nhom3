@@ -1,0 +1,222 @@
+@page "/protocols"
+@layout AppLayout
+
+<PageTitle>Phac do va Quy trinh Lam sang - QLCM Pro</PageTitle>
+
+<!-- Page Header -->
+<div class="module-page__header">
+    <div class="module-page__header-left">
+        <h1>Phac do &amp; Quy trinh Lam sang</h1>
+        <p>Quan ly phac do dieu tri, cham soc, phau thuat va thu thuat</p>
+    </div>
+    <div class="module-page__actions">
+        <button class="btn-primary" aria-label="Them phac do moi">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Them phac do
+        </button>
+    </div>
+</div>
+
+<!-- Type Tabs -->
+<div class="category-tabs" role="tablist" aria-label="Loc loai phac do">
+    <button class="category-tab @(activeType == "all" ? "category-tab--active" : "")" role="tab" @onclick='() => activeType = "all"'>Tat ca <span class="category-tab__count">8</span></button>
+    <button class="category-tab @(activeType == "treatment" ? "category-tab--active" : "")" role="tab" @onclick='() => activeType = "treatment"'>Phac do dieu tri <span class="category-tab__count">3</span></button>
+    <button class="category-tab @(activeType == "care" ? "category-tab--active" : "")" role="tab" @onclick='() => activeType = "care"'>Cham soc <span class="category-tab__count">2</span></button>
+    <button class="category-tab @(activeType == "surgery" ? "category-tab--active" : "")" role="tab" @onclick='() => activeType = "surgery"'>Phau thuat <span class="category-tab__count">1</span></button>
+    <button class="category-tab @(activeType == "procedure" ? "category-tab--active" : "")" role="tab" @onclick='() => activeType = "procedure"'>Thu thuat <span class="category-tab__count">2</span></button>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="filter-bar__search">
+        <span class="filter-bar__search-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </span>
+        <input type="text" placeholder="Tim kiem phac do..." aria-label="Tim kiem phac do" />
+    </div>
+    <select class="filter-bar__select" aria-label="Loc ICD">
+        <option>Tat ca ICD</option>
+        <option>J18.9 - Viem phoi</option>
+        <option>E11.9 - DTD type 2</option>
+        <option>C34.9 - Ung thu phoi</option>
+    </select>
+    <select class="filter-bar__select" aria-label="Loc khoa">
+        <option>Tat ca khoa</option>
+        <option>Noi khoa</option>
+        <option>Ngoai khoa</option>
+        <option>Ung buou</option>
+        <option>Hoi suc</option>
+    </select>
+    <select class="filter-bar__select" aria-label="Trang thai">
+        <option>Tat ca</option>
+        <option>Active</option>
+        <option>Draft</option>
+    </select>
+</div>
+
+<!-- Protocol Cards Grid -->
+<div class="protocol-grid">
+    <!-- Card 1 -->
+    <div class="protocol-card card-hover">
+        <div class="protocol-card__header">
+            <span class="protocol-card__type-badge protocol-card__type-badge--treatment">Phac do</span>
+            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
+        </div>
+        <div class="protocol-card__name">Phac do dieu tri viem phoi cong dong</div>
+        <div class="protocol-card__icd">
+            <span class="icd-chip">J18.9</span>
+        </div>
+        <div class="protocol-card__meta">
+            <span class="protocol-card__meta-item">Noi khoa</span>
+            <span class="protocol-card__meta-item">v2.0</span>
+        </div>
+        <div class="protocol-card__footer">
+            <span class="protocol-card__usage">Ap dung: 128 lan</span>
+            <a href="/protocols/PD-001" class="protocol-card__link">Xem chi tiet &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="protocol-card card-hover">
+        <div class="protocol-card__header">
+            <span class="protocol-card__type-badge protocol-card__type-badge--care">Cham soc</span>
+            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
+        </div>
+        <div class="protocol-card__name">Quy trinh cham soc sau mo tim</div>
+        <div class="protocol-card__icd">
+            <span class="icd-chip">I25.1</span>
+        </div>
+        <div class="protocol-card__meta">
+            <span class="protocol-card__meta-item">Ngoai tim mach</span>
+            <span class="protocol-card__meta-item">v1.2</span>
+        </div>
+        <div class="protocol-card__footer">
+            <span class="protocol-card__usage">Ap dung: 45 lan</span>
+            <a href="/protocols/PD-002" class="protocol-card__link">Xem chi tiet &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="protocol-card card-hover">
+        <div class="protocol-card__header">
+            <span class="protocol-card__type-badge protocol-card__type-badge--treatment">Phac do</span>
+            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
+        </div>
+        <div class="protocol-card__name">Phac do hoa tri ung thu phoi</div>
+        <div class="protocol-card__icd">
+            <span class="icd-chip">C34.9</span>
+        </div>
+        <div class="protocol-card__meta">
+            <span class="protocol-card__meta-item">Ung buou</span>
+            <span class="protocol-card__meta-item">v3.0</span>
+        </div>
+        <div class="protocol-card__footer">
+            <span class="protocol-card__usage">Ap dung: 67 lan</span>
+            <a href="/protocols/PD-003" class="protocol-card__link">Xem chi tiet &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="protocol-card card-hover">
+        <div class="protocol-card__header">
+            <span class="protocol-card__type-badge protocol-card__type-badge--surgery">Phau thuat</span>
+            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
+        </div>
+        <div class="protocol-card__name">Quy trinh mo noi soi cat tui mat</div>
+        <div class="protocol-card__icd">
+            <span class="icd-chip">K80.2</span>
+        </div>
+        <div class="protocol-card__meta">
+            <span class="protocol-card__meta-item">Ngoai khoa</span>
+            <span class="protocol-card__meta-item">v2.1</span>
+        </div>
+        <div class="protocol-card__footer">
+            <span class="protocol-card__usage">Ap dung: 89 lan</span>
+            <a href="/protocols/PD-004" class="protocol-card__link">Xem chi tiet &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Card 5 -->
+    <div class="protocol-card card-hover">
+        <div class="protocol-card__header">
+            <span class="protocol-card__type-badge protocol-card__type-badge--treatment">Phac do</span>
+            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
+        </div>
+        <div class="protocol-card__name">Phac do dieu tri dai thao duong type 2</div>
+        <div class="protocol-card__icd">
+            <span class="icd-chip">E11.9</span>
+        </div>
+        <div class="protocol-card__meta">
+            <span class="protocol-card__meta-item">Noi tiet</span>
+            <span class="protocol-card__meta-item">v1.5</span>
+        </div>
+        <div class="protocol-card__footer">
+            <span class="protocol-card__usage">Ap dung: 256 lan</span>
+            <a href="/protocols/PD-005" class="protocol-card__link">Xem chi tiet &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Card 6 -->
+    <div class="protocol-card card-hover">
+        <div class="protocol-card__header">
+            <span class="protocol-card__type-badge protocol-card__type-badge--procedure">Thu thuat</span>
+            <span class="status-badge status-badge--draft"><span class="status-badge__dot"></span>Draft</span>
+        </div>
+        <div class="protocol-card__name">Thu thuat sinh thiet tuyen giap</div>
+        <div class="protocol-card__icd">
+            <span class="icd-chip">E04.1</span>
+        </div>
+        <div class="protocol-card__meta">
+            <span class="protocol-card__meta-item">Noi tiet</span>
+            <span class="protocol-card__meta-item">v1.0</span>
+        </div>
+        <div class="protocol-card__footer">
+            <span class="protocol-card__usage">Ap dung: 12 lan</span>
+            <a href="/protocols/PD-006" class="protocol-card__link">Xem chi tiet &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Card 7 -->
+    <div class="protocol-card card-hover">
+        <div class="protocol-card__header">
+            <span class="protocol-card__type-badge protocol-card__type-badge--care">Cham soc</span>
+            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
+        </div>
+        <div class="protocol-card__name">Cham soc benh nhan tho may</div>
+        <div class="protocol-card__icd">
+            <span class="icd-chip">J96.0</span>
+        </div>
+        <div class="protocol-card__meta">
+            <span class="protocol-card__meta-item">Hoi suc</span>
+            <span class="protocol-card__meta-item">v2.0</span>
+        </div>
+        <div class="protocol-card__footer">
+            <span class="protocol-card__usage">Ap dung: 34 lan</span>
+            <a href="/protocols/PD-007" class="protocol-card__link">Xem chi tiet &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Card 8 -->
+    <div class="protocol-card card-hover">
+        <div class="protocol-card__header">
+            <span class="protocol-card__type-badge protocol-card__type-badge--treatment">Phac do</span>
+            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
+        </div>
+        <div class="protocol-card__name">Phac do khang sinh kinh nghiem</div>
+        <div class="protocol-card__icd">
+            <span class="icd-chip">A41.9</span>
+        </div>
+        <div class="protocol-card__meta">
+            <span class="protocol-card__meta-item">Truyen nhiem</span>
+            <span class="protocol-card__meta-item">v4.0</span>
+        </div>
+        <div class="protocol-card__footer">
+            <span class="protocol-card__usage">Ap dung: 312 lan</span>
+            <a href="/protocols/PD-008" class="protocol-card__link">Xem chi tiet &rarr;</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string activeType = "all";
+}
