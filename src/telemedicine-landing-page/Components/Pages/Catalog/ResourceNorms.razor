@@ -1,212 +1,153 @@
-@page "/catalog/{ServiceId}/norms"
+@page "/catalog/resource-norms"
 @layout AppLayout
 
-<PageTitle>Định mức Tài nguyên - @ServiceId - QLCM Pro</PageTitle>
+<PageTitle>Dinh muc Tai nguyen - QLCM Pro</PageTitle>
 
-<!-- Breadcrumb -->
-<nav class="breadcrumb" aria-label="Breadcrumb">
-    <a href="/dashboard" class="breadcrumb__item">Dashboard</a>
-    <span class="breadcrumb__separator" aria-hidden="true">/</span>
-    <a href="/catalog" class="breadcrumb__item">Danh mục</a>
-    <span class="breadcrumb__separator" aria-hidden="true">/</span>
-    <span class="breadcrumb__current">@ServiceId</span>
-</nav>
+<div class="module-page reveal">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/dashboard" class="breadcrumb__item">Dashboard</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="/catalog/services" class="breadcrumb__item">Danh muc KT</a>
+        <span class="breadcrumb__sep">/</span>
+        <span class="breadcrumb__item breadcrumb__item--current">Dinh muc Tai nguyen</span>
+    </nav>
 
-<!-- Page Header -->
-<div class="module-page__header">
-    <div class="module-page__header-left">
-        <h1>Xét nghiệm công thức máu</h1>
-        <p>@ServiceId &bull; Định mức tài nguyên cho dịch vụ kỹ thuật</p>
-    </div>
-    <div class="module-page__actions">
-        <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
-        <button class="btn-primary" @onclick="ToggleAddForm" aria-label="Thêm định mức">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            Thêm định mức
-        </button>
-    </div>
-</div>
+    <h1 style="margin-bottom:1.5rem;">Dinh muc Tai nguyen</h1>
 
-<!-- Service Info Card -->
-<div class="service-info-card glass-card">
-    <div class="service-info-card__item">
-        <label>Tên dịch vụ</label>
-        <span>Xét nghiệm công thức máu</span>
-    </div>
-    <div class="service-info-card__item">
-        <label>Loại</label>
-        <span>Xét nghiệm</span>
-    </div>
-    <div class="service-info-card__item">
-        <label>Khoa/Phòng</label>
-        <span>Khoa Xét nghiệm</span>
-    </div>
-    <div class="service-info-card__item">
-        <label>Mô tả</label>
-        <span>Xét nghiệm đếm và phân loại tế bào máu ngoại vi</span>
-    </div>
-    <div class="service-info-card__item">
-        <label>Ngày cập nhật</label>
-        <span>15/03/2024</span>
-    </div>
-</div>
-
-<!-- Resource Norms Table -->
-<div class="glass-card" style="padding: var(--space-5);">
-    <!-- Tab Filters -->
-    <div class="category-tabs" role="tablist" aria-label="Lọc loại tài nguyên">
-        <button class="category-tab @(activeTab == "all" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeTab == "all" ? "true" : "false")" @onclick='() => activeTab = "all"' >Tất cả <span class="category-tab__count">5</span></button>
-        <button class="category-tab @(activeTab == "vattu" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeTab == "vattu" ? "true" : "false")" @onclick='() => activeTab = "vattu"' >Vật tư <span class="category-tab__count">3</span></button>
-        <button class="category-tab @(activeTab == "hoach" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeTab == "hoach" ? "true" : "false")" @onclick='() => activeTab = "hoach"' >Thuốc/Hóa chất <span class="category-tab__count">1</span></button>
-        <button class="category-tab @(activeTab == "thietbi" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeTab == "thietbi" ? "true" : "false")" @onclick='() => activeTab = "thietbi"' >Thiết bị <span class="category-tab__count">1</span></button>
+    <!-- Service Info Card -->
+    <div class="glass-card" style="padding:1rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:1.5rem;">
+        <div><span class="data-table__code">KT-N001</span></div>
+        <div><strong>Phau thuat noi soi cat tui mat</strong></div>
+        <div><span class="kanban__card-dept">Ngoai khoa</span></div>
+        <div><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></div>
+        <button class="btn-secondary" style="margin-left:auto;" aria-label="Nhap tu Excel">Nhap tu Excel</button>
+        <button class="btn-primary" aria-label="Them tai nguyen">+ Them</button>
     </div>
 
-    <table class="data-table" aria-label="Danh sách định mức tài nguyên">
-        <thead>
-            <tr>
-                <th>STT</th>
-                <th>Mã tài nguyên</th>
-                <th>Tên</th>
-                <th>Loại</th>
-                <th>Đơn vị</th>
-                <th>SL chuẩn</th>
-                <th>Tồn kho</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>1</td>
-                <td><span class="data-table__code">VT-001</span></td>
-                <td><span class="data-table__name">Ống nghiệm EDTA 3ml</span></td>
-                <td>Vật tư</td>
-                <td>Ống</td>
-                <td>2</td>
-                <td><span class="stock-indicator stock-indicator--ok">1,500</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Đủ</span></td>
-                <td>
-                    <div class="actions-cell">
-                        <button class="action-btn" title="Sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Xóa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5h10l-1 9H4L3 5zM6 2h4M2 5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td><span class="data-table__code">VT-002</span></td>
-                <td><span class="data-table__name">Kim lấy máu</span></td>
-                <td>Vật tư</td>
-                <td>Cái</td>
-                <td>1</td>
-                <td><span class="stock-indicator stock-indicator--ok">800</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Đủ</span></td>
-                <td>
-                    <div class="actions-cell">
-                        <button class="action-btn" title="Sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Xóa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5h10l-1 9H4L3 5zM6 2h4M2 5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>3</td>
-                <td><span class="data-table__code">HC-001</span></td>
-                <td><span class="data-table__name">Thuốc nhuộm Wright</span></td>
-                <td>Hóa chất</td>
-                <td>ml</td>
-                <td>5</td>
-                <td><span class="stock-indicator stock-indicator--low">50</span></td>
-                <td><span class="status-badge status-badge--warning"><span class="status-badge__dot"></span>Sắp hết</span></td>
-                <td>
-                    <div class="actions-cell">
-                        <button class="action-btn" title="Sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Xóa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5h10l-1 9H4L3 5zM6 2h4M2 5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>4</td>
-                <td><span class="data-table__code">TB-001</span></td>
-                <td><span class="data-table__name">Máy đếm tế bào tự động</span></td>
-                <td>Thiết bị</td>
-                <td>Máy</td>
-                <td>1</td>
-                <td><span class="stock-indicator stock-indicator--ok">3</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Sẵn sàng</span></td>
-                <td>
-                    <div class="actions-cell">
-                        <button class="action-btn" title="Sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Xóa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5h10l-1 9H4L3 5zM6 2h4M2 5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>5</td>
-                <td><span class="data-table__code">VT-003</span></td>
-                <td><span class="data-table__name">Gang tay latex</span></td>
-                <td>Vật tư</td>
-                <td>Doi</td>
-                <td>2</td>
-                <td><span class="stock-indicator stock-indicator--out">200</span></td>
-                <td><span class="status-badge" style="background:#fef2f2;color:#dc2626;"><span class="status-badge__dot" style="background:#dc2626;"></span>Thieu</span></td>
-                <td>
-                    <div class="actions-cell">
-                        <button class="action-btn" title="Sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Xóa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5h10l-1 9H4L3 5zM6 2h4M2 5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
-<!-- Add Norm Collapsible Panel -->
-<div class="collapsible-panel @(showAddForm ? "collapsible-panel--open" : "")">
-    <div class="collapsible-panel__header" @onclick="ToggleAddForm">
-        <span>Thêm định mức tài nguyên mới</span>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <!-- Resource Norm Table -->
+    <div class="glass-card" style="padding:1.25rem; margin-bottom:1.5rem;">
+        <table class="data-table" aria-label="Dinh muc tai nguyen">
+            <thead>
+                <tr><th>Loai</th><th>Ma</th><th>Ten tai nguyen</th><th>Don vi</th><th>Dinh muc</th><th>Thuc te TB</th><th>Chenh lech</th><th>Thao tac</th></tr>
+            </thead>
+            <tbody class="stagger-children">
+                <tr style="background:rgba(16,185,129,0.03);">
+                    <td><span class="priority-badge priority-badge--normal">Vat tu</span></td>
+                    <td>VT-001</td>
+                    <td>Trocar 10mm</td>
+                    <td>Cai</td>
+                    <td>3</td>
+                    <td>2.8</td>
+                    <td><span style="color:var(--color-success);">-7%</span>
+                        <div style="height:4px; background:var(--border-color); border-radius:2px; margin-top:4px; width:60px;"><div style="height:100%; width:93%; background:var(--color-success); border-radius:2px;"></div></div>
+                    </td>
+                    <td><button class="action-btn" title="Sua">&#9998;</button></td>
+                </tr>
+                <tr style="background:rgba(16,185,129,0.03);">
+                    <td><span class="priority-badge priority-badge--normal">Vat tu</span></td>
+                    <td>VT-002</td>
+                    <td>Trocar 5mm</td>
+                    <td>Cai</td>
+                    <td>2</td>
+                    <td>2.0</td>
+                    <td><span style="color:var(--color-success);">0%</span>
+                        <div style="height:4px; background:var(--border-color); border-radius:2px; margin-top:4px; width:60px;"><div style="height:100%; width:100%; background:var(--color-success); border-radius:2px;"></div></div>
+                    </td>
+                    <td><button class="action-btn" title="Sua">&#9998;</button></td>
+                </tr>
+                <tr style="background:rgba(245,158,11,0.03);">
+                    <td><span class="priority-badge priority-badge--urgent">Thuoc</span></td>
+                    <td>TH-001</td>
+                    <td>Propofol 1% 20ml</td>
+                    <td>Ong</td>
+                    <td>2</td>
+                    <td>2.4</td>
+                    <td><span style="color:var(--color-warning);">+20%</span>
+                        <div style="height:4px; background:var(--border-color); border-radius:2px; margin-top:4px; width:60px;"><div style="height:100%; width:120%; max-width:100%; background:var(--color-warning); border-radius:2px;"></div></div>
+                    </td>
+                    <td><button class="action-btn" title="Sua">&#9998;</button></td>
+                </tr>
+                <tr style="background:rgba(16,185,129,0.03);">
+                    <td><span class="priority-badge priority-badge--urgent">Thuoc</span></td>
+                    <td>TH-002</td>
+                    <td>Fentanyl 0.1mg/2ml</td>
+                    <td>Ong</td>
+                    <td>3</td>
+                    <td>2.7</td>
+                    <td><span style="color:var(--color-success);">-10%</span>
+                        <div style="height:4px; background:var(--border-color); border-radius:2px; margin-top:4px; width:60px;"><div style="height:100%; width:90%; background:var(--color-success); border-radius:2px;"></div></div>
+                    </td>
+                    <td><button class="action-btn" title="Sua">&#9998;</button></td>
+                </tr>
+                <tr style="background:rgba(239,68,68,0.03);">
+                    <td><span class="priority-badge priority-badge--low">Hoa chat</span></td>
+                    <td>HC-001</td>
+                    <td>CO2 y te (binh 20L)</td>
+                    <td>Lit</td>
+                    <td>15</td>
+                    <td>19.2</td>
+                    <td><span style="color:var(--color-danger);">+28%</span>
+                        <div style="height:4px; background:var(--border-color); border-radius:2px; margin-top:4px; width:60px;"><div style="height:100%; width:100%; background:var(--color-danger); border-radius:2px;"></div></div>
+                    </td>
+                    <td><button class="action-btn" title="Sua">&#9998;</button></td>
+                </tr>
+                <tr style="background:rgba(16,185,129,0.03);">
+                    <td><span class="priority-badge priority-badge--low">Hoa chat</span></td>
+                    <td>HC-002</td>
+                    <td>Dung dich rua Betadine 10%</td>
+                    <td>Chai</td>
+                    <td>1</td>
+                    <td>1.0</td>
+                    <td><span style="color:var(--color-success);">0%</span>
+                        <div style="height:4px; background:var(--border-color); border-radius:2px; margin-top:4px; width:60px;"><div style="height:100%; width:100%; background:var(--color-success); border-radius:2px;"></div></div>
+                    </td>
+                    <td><button class="action-btn" title="Sua">&#9998;</button></td>
+                </tr>
+                <tr style="background:rgba(16,185,129,0.03);">
+                    <td><span style="font-size:0.6875rem; padding:0.125rem 0.5rem; border-radius:999px; background:rgba(100,116,139,0.1); color:var(--color-gray-600);">Thiet bi</span></td>
+                    <td>TB-001</td>
+                    <td>Bo optic 10mm 30 do</td>
+                    <td>Bo</td>
+                    <td>1</td>
+                    <td>1.0</td>
+                    <td><span style="color:var(--color-success);">0%</span>
+                        <div style="height:4px; background:var(--border-color); border-radius:2px; margin-top:4px; width:60px;"><div style="height:100%; width:100%; background:var(--color-success); border-radius:2px;"></div></div>
+                    </td>
+                    <td><button class="action-btn" title="Sua">&#9998;</button></td>
+                </tr>
+                <tr style="background:rgba(245,158,11,0.03);">
+                    <td><span style="font-size:0.6875rem; padding:0.125rem 0.5rem; border-radius:999px; background:rgba(100,116,139,0.1); color:var(--color-gray-600);">Thiet bi</span></td>
+                    <td>TB-002</td>
+                    <td>Dao dien (Harmonic scalpel)</td>
+                    <td>Cai</td>
+                    <td>1</td>
+                    <td>1.2</td>
+                    <td><span style="color:var(--color-warning);">+20%</span>
+                        <div style="height:4px; background:var(--border-color); border-radius:2px; margin-top:4px; width:60px;"><div style="height:100%; width:100%; background:var(--color-warning); border-radius:2px;"></div></div>
+                    </td>
+                    <td><button class="action-btn" title="Sua">&#9998;</button></td>
+                </tr>
+            </tbody>
+        </table>
     </div>
-    <div class="collapsible-panel__body">
-        <div class="collapsible-panel__form">
-            <div class="form-group">
-                <label>Mã tài nguyên</label>
-                <input type="text" placeholder="VD: VT-004" />
-            </div>
-            <div class="form-group">
-                <label>Tên tài nguyên</label>
-                <input type="text" placeholder="Nhập tên..." />
-            </div>
-            <div class="form-group">
-                <label>Loai</label>
-                <select>
-                    <option>Vật tư</option>
-                    <option>Thuốc/Hóa chất</option>
-                    <option>Thiết bị</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Đơn vị</label>
-                <input type="text" placeholder="VD: Ống, Cái, ml" />
-            </div>
-            <div class="form-group">
-                <label>Số lượng chuẩn</label>
-                <input type="number" placeholder="0" min="1" />
-            </div>
+
+    <!-- Total Cost Summary -->
+    <div class="glass-card" style="padding:1.25rem; display:flex; align-items:center; justify-content:space-between;">
+        <div>
+            <span style="font-size:0.875rem; font-weight:600;">Tong chi phi dinh muc:</span>
+            <span style="font-size:1.125rem; font-weight:700; color:var(--color-primary); margin-left:0.5rem;" class="counter-animate" data-target="4850000" data-suffix=" VND">0</span>
         </div>
-        <div style="display:flex;gap:var(--space-3);margin-top:var(--space-5);">
-            <button class="btn-primary">Thêm</button>
-            <button class="btn-secondary" @onclick="ToggleAddForm">Hủy</button>
+        <div>
+            <span style="font-size:0.875rem; font-weight:600;">Chi phi thuc te TB:</span>
+            <span style="font-size:1.125rem; font-weight:700; color:var(--color-warning); margin-left:0.5rem;" class="counter-animate" data-target="5420000" data-suffix=" VND">0</span>
+        </div>
+        <div>
+            <span style="font-size:0.875rem; font-weight:600;">Chenh lech:</span>
+            <span style="font-size:1.125rem; font-weight:700; color:var(--color-danger); margin-left:0.5rem;">+11.8%</span>
         </div>
     </div>
 </div>
 
 @code {
-    [Parameter] public string ServiceId { get; set; } = "DV-XN-001";
-    private string activeTab = "all";
-    private bool showAddForm = false;
-
-    private void ToggleAddForm()
-    {
-        showAddForm = !showAddForm;
-    }
+    private string serviceId = "KT-N001";
 }

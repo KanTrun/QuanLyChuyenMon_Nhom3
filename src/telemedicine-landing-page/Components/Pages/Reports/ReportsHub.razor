@@ -1,167 +1,154 @@
 @page "/reports"
 @layout AppLayout
 
-<PageTitle>Báo cáo và Phân tích - QLCM Pro</PageTitle>
+<PageTitle>Bao cao & Thong ke - QLCM Pro</PageTitle>
 
-<!-- Page Header -->
-<div class="module-page__header">
-    <div class="module-page__header-left">
-        <h1>Báo cáo &amp; Phân tích</h1>
-        <p>Tổng hợp báo cáo hoạt động hệ thống</p>
+<div class="module-page reveal">
+    <div class="module-page__header">
+        <div class="module-page__header-left">
+            <h1>Bao cao & Thong ke</h1>
+            <p>Tong hop bao cao va thong ke he thong</p>
+        </div>
+        <div class="module-page__actions">
+            <div class="date-range-picker">
+                <input type="date" class="date-range-picker__input" value="2024-03-01" aria-label="Tu ngay" />
+                <span class="date-range-picker__sep">-</span>
+                <input type="date" class="date-range-picker__input" value="2024-04-15" aria-label="Den ngay" />
+            </div>
+            <button class="btn-secondary" aria-label="Xuat tat ca">Xuat tat ca</button>
+        </div>
+    </div>
+
+    <!-- KPI Summary Row -->
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:2rem;" class="stagger-children">
+        <div class="glass-card" style="padding:1.25rem; text-align:center;">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.25rem;">Tuan thu quy trinh</div>
+            <div style="font-size:1.75rem; font-weight:700; color:var(--color-success);" class="counter-animate" data-target="96" data-suffix=".5%">0</div>
+        </div>
+        <div class="glass-card" style="padding:1.25rem; text-align:center;">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.25rem;">Thay doi quyen</div>
+            <div style="font-size:1.75rem; font-weight:700; color:var(--text-primary);" class="counter-animate" data-target="23">0</div>
+        </div>
+        <div class="glass-card" style="padding:1.25rem; text-align:center;">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.25rem;">Tieu thu vuot muc</div>
+            <div style="font-size:1.75rem; font-weight:700; color:var(--color-danger);" class="counter-animate" data-target="12" data-suffix="%">0</div>
+        </div>
+        <div class="glass-card" style="padding:1.25rem; text-align:center;">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.25rem;">Phac do ap dung</div>
+            <div style="font-size:1.75rem; font-weight:700; color:var(--color-primary);" class="counter-animate" data-target="156">0</div>
+        </div>
+    </div>
+
+    <!-- Report Category Cards (2x3 Grid) -->
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem;" class="stagger-children">
+        <!-- Card 1: Tuan thu Quy trinh -->
+        <div class="glass-card tilt-card" style="padding:1.5rem; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                <div style="width:40px; height:40px; border-radius:var(--radius-md); background:rgba(16,185,129,0.1); display:flex; align-items:center; justify-content:center;">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M6 10l3 3 5-5" stroke="var(--color-success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="2" y="2" width="16" height="16" rx="3" stroke="var(--color-success)" stroke-width="1.5"/></svg>
+                </div>
+                <h3 style="font-size:0.9375rem; font-weight:700;">Tuan thu Quy trinh</h3>
+            </div>
+            <p style="font-size:0.8125rem; color:var(--text-secondary); flex:1; margin-bottom:1rem;">Phan tich muc do tuan thu quy trinh ky thuat chuyen mon tai cac khoa/phong.</p>
+            <div style="height:32px; display:flex; align-items:flex-end; gap:3px; margin-bottom:0.75rem;">
+                <div style="width:12%; height:60%; background:var(--color-success); border-radius:2px; opacity:0.7;"></div>
+                <div style="width:12%; height:80%; background:var(--color-success); border-radius:2px; opacity:0.7;"></div>
+                <div style="width:12%; height:70%; background:var(--color-success); border-radius:2px; opacity:0.7;"></div>
+                <div style="width:12%; height:90%; background:var(--color-success); border-radius:2px; opacity:0.7;"></div>
+                <div style="width:12%; height:95%; background:var(--color-success); border-radius:2px;"></div>
+                <div style="width:12%; height:85%; background:var(--color-success); border-radius:2px; opacity:0.7;"></div>
+            </div>
+            <a href="/reports/compliance" style="font-size:0.8125rem; font-weight:600; color:var(--color-primary);">Xem bao cao &rarr;</a>
+        </div>
+
+        <!-- Card 2: Thay doi Phan quyen -->
+        <div class="glass-card tilt-card" style="padding:1.5rem; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                <div style="width:40px; height:40px; border-radius:var(--radius-md); background:rgba(139,92,246,0.1); display:flex; align-items:center; justify-content:center;">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="3" stroke="#7c3aed" stroke-width="1.5"/><path d="M7 10h6M10 7v6" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+                <h3 style="font-size:0.9375rem; font-weight:700;">Thay doi Phan quyen</h3>
+            </div>
+            <p style="font-size:0.8125rem; color:var(--text-secondary); flex:1; margin-bottom:1rem;">Theo doi cac thay doi phan quyen va vai tro nguoi dung trong he thong.</p>
+            <div style="height:32px; display:flex; flex-direction:column; justify-content:space-between; margin-bottom:0.75rem;">
+                <div style="height:3px; background:var(--border-color); border-radius:2px; position:relative;"><div style="position:absolute; left:20%; width:8px; height:8px; border-radius:50%; background:#7c3aed; top:-2.5px;"></div><div style="position:absolute; left:55%; width:8px; height:8px; border-radius:50%; background:#7c3aed; top:-2.5px;"></div><div style="position:absolute; left:80%; width:8px; height:8px; border-radius:50%; background:#7c3aed; top:-2.5px;"></div></div>
+            </div>
+            <a href="/permissions/audit-log" style="font-size:0.8125rem; font-weight:600; color:var(--color-primary);">Xem bao cao &rarr;</a>
+        </div>
+
+        <!-- Card 3: Tieu thu Tai nguyen -->
+        <div class="glass-card tilt-card" style="padding:1.5rem; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                <div style="width:40px; height:40px; border-radius:var(--radius-md); background:rgba(245,158,11,0.1); display:flex; align-items:center; justify-content:center;">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 15h2V8H3v7zM7 15h2V5H7v10zM11 15h2V10h-2v5zM15 15h2V3h-2v12z" stroke="var(--color-warning)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h3 style="font-size:0.9375rem; font-weight:700;">Tieu thu Tai nguyen</h3>
+            </div>
+            <p style="font-size:0.8125rem; color:var(--text-secondary); flex:1; margin-bottom:1rem;">So sanh muc tieu thu thuc te voi dinh muc, phat hien vuot muc.</p>
+            <div style="height:32px; display:flex; flex-direction:column; gap:4px; margin-bottom:0.75rem;">
+                <div style="display:flex; gap:2px; align-items:center;"><div style="height:6px; width:60%; background:var(--color-primary); border-radius:2px; opacity:0.6;"></div><div style="height:6px; width:72%; background:var(--color-danger); border-radius:2px; opacity:0.6; margin-left:-60%;"></div></div>
+                <div style="display:flex; gap:2px; align-items:center;"><div style="height:6px; width:50%; background:var(--color-primary); border-radius:2px; opacity:0.6;"></div><div style="height:6px; width:45%; background:var(--color-success); border-radius:2px; opacity:0.6; margin-left:-50%;"></div></div>
+            </div>
+            <a href="/catalog/consumption-report" style="font-size:0.8125rem; font-weight:600; color:var(--color-primary);">Xem bao cao &rarr;</a>
+        </div>
+
+        <!-- Card 4: Su dung Phac do -->
+        <div class="glass-card tilt-card" style="padding:1.5rem; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                <div style="width:40px; height:40px; border-radius:var(--radius-md); background:rgba(59,130,246,0.1); display:flex; align-items:center; justify-content:center;">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="var(--color-info)" stroke-width="1.5"/><path d="M10 6v4l3 2" stroke="var(--color-info)" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+                <h3 style="font-size:0.9375rem; font-weight:700;">Su dung Phac do</h3>
+            </div>
+            <p style="font-size:0.8125rem; color:var(--text-secondary); flex:1; margin-bottom:1rem;">Thong ke tan suat ap dung phac do lam sang theo khoa va loai benh.</p>
+            <div style="height:32px; display:flex; align-items:center; justify-content:center; margin-bottom:0.75rem;">
+                <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="var(--border-color)" stroke-width="6"/><circle cx="16" cy="16" r="12" fill="none" stroke="var(--color-info)" stroke-width="6" stroke-dasharray="50 75" transform="rotate(-90 16 16)"/></svg>
+            </div>
+            <a href="/protocols" style="font-size:0.8125rem; font-weight:600; color:var(--color-primary);">Xem bao cao &rarr;</a>
+        </div>
+
+        <!-- Card 5: Kiem toan He thong -->
+        <div class="glass-card tilt-card" style="padding:1.5rem; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                <div style="width:40px; height:40px; border-radius:var(--radius-md); background:rgba(100,116,139,0.1); display:flex; align-items:center; justify-content:center;">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 5h12M4 9h8M4 13h10M4 17h6" stroke="var(--color-gray-600, #475569)" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+                <h3 style="font-size:0.9375rem; font-weight:700;">Kiem toan He thong</h3>
+            </div>
+            <p style="font-size:0.8125rem; color:var(--text-secondary); flex:1; margin-bottom:1rem;">Ghi nhan toan bo hoat dong va thay doi trong he thong de kiem toan.</p>
+            <div style="height:32px; display:flex; flex-direction:column; gap:3px; margin-bottom:0.75rem;">
+                <div style="height:2px; background:var(--border-color); border-radius:1px; width:90%;"></div>
+                <div style="height:2px; background:var(--border-color); border-radius:1px; width:75%;"></div>
+                <div style="height:2px; background:var(--border-color); border-radius:1px; width:85%;"></div>
+                <div style="height:2px; background:var(--border-color); border-radius:1px; width:60%;"></div>
+            </div>
+            <a href="/permissions/audit-log" style="font-size:0.8125rem; font-weight:600; color:var(--color-primary);">Xem bao cao &rarr;</a>
+        </div>
+
+        <!-- Card 6: Hieu suat Nhan vien -->
+        <div class="glass-card tilt-card" style="padding:1.5rem; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                <div style="width:40px; height:40px; border-radius:var(--radius-md); background:rgba(236,72,153,0.1); display:flex; align-items:center; justify-content:center;">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="#ec4899" stroke-width="1.5"/><path d="M4 17c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#ec4899" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+                <h3 style="font-size:0.9375rem; font-weight:700;">Hieu suat Nhan vien</h3>
+            </div>
+            <p style="font-size:0.8125rem; color:var(--text-secondary); flex:1; margin-bottom:1rem;">Danh gia hieu suat lam viec cua nhan vien theo cac chi so KPI.</p>
+            <div style="height:32px; position:relative; margin-bottom:0.75rem;">
+                <svg width="100%" height="32" viewBox="0 0 120 32" fill="none" preserveAspectRatio="none"><polyline points="0,28 20,22 40,24 60,18 80,12 100,15 120,8" stroke="#ec4899" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+            </div>
+            <a href="/reports/staff" style="font-size:0.8125rem; font-weight:600; color:var(--color-primary);">Xem bao cao &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Scheduled report indicator -->
+    <div style="margin-top:1.5rem; display:flex; align-items:center; gap:0.75rem; padding:0.875rem 1.25rem; background:var(--surface-secondary); border-radius:var(--radius-md);">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="var(--text-muted)" stroke-width="1.3"/><path d="M8 5v3l2 1.5" stroke="var(--text-muted)" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span style="font-size:0.8125rem; color:var(--text-secondary);">Bao cao tu dong: Gui email moi Thu 2 luc 08:00 cho ban giam doc</span>
+        <button class="btn-secondary" style="margin-left:auto; font-size:0.75rem; padding:0.25rem 0.75rem;">Cai dat</button>
     </div>
 </div>
 
-<!-- Summary Cards -->
-<div class="stats-row">
-    <div class="stat-card-mini">
-        <div class="stat-card-mini__label">Quy trình Active</div>
-        <div class="stat-card-mini__value stat-card-mini__value--primary">128</div>
-        <span class="trend-indicator trend-indicator--up" style="margin-top:var(--space-2);">&#8593; +5%</span>
-    </div>
-    <div class="stat-card-mini">
-        <div class="stat-card-mini__label">Tỷ lệ tuân thủ</div>
-        <div class="stat-card-mini__value stat-card-mini__value--success">94.2%</div>
-        <span class="trend-indicator trend-indicator--up" style="margin-top:var(--space-2);">&#8593; +2.1%</span>
-    </div>
-    <div class="stat-card-mini">
-        <div class="stat-card-mini__label">Thay đổi quyền</div>
-        <div class="stat-card-mini__value">23</div>
-        <span class="trend-indicator trend-indicator--down" style="margin-top:var(--space-2);">&#8595; -3</span>
-    </div>
-    <div class="stat-card-mini">
-        <div class="stat-card-mini__label">Vượt SLA</div>
-        <div class="stat-card-mini__value stat-card-mini__value--danger">7</div>
-        <span class="trend-indicator trend-indicator--down" style="margin-top:var(--space-2);">&#8595; -2</span>
-    </div>
-</div>
-
-<!-- Reports Grid -->
-<div class="reports-grid">
-    <!-- Report 1 -->
-    <a href="/catalog/reports" class="report-card">
-        <div class="report-card__icon">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 19V8l4-4h6l4 4v11a1 1 0 01-1 1H4a1 1 0 01-1-1z" stroke="currentColor" stroke-width="1.5"/><path d="M8 13v5M11 10v8M14 12v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </div>
-        <div class="report-card__title">Tiêu thụ Tài nguyên</div>
-        <div class="report-card__desc">So sánh định mức và thực tế sử dụng vật tư, thuốc, thiết bị</div>
-        <div class="report-card__arrow">Xem báo cáo &rarr;</div>
-    </a>
-
-    <!-- Report 2 -->
-    <a href="/permissions/audit" class="report-card">
-        <div class="report-card__icon" style="background:var(--color-lavender);color:#7c3aed;">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2l8 4.5v5.5c0 4-3.2 7.5-8 9.5-4.8-2-8-5.5-8-9.5V6.5L11 2z" stroke="currentColor" stroke-width="1.5"/><path d="M8 11l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <div class="report-card__title">Thay đổi Phân quyền</div>
-        <div class="report-card__desc">Lịch sử và xu hướng thay đổi quyền truy cập hệ thống</div>
-        <div class="report-card__arrow">Xem báo cáo &rarr;</div>
-    </a>
-
-    <!-- Report 3 -->
-    <a href="/procedures/publish" class="report-card">
-        <div class="report-card__icon" style="background:var(--color-secondary-50);color:var(--color-secondary);">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 4h14v14H4z" stroke="currentColor" stroke-width="1.5" rx="2"/><path d="M4 9h14M9 9v9" stroke="currentColor" stroke-width="1.5"/></svg>
-        </div>
-        <div class="report-card__title">Phiên bản Quy trình</div>
-        <div class="report-card__desc">Theo dõi phiên bản và quy trình ban hành</div>
-        <div class="report-card__arrow">Xem báo cáo &rarr;</div>
-    </a>
-
-    <!-- Report 4 -->
-    <div class="report-card">
-        <div class="report-card__icon" style="background:var(--color-accent-50);color:var(--color-accent);">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 3v16h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M7 15l4-5 3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <div class="report-card__title">Hoạt động Hệ thống</div>
-        <div class="report-card__desc">Log hoạt động, truy cập, và lỗi hệ thống</div>
-        <div class="report-card__arrow">Xem báo cáo &rarr;</div>
-    </div>
-
-    <!-- Report 5 -->
-    <div class="report-card">
-        <div class="report-card__icon" style="background:#ecfdf5;color:#059669;">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2l8 4.5v5.5c0 4-3.2 7.5-8 9.5-4.8-2-8-5.5-8-9.5V6.5L11 2z" stroke="currentColor" stroke-width="1.5"/><path d="M8 11l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <div class="report-card__title">Tuân thủ Quy trình</div>
-        <div class="report-card__desc">Tỷ lệ tuân thủ theo khoa, thời gian và loại quy trình</div>
-        <div class="report-card__arrow">Xem báo cáo &rarr;</div>
-    </div>
-
-    <!-- Report 6 -->
-    <div class="report-card">
-        <div class="report-card__icon" style="background:#fef2f2;color:#dc2626;">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2a4 4 0 014 4v1h1a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h1V6a4 4 0 014-4z" stroke="currentColor" stroke-width="1.5"/><path d="M9 13h4M11 11v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </div>
-        <div class="report-card__title">Áp dụng Phác đồ</div>
-        <div class="report-card__desc">Thống kê áp dụng phác đồ lâm sàng và hiệu quả điều trị</div>
-        <div class="report-card__arrow">Xem báo cáo &rarr;</div>
-    </div>
-</div>
-
-<!-- Quick Insights -->
-<h2 style="font-size:var(--text-lg);font-weight:600;color:var(--color-ink);margin-bottom:var(--space-5);">Thông tin nhanh</h2>
-<div class="insights-section">
-    <!-- Bar Chart: Quy trình theo Khoa -->
-    <div class="insight-card">
-        <div class="insight-card__title">Quy trình theo Khoa</div>
-        <div class="mini-bar-chart">
-            <div class="mini-bar-chart__row">
-                <span class="mini-bar-chart__label">Ngoại khoa</span>
-                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:85%;"></div></div>
-                <span class="mini-bar-chart__value">34</span>
-            </div>
-            <div class="mini-bar-chart__row">
-                <span class="mini-bar-chart__label">Nội khoa</span>
-                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:70%;"></div></div>
-                <span class="mini-bar-chart__value">28</span>
-            </div>
-            <div class="mini-bar-chart__row">
-                <span class="mini-bar-chart__label">Xét nghiệm</span>
-                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:55%;"></div></div>
-                <span class="mini-bar-chart__value">22</span>
-            </div>
-            <div class="mini-bar-chart__row">
-                <span class="mini-bar-chart__label">CDHA</span>
-                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:45%;"></div></div>
-                <span class="mini-bar-chart__value">18</span>
-            </div>
-            <div class="mini-bar-chart__row">
-                <span class="mini-bar-chart__label">Hồi sức</span>
-                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:35%;"></div></div>
-                <span class="mini-bar-chart__value">14</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Progress: Top 5 Quy trình -->
-    <div class="insight-card">
-        <div class="insight-card__title">Top 5 Quy trình được áp dụng nhiều nhất</div>
-        <div class="mini-bar-chart">
-            <div class="mini-bar-chart__row">
-                <span class="mini-bar-chart__label">Mổ nội soi</span>
-                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:95%;"></div></div>
-                <span class="mini-bar-chart__value">312</span>
-            </div>
-            <div class="mini-bar-chart__row">
-                <span class="mini-bar-chart__label">XN Công thức máu</span>
-                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:82%;"></div></div>
-                <span class="mini-bar-chart__value">267</span>
-            </div>
-            <div class="mini-bar-chart__row">
-                <span class="mini-bar-chart__label">Thăm khám ngoại trú</span>
-                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:70%;"></div></div>
-                <span class="mini-bar-chart__value">230</span>
-            </div>
-            <div class="mini-bar-chart__row">
-                <span class="mini-bar-chart__label">Cấp cứu tim mach</span>
-                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:55%;"></div></div>
-                <span class="mini-bar-chart__value">178</span>
-            </div>
-            <div class="mini-bar-chart__row">
-                <span class="mini-bar-chart__label">Chăm sóc sau mổ</span>
-                <div class="mini-bar-chart__track"><div class="mini-bar-chart__fill" style="width:45%;"></div></div>
-                <span class="mini-bar-chart__value">145</span>
-            </div>
-        </div>
-    </div>
-</div>
+@code {
+    private string dateRange = "2024-03-01 - 2024-04-15";
+}

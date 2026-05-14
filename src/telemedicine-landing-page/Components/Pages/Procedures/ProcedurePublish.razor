@@ -1,215 +1,147 @@
 @page "/procedures/publish"
 @layout AppLayout
 
-<PageTitle>Ban hành Quy trình - QLCM Pro</PageTitle>
+<PageTitle>Phe duyet & Ban hanh Quy trinh - QLCM Pro</PageTitle>
 
-<!-- Page Header -->
-<div class="module-page__header">
-    <div class="module-page__header-left">
-        <h1>Ban hành Quy trình</h1>
-        <p>Theo dõi trạng thái ban hành các phiên bản quy trình</p>
-    </div>
-    <div class="module-page__actions">
-        <button class="btn-secondary">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2h10v10H2z" stroke="currentColor" stroke-width="1.5" rx="1"/><path d="M5 5h4M5 7h4M5 9h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            Xem danh sách
-        </button>
-    </div>
-</div>
+<div class="module-page reveal">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/dashboard" class="breadcrumb__item">Dashboard</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="/procedures" class="breadcrumb__item">Quy trinh</a>
+        <span class="breadcrumb__sep">/</span>
+        <span class="breadcrumb__item breadcrumb__item--current">Phe duyet & Ban hanh</span>
+    </nav>
 
-<!-- Kanban Board -->
-<div class="kanban-board">
-    <!-- Column: Nhap (Draft) -->
-    <div class="kanban-column kanban-column--draft">
-        <div class="kanban-column__header">
-            <span class="kanban-column__title">Nháp</span>
-            <span class="kanban-column__count">2</span>
-        </div>
-        <div class="kanban-column__body">
-            <div class="kanban-card">
-                <div class="kanban-card__handle"></div>
-                <div class="kanban-card__title">QT Mổ tim hở</div>
-                <div class="kanban-card__meta">
-                    <span class="kanban-card__version">v3.0</span>
-                    <span class="kanban-card__tag">Tim mạch</span>
-                </div>
-                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
-                    <span>BS. Tran Van B</span>
-                    <span>10/04/2024</span>
-                </div>
-            </div>
-            <div class="kanban-card">
-                <div class="kanban-card__handle"></div>
-                <div class="kanban-card__title">QT Chăm sóc sau mổ</div>
-                <div class="kanban-card__meta">
-                    <span class="kanban-card__version">v2.0</span>
-                    <span class="kanban-card__tag">Điều dưỡng</span>
-                </div>
-                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
-                    <span>DD. Le Thi C</span>
-                    <span>08/04/2024</span>
-                </div>
-            </div>
-        </div>
-    </div>
+    <h1 style="margin-bottom:1.5rem;">Phe duyet & Ban hanh Quy trinh</h1>
 
-    <!-- Column: Chờ duyệt (Pending) -->
-    <div class="kanban-column kanban-column--pending">
-        <div class="kanban-column__header">
-            <span class="kanban-column__title">Chờ duyệt</span>
-            <span class="kanban-column__count">3</span>
+    <div class="publish-layout" style="display:grid; grid-template-columns:2fr 3fr; gap:1.5rem;">
+        <!-- Left Panel: Pending Procedures -->
+        <div class="glass-card" style="padding:1.25rem;">
+            <h3 style="margin-bottom:1rem; font-size:0.9375rem;">Quy trinh cho duyet</h3>
+            <div class="publish-list stagger-children">
+                <div class="publish-list__item publish-list__item--selected" style="padding:0.875rem; border:1px solid var(--color-primary); border-radius:var(--radius-md); margin-bottom:0.75rem; cursor:pointer;">
+                    <div style="font-weight:600; font-size:0.8125rem;">Quy trinh sinh thiet gan</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary);">v1.1 - BS. Hoang Nam</div>
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.375rem;">
+                        <span class="priority-badge priority-badge--urgent">Khan cap</span>
+                        <span style="font-size:0.6875rem; color:var(--text-muted);">12/04/2024</span>
+                    </div>
+                </div>
+                <div class="publish-list__item" style="padding:0.875rem; border:1px solid var(--border-color); border-radius:var(--radius-md); margin-bottom:0.75rem; cursor:pointer;">
+                    <div style="font-weight:600; font-size:0.8125rem;">Quy trinh phau thuat noi soi khop goi</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary);">v1.2 - BS. Le Minh Tuan</div>
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.375rem;">
+                        <span class="priority-badge priority-badge--normal">Binh thuong</span>
+                        <span style="font-size:0.6875rem; color:var(--text-muted);">05/04/2024</span>
+                    </div>
+                </div>
+                <div class="publish-list__item" style="padding:0.875rem; border:1px solid var(--border-color); border-radius:var(--radius-md); margin-bottom:0.75rem; cursor:pointer;">
+                    <div style="font-weight:600; font-size:0.8125rem;">Quy trinh CT-Scanner 128 lat</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary);">v2.0 - BS. Pham Quoc Long</div>
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.375rem;">
+                        <span class="priority-badge priority-badge--normal">Binh thuong</span>
+                        <span style="font-size:0.6875rem; color:var(--text-muted);">01/04/2024</span>
+                    </div>
+                </div>
+                <div class="publish-list__item" style="padding:0.875rem; border:1px solid var(--border-color); border-radius:var(--radius-md); margin-bottom:0.75rem; cursor:pointer;">
+                    <div style="font-weight:600; font-size:0.8125rem;">Quy trinh MRI nao</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary);">v1.5 - KTV. Tran Kim Anh</div>
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.375rem;">
+                        <span class="priority-badge priority-badge--low">Thap</span>
+                        <span style="font-size:0.6875rem; color:var(--text-muted);">28/03/2024</span>
+                    </div>
+                </div>
+                <div class="publish-list__item" style="padding:0.875rem; border:1px solid var(--border-color); border-radius:var(--radius-md); cursor:pointer;">
+                    <div style="font-weight:600; font-size:0.8125rem;">Quy trinh noi soi dai trang</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary);">v1.0 - BS. Vu Thanh Hai</div>
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.375rem;">
+                        <span class="priority-badge priority-badge--low">Thap</span>
+                        <span style="font-size:0.6875rem; color:var(--text-muted);">25/03/2024</span>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="kanban-column__body">
-            <div class="kanban-card">
-                <div class="kanban-card__handle"></div>
-                <div class="kanban-card__title">QT Xét nghiệm PCR</div>
-                <div class="kanban-card__meta">
-                    <span class="kanban-card__version">v1.2</span>
-                    <span class="kanban-card__tag">Vi sinh</span>
-                </div>
-                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
-                    <span>KTV. Pham Van D</span>
-                    <span>12/04/2024</span>
-                </div>
-            </div>
-            <div class="kanban-card">
-                <div class="kanban-card__handle"></div>
-                <div class="kanban-card__title">QT Nội soi khớp gối</div>
-                <div class="kanban-card__meta">
-                    <span class="kanban-card__version">v1.2</span>
-                    <span class="kanban-card__tag">Chỉnh hình</span>
-                </div>
-                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
-                    <span>BS. Nguyen Van E</span>
-                    <span>05/04/2024</span>
-                </div>
-            </div>
-            <div class="kanban-card">
-                <div class="kanban-card__handle"></div>
-                <div class="kanban-card__title">QT Sinh thiết gan</div>
-                <div class="kanban-card__meta">
-                    <span class="kanban-card__version">v1.1</span>
-                    <span class="kanban-card__tag">Tiêu hóa</span>
-                </div>
-                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
-                    <span>BS. Vu Van F</span>
-                    <span>12/04/2024</span>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Column: Đã duyệt (Approved) -->
-    <div class="kanban-column kanban-column--approved">
-        <div class="kanban-column__header">
-            <span class="kanban-column__title">Đã duyệt</span>
-            <span class="kanban-column__count">2</span>
-        </div>
-        <div class="kanban-column__body">
-            <div class="kanban-card">
-                <div class="kanban-card__handle"></div>
-                <div class="kanban-card__title">QT Truyền máu</div>
-                <div class="kanban-card__meta">
-                    <span class="kanban-card__version">v2.1</span>
-                    <span class="kanban-card__tag">Huyết học</span>
-                </div>
-                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
-                    <span>BS. Hoang Van G</span>
-                    <span>14/04/2024</span>
+        <!-- Right Panel: Preview -->
+        <div class="glass-card" style="padding:1.5rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+                <div>
+                    <h2 style="font-size:1.0625rem; margin-bottom:0.25rem;">Quy trinh sinh thiet gan</h2>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <span class="data-table__code">QT-008</span>
+                        <span class="priority-badge priority-badge--normal">v1.1</span>
+                        <span class="status-badge status-badge--pending"><span class="status-badge__dot"></span>Cho duyet</span>
+                    </div>
                 </div>
             </div>
-            <div class="kanban-card">
-                <div class="kanban-card__handle"></div>
-                <div class="kanban-card__title">QT Siêu âm thai</div>
-                <div class="kanban-card__meta">
-                    <span class="kanban-card__version">v1.5</span>
-                    <span class="kanban-card__tag">Sản khoa</span>
+
+            <!-- Quick summary -->
+            <div style="background:var(--surface-secondary); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.25rem;">
+                <p style="font-size:0.8125rem; color:var(--text-secondary); margin-bottom:0.5rem;"><strong>Khoa:</strong> Tieu hoa | <strong>Nguoi gui:</strong> BS. Hoang Nam | <strong>Ngay gui:</strong> 12/04/2024</p>
+                <p style="font-size:0.8125rem; color:var(--text-secondary);">Quy trinh sinh thiet gan duoi huong dan sieu am ap dung cho benh nhan nghi ngo ton thuong gan can chan doan mo benh hoc.</p>
+            </div>
+
+            <!-- Diff comparison -->
+            <h3 style="font-size:0.875rem; margin-bottom:0.75rem;">So sanh phien ban</h3>
+            <div class="diff-view" style="margin-bottom:1.5rem;">
+                <div class="diff-view__header"><span>v1.0 (Hien tai)</span><span>v1.1 (Moi)</span></div>
+                <div class="diff-view__panel diff-view__panel--before">
+                    <div class="diff-view__line">Buoc 3: Sieu am dinh vi</div>
+                    <div class="diff-view__line diff-view__line--removed">Buoc 4: Sinh thiet kim 16G</div>
+                    <div class="diff-view__line">Buoc 5: Theo doi hau thu thuat</div>
                 </div>
-                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
-                    <span>BS. Tran Thi H</span>
-                    <span>13/04/2024</span>
+                <div class="diff-view__panel diff-view__panel--after">
+                    <div class="diff-view__line">Buoc 3: Sieu am dinh vi voi contrast</div>
+                    <div class="diff-view__line diff-view__line--added">Buoc 4: Sinh thiet kim 18G (an toan hon)</div>
+                    <div class="diff-view__line diff-view__line--added">Buoc 4b: Kiem tra mau sinh thiet tai cho</div>
+                    <div class="diff-view__line">Buoc 5: Theo doi hau thu thuat 6h</div>
                 </div>
+            </div>
+
+            <!-- Approval actions -->
+            <div style="display:flex; gap:0.75rem; margin-bottom:1.25rem;">
+                <button class="btn-primary" style="background:var(--color-success); border-color:var(--color-success);" aria-label="Phe duyet">Phe duyet</button>
+                <button class="btn-primary" style="background:var(--color-danger); border-color:var(--color-danger);" aria-label="Tu choi">Tu choi</button>
+                <button class="btn-secondary" aria-label="Yeu cau chinh sua">Yeu cau chinh sua</button>
+            </div>
+
+            <!-- Publication date -->
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label">Ngay ban hanh</label>
+                <input type="date" class="form-input" style="max-width:200px;" aria-label="Ngay ban hanh" />
+            </div>
+
+            <!-- Notification preview -->
+            <div style="background:rgba(59,130,246,0.05); border:1px solid rgba(59,130,246,0.2); border-radius:var(--radius-md); padding:0.875rem;">
+                <p style="font-size:0.8125rem; font-weight:600; color:var(--color-primary); margin-bottom:0.25rem;">Thong bao se gui den:</p>
+                <p style="font-size:0.8125rem; color:var(--text-secondary);">45 nhan vien tai Khoa Tieu hoa va cac khoa lien quan</p>
             </div>
         </div>
     </div>
 
-    <!-- Column: Ban hành (Published) -->
-    <div class="kanban-column kanban-column--published">
-        <div class="kanban-column__header">
-            <span class="kanban-column__title">Ban hành</span>
-            <span class="kanban-column__count">3</span>
-        </div>
-        <div class="kanban-column__body">
-            <div class="kanban-card">
-                <div class="kanban-card__handle"></div>
-                <div class="kanban-card__title">QT Mổ nội soi ổ bụng</div>
-                <div class="kanban-card__meta">
-                    <span class="kanban-card__version">v2.1</span>
-                    <span class="kanban-card__tag">Ngoại TH</span>
-                </div>
-                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
-                    <span>PGS. Nguyen Van A</span>
-                    <span>15/03/2024</span>
+    <!-- Approval Modal (hidden) -->
+    <div class="modal-dialog" aria-hidden="true" data-modal="approve">
+        <div class="modal-dialog__backdrop"></div>
+        <div class="modal-dialog__content">
+            <div class="modal-dialog__header">
+                <span class="modal-dialog__title">Xac nhan phe duyet</span>
+                <button class="slide-over__close" aria-label="Dong">&times;</button>
+            </div>
+            <div class="modal-dialog__body">
+                <p>Ban chac chan muon phe duyet quy trinh <strong>Sinh thiet gan v1.1</strong>?</p>
+                <div class="form-group" style="margin-top:1rem;">
+                    <label class="form-label">Ghi chu (tuy chon)</label>
+                    <textarea class="form-input form-textarea" rows="3" placeholder="Nhap ghi chu..."></textarea>
                 </div>
             </div>
-            <div class="kanban-card">
-                <div class="kanban-card__handle"></div>
-                <div class="kanban-card__title">QT Chăm sóc vết thương</div>
-                <div class="kanban-card__meta">
-                    <span class="kanban-card__version">v3.0</span>
-                    <span class="kanban-card__tag">Điều dưỡng</span>
-                </div>
-                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
-                    <span>DD. Pham Thi I</span>
-                    <span>18/03/2024</span>
-                </div>
-            </div>
-            <div class="kanban-card">
-                <div class="kanban-card__handle"></div>
-                <div class="kanban-card__title">QT Cấp cứu ngừng tuần hoàn</div>
-                <div class="kanban-card__meta">
-                    <span class="kanban-card__version">v4.1</span>
-                    <span class="kanban-card__tag">Cấp cứu</span>
-                </div>
-                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
-                    <span>PGS. Le Van K</span>
-                    <span>28/01/2024</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Column: Thay the (Superseded) -->
-    <div class="kanban-column kanban-column--superseded">
-        <div class="kanban-column__header">
-            <span class="kanban-column__title">Thay thế</span>
-            <span class="kanban-column__count">2</span>
-        </div>
-        <div class="kanban-column__body">
-            <div class="kanban-card">
-                <div class="kanban-card__handle"></div>
-                <div class="kanban-card__title">QT Mổ nội soi</div>
-                <div class="kanban-card__meta">
-                    <span class="kanban-card__version">v1.0</span>
-                    <span class="kanban-card__tag">Ngoại TH</span>
-                </div>
-                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
-                    <span>BS. Nguyen Van A</span>
-                    <span>15/06/2023</span>
-                </div>
-            </div>
-            <div class="kanban-card">
-                <div class="kanban-card__handle"></div>
-                <div class="kanban-card__title">QT Xét nghiệm đông máu</div>
-                <div class="kanban-card__meta">
-                    <span class="kanban-card__version">v1.0</span>
-                    <span class="kanban-card__tag">Xét nghiệm</span>
-                </div>
-                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
-                    <span>KTV. Tran Van L</span>
-                    <span>01/03/2023</span>
-                </div>
+            <div class="modal-dialog__footer">
+                <button class="btn-secondary">Huy bo</button>
+                <button class="btn-primary" style="background:var(--color-success);">Xac nhan phe duyet</button>
             </div>
         </div>
     </div>
 </div>
+
+@code {
+    private string selectedProcedure = "QT-008";
+}

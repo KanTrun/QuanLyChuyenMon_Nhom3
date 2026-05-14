@@ -1,255 +1,99 @@
-@page "/permissions"
+@page "/permissions/setup"
 @layout AppLayout
 
-<PageTitle>Thiết lập Phân quyền - QLCM Pro</PageTitle>
+<PageTitle>Thiet lap Phan quyen - QLCM Pro</PageTitle>
 
-<!-- Page Header -->
-<div class="module-page__header">
-    <div class="module-page__header-left">
-        <h1>Thiết lập Phân quyền</h1>
-        <p>Quản lý quyền truy cập theo vai trò và chức năng</p>
+<div class="module-page reveal">
+    <h1 style="margin-bottom:1.5rem;">Thiet lap Phan quyen</h1>
+
+    <!-- Role template quick-apply -->
+    <div class="filter-panel" style="margin-bottom:1.5rem;">
+        <span style="font-size:0.8125rem; font-weight:600; color:var(--text-secondary);">Ap dung mau:</span>
+        <button class="filter-chip filter-chip--active">Quan tri vien</button>
+        <button class="filter-chip">Bac si</button>
+        <button class="filter-chip">Dieu duong</button>
+        <button class="filter-chip">Ky thuat vien</button>
+        <button class="filter-chip">Kiem toan</button>
+        <select class="filter-panel__input" style="margin-left:auto;" aria-label="Pham vi khoa">
+            <option>Tat ca khoa/phong</option>
+            <option>Ngoai tong hop</option>
+            <option>Noi tong hop</option>
+            <option>Xet nghiem</option>
+        </select>
     </div>
-    <div class="module-page__actions">
-        <button class="btn-primary">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 11V3h10v8a1 1 0 01-1 1H3a1 1 0 01-1-1z" stroke="currentColor" stroke-width="1.5"/><path d="M5 6h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            Lưu thay đổi
-        </button>
-        <button class="btn-secondary">Hủy</button>
-    </div>
-</div>
 
-<!-- Filter Section -->
-<div class="filter-bar">
-    <div class="tab-toggle" role="tablist">
-        <button class="tab-toggle__btn tab-toggle__btn--active" role="tab" aria-selected="true">Theo Vai trò</button>
-        <button class="tab-toggle__btn" role="tab" aria-selected="false">Theo Người dùng</button>
-    </div>
-    <select class="filter-bar__select">
-        <option>Tất cả khoa/phòng</option>
-        <option>Ngoại tổng hợp</option>
-        <option>Nội tổng hợp</option>
-        <option>Xét nghiệm</option>
-        <option>Chẩn đoán hình ảnh</option>
-    </select>
-    <div class="filter-bar__search">
-        <span class="filter-bar__search-icon">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </span>
-        <input type="text" placeholder="Tìm vai trò hoặc người dùng..." />
-    </div>
-</div>
+    <div style="display:grid; grid-template-columns:280px 1fr; gap:1.5rem;">
+        <!-- User/Group Selector -->
+        <div class="glass-card" style="padding:1.25rem;">
+            <div class="tabs-animated" style="margin-bottom:1rem;">
+                <button class="tabs-animated__tab tabs-animated__tab--active">Tai khoan</button>
+                <button class="tabs-animated__tab">Nhom</button>
+            </div>
+            <input type="text" class="form-input" placeholder="Tim kiem..." aria-label="Tim kiem tai khoan" style="margin-bottom:1rem;" />
+            <div class="user-list stagger-children">
+                <div class="user-list__item user-list__item--selected" style="display:flex; align-items:center; gap:0.75rem; padding:0.625rem; border-radius:var(--radius-sm); cursor:pointer; background:rgba(59,130,246,0.08);">
+                    <span class="avatar-circle">NA</span>
+                    <div><div style="font-size:0.8125rem; font-weight:600;">BS. Nguyen Van An</div><div style="font-size:0.6875rem; color:var(--text-muted);">Quan tri vien</div></div>
+                </div>
+                <div class="user-list__item" style="display:flex; align-items:center; gap:0.75rem; padding:0.625rem; border-radius:var(--radius-sm); cursor:pointer;">
+                    <span class="avatar-circle">TM</span>
+                    <div><div style="font-size:0.8125rem; font-weight:600;">DD. Nguyen Thi Mai</div><div style="font-size:0.6875rem; color:var(--text-muted);">Dieu duong</div></div>
+                </div>
+                <div class="user-list__item" style="display:flex; align-items:center; gap:0.75rem; padding:0.625rem; border-radius:var(--radius-sm); cursor:pointer;">
+                    <span class="avatar-circle">LT</span>
+                    <div><div style="font-size:0.8125rem; font-weight:600;">BS. Le Minh Tuan</div><div style="font-size:0.6875rem; color:var(--text-muted);">Bac si</div></div>
+                </div>
+                <div class="user-list__item" style="display:flex; align-items:center; gap:0.75rem; padding:0.625rem; border-radius:var(--radius-sm); cursor:pointer;">
+                    <span class="avatar-circle">VH</span>
+                    <div><div style="font-size:0.8125rem; font-weight:600;">KTV. Le Van Hung</div><div style="font-size:0.6875rem; color:var(--text-muted);">Ky thuat vien</div></div>
+                </div>
+                <div class="user-list__item" style="display:flex; align-items:center; gap:0.75rem; padding:0.625rem; border-radius:var(--radius-sm); cursor:pointer;">
+                    <span class="avatar-circle">HN</span>
+                    <div><div style="font-size:0.8125rem; font-weight:600;">BS. Hoang Nam</div><div style="font-size:0.6875rem; color:var(--text-muted);">Bac si</div></div>
+                </div>
+            </div>
+        </div>
 
-<!-- Permission Matrix -->
-<div class="permission-matrix">
-    <table>
-        <thead>
-            <tr>
-                <th>Chức năng</th>
-                <th>Bác sĩ</th>
-                <th>Điều dưỡng</th>
-                <th>Dược sĩ</th>
-                <th>KTV</th>
-                <th>Quản trị</th>
-                <th>Lãnh đạo</th>
-                <th>QA</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Group: Quy trình F01 -->
-            <tr class="permission-matrix__group-row">
-                <td colspan="8">Quy trình (F01)</td>
-            </tr>
-            <tr>
-                <td>Xem quy trình</td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-            </tr>
-            <tr>
-                <td>Tạo quy trình</td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-            </tr>
-            <tr>
-                <td>Sửa quy trình</td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-            </tr>
-            <tr>
-                <td>Xóa quy trình</td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-            </tr>
-            <tr>
-                <td>Gửi duyệt</td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-            </tr>
-            <tr>
-                <td>Phê duyệt</td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-            </tr>
+        <!-- Permission Matrix -->
+        <div class="glass-card" style="padding:1.25rem; overflow-x:auto;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+                <div>
+                    <h3 style="font-size:0.9375rem;">Quyen cua: BS. Nguyen Van An</h3>
+                    <p style="font-size:0.75rem; color:var(--text-muted);">Vai tro: Quan tri vien | Khoa: Tat ca</p>
+                </div>
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="btn-secondary" aria-label="Dat lai">Dat lai</button>
+                    <button class="btn-primary" aria-label="Luu thay doi">Luu thay doi</button>
+                </div>
+            </div>
 
-            <!-- Group: Phân quyền F02 -->
-            <tr class="permission-matrix__group-row">
-                <td colspan="8">Phân quyền (F02)</td>
-            </tr>
-            <tr>
-                <td>Xem quyền</td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-            </tr>
-            <tr>
-                <td>Gán quyền</td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-            </tr>
-            <tr>
-                <td>Thu hồi quyền</td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-            </tr>
+            <!-- Conflict Warning -->
+            <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:var(--radius-md); padding:0.75rem; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1l7 13H1L8 1z" stroke="#f59e0b" stroke-width="1.5"/><path d="M8 6v3M8 11v.5" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/></svg>
+                <span style="font-size:0.8125rem; color:var(--color-warning);">Canh bao: Quyen 'Xoa quy trinh' xung dot voi vai tro 'Dieu duong'</span>
+            </div>
 
-            <!-- Group: Danh mục F05 -->
-            <tr class="permission-matrix__group-row">
-                <td colspan="8">Danh mục (F05)</td>
-            </tr>
-            <tr>
-                <td>Xem danh mục</td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-            </tr>
-            <tr>
-                <td>Tạo danh mục</td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-            </tr>
-            <tr>
-                <td>Sửa danh mục</td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-            </tr>
-            <tr>
-                <td>Xóa danh mục</td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-            </tr>
-
-            <!-- Group: Phác đồ F06 -->
-            <tr class="permission-matrix__group-row">
-                <td colspan="8">Phác đồ (F06)</td>
-            </tr>
-            <tr>
-                <td>Xem phác đồ</td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-            </tr>
-            <tr>
-                <td>Tạo phác đồ</td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-            </tr>
-            <tr>
-                <td>Áp dụng phác đồ</td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" checked /></td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
-<!-- Legend -->
-<div class="matrix-legend">
-    <div class="matrix-legend__item">
-        <input type="checkbox" checked disabled style="width: 14px; height: 14px; accent-color: var(--color-primary);" />
-        <span>Có quyền</span>
-    </div>
-    <div class="matrix-legend__item">
-        <input type="checkbox" disabled style="width: 14px; height: 14px;" />
-        <span>Không có quyền</span>
-    </div>
-    <div class="matrix-legend__item">
-        <span style="display: inline-block; width: 14px; height: 14px; background: var(--color-border); border-radius: 3px;"></span>
-        <span>Kế thừa từ nhóm</span>
+            <table class="permission-matrix" aria-label="Bang phan quyen">
+                <thead>
+                    <tr><th>Chuc nang</th><th>Xem</th><th>Them</th><th>Sua</th><th>Xoa</th><th>Phe duyet</th><th>Thuc hien</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Quy trinh KT</td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td></tr>
+                    <tr><td>Phan quyen</td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td></tr>
+                    <tr><td>Danh muc</td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td></tr>
+                    <tr><td>Phac do</td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td></tr>
+                    <tr><td>Bao cao</td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td></tr>
+                    <tr><td>Thong bao</td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td></tr>
+                    <tr><td>Cai dat</td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td></tr>
+                    <tr><td>Ban hanh</td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td></tr>
+                    <tr><td>Kiem toan</td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td><td><input type="checkbox" class="permission-matrix__check" /></td></tr>
+                    <tr><td>Quan tri he thong</td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td><td><input type="checkbox" class="permission-matrix__check" checked /></td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+@code {
+    private string selectedUser = "BS. Nguyen Van An";
+}

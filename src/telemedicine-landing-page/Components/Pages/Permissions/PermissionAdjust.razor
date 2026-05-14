@@ -1,154 +1,135 @@
 @page "/permissions/adjust"
 @layout AppLayout
 
-<PageTitle>Điều chỉnh Phân quyền - QLCM Pro</PageTitle>
+<PageTitle>Dieu chinh Phan quyen - QLCM Pro</PageTitle>
 
-<!-- Page Header -->
-<div class="module-page__header">
-    <div class="module-page__header-left">
-        <h1>Điều chỉnh Phân quyền</h1>
-        <p>Tạo yêu cầu thay đổi quyền truy cập cho người dùng hoặc nhóm</p>
-    </div>
-</div>
+<div class="module-page reveal">
+    <h1 style="margin-bottom:1.5rem;">Dieu chinh Phan quyen</h1>
 
-<div class="glass-card" style="padding: var(--space-8); border-radius: var(--radius-card);">
-
-    <!-- Section 1: Đối tượng -->
-    <div class="form-section">
-        <h2 class="form-section__title">1. Đối tượng</h2>
-        <div class="radio-group">
-            <label class="radio-item"><input type="radio" name="target-type" checked /> Tài khoản cá nhân</label>
-            <label class="radio-item"><input type="radio" name="target-type" /> Nhóm tài khoản</label>
+    <!-- Target Selector -->
+    <div class="filter-panel" style="margin-bottom:1.5rem;">
+        <div class="form-group" style="margin-bottom:0; flex:1;">
+            <label class="form-label" style="margin-bottom:0.25rem;">Doi tuong dieu chinh</label>
+            <input type="text" class="form-input" value="DD. Nguyen Thi Mai" aria-label="Doi tuong" />
         </div>
-        <div class="form-group">
-            <label>Tìm kiếm đối tượng</label>
-            <div class="filter-bar__search" style="max-width: 100%;">
-                <span class="filter-bar__search-icon">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                </span>
-                <input type="text" value="BS. Tran Minh Duc" style="width: 100%; padding: var(--space-3) var(--space-3) var(--space-3) var(--space-10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: var(--text-sm);" />
+        <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" style="margin-bottom:0.25rem;">Vai tro hien tai</label>
+            <span class="priority-badge priority-badge--normal">Dieu duong</span>
+        </div>
+    </div>
+
+    <!-- Current permissions summary -->
+    <div class="glass-card" style="padding:1rem; margin-bottom:1.5rem; background:var(--surface-secondary);">
+        <h3 style="font-size:0.875rem; margin-bottom:0.5rem;">Quyen hien tai</h3>
+        <p style="font-size:0.8125rem; color:var(--text-secondary);">Xem: Quy trinh, Phac do, Bao cao, Thong bao | Them/Sua: Khong | Phe duyet: Khong | Thuc hien: Quy trinh, Phac do</p>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="glass-card" style="padding:1.5rem; margin-bottom:1.5rem;">
+        <h3 style="font-size:0.9375rem; margin-bottom:1rem;">So sanh quyen Truoc/Sau</h3>
+        <table class="comparison-table" aria-label="So sanh phan quyen">
+            <thead>
+                <tr><th>Chuc nang</th><th>Truoc (Hien tai)</th><th>Sau (Moi)</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Quy trinh KT</td>
+                    <td style="opacity:0.6;">Xem, Thuc hien</td>
+                    <td class="comparison-table__changed">Xem, Them, Sua, Thuc hien</td>
+                </tr>
+                <tr>
+                    <td>Phac do</td>
+                    <td style="opacity:0.6;">Xem, Thuc hien</td>
+                    <td>Xem, Thuc hien</td>
+                </tr>
+                <tr>
+                    <td>Danh muc</td>
+                    <td style="opacity:0.6;">Xem</td>
+                    <td class="comparison-table__changed">Xem, Them</td>
+                </tr>
+                <tr>
+                    <td>Bao cao</td>
+                    <td style="opacity:0.6;">Xem</td>
+                    <td>Xem</td>
+                </tr>
+                <tr>
+                    <td>Thong bao</td>
+                    <td style="opacity:0.6;">Xem</td>
+                    <td>Xem</td>
+                </tr>
+                <tr>
+                    <td>Ban hanh</td>
+                    <td style="opacity:0.6;">Khong</td>
+                    <td class="comparison-table__changed">Xem</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Reason & Effective Date -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+        <div class="glass-card" style="padding:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Ly do dieu chinh <span class="form-required">*</span></label>
+                <textarea class="form-input form-textarea" rows="4" placeholder="Nhap ly do..." aria-label="Ly do dieu chinh" aria-required="true">DD. Nguyen Thi Mai duoc bo nhiem lam Truong nhom Dieu duong, can quyen Them/Sua quy trinh de cap nhat quy trinh cham soc.</textarea>
+                <span class="form-hint">156/500 ky tu</span>
+            </div>
+        </div>
+        <div class="glass-card" style="padding:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Thoi gian hieu luc</label>
+                <div style="display:flex; gap:1rem; margin-bottom:0.75rem;">
+                    <label style="display:flex; align-items:center; gap:0.375rem; font-size:0.8125rem; cursor:pointer;">
+                        <input type="radio" name="effective" checked /> Ap dung ngay
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.375rem; font-size:0.8125rem; cursor:pointer;">
+                        <input type="radio" name="effective" /> Hen gio
+                    </label>
+                </div>
+                <input type="datetime-local" class="form-input" aria-label="Thoi gian hieu luc" disabled />
             </div>
         </div>
     </div>
 
-    <!-- Section 2: Quyền hiện tại (read-only) -->
-    <div class="form-section">
-        <h2 class="form-section__title">2. Quyền hiện tại</h2>
-        <div class="data-table-container" style="max-height: 200px; overflow-y: auto;">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Chức năng</th>
-                        <th>Quyền hiện tại</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>Xem quy trình</td><td><span class="status-badge status-badge--active">Có</span></td></tr>
-                    <tr><td>Tạo quy trình</td><td><span class="status-badge status-badge--active">Có</span></td></tr>
-                    <tr><td>Sửa quy trình</td><td><span class="status-badge status-badge--active">Có</span></td></tr>
-                    <tr><td>Xóa quy trình</td><td><span class="status-badge status-badge--draft">Khong</span></td></tr>
-                    <tr><td>Gửi duyệt</td><td><span class="status-badge status-badge--active">Có</span></td></tr>
-                    <tr><td>Phê duyệt</td><td><span class="status-badge status-badge--draft">Không</span></td></tr>
-                    <tr><td>Xem phác đồ</td><td><span class="status-badge status-badge--active">Có</span></td></tr>
-                    <tr><td>Tạo phác đồ</td><td><span class="status-badge status-badge--active">Có</span></td></tr>
-                </tbody>
-            </table>
+    <!-- Impact Preview -->
+    <div class="glass-card" style="padding:1.25rem; margin-bottom:1.5rem; border-left:4px solid var(--color-info);">
+        <h3 style="font-size:0.875rem; margin-bottom:0.5rem;">Anh huong</h3>
+        <p style="font-size:0.8125rem; color:var(--text-secondary); margin-bottom:0.5rem;">3 tai khoan, 12 chuc nang bi tac dong</p>
+        <div style="font-size:0.75rem; color:var(--text-muted);">
+            <p>- DD. Nguyen Thi Mai (truc tiep)</p>
+            <p>- Nhom Dieu duong Khoa Ngoai (ke thua)</p>
+            <p>- Nhom Dieu duong Khoa Noi (ke thua)</p>
         </div>
-    </div>
-
-    <!-- Section 3: Quyền mới -->
-    <div class="form-section">
-        <h2 class="form-section__title">3. Quyền mới (thay đổi)</h2>
-        <div class="data-table-container" style="max-height: 240px; overflow-y: auto;">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Chức năng</th>
-                        <th>Quyền</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>Xem quy trình</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Tạo quy trình</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Sửa quy trình</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Xóa quy trình</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Gửi duyệt</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Phê duyệt</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Xem phác đồ</td><td><input type="checkbox" checked style="accent-color: var(--color-primary);" /></td></tr>
-                    <tr><td>Tạo phác đồ</td><td><input type="checkbox" style="accent-color: var(--color-primary);" /></td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Section 4: Diff Preview -->
-    <div class="form-section">
-        <h2 class="form-section__title">4. Xem trước thay đổi</h2>
-        <div class="diff-preview">
-            <div class="diff-preview__summary">
-                <span class="diff-preview__added">+3 quyền mới</span>
-                <span class="diff-preview__removed">-1 quyền bị thu hồi</span>
-            </div>
-            <table class="diff-preview__table">
-                <tbody>
-                    <tr class="diff-preview__row--added">
-                        <td class="diff-preview__indicator diff-preview__indicator--add">+</td>
-                        <td>Xóa quy trình</td>
-                        <td><span class="status-badge status-badge--active">Thêm mới</span></td>
-                    </tr>
-                    <tr class="diff-preview__row--added">
-                        <td class="diff-preview__indicator diff-preview__indicator--add">+</td>
-                        <td>Phê duyệt</td>
-                        <td><span class="status-badge status-badge--active">Thêm mới</span></td>
-                    </tr>
-                    <tr class="diff-preview__row--added">
-                        <td class="diff-preview__indicator diff-preview__indicator--add">+</td>
-                        <td>Xem quyền</td>
-                        <td><span class="status-badge status-badge--active">Thêm mới</span></td>
-                    </tr>
-                    <tr class="diff-preview__row--removed">
-                        <td class="diff-preview__indicator diff-preview__indicator--remove">-</td>
-                        <td>Tạo phác đồ</td>
-                        <td><span class="status-badge status-badge--archived">Thu hồi</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Section 5: Lý do -->
-    <div class="form-section">
-        <h2 class="form-section__title">5. Lý do điều chỉnh</h2>
-        <div class="form-group">
-            <textarea class="form-input form-input--textarea" placeholder="Nhập lý do điều chỉnh quyền...">Bác sĩ Trần Minh Đức được bổ nhiệm làm Phó khoa Ngoại, cần bổ sung quyền phê duyệt và quản lý quy trình.</textarea>
-        </div>
-    </div>
-
-    <!-- Section 6: Hieu luc -->
-    <div class="form-section">
-        <h2 class="form-section__title">6. Thời gian hiệu lực</h2>
-        <div class="radio-group">
-            <label class="radio-item"><input type="radio" name="effective" checked /> Áp dụng ngay</label>
-            <label class="radio-item"><input type="radio" name="effective" /> Hẹn giờ</label>
-        </div>
-        <div class="form-group">
-            <label>Thời gian áp dụng (nếu hẹn giờ)</label>
-            <input type="datetime-local" class="form-input" style="max-width: 300px;" />
-        </div>
-    </div>
-
-    <!-- Section 7: Xác nhận -->
-    <div class="confirm-checkbox">
-        <input type="checkbox" id="confirm-check" />
-        <label for="confirm-check">Tôi xác nhận đã kiểm tra các thay đổi trên và chịu trách nhiệm về yêu cầu này</label>
     </div>
 
     <!-- Actions -->
-    <div style="display: flex; gap: var(--space-4); justify-content: flex-end; margin-top: var(--space-6);">
-        <button class="btn-secondary">Hủy bỏ</button>
-        <button class="btn-primary">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Gửi yêu cầu
-        </button>
+    <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+        <button class="btn-secondary">Huy bo</button>
+        <button class="btn-primary" aria-label="Xac nhan thay doi">Xac nhan thay doi</button>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-dialog" aria-hidden="true" data-modal="confirm">
+        <div class="modal-dialog__backdrop"></div>
+        <div class="modal-dialog__content">
+            <div class="modal-dialog__header">
+                <span class="modal-dialog__title">Xac nhan dieu chinh phan quyen</span>
+                <button class="slide-over__close" aria-label="Dong">&times;</button>
+            </div>
+            <div class="modal-dialog__body">
+                <p style="margin-bottom:0.75rem;"><strong>Doi tuong:</strong> DD. Nguyen Thi Mai</p>
+                <p style="margin-bottom:0.75rem;"><strong>Thay doi:</strong> Them quyen Them/Sua cho Quy trinh KT, Them cho Danh muc, Xem cho Ban hanh</p>
+                <p style="margin-bottom:0.75rem;"><strong>Hieu luc:</strong> Ngay lap tuc</p>
+                <p><strong>Ly do:</strong> Bo nhiem Truong nhom Dieu duong</p>
+            </div>
+            <div class="modal-dialog__footer">
+                <button class="btn-secondary">Huy bo</button>
+                <button class="btn-primary">Xac nhan thay doi</button>
+            </div>
+        </div>
     </div>
 </div>
+
+@code {
+    private string targetUser = "DD. Nguyen Thi Mai";
+}

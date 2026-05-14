@@ -1,330 +1,167 @@
-@page "/permissions/audit"
+@page "/permissions/audit-log"
 @layout AppLayout
 
-<PageTitle>Nhật ký Phân quyền - QLCM Pro</PageTitle>
+<PageTitle>Nhat ky Thay doi Phan quyen - QLCM Pro</PageTitle>
 
-<!-- Page Header -->
-<div class="module-page__header">
-    <div class="module-page__header-left">
-        <h1>Nhật ký Phân quyền</h1>
-        <p>Lịch sử thay đổi quyền truy cập trong hệ thống</p>
-    </div>
-    <div class="module-page__actions">
-        <button class="btn-secondary">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 9v3h10V9M7 2v7M4 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Xuất Excel
+<div class="module-page reveal">
+    <h1 style="margin-bottom:1.5rem;">Nhat ky Thay doi Phan quyen</h1>
+
+    <!-- Filter Bar -->
+    <div class="filter-panel">
+        <div class="date-range-picker">
+            <input type="date" class="date-range-picker__input" value="2024-03-01" aria-label="Tu ngay" />
+            <span class="date-range-picker__sep">-</span>
+            <input type="date" class="date-range-picker__input" value="2024-04-15" aria-label="Den ngay" />
+        </div>
+        <input type="text" class="filter-panel__input" placeholder="Tim nguoi thuc hien..." aria-label="Tim nguoi thuc hien" />
+        <select class="filter-panel__input" aria-label="Loai hanh dong">
+            <option>Tat ca hanh dong</option>
+            <option>Them quyen</option>
+            <option>Sua quyen</option>
+            <option>Xoa quyen</option>
+        </select>
+        <select class="filter-panel__input" aria-label="Khoa phong">
+            <option>Tat ca khoa</option>
+            <option>Ngoai tong hop</option>
+            <option>Noi tong hop</option>
+            <option>Xet nghiem</option>
+        </select>
+        <div class="view-toggle" style="margin-left:auto;">
+            <button class="view-toggle__btn view-toggle__btn--active">Bang</button>
+            <button class="view-toggle__btn">Timeline</button>
+        </div>
+        <button class="btn-icon" title="Xuat bao cao" aria-label="Xuat bao cao">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3M3 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
     </div>
-</div>
 
-<!-- Filter Bar -->
-<div class="filter-bar">
-    <div class="date-range">
-        <input type="date" value="2024-01-01" />
-        <span class="date-range__sep">đến</span>
-        <input type="date" value="2024-04-15" />
+    <!-- Search within logs -->
+    <div style="margin-bottom:1rem;">
+        <input type="text" class="form-input" placeholder="Tim kiem trong nhat ky..." aria-label="Tim kiem nhat ky" style="max-width:300px;" />
     </div>
-    <div class="filter-bar__search" style="min-width: 160px;">
-        <span class="filter-bar__search-icon">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </span>
-        <input type="text" placeholder="Tìm người dùng..." />
-    </div>
-    <select class="filter-bar__select">
-        <option>Tất cả hành động</option>
-        <option>Gán quyền</option>
-        <option>Thu hồi</option>
-        <option>Điều chỉnh</option>
-    </select>
-</div>
 
-<!-- Audit Log Table -->
-<div class="data-table-container">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th style="width: 30px;"></th>
-                <th>Thời gian</th>
-                <th>Người thực hiện</th>
-                <th>Đối tượng</th>
-                <th>Hành động</th>
-                <th>Lý do</th>
-                <th>Trạng thái</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr class="audit-log__expandable" @onclick="() => ToggleRow(1)">
-                <td><span class="audit-log__expand-icon @(expandedRow == 1 ? "audit-log__expand-icon--open" : "")"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></td>
-                <td>15/04/2024 09:30</td>
-                <td>Admin Nguyen</td>
-                <td>BS. Tran Minh Duc</td>
-                <td>Gán quyền</td>
-                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Bổ nhiệm Phó khoa Ngoại</td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Đã áp dụng</span></td>
-            </tr>
-            @if (expandedRow == 1)
-            {
+    <!-- Table View -->
+    <div class="glass-card" style="padding:1.25rem;" data-view-content="table">
+        <table class="data-table" aria-label="Nhat ky phan quyen">
+            <thead>
+                <tr><th>Thoi gian</th><th>Nguoi thuc hien</th><th>Doi tuong</th><th>Hanh dong</th><th>Hieu luc</th><th></th></tr>
+            </thead>
+            <tbody class="stagger-children">
                 <tr>
-                    <td colspan="7" style="padding: 0;">
-                        <div class="audit-log__detail">
-                            <div class="audit-log__diff">
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">Xem QT: Có
-Tạo QT: Có
-Sửa QT: Có
-Xóa QT: Không
-Phê duyệt: Không</div>
-                                </div>
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
-                                    <div class="audit-log__diff-after">Xem QT: Có
-Tạo QT: Có
-Sửa QT: Có
-Xóa QT: Có (+)
-Phê duyệt: Có (+)</div>
-                                </div>
-                            </div>
-                        </div>
-                    </td>
+                    <td>15/04/2024 14:30</td>
+                    <td><div style="display:flex;align-items:center;gap:0.5rem;"><span class="avatar-circle avatar-circle--sm">NA</span>BS. Nguyen Van An</div></td>
+                    <td>DD. Nguyen Thi Mai</td>
+                    <td><span class="status-badge status-badge--active">Them quyen</span></td>
+                    <td>Ngay lap tuc</td>
+                    <td><button class="action-btn" title="Xem chi tiet">+</button></td>
                 </tr>
-            }
-            <tr class="audit-log__expandable" @onclick="() => ToggleRow(2)">
-                <td><span class="audit-log__expand-icon @(expandedRow == 2 ? "audit-log__expand-icon--open" : "")"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></td>
-                <td>14/04/2024 14:15</td>
-                <td>Admin Nguyen</td>
-                <td>DD. Le Thi Hoa</td>
-                <td>Điều chỉnh</td>
-                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Chuyển sang khoa Nhi</td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Đã áp dụng</span></td>
-            </tr>
-            @if (expandedRow == 2)
-            {
                 <tr>
-                    <td colspan="7" style="padding: 0;">
-                        <div class="audit-log__detail">
-                            <div class="audit-log__diff">
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">Khoa: Ngoại TH
-Xem DM Ngoại: Có
-Ghi nhận CS: Có</div>
-                                </div>
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
-                                    <div class="audit-log__diff-after">Khoa: Nhi (+)
-Xem DM Nhi: Có (+)
-Ghi nhận CS Nhi: Có (+)</div>
-                                </div>
-                            </div>
-                        </div>
-                    </td>
+                    <td>12/04/2024 09:15</td>
+                    <td><div style="display:flex;align-items:center;gap:0.5rem;"><span class="avatar-circle avatar-circle--sm">NA</span>BS. Nguyen Van An</div></td>
+                    <td>Nhom Bac si Ngoai</td>
+                    <td><span class="status-badge status-badge--pending">Sua quyen</span></td>
+                    <td>15/04/2024</td>
+                    <td><button class="action-btn" title="Xem chi tiet">+</button></td>
                 </tr>
-            }
-            <tr class="audit-log__expandable" @onclick="() => ToggleRow(3)">
-                <td><span class="audit-log__expand-icon @(expandedRow == 3 ? "audit-log__expand-icon--open" : "")"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></td>
-                <td>12/04/2024 10:00</td>
-                <td>Admin Le</td>
-                <td>Nhóm: Dược sĩ</td>
-                <td>Gán quyền</td>
-                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Thêm quyền xem phác đồ</td>
-                <td><span class="status-badge status-badge--pending"><span class="status-badge__dot"></span>Chờ áp dụng</span></td>
-            </tr>
-            @if (expandedRow == 3)
-            {
                 <tr>
-                    <td colspan="7" style="padding: 0;">
-                        <div class="audit-log__detail">
-                            <div class="audit-log__diff">
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">Xem PĐ: Không
-Áp dụng PĐ: Không</div>
-                                </div>
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
-                                    <div class="audit-log__diff-after">Xem PĐ: Có (+)
-Áp dụng PĐ: Có (+)</div>
-                                </div>
-                            </div>
-                        </div>
-                    </td>
+                    <td>10/04/2024 16:00</td>
+                    <td><div style="display:flex;align-items:center;gap:0.5rem;"><span class="avatar-circle avatar-circle--sm">VL</span>PGD. Vo Thi Lan</div></td>
+                    <td>KTV. Le Van Hung</td>
+                    <td><span class="status-badge status-badge--active">Them quyen</span></td>
+                    <td>Ngay lap tuc</td>
+                    <td><button class="action-btn" title="Xem chi tiet">+</button></td>
                 </tr>
-            }
-            <tr class="audit-log__expandable" @onclick="() => ToggleRow(4)">
-                <td><span class="audit-log__expand-icon @(expandedRow == 4 ? "audit-log__expand-icon--open" : "")"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></td>
-                <td>10/04/2024 16:45</td>
-                <td>System</td>
-                <td>KTV. Pham Van C</td>
-                <td>Thu hồi</td>
-                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Nghỉ việc - vô hiệu hóa</td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Đã áp dụng</span></td>
-            </tr>
-            @if (expandedRow == 4)
-            {
                 <tr>
-                    <td colspan="7" style="padding: 0;">
-                        <div class="audit-log__detail">
-                            <div class="audit-log__diff">
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">Trạng thái: Active
-Xem QT: Có
-XN máu: Có
-Nhập KQ: Có</div>
-                                </div>
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
-                                    <div class="audit-log__diff-after">Trạng thái: Inactive
-Tất cả quyền: Thu hồi</div>
-                                </div>
-                            </div>
-                        </div>
-                    </td>
+                    <td>08/04/2024 11:20</td>
+                    <td><div style="display:flex;align-items:center;gap:0.5rem;"><span class="avatar-circle avatar-circle--sm">NA</span>BS. Nguyen Van An</div></td>
+                    <td>BS. Hoang Nam</td>
+                    <td><span class="status-badge status-badge--draft">Xoa quyen</span></td>
+                    <td>Ngay lap tuc</td>
+                    <td><button class="action-btn" title="Xem chi tiet">+</button></td>
                 </tr>
-            }
-            <tr class="audit-log__expandable" @onclick="() => ToggleRow(5)">
-                <td><span class="audit-log__expand-icon @(expandedRow == 5 ? "audit-log__expand-icon--open" : "")"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></td>
-                <td>08/04/2024 08:00</td>
-                <td>Admin Nguyen</td>
-                <td>BS. Hoang Van D</td>
-                <td>Gán quyền</td>
-                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Phê duyệt QT cấp cứu</td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Đã áp dụng</span></td>
-            </tr>
-            @if (expandedRow == 5)
-            {
                 <tr>
-                    <td colspan="7" style="padding: 0;">
-                        <div class="audit-log__detail">
-                            <div class="audit-log__diff">
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">Phê duyệt QT: Không</div>
-                                </div>
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
-                                    <div class="audit-log__diff-after">Phê duyệt QT: Có (+)</div>
-                                </div>
-                            </div>
-                        </div>
-                    </td>
+                    <td>05/04/2024 08:45</td>
+                    <td><div style="display:flex;align-items:center;gap:0.5rem;"><span class="avatar-circle avatar-circle--sm">AD</span>Admin</div></td>
+                    <td>Nhom Ky thuat vien</td>
+                    <td><span class="status-badge status-badge--pending">Sua quyen</span></td>
+                    <td>Ngay lap tuc</td>
+                    <td><button class="action-btn" title="Xem chi tiet">+</button></td>
                 </tr>
-            }
-            <tr class="audit-log__expandable" @onclick="() => ToggleRow(6)">
-                <td><span class="audit-log__expand-icon @(expandedRow == 6 ? "audit-log__expand-icon--open" : "")"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></td>
-                <td>05/04/2024 11:20</td>
-                <td>Admin Le</td>
-                <td>Nhóm: QA</td>
-                <td>Điều chỉnh</td>
-                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Cập nhật quyền kiểm soát CL</td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Đã áp dụng</span></td>
-            </tr>
-            @if (expandedRow == 6)
-            {
                 <tr>
-                    <td colspan="7" style="padding: 0;">
-                        <div class="audit-log__detail">
-                            <div class="audit-log__diff">
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">KSCL: Xem
-Báo cáo CL: Không</div>
-                                </div>
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
-                                    <div class="audit-log__diff-after">KSCL: Xem + Sửa (+)
-Báo cáo CL: Có (+)</div>
-                                </div>
-                            </div>
-                        </div>
-                    </td>
+                    <td>01/04/2024 14:10</td>
+                    <td><div style="display:flex;align-items:center;gap:0.5rem;"><span class="avatar-circle avatar-circle--sm">VL</span>PGD. Vo Thi Lan</div></td>
+                    <td>DD. Tran Thi Hoa</td>
+                    <td><span class="status-badge status-badge--active">Them quyen</span></td>
+                    <td>05/04/2024</td>
+                    <td><button class="action-btn" title="Xem chi tiet">+</button></td>
                 </tr>
-            }
-            <tr class="audit-log__expandable" @onclick="() => ToggleRow(7)">
-                <td><span class="audit-log__expand-icon @(expandedRow == 7 ? "audit-log__expand-icon--open" : "")"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></td>
-                <td>01/04/2024 09:00</td>
-                <td>Admin Nguyen</td>
-                <td>BS. Vu Thi E</td>
-                <td>Gán quyền</td>
-                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Nhận việc mới - Khoa Tim</td>
-                <td><span class="status-badge status-badge--archived"><span class="status-badge__dot"></span>Hủy</span></td>
-            </tr>
-            @if (expandedRow == 7)
-            {
                 <tr>
-                    <td colspan="7" style="padding: 0;">
-                        <div class="audit-log__detail">
-                            <div class="audit-log__diff">
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">(không có quyền)</div>
-                                </div>
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: #059669;">Sau (đã hủy)</div>
-                                    <div class="audit-log__diff-after">Xem QT Tim: Có
-Tạo QT: Có
--- ĐÃ HỦY --</div>
-                                </div>
-                            </div>
-                        </div>
-                    </td>
+                    <td>28/03/2024 10:30</td>
+                    <td><div style="display:flex;align-items:center;gap:0.5rem;"><span class="avatar-circle avatar-circle--sm">NA</span>BS. Nguyen Van An</div></td>
+                    <td>BS. Pham Quoc Bao</td>
+                    <td><span class="status-badge status-badge--active">Them quyen</span></td>
+                    <td>Ngay lap tuc</td>
+                    <td><button class="action-btn" title="Xem chi tiet">+</button></td>
                 </tr>
-            }
-            <tr class="audit-log__expandable" @onclick="() => ToggleRow(8)">
-                <td><span class="audit-log__expand-icon @(expandedRow == 8 ? "audit-log__expand-icon--open" : "")"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></td>
-                <td>28/03/2024 15:30</td>
-                <td>System</td>
-                <td>Nhóm: Điều dưỡng</td>
-                <td>Điều chỉnh</td>
-                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Cập nhật quyền theo QĐ mới</td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Đã áp dụng</span></td>
-            </tr>
-            @if (expandedRow == 8)
-            {
                 <tr>
-                    <td colspan="7" style="padding: 0;">
-                        <div class="audit-log__detail">
-                            <div class="audit-log__diff">
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">Ghi nhận CS: Có
-Báo cáo ĐD: Không
-Xem PĐ: Không</div>
-                                </div>
-                                <div>
-                                    <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
-                                    <div class="audit-log__diff-after">Ghi nhận CS: Có
-Báo cáo ĐD: Có (+)
-Xem PĐ: Có (+)</div>
-                                </div>
-                            </div>
-                        </div>
-                    </td>
+                    <td>25/03/2024 15:00</td>
+                    <td><div style="display:flex;align-items:center;gap:0.5rem;"><span class="avatar-circle avatar-circle--sm">AD</span>Admin</div></td>
+                    <td>Nhom Dieu duong</td>
+                    <td><span class="status-badge status-badge--pending">Sua quyen</span></td>
+                    <td>01/04/2024</td>
+                    <td><button class="action-btn" title="Xem chi tiet">+</button></td>
                 </tr>
-            }
-        </tbody>
-    </table>
-    <!-- Pagination -->
-    <div class="pagination">
-        <span class="pagination__info">Hiển thị 1-8 / 156 bản ghi</span>
-        <div class="pagination__buttons">
-            <button class="pagination__btn" disabled>&laquo;</button>
-            <button class="pagination__btn pagination__btn--active">1</button>
-            <button class="pagination__btn">2</button>
-            <button class="pagination__btn">3</button>
-            <button class="pagination__btn">...</button>
-            <button class="pagination__btn">20</button>
-            <button class="pagination__btn">&raquo;</button>
+            </tbody>
+        </table>
+
+        <!-- Expanded row example -->
+        <div class="diff-view" style="margin:0.75rem 0 1.5rem; font-size:0.75rem;">
+            <div class="diff-view__header"><span>Truoc</span><span>Sau</span></div>
+            <div class="diff-view__panel diff-view__panel--before">
+                <div class="diff-view__line diff-view__line--removed">Quy trinh KT: Xem</div>
+                <div class="diff-view__line">Phac do: Xem, Thuc hien</div>
+            </div>
+            <div class="diff-view__panel diff-view__panel--after">
+                <div class="diff-view__line diff-view__line--added">Quy trinh KT: Xem, Them, Sua</div>
+                <div class="diff-view__line">Phac do: Xem, Thuc hien</div>
+            </div>
+        </div>
+
+        <div class="pagination">
+            <span class="pagination__info">Hien thi 1-8 / 45 ban ghi</span>
+            <div class="pagination__buttons">
+                <button class="pagination__btn" disabled>&laquo;</button>
+                <button class="pagination__btn pagination__btn--active">1</button>
+                <button class="pagination__btn">2</button>
+                <button class="pagination__btn">3</button>
+                <button class="pagination__btn">...</button>
+                <button class="pagination__btn">6</button>
+                <button class="pagination__btn">&raquo;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline View (hidden by default) -->
+    <div class="timeline-view" data-view-content="timeline" style="display:none;">
+        <div class="timeline-view__item">
+            <span class="timeline-view__date">15/04</span>
+            <div class="timeline-view__content"><div class="timeline-view__content-title">Them quyen cho DD. Nguyen Thi Mai</div><div class="timeline-view__content-desc">Them quyen Them/Sua Quy trinh KT - BS. Nguyen Van An</div></div>
+        </div>
+        <div class="timeline-view__item">
+            <span class="timeline-view__date">12/04</span>
+            <div class="timeline-view__content"><div class="timeline-view__content-title">Sua quyen Nhom Bac si Ngoai</div><div class="timeline-view__content-desc">Cap nhat quyen Phe duyet cho module Ban hanh - BS. Nguyen Van An</div></div>
+        </div>
+        <div class="timeline-view__item">
+            <span class="timeline-view__date">10/04</span>
+            <div class="timeline-view__content"><div class="timeline-view__content-title">Them quyen cho KTV. Le Van Hung</div><div class="timeline-view__content-desc">Them quyen Thuc hien Danh muc - PGD. Vo Thi Lan</div></div>
+        </div>
+        <div class="timeline-view__item">
+            <span class="timeline-view__date">08/04</span>
+            <div class="timeline-view__content"><div class="timeline-view__content-title">Xoa quyen BS. Hoang Nam</div><div class="timeline-view__content-desc">Go quyen Xoa Quy trinh (chuyen khoa) - BS. Nguyen Van An</div></div>
         </div>
     </div>
 </div>
 
 @code {
-    private int? expandedRow = null;
-
-    private void ToggleRow(int rowId)
-    {
-        expandedRow = expandedRow == rowId ? null : rowId;
-    }
+    private string viewMode = "table";
 }

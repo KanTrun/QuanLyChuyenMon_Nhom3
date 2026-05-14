@@ -1,243 +1,272 @@
 @page "/procedures"
 @layout AppLayout
 
-<PageTitle>Quy trình Kỹ thuật Chuyên môn - QLCM Pro</PageTitle>
+<PageTitle>Quy trinh Ky thuat Chuyen mon - QLCM Pro</PageTitle>
 
-<!-- Page Header -->
-<div class="module-page__header">
-    <div class="module-page__header-left">
-        <h1>Quy trình Kỹ thuật Chuyên môn</h1>
-        <p>Quản lý toàn bộ quy trình hoạt động chuyên môn</p>
-    </div>
-    <div class="module-page__actions">
-        <a href="/procedures/create" class="btn-primary">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            Tạo quy trình mới
-        </a>
-    </div>
-</div>
-
-<!-- Filter Bar -->
-<div class="filter-bar">
-    <div class="filter-bar__search">
-        <span class="filter-bar__search-icon">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </span>
-        <input type="text" placeholder="Tìm kiếm quy trình..." />
-    </div>
-    <div class="filter-bar__chips">
-        <span class="filter-chip filter-chip--active">Tất cả <span class="filter-chip__count">128</span></span>
-        <span class="filter-chip">Nháp <span class="filter-chip__count">23</span></span>
-        <span class="filter-chip">Chờ duyệt <span class="filter-chip__count">15</span></span>
-        <span class="filter-chip">Hoạt động <span class="filter-chip__count">78</span></span>
-        <span class="filter-chip">Lưu trữ <span class="filter-chip__count">12</span></span>
-    </div>
-    <select class="filter-bar__select">
-        <option>Tất cả khoa/phòng</option>
-        <option>Ngoại tổng hợp</option>
-        <option>Nội tổng hợp</option>
-        <option>Xét nghiệm</option>
-        <option>Chẩn đoán hình ảnh</option>
-        <option>Sản phụ khoa</option>
-        <option>Nhi khoa</option>
-        <option>Tim mạch</option>
-        <option>Phẫu thuật</option>
-    </select>
-    <select class="filter-bar__select">
-        <option>Mới nhất</option>
-        <option>Tên A-Z</option>
-        <option>Tên Z-A</option>
-        <option>Phiên bản</option>
-    </select>
-</div>
-
-<!-- Data Table -->
-<div class="data-table-container glass-card">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Mã QT</th>
-                <th>Tên quy trình</th>
-                <th>Khoa/Phòng áp dụng</th>
-                <th>Trạng thái</th>
-                <th>Phiên bản</th>
-                <th>Ngày cập nhật</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><span class="data-table__code">QT-001</span></td>
-                <td><span class="data-table__name">Quy trình mổ nội soi ổ bụng</span></td>
-                <td><span class="data-table__dept">Ngoại tổng hợp</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoạt động</span></td>
-                <td>v2.1</td>
-                <td>15/03/2024</td>
-                <td>
-                    <div class="actions-cell">
-                        <a href="/procedures/QT-001" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td><span class="data-table__code">QT-002</span></td>
-                <td><span class="data-table__name">Quy trình xét nghiệm đông máu</span></td>
-                <td><span class="data-table__dept">Xét nghiệm</span></td>
-                <td><span class="status-badge status-badge--draft"><span class="status-badge__dot"></span>Nháp</span></td>
-                <td>v1.0</td>
-                <td>10/04/2024</td>
-                <td>
-                    <div class="actions-cell">
-                        <a href="/procedures/QT-002" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td><span class="data-table__code">QT-003</span></td>
-                <td><span class="data-table__name">Quy trình truyền máu và chế phẩm máu</span></td>
-                <td><span class="data-table__dept">Huyết học</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoạt động</span></td>
-                <td>v3.2</td>
-                <td>22/02/2024</td>
-                <td>
-                    <div class="actions-cell">
-                        <a href="/procedures/QT-003" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td><span class="data-table__code">QT-004</span></td>
-                <td><span class="data-table__name">Quy trình phẫu thuật nội soi khớp gối</span></td>
-                <td><span class="data-table__dept">Chỉnh hình</span></td>
-                <td><span class="status-badge status-badge--pending"><span class="status-badge__dot"></span>Chờ duyệt</span></td>
-                <td>v1.2</td>
-                <td>05/04/2024</td>
-                <td>
-                    <div class="actions-cell">
-                        <a href="/procedures/QT-004" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td><span class="data-table__code">QT-005</span></td>
-                <td><span class="data-table__name">Quy trình chăm sóc vết thương mạn tính</span></td>
-                <td><span class="data-table__dept">Điều dưỡng</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoạt động</span></td>
-                <td>v3.0</td>
-                <td>18/03/2024</td>
-                <td>
-                    <div class="actions-cell">
-                        <a href="/procedures/QT-005" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td><span class="data-table__code">QT-006</span></td>
-                <td><span class="data-table__name">Quy trình siêu âm tim qua thành ngực</span></td>
-                <td><span class="data-table__dept">Tim mạch</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoạt động</span></td>
-                <td>v2.0</td>
-                <td>01/03/2024</td>
-                <td>
-                    <div class="actions-cell">
-                        <a href="/procedures/QT-006" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td><span class="data-table__code">QT-007</span></td>
-                <td><span class="data-table__name">Quy trình cấp cứu ngừng tuần hoàn</span></td>
-                <td><span class="data-table__dept">Cấp cứu</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoạt động</span></td>
-                <td>v4.1</td>
-                <td>28/01/2024</td>
-                <td>
-                    <div class="actions-cell">
-                        <a href="/procedures/QT-007" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td><span class="data-table__code">QT-008</span></td>
-                <td><span class="data-table__name">Quy trình sinh thiết gan dưới hướng dẫn siêu âm</span></td>
-                <td><span class="data-table__dept">Tiêu hóa</span></td>
-                <td><span class="status-badge status-badge--pending"><span class="status-badge__dot"></span>Chờ duyệt</span></td>
-                <td>v1.1</td>
-                <td>12/04/2024</td>
-                <td>
-                    <div class="actions-cell">
-                        <a href="/procedures/QT-008" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td><span class="data-table__code">QT-009</span></td>
-                <td><span class="data-table__name">Quy trình đặt catheter tĩnh mạch trung tâm</span></td>
-                <td><span class="data-table__dept">Hồi sức tích cực</span></td>
-                <td><span class="status-badge status-badge--archived"><span class="status-badge__dot"></span>Lưu trữ</span></td>
-                <td>v1.0</td>
-                <td>20/12/2023</td>
-                <td>
-                    <div class="actions-cell">
-                        <a href="/procedures/QT-009" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td><span class="data-table__code">QT-010</span></td>
-                <td><span class="data-table__name">Quy trình xét nghiệm PCR chẩn đoán bệnh truyền nhiễm</span></td>
-                <td><span class="data-table__dept">Vi sinh</span></td>
-                <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoạt động</span></td>
-                <td>v2.3</td>
-                <td>08/03/2024</td>
-                <td>
-                    <div class="actions-cell">
-                        <a href="/procedures/QT-010" class="action-btn" title="Xem chi tiết"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg></a>
-                        <button class="action-btn" title="Chỉnh sửa"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-                        <button class="action-btn action-btn--danger" title="Lưu trữ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5zM4 5V3.5A1.5 1.5 0 015.5 2h5A1.5 1.5 0 0112 3.5V5" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <!-- Pagination -->
-    <div class="pagination">
-        <span class="pagination__info">Hiển thị 1-10 / 128 quy trình</span>
-        <div class="pagination__buttons">
-            <button class="pagination__btn" disabled>&laquo;</button>
-            <button class="pagination__btn pagination__btn--active">1</button>
-            <button class="pagination__btn">2</button>
-            <button class="pagination__btn">3</button>
-            <button class="pagination__btn">...</button>
-            <button class="pagination__btn">13</button>
-            <button class="pagination__btn">&raquo;</button>
+<div class="module-page reveal">
+    <!-- Page Header -->
+    <div class="module-page__header">
+        <div class="module-page__header-left">
+            <h1>Quy trinh Ky thuat Chuyen mon</h1>
+            <p>Quan ly toan bo quy trinh hoat dong chuyen mon</p>
+        </div>
+        <div class="module-page__actions">
+            <div class="view-toggle" role="tablist" aria-label="Che do xem">
+                <button class="view-toggle__btn view-toggle__btn--active" aria-label="Bang" data-view="table">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="3" rx="0.5" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="6" width="5" height="3" rx="0.5" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1" width="5" height="3" rx="0.5" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="6" width="5" height="3" rx="0.5" stroke="currentColor" stroke-width="1.2"/></svg>
+                    Bang
+                </button>
+                <button class="view-toggle__btn" aria-label="Kanban" data-view="kanban">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="3" height="12" rx="0.5" stroke="currentColor" stroke-width="1.2"/><rect x="5.5" y="1" width="3" height="8" rx="0.5" stroke="currentColor" stroke-width="1.2"/><rect x="10" y="1" width="3" height="10" rx="0.5" stroke="currentColor" stroke-width="1.2"/></svg>
+                    Kanban
+                </button>
+                <button class="view-toggle__btn" aria-label="Timeline" data-view="timeline">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M3 4h8M3 7h8M3 10h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    Timeline
+                </button>
+            </div>
+            <button class="btn-icon" title="Xuat PDF" aria-label="Xuat PDF">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 1h5l4 4v9a1 1 0 01-1 1H4a1 1 0 01-1-1V2a1 1 0 011-1z" stroke="currentColor" stroke-width="1.3"/><path d="M9 1v4h4" stroke="currentColor" stroke-width="1.3"/></svg>
+            </button>
+            <button class="btn-icon" title="Xuat Excel" aria-label="Xuat Excel">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M5 5l6 6M11 5l-6 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            </button>
+            <a href="/procedures/create" class="btn-primary">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Tao quy trinh moi
+            </a>
         </div>
     </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-panel">
+        <div class="filter-bar__search">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <input type="text" class="filter-panel__input" placeholder="Tim kiem quy trinh..." aria-label="Tim kiem quy trinh" />
+        </div>
+        <div class="filter-bar__chips">
+            <span class="filter-chip filter-chip--active">Tat ca <span class="filter-chip__count">128</span></span>
+            <span class="filter-chip">Nhap <span class="filter-chip__count">23</span></span>
+            <span class="filter-chip">Cho duyet <span class="filter-chip__count">15</span></span>
+            <span class="filter-chip">Hoat dong <span class="filter-chip__count">78</span></span>
+            <span class="filter-chip">Luu tru <span class="filter-chip__count">12</span></span>
+        </div>
+        <select class="filter-panel__input" aria-label="Khoa phong">
+            <option>Tat ca khoa/phong</option>
+            <option>Ngoai tong hop</option>
+            <option>Noi tong hop</option>
+            <option>Xet nghiem</option>
+            <option>Chan doan hinh anh</option>
+            <option>San phu khoa</option>
+        </select>
+        <select class="filter-panel__input" aria-label="Sap xep">
+            <option>Moi nhat</option>
+            <option>Ten A-Z</option>
+            <option>Ten Z-A</option>
+            <option>Phien ban</option>
+        </select>
+        <div class="date-range-picker">
+            <input type="date" class="date-range-picker__input" aria-label="Tu ngay" />
+            <span class="date-range-picker__sep">-</span>
+            <input type="date" class="date-range-picker__input" aria-label="Den ngay" />
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions" style="display:none;" aria-label="Thao tac hang loat">
+        <span class="bulk-actions__count">3 muc da chon</span>
+        <button class="bulk-actions__btn">Phe duyet</button>
+        <button class="bulk-actions__btn">Luu tru</button>
+        <button class="bulk-actions__btn bulk-actions__btn--danger">Xoa</button>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div class="data-table-container glass-card" data-view-content="table">
+        <table class="data-table" aria-label="Danh sach quy trinh">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" aria-label="Chon tat ca" /></th>
+                    <th>Ma QT</th>
+                    <th>Ten quy trinh</th>
+                    <th>Khoa/Phong</th>
+                    <th>Trang thai</th>
+                    <th>Phien ban</th>
+                    <th>Ngay cap nhat</th>
+                    <th>Thao tac</th>
+                </tr>
+            </thead>
+            <tbody class="stagger-children">
+                <tr>
+                    <td><input type="checkbox" aria-label="Chon QT-001" /></td>
+                    <td><span class="data-table__code">QT-001</span></td>
+                    <td><span class="data-table__name">Quy trinh mo noi soi o bung</span></td>
+                    <td><span class="data-table__dept">Ngoai tong hop</span></td>
+                    <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></td>
+                    <td>v2.1</td>
+                    <td>15/03/2024</td>
+                    <td><div class="actions-cell"><a href="/procedures/QT-001" class="action-btn" title="Xem">&#128065;</a><button class="action-btn" title="Sua">&#9998;</button><button class="action-btn action-btn--danger" title="Luu tru">&#128451;</button></div></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" aria-label="Chon QT-002" /></td>
+                    <td><span class="data-table__code">QT-002</span></td>
+                    <td><span class="data-table__name">Quy trinh xet nghiem dong mau</span></td>
+                    <td><span class="data-table__dept">Xet nghiem</span></td>
+                    <td><span class="status-badge status-badge--draft"><span class="status-badge__dot"></span>Nhap</span></td>
+                    <td>v1.0</td>
+                    <td>10/04/2024</td>
+                    <td><div class="actions-cell"><a href="/procedures/QT-002" class="action-btn" title="Xem">&#128065;</a><button class="action-btn" title="Sua">&#9998;</button><button class="action-btn action-btn--danger" title="Luu tru">&#128451;</button></div></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" aria-label="Chon QT-003" /></td>
+                    <td><span class="data-table__code">QT-003</span></td>
+                    <td><span class="data-table__name">Quy trinh truyen mau va che pham mau</span></td>
+                    <td><span class="data-table__dept">Huyet hoc</span></td>
+                    <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></td>
+                    <td>v3.2</td>
+                    <td>22/02/2024</td>
+                    <td><div class="actions-cell"><a href="/procedures/QT-003" class="action-btn" title="Xem">&#128065;</a><button class="action-btn" title="Sua">&#9998;</button><button class="action-btn action-btn--danger" title="Luu tru">&#128451;</button></div></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" aria-label="Chon QT-004" /></td>
+                    <td><span class="data-table__code">QT-004</span></td>
+                    <td><span class="data-table__name">Quy trinh phau thuat noi soi khop goi</span></td>
+                    <td><span class="data-table__dept">Chinh hinh</span></td>
+                    <td><span class="status-badge status-badge--pending"><span class="status-badge__dot"></span>Cho duyet</span></td>
+                    <td>v1.2</td>
+                    <td>05/04/2024</td>
+                    <td><div class="actions-cell"><a href="/procedures/QT-004" class="action-btn" title="Xem">&#128065;</a><button class="action-btn" title="Sua">&#9998;</button><button class="action-btn action-btn--danger" title="Luu tru">&#128451;</button></div></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" aria-label="Chon QT-005" /></td>
+                    <td><span class="data-table__code">QT-005</span></td>
+                    <td><span class="data-table__name">Quy trinh cham soc vet thuong man tinh</span></td>
+                    <td><span class="data-table__dept">Dieu duong</span></td>
+                    <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></td>
+                    <td>v3.0</td>
+                    <td>18/03/2024</td>
+                    <td><div class="actions-cell"><a href="/procedures/QT-005" class="action-btn" title="Xem">&#128065;</a><button class="action-btn" title="Sua">&#9998;</button><button class="action-btn action-btn--danger" title="Luu tru">&#128451;</button></div></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" aria-label="Chon QT-006" /></td>
+                    <td><span class="data-table__code">QT-006</span></td>
+                    <td><span class="data-table__name">Quy trinh sieu am tim qua thanh nguc</span></td>
+                    <td><span class="data-table__dept">Tim mach</span></td>
+                    <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></td>
+                    <td>v2.0</td>
+                    <td>01/03/2024</td>
+                    <td><div class="actions-cell"><a href="/procedures/QT-006" class="action-btn" title="Xem">&#128065;</a><button class="action-btn" title="Sua">&#9998;</button><button class="action-btn action-btn--danger" title="Luu tru">&#128451;</button></div></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" aria-label="Chon QT-007" /></td>
+                    <td><span class="data-table__code">QT-007</span></td>
+                    <td><span class="data-table__name">Quy trinh cap cuu ngung tuan hoan</span></td>
+                    <td><span class="data-table__dept">Cap cuu</span></td>
+                    <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></td>
+                    <td>v4.1</td>
+                    <td>28/01/2024</td>
+                    <td><div class="actions-cell"><a href="/procedures/QT-007" class="action-btn" title="Xem">&#128065;</a><button class="action-btn" title="Sua">&#9998;</button><button class="action-btn action-btn--danger" title="Luu tru">&#128451;</button></div></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" aria-label="Chon QT-008" /></td>
+                    <td><span class="data-table__code">QT-008</span></td>
+                    <td><span class="data-table__name">Quy trinh sinh thiet gan duoi huong dan sieu am</span></td>
+                    <td><span class="data-table__dept">Tieu hoa</span></td>
+                    <td><span class="status-badge status-badge--pending"><span class="status-badge__dot"></span>Cho duyet</span></td>
+                    <td>v1.1</td>
+                    <td>12/04/2024</td>
+                    <td><div class="actions-cell"><a href="/procedures/QT-008" class="action-btn" title="Xem">&#128065;</a><button class="action-btn" title="Sua">&#9998;</button><button class="action-btn action-btn--danger" title="Luu tru">&#128451;</button></div></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="pagination">
+            <span class="pagination__info">Hien thi 1-8 / 128 quy trinh</span>
+            <div class="pagination__buttons">
+                <button class="pagination__btn" disabled>&laquo;</button>
+                <button class="pagination__btn pagination__btn--active">1</button>
+                <button class="pagination__btn">2</button>
+                <button class="pagination__btn">3</button>
+                <button class="pagination__btn">...</button>
+                <button class="pagination__btn">16</button>
+                <button class="pagination__btn">&raquo;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KANBAN VIEW -->
+    <div class="kanban" data-view-content="kanban" style="display:none;" aria-label="Kanban board">
+        <div class="kanban__column kanban__column--draft">
+            <div class="kanban__column-header"><span class="kanban__column-title">Nhap</span><span class="kanban__column-count">3</span></div>
+            <div class="kanban__card tilt-card"><div class="kanban__card-title">Quy trinh xet nghiem dong mau</div><span class="kanban__card-dept">Xet nghiem</span><div class="kanban__card-meta"><span class="kanban__card-version">v1.0</span><span class="kanban__card-avatar">NV</span></div></div>
+            <div class="kanban__card tilt-card"><div class="kanban__card-title">Quy trinh noi soi dai trang</div><span class="kanban__card-dept">Tieu hoa</span><div class="kanban__card-meta"><span class="kanban__card-version">v1.0</span><span class="kanban__card-avatar">TH</span></div></div>
+            <div class="kanban__card tilt-card"><div class="kanban__card-title">Quy trinh sieu am san khoa</div><span class="kanban__card-dept">San khoa</span><div class="kanban__card-meta"><span class="kanban__card-version">v1.0</span><span class="kanban__card-avatar">LM</span></div></div>
+            <div class="kanban__drop-placeholder">Keo tha vao day</div>
+        </div>
+        <div class="kanban__column kanban__column--pending">
+            <div class="kanban__column-header"><span class="kanban__column-title">Cho duyet</span><span class="kanban__column-count">2</span></div>
+            <div class="kanban__card tilt-card"><div class="kanban__card-title">Quy trinh phau thuat noi soi khop goi</div><span class="kanban__card-dept">Chinh hinh</span><div class="kanban__card-meta"><span class="kanban__card-version">v1.2</span><span class="kanban__card-avatar">DT</span></div></div>
+            <div class="kanban__card tilt-card"><div class="kanban__card-title">Quy trinh sinh thiet gan</div><span class="kanban__card-dept">Tieu hoa</span><div class="kanban__card-meta"><span class="kanban__card-version">v1.1</span><span class="kanban__card-avatar">HN</span></div></div>
+            <div class="kanban__drop-placeholder">Keo tha vao day</div>
+        </div>
+        <div class="kanban__column kanban__column--approved">
+            <div class="kanban__column-header"><span class="kanban__column-title">Da duyet</span><span class="kanban__column-count">2</span></div>
+            <div class="kanban__card tilt-card"><div class="kanban__card-title">Quy trinh CT-Scanner 128 lat</div><span class="kanban__card-dept">CDHA</span><div class="kanban__card-meta"><span class="kanban__card-version">v2.0</span><span class="kanban__card-avatar">PL</span></div></div>
+            <div class="kanban__card tilt-card"><div class="kanban__card-title">Quy trinh MRI nao</div><span class="kanban__card-dept">CDHA</span><div class="kanban__card-meta"><span class="kanban__card-version">v1.5</span><span class="kanban__card-avatar">KA</span></div></div>
+            <div class="kanban__drop-placeholder">Keo tha vao day</div>
+        </div>
+        <div class="kanban__column kanban__column--published">
+            <div class="kanban__column-header"><span class="kanban__column-title">Ban hanh</span><span class="kanban__column-count">3</span></div>
+            <div class="kanban__card tilt-card"><div class="kanban__card-title">Quy trinh mo noi soi o bung</div><span class="kanban__card-dept">Ngoai tong hop</span><div class="kanban__card-meta"><span class="kanban__card-version">v2.1</span><span class="kanban__card-avatar">AN</span></div></div>
+            <div class="kanban__card tilt-card"><div class="kanban__card-title">Quy trinh truyen mau</div><span class="kanban__card-dept">Huyet hoc</span><div class="kanban__card-meta"><span class="kanban__card-version">v3.2</span><span class="kanban__card-avatar">BM</span></div></div>
+            <div class="kanban__card tilt-card"><div class="kanban__card-title">Quy trinh cap cuu ngung tuan hoan</div><span class="kanban__card-dept">Cap cuu</span><div class="kanban__card-meta"><span class="kanban__card-version">v4.1</span><span class="kanban__card-avatar">VD</span></div></div>
+            <div class="kanban__drop-placeholder">Keo tha vao day</div>
+        </div>
+        <div class="kanban__column kanban__column--archived">
+            <div class="kanban__column-header"><span class="kanban__column-title">Luu tru</span><span class="kanban__column-count">2</span></div>
+            <div class="kanban__card tilt-card"><div class="kanban__card-title">Quy trinh dat catheter TM trung tam</div><span class="kanban__card-dept">HSTC</span><div class="kanban__card-meta"><span class="kanban__card-version">v1.0</span><span class="kanban__card-avatar">QT</span></div></div>
+            <div class="kanban__card tilt-card"><div class="kanban__card-title">Quy trinh loc mau lien tuc</div><span class="kanban__card-dept">HSTC</span><div class="kanban__card-meta"><span class="kanban__card-version">v2.0</span><span class="kanban__card-avatar">NH</span></div></div>
+            <div class="kanban__drop-placeholder">Keo tha vao day</div>
+        </div>
+    </div>
+
+    <!-- TIMELINE VIEW -->
+    <div class="timeline-view" data-view-content="timeline" style="display:none;" aria-label="Timeline quy trinh">
+        <div class="timeline-view__item reveal">
+            <span class="timeline-view__date">15/04/2024</span>
+            <div class="timeline-view__content"><div class="timeline-view__content-title">Quy trinh sinh thiet gan - Cap nhat v1.1</div><div class="timeline-view__content-desc">Gui duyet boi BS. Hoang Nam - Khoa Tieu hoa</div><div class="timeline-view__content-meta"><span>Trang thai: Cho duyet</span><span>BS. Tran Van Duc</span></div></div>
+        </div>
+        <div class="timeline-view__item reveal">
+            <span class="timeline-view__date">10/04/2024</span>
+            <div class="timeline-view__content"><div class="timeline-view__content-title">Quy trinh xet nghiem dong mau - Tao moi</div><div class="timeline-view__content-desc">Khoi tao boi DD. Nguyen Thi Mai - Khoa Xet nghiem</div><div class="timeline-view__content-meta"><span>Trang thai: Nhap</span><span>DD. Nguyen Thi Mai</span></div></div>
+        </div>
+        <div class="timeline-view__item reveal">
+            <span class="timeline-view__date">05/04/2024</span>
+            <div class="timeline-view__content"><div class="timeline-view__content-title">Quy trinh phau thuat noi soi khop goi - Gui duyet</div><div class="timeline-view__content-desc">Phien ban 1.2 gui duyet boi Khoa Chinh hinh</div><div class="timeline-view__content-meta"><span>Trang thai: Cho duyet</span><span>BS. Le Minh Tuan</span></div></div>
+        </div>
+        <div class="timeline-view__item reveal">
+            <span class="timeline-view__date">22/03/2024</span>
+            <div class="timeline-view__content"><div class="timeline-view__content-title">Quy trinh cham soc vet thuong - Ban hanh v3.0</div><div class="timeline-view__content-desc">Da phe duyet va ban hanh toan benh vien</div><div class="timeline-view__content-meta"><span>Trang thai: Hoat dong</span><span>PGD. Vo Thi Lan</span></div></div>
+        </div>
+        <div class="timeline-view__item reveal">
+            <span class="timeline-view__date">15/03/2024</span>
+            <div class="timeline-view__content"><div class="timeline-view__content-title">Quy trinh mo noi soi o bung - Cap nhat v2.1</div><div class="timeline-view__content-desc">Bo sung buoc kiem tra thiet bi truoc phau thuat</div><div class="timeline-view__content-meta"><span>Trang thai: Hoat dong</span><span>BS. Nguyen Van An</span></div></div>
+        </div>
+        <div class="timeline-view__item reveal">
+            <span class="timeline-view__date">01/03/2024</span>
+            <div class="timeline-view__content"><div class="timeline-view__content-title">Quy trinh sieu am tim - Ban hanh v2.0</div><div class="timeline-view__content-desc">Hieu chinh theo huong dan Bo Y te 2024</div><div class="timeline-view__content-meta"><span>Trang thai: Hoat dong</span><span>BS. Pham Quoc Bao</span></div></div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" style="display:none;" data-empty-state>
+        <div class="empty-state__icon">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none"><rect x="16" y="12" width="48" height="56" rx="4" stroke="currentColor" stroke-width="2"/><path d="M28 28h24M28 36h24M28 44h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="56" cy="56" r="12" stroke="currentColor" stroke-width="2"/><path d="M52 56h8M56 52v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="empty-state__title">Khong tim thay quy trinh nao</div>
+        <div class="empty-state__desc">Thu thay doi bo loc hoac tao quy trinh moi</div>
+        <a href="/procedures/create" class="btn-primary empty-state__action">Tao quy trinh moi</a>
+    </div>
 </div>
 
-<!-- Empty State (hidden, shown when no data) -->
-<div class="empty-state" style="display: none;">
-    <div class="empty-state__icon">
-        <svg width="80" height="80" viewBox="0 0 80 80" fill="none"><rect x="16" y="12" width="48" height="56" rx="4" stroke="currentColor" stroke-width="2"/><path d="M28 28h24M28 36h24M28 44h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    </div>
-    <div class="empty-state__title">Chưa có quy trình nào</div>
-    <div class="empty-state__desc">Bắt đầu tạo quy trình kỹ thuật chuyên môn đầu tiên cho bệnh viện của bạn</div>
-</div>
+@code {
+    private string currentView = "table";
+}

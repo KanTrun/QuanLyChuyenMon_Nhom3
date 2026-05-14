@@ -1,222 +1,227 @@
 @page "/protocols"
 @layout AppLayout
 
-<PageTitle>Phác đồ và Quy trình Lâm sàng - QLCM Pro</PageTitle>
+<PageTitle>Phac do Lam sang - QLCM Pro</PageTitle>
 
-<!-- Page Header -->
-<div class="module-page__header">
-    <div class="module-page__header-left">
-        <h1>Phác đồ &amp; Quy trình Lâm sàng</h1>
-        <p>Quản lý phác đồ điều trị, chăm sóc, phẫu thuật và thủ thuật</p>
-    </div>
-    <div class="module-page__actions">
-        <button class="btn-primary" aria-label="Thêm phác đồ mới">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            Thêm phác đồ
-        </button>
-    </div>
-</div>
-
-<!-- Type Tabs -->
-<div class="category-tabs" role="tablist" aria-label="Lọc loại phác đồ">
-    <button class="category-tab @(activeType == "all" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeType == "all" ? "true" : "false")" @onclick='() => activeType = "all"' >Tất cả <span class="category-tab__count">8</span></button>
-    <button class="category-tab @(activeType == "treatment" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeType == "treatment" ? "true" : "false")" @onclick='() => activeType = "treatment"' >Phác đồ điều trị <span class="category-tab__count">3</span></button>
-    <button class="category-tab @(activeType == "care" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeType == "care" ? "true" : "false")" @onclick='() => activeType = "care"' >Chăm sóc <span class="category-tab__count">2</span></button>
-    <button class="category-tab @(activeType == "surgery" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeType == "surgery" ? "true" : "false")" @onclick='() => activeType = "surgery"' >Phẫu thuật <span class="category-tab__count">1</span></button>
-    <button class="category-tab @(activeType == "procedure" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeType == "procedure" ? "true" : "false")" @onclick='() => activeType = "procedure"' >Thủ thuật <span class="category-tab__count">2</span></button>
-</div>
-
-<!-- Filter Bar -->
-<div class="filter-bar">
-    <div class="filter-bar__search">
-        <span class="filter-bar__search-icon">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </span>
-        <input type="text" placeholder="Tìm kiếm phác đồ..." aria-label="Tìm kiếm phác đồ" />
-    </div>
-    <select class="filter-bar__select" aria-label="Lọc ICD">
-        <option>Tất cả ICD</option>
-        <option>J18.9 - Viêm phổi</option>
-        <option>E11.9 - ĐTĐ type 2</option>
-        <option>C34.9 - Ung thư phổi</option>
-    </select>
-    <select class="filter-bar__select" aria-label="Lọc khoa">
-        <option>Tất cả khoa</option>
-        <option>Nội khoa</option>
-        <option>Ngoại khoa</option>
-        <option>Ung bướu</option>
-        <option>Hồi sức</option>
-    </select>
-    <select class="filter-bar__select" aria-label="Trạng thái">
-        <option>Tất cả</option>
-        <option>Active</option>
-        <option>Draft</option>
-    </select>
-</div>
-
-<!-- Protocol Cards Grid -->
-<div class="protocol-grid">
-    <!-- Card 1 -->
-    <div class="protocol-card card-hover">
-        <div class="protocol-card__header">
-            <span class="protocol-card__type-badge protocol-card__type-badge--treatment">Phác đồ</span>
-            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
+<div class="module-page reveal">
+    <div class="module-page__header">
+        <div class="module-page__header-left">
+            <h1>Phac do Lam sang</h1>
+            <p>Quan ly phac do dieu tri, cham soc va thu thuat</p>
         </div>
-        <div class="protocol-card__name">Phác đồ điều trị viêm phổi cộng đồng</div>
-        <div class="protocol-card__icd">
-            <span class="icd-chip">J18.9</span>
-        </div>
-        <div class="protocol-card__meta">
-            <span class="protocol-card__meta-item">Nội khoa</span>
-            <span class="protocol-card__meta-item">v2.0</span>
-        </div>
-        <div class="protocol-card__footer">
-            <span class="protocol-card__usage">Áp dụng: 128 lần</span>
-            <a href="/protocols/PD-001" class="protocol-card__link">Xem chi tiết &rarr;</a>
+        <div class="module-page__actions">
+            <div class="view-toggle">
+                <button class="view-toggle__btn view-toggle__btn--active" aria-label="Luoi">Luoi</button>
+                <button class="view-toggle__btn" aria-label="Danh sach">Danh sach</button>
+            </div>
+            <button class="btn-primary">+ Tao phac do</button>
         </div>
     </div>
 
-    <!-- Card 2 -->
-    <div class="protocol-card card-hover">
-        <div class="protocol-card__header">
-            <span class="protocol-card__type-badge protocol-card__type-badge--care">Chăm sóc</span>
-            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
-        </div>
-        <div class="protocol-card__name">Quy trình chăm sóc sau mổ tim</div>
-        <div class="protocol-card__icd">
-            <span class="icd-chip">I25.1</span>
-        </div>
-        <div class="protocol-card__meta">
-            <span class="protocol-card__meta-item">Ngoại tim mạch</span>
-            <span class="protocol-card__meta-item">v1.2</span>
-        </div>
-        <div class="protocol-card__footer">
-            <span class="protocol-card__usage">Áp dụng: 45 lần</span>
-            <a href="/protocols/PD-002" class="protocol-card__link">Xem chi tiết &rarr;</a>
-        </div>
+    <!-- Protocol Type Tabs -->
+    <div class="tabs-animated" style="margin-bottom:1.5rem;">
+        <button class="tabs-animated__tab tabs-animated__tab--active">Tat ca</button>
+        <button class="tabs-animated__tab">Dieu tri</button>
+        <button class="tabs-animated__tab">Cham soc</button>
+        <button class="tabs-animated__tab">Phau thuat</button>
+        <button class="tabs-animated__tab">Thu thuat</button>
     </div>
 
-    <!-- Card 3 -->
-    <div class="protocol-card card-hover">
-        <div class="protocol-card__header">
-            <span class="protocol-card__type-badge protocol-card__type-badge--treatment">Phác đồ</span>
-            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
-        </div>
-        <div class="protocol-card__name">Phác đồ hóa trị ung thư phổi</div>
-        <div class="protocol-card__icd">
-            <span class="icd-chip">C34.9</span>
-        </div>
-        <div class="protocol-card__meta">
-            <span class="protocol-card__meta-item">Ung bướu</span>
-            <span class="protocol-card__meta-item">v3.0</span>
-        </div>
-        <div class="protocol-card__footer">
-            <span class="protocol-card__usage">Áp dụng: 67 lần</span>
-            <a href="/protocols/PD-003" class="protocol-card__link">Xem chi tiết &rarr;</a>
-        </div>
+    <!-- Search & Filters -->
+    <div class="filter-panel">
+        <input type="text" class="filter-panel__input" placeholder="Tim kiem theo ten hoac ma ICD..." aria-label="Tim kiem" style="flex:1;" />
+        <select class="filter-panel__input" aria-label="Khoa">
+            <option>Tat ca khoa</option>
+            <option>Noi tong hop</option>
+            <option>Ngoai tong hop</option>
+            <option>Nhi khoa</option>
+            <option>San khoa</option>
+        </select>
+        <select class="filter-panel__input" aria-label="Trang thai">
+            <option>Tat ca trang thai</option>
+            <option>Hoat dong</option>
+            <option>Nhap</option>
+            <option>Luu tru</option>
+        </select>
     </div>
 
-    <!-- Card 4 -->
-    <div class="protocol-card card-hover">
-        <div class="protocol-card__header">
-            <span class="protocol-card__type-badge protocol-card__type-badge--surgery">Phẫu thuật</span>
-            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
+    <!-- Grid View (default) -->
+    <div class="protocol-grid stagger-children" style="display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem;" data-view-content="grid">
+        <!-- Card 1 -->
+        <div class="glass-card tilt-card" style="padding:1.25rem; cursor:pointer;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-size:0.6875rem; font-weight:600; padding:0.125rem 0.5rem; border-radius:4px; background:rgba(59,130,246,0.1); color:var(--color-info);">Dieu tri</span>
+                <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span>
+            </div>
+            <h3 style="font-size:0.9375rem; font-weight:700; margin-bottom:0.5rem;">Phac do dieu tri viem phoi cong dong</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">J15.0</span>
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">J18.1</span>
+            </div>
+            <div style="display:flex; gap:0.375rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.125rem 0.375rem; border-radius:999px; background:rgba(16,185,129,0.1); color:var(--color-success);">Nguoi lon</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                <span>v2.1</span>
+                <span>Noi tong hop</span>
+            </div>
         </div>
-        <div class="protocol-card__name">Quy trình mổ nội soi cắt túi mật</div>
-        <div class="protocol-card__icd">
-            <span class="icd-chip">K80.2</span>
+        <!-- Card 2 -->
+        <div class="glass-card tilt-card" style="padding:1.25rem; cursor:pointer;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-size:0.6875rem; font-weight:600; padding:0.125rem 0.5rem; border-radius:4px; background:rgba(245,158,11,0.1); color:var(--color-warning);">Cham soc</span>
+                <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span>
+            </div>
+            <h3 style="font-size:0.9375rem; font-weight:700; margin-bottom:0.5rem;">Phac do cham soc benh nhan sau mo</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">Z48.0</span>
+            </div>
+            <div style="display:flex; gap:0.375rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.125rem 0.375rem; border-radius:999px; background:rgba(16,185,129,0.1); color:var(--color-success);">Nguoi lon</span>
+                <span style="font-size:0.625rem; padding:0.125rem 0.375rem; border-radius:999px; background:rgba(59,130,246,0.1); color:var(--color-info);">Tre em</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                <span>v3.0</span>
+                <span>Dieu duong</span>
+            </div>
         </div>
-        <div class="protocol-card__meta">
-            <span class="protocol-card__meta-item">Ngoại khoa</span>
-            <span class="protocol-card__meta-item">v2.1</span>
+        <!-- Card 3 -->
+        <div class="glass-card tilt-card" style="padding:1.25rem; cursor:pointer;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-size:0.6875rem; font-weight:600; padding:0.125rem 0.5rem; border-radius:4px; background:rgba(239,68,68,0.1); color:var(--color-danger);">Phau thuat</span>
+                <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span>
+            </div>
+            <h3 style="font-size:0.9375rem; font-weight:700; margin-bottom:0.5rem;">Phac do phau thuat cat ruot thua noi soi</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">K35.8</span>
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">K37</span>
+            </div>
+            <div style="display:flex; gap:0.375rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.125rem 0.375rem; border-radius:999px; background:rgba(16,185,129,0.1); color:var(--color-success);">Nguoi lon</span>
+                <span style="font-size:0.625rem; padding:0.125rem 0.375rem; border-radius:999px; background:rgba(59,130,246,0.1); color:var(--color-info);">Tre em >10 tuoi</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                <span>v1.5</span>
+                <span>Ngoai tong hop</span>
+            </div>
         </div>
-        <div class="protocol-card__footer">
-            <span class="protocol-card__usage">Áp dụng: 89 lần</span>
-            <a href="/protocols/PD-004" class="protocol-card__link">Xem chi tiết &rarr;</a>
+        <!-- Card 4 -->
+        <div class="glass-card tilt-card" style="padding:1.25rem; cursor:pointer;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-size:0.6875rem; font-weight:600; padding:0.125rem 0.5rem; border-radius:4px; background:rgba(59,130,246,0.1); color:var(--color-info);">Dieu tri</span>
+                <span class="status-badge status-badge--draft"><span class="status-badge__dot"></span>Nhap</span>
+            </div>
+            <h3 style="font-size:0.9375rem; font-weight:700; margin-bottom:0.5rem;">Phac do dieu tri dai thao duong type 2</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">E11.9</span>
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">E11.6</span>
+            </div>
+            <div style="display:flex; gap:0.375rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.125rem 0.375rem; border-radius:999px; background:rgba(16,185,129,0.1); color:var(--color-success);">Nguoi lon</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                <span>v1.0</span>
+                <span>Noi tiet</span>
+            </div>
         </div>
-    </div>
-
-    <!-- Card 5 -->
-    <div class="protocol-card card-hover">
-        <div class="protocol-card__header">
-            <span class="protocol-card__type-badge protocol-card__type-badge--treatment">Phác đồ</span>
-            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
+        <!-- Card 5 -->
+        <div class="glass-card tilt-card" style="padding:1.25rem; cursor:pointer;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-size:0.6875rem; font-weight:600; padding:0.125rem 0.5rem; border-radius:4px; background:rgba(139,92,246,0.1); color:#7c3aed;">Thu thuat</span>
+                <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span>
+            </div>
+            <h3 style="font-size:0.9375rem; font-weight:700; margin-bottom:0.5rem;">Phac do noi soi da day ta trang</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">K29.7</span>
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">K25.9</span>
+            </div>
+            <div style="display:flex; gap:0.375rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.125rem 0.375rem; border-radius:999px; background:rgba(16,185,129,0.1); color:var(--color-success);">Nguoi lon</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                <span>v2.0</span>
+                <span>Tieu hoa</span>
+            </div>
         </div>
-        <div class="protocol-card__name">Phác đồ điều trị đái tháo đường type 2</div>
-        <div class="protocol-card__icd">
-            <span class="icd-chip">E11.9</span>
+        <!-- Card 6 -->
+        <div class="glass-card tilt-card" style="padding:1.25rem; cursor:pointer;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-size:0.6875rem; font-weight:600; padding:0.125rem 0.5rem; border-radius:4px; background:rgba(59,130,246,0.1); color:var(--color-info);">Dieu tri</span>
+                <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span>
+            </div>
+            <h3 style="font-size:0.9375rem; font-weight:700; margin-bottom:0.5rem;">Phac do dieu tri tang huyet ap</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">I10</span>
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">I11.9</span>
+            </div>
+            <div style="display:flex; gap:0.375rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.125rem 0.375rem; border-radius:999px; background:rgba(16,185,129,0.1); color:var(--color-success);">Nguoi lon</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                <span>v4.2</span>
+                <span>Tim mach</span>
+            </div>
         </div>
-        <div class="protocol-card__meta">
-            <span class="protocol-card__meta-item">Nội tiết</span>
-            <span class="protocol-card__meta-item">v1.5</span>
+        <!-- Card 7 -->
+        <div class="glass-card tilt-card" style="padding:1.25rem; cursor:pointer;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-size:0.6875rem; font-weight:600; padding:0.125rem 0.5rem; border-radius:4px; background:rgba(245,158,11,0.1); color:var(--color-warning);">Cham soc</span>
+                <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span>
+            </div>
+            <h3 style="font-size:0.9375rem; font-weight:700; margin-bottom:0.5rem;">Phac do cham soc so sinh non thang</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">P07.3</span>
+            </div>
+            <div style="display:flex; gap:0.375rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.125rem 0.375rem; border-radius:999px; background:rgba(59,130,246,0.1); color:var(--color-info);">So sinh</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                <span>v2.3</span>
+                <span>Nhi - So sinh</span>
+            </div>
         </div>
-        <div class="protocol-card__footer">
-            <span class="protocol-card__usage">Áp dụng: 256 lần</span>
-            <a href="/protocols/PD-005" class="protocol-card__link">Xem chi tiết &rarr;</a>
+        <!-- Card 8 -->
+        <div class="glass-card tilt-card" style="padding:1.25rem; cursor:pointer;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-size:0.6875rem; font-weight:600; padding:0.125rem 0.5rem; border-radius:4px; background:rgba(239,68,68,0.1); color:var(--color-danger);">Phau thuat</span>
+                <span class="status-badge status-badge--pending"><span class="status-badge__dot"></span>Cho duyet</span>
+            </div>
+            <h3 style="font-size:0.9375rem; font-weight:700; margin-bottom:0.5rem;">Phac do mo lay thai cap cuu</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">O82</span>
+            </div>
+            <div style="display:flex; gap:0.375rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.125rem 0.375rem; border-radius:999px; background:rgba(16,185,129,0.1); color:var(--color-success);">Nguoi lon</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                <span>v1.0</span>
+                <span>San khoa</span>
+            </div>
         </div>
-    </div>
-
-    <!-- Card 6 -->
-    <div class="protocol-card card-hover">
-        <div class="protocol-card__header">
-            <span class="protocol-card__type-badge protocol-card__type-badge--procedure">Thủ thuật</span>
-            <span class="status-badge status-badge--draft"><span class="status-badge__dot"></span>Draft</span>
-        </div>
-        <div class="protocol-card__name">Thủ thuật sinh thiết tuyến giáp</div>
-        <div class="protocol-card__icd">
-            <span class="icd-chip">E04.1</span>
-        </div>
-        <div class="protocol-card__meta">
-            <span class="protocol-card__meta-item">Nội tiết</span>
-            <span class="protocol-card__meta-item">v1.0</span>
-        </div>
-        <div class="protocol-card__footer">
-            <span class="protocol-card__usage">Áp dụng: 12 lần</span>
-            <a href="/protocols/PD-006" class="protocol-card__link">Xem chi tiết &rarr;</a>
-        </div>
-    </div>
-
-    <!-- Card 7 -->
-    <div class="protocol-card card-hover">
-        <div class="protocol-card__header">
-            <span class="protocol-card__type-badge protocol-card__type-badge--care">Chăm sóc</span>
-            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
-        </div>
-        <div class="protocol-card__name">Chăm sóc bệnh nhân thở máy</div>
-        <div class="protocol-card__icd">
-            <span class="icd-chip">J96.0</span>
-        </div>
-        <div class="protocol-card__meta">
-            <span class="protocol-card__meta-item">Hồi sức</span>
-            <span class="protocol-card__meta-item">v2.0</span>
-        </div>
-        <div class="protocol-card__footer">
-            <span class="protocol-card__usage">Áp dụng: 34 lần</span>
-            <a href="/protocols/PD-007" class="protocol-card__link">Xem chi tiết &rarr;</a>
-        </div>
-    </div>
-
-    <!-- Card 8 -->
-    <div class="protocol-card card-hover">
-        <div class="protocol-card__header">
-            <span class="protocol-card__type-badge protocol-card__type-badge--treatment">Phác đồ</span>
-            <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Active</span>
-        </div>
-        <div class="protocol-card__name">Phác đồ kháng sinh kinh nghiệm</div>
-        <div class="protocol-card__icd">
-            <span class="icd-chip">A41.9</span>
-        </div>
-        <div class="protocol-card__meta">
-            <span class="protocol-card__meta-item">Truyền nhiễm</span>
-            <span class="protocol-card__meta-item">v4.0</span>
-        </div>
-        <div class="protocol-card__footer">
-            <span class="protocol-card__usage">Áp dụng: 312 lần</span>
-            <a href="/protocols/PD-008" class="protocol-card__link">Xem chi tiết &rarr;</a>
+        <!-- Card 9 -->
+        <div class="glass-card tilt-card" style="padding:1.25rem; cursor:pointer;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-size:0.6875rem; font-weight:600; padding:0.125rem 0.5rem; border-radius:4px; background:rgba(59,130,246,0.1); color:var(--color-info);">Dieu tri</span>
+                <span class="status-badge status-badge--archived"><span class="status-badge__dot"></span>Luu tru</span>
+            </div>
+            <h3 style="font-size:0.9375rem; font-weight:700; margin-bottom:0.5rem;">Phac do dieu tri sot xuat huyet Dengue</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">A90</span>
+                <span style="font-size:0.625rem; padding:0.0625rem 0.375rem; border-radius:3px; background:var(--surface-secondary); color:var(--text-secondary);">A91</span>
+            </div>
+            <div style="display:flex; gap:0.375rem; margin-bottom:0.5rem;">
+                <span style="font-size:0.625rem; padding:0.125rem 0.375rem; border-radius:999px; background:rgba(16,185,129,0.1); color:var(--color-success);">Nguoi lon</span>
+                <span style="font-size:0.625rem; padding:0.125rem 0.375rem; border-radius:999px; background:rgba(59,130,246,0.1); color:var(--color-info);">Tre em</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                <span>v3.1</span>
+                <span>Truyen nhiem</span>
+            </div>
         </div>
     </div>
 </div>
 
 @code {
+    private string viewMode = "grid";
     private string activeType = "all";
 }
