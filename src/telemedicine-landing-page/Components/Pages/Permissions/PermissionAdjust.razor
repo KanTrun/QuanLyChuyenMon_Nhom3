@@ -7,7 +7,7 @@
 <div class="module-page__header">
     <div class="module-page__header-left">
         <h1>Điều chỉnh Phân quyền</h1>
-        <p>Tạo yêu cầu thay đổi quyền truy cap cho người dùng hoac nhom</p>
+        <p>Tạo yêu cầu thay đổi quyền truy cập cho người dùng hoặc nhóm</p>
     </div>
 </div>
 
@@ -43,28 +43,28 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td>Xem quy trình</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
-                    <tr><td>Tạo quy trình</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
-                    <tr><td>Sửa quy trình</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
+                    <tr><td>Xem quy trình</td><td><span class="status-badge status-badge--active">Có</span></td></tr>
+                    <tr><td>Tạo quy trình</td><td><span class="status-badge status-badge--active">Có</span></td></tr>
+                    <tr><td>Sửa quy trình</td><td><span class="status-badge status-badge--active">Có</span></td></tr>
                     <tr><td>Xóa quy trình</td><td><span class="status-badge status-badge--draft">Khong</span></td></tr>
-                    <tr><td>Gửi duyệt</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
-                    <tr><td>Phê duyệt</td><td><span class="status-badge status-badge--draft">Khong</span></td></tr>
-                    <tr><td>Xem phác đồ</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
-                    <tr><td>Tạo phác đồ</td><td><span class="status-badge status-badge--active">Co</span></td></tr>
+                    <tr><td>Gửi duyệt</td><td><span class="status-badge status-badge--active">Có</span></td></tr>
+                    <tr><td>Phê duyệt</td><td><span class="status-badge status-badge--draft">Không</span></td></tr>
+                    <tr><td>Xem phác đồ</td><td><span class="status-badge status-badge--active">Có</span></td></tr>
+                    <tr><td>Tạo phác đồ</td><td><span class="status-badge status-badge--active">Có</span></td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- Section 3: Quyen moi -->
+    <!-- Section 3: Quyền mới -->
     <div class="form-section">
-        <h2 class="form-section__title">3. Quyen moi (thay doi)</h2>
+        <h2 class="form-section__title">3. Quyền mới (thay đổi)</h2>
         <div class="data-table-container" style="max-height: 240px; overflow-y: auto;">
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>Chức năng</th>
-                        <th>Quyen</th>
+                        <th>Quyền</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -87,7 +87,7 @@
         <div class="diff-preview">
             <div class="diff-preview__summary">
                 <span class="diff-preview__added">+3 quyền mới</span>
-                <span class="diff-preview__removed">-1 quyen bi thu hoi</span>
+                <span class="diff-preview__removed">-1 quyền bị thu hồi</span>
             </div>
             <table class="diff-preview__table">
                 <tbody>
@@ -132,7 +132,7 @@
             <label class="radio-item"><input type="radio" name="effective" /> Hẹn giờ</label>
         </div>
         <div class="form-group">
-            <label>Thời gian áp dụng (neu hen gio)</label>
+            <label>Thời gian áp dụng (nếu hẹn giờ)</label>
             <input type="datetime-local" class="form-input" style="max-width: 300px;" />
         </div>
     </div>
@@ -140,7 +140,7 @@
     <!-- Section 7: Xác nhận -->
     <div class="confirm-checkbox">
         <input type="checkbox" id="confirm-check" />
-        <label for="confirm-check">Toi xac nhan da kiem tra cac thay doi tren va chiu trach nhiem ve yeu cau nay</label>
+        <label for="confirm-check">Tôi xác nhận đã kiểm tra các thay đổi trên và chịu trách nhiệm về yêu cầu này</label>
     </div>
 
     <!-- Actions -->

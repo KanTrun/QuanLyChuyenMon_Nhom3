@@ -20,9 +20,9 @@
 <!-- Filter Bar -->
 <div class="filter-bar">
     <div class="filter-bar__date-range">
-        <input type="date" value="2024-03-01" aria-label="Tu ngay" />
-        <span style="color:var(--color-muted);font-size:var(--text-sm);">den</span>
-        <input type="date" value="2024-03-31" aria-label="Den ngay" />
+        <input type="date" value="2024-03-01" aria-label="Từ ngày" />
+        <span style="color:var(--color-muted);font-size:var(--text-sm);">đến</span>
+        <input type="date" value="2024-03-31" aria-label="Đến ngày" />
     </div>
     <select class="filter-bar__select" aria-label="Lọc khoa">
         <option>Tất cả khoa/phòng</option>
@@ -32,20 +32,20 @@
         <option>Nội khoa</option>
     </select>
     <select class="filter-bar__select" aria-label="Loại dịch vụ">
-        <option>Tất cả loai</option>
+        <option>Tất cả loại</option>
         <option>Xét nghiệm</option>
         <option>CDHA</option>
         <option>Phẫu thuật</option>
         <option>Thủ thuật</option>
     </select>
-    <button class="btn-primary" style="padding:var(--space-2) var(--space-4);">Loc</button>
+    <button class="btn-primary" style="padding:var(--space-2) var(--space-4);">Lọc</button>
 </div>
 
 <!-- Summary Cards -->
 <div class="stats-row">
     <div class="stat-card-mini">
         <div class="stat-card-mini__label">Tổng tiêu thụ</div>
-        <div class="stat-card-mini__value stat-card-mini__value--primary">15,432 don vi</div>
+        <div class="stat-card-mini__value stat-card-mini__value--primary">15.432 đơn vị</div>
     </div>
     <div class="stat-card-mini">
         <div class="stat-card-mini__label">Vượt định mức</div>
@@ -57,16 +57,16 @@
     </div>
     <div class="stat-card-mini">
         <div class="stat-card-mini__label">Chi phí</div>
-        <div class="stat-card-mini__value">2.1 ty VND</div>
+        <div class="stat-card-mini__value">2,1 tỷ VNĐ</div>
     </div>
 </div>
 
 <!-- Comparison Chart Section -->
 <div class="glass-card" style="padding:var(--space-6);margin-bottom:var(--space-6);">
-    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--color-ink);margin-bottom:var(--space-5);">So sánh Định mức vs Thực tế - Top 8 dich vu</h3>
+    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--color-ink);margin-bottom:var(--space-5);">So sánh Định mức vs Thực tế - Top 8 dịch vụ</h3>
     <div class="consumption-chart">
         <div class="consumption-chart__row">
-            <span class="consumption-chart__label">XN Cong thuc mau</span>
+            <span class="consumption-chart__label">XN Công thức máu</span>
             <div class="consumption-chart__bars">
                 <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 75%;"></div>
                 <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 82%;"></div>
@@ -74,7 +74,7 @@
             <span class="consumption-chart__percent consumption-chart__percent--over">+9.3%</span>
         </div>
         <div class="consumption-chart__row">
-            <span class="consumption-chart__label">Chup X-quang nguc</span>
+            <span class="consumption-chart__label">Chụp X-quang ngực</span>
             <div class="consumption-chart__bars">
                 <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 60%;"></div>
                 <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 55%;"></div>
@@ -82,7 +82,7 @@
             <span class="consumption-chart__percent consumption-chart__percent--under">-8.3%</span>
         </div>
         <div class="consumption-chart__row">
-            <span class="consumption-chart__label">Mo nội soi tui mat</span>
+            <span class="consumption-chart__label">Mổ nội soi túi mật</span>
             <div class="consumption-chart__bars">
                 <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 85%;"></div>
                 <div class="consumption-chart__bar consumption-chart__bar--exceed" style="width: 98%;"></div>
@@ -90,7 +90,7 @@
             <span class="consumption-chart__percent consumption-chart__percent--over">+15.3%</span>
         </div>
         <div class="consumption-chart__row">
-            <span class="consumption-chart__label">Nội soi da day</span>
+            <span class="consumption-chart__label">Nội soi dạ dày</span>
             <div class="consumption-chart__bars">
                 <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 70%;"></div>
                 <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 65%;"></div>
@@ -98,7 +98,7 @@
             <span class="consumption-chart__percent consumption-chart__percent--under">-7.1%</span>
         </div>
         <div class="consumption-chart__row">
-            <span class="consumption-chart__label">Sinh thiet gan</span>
+            <span class="consumption-chart__label">Sinh thiết gan</span>
             <div class="consumption-chart__bars">
                 <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 50%;"></div>
                 <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 52%;"></div>
@@ -106,7 +106,7 @@
             <span class="consumption-chart__percent consumption-chart__percent--over">+4.0%</span>
         </div>
         <div class="consumption-chart__row">
-            <span class="consumption-chart__label">XN Sinh hoa</span>
+            <span class="consumption-chart__label">XN Sinh hóa</span>
             <div class="consumption-chart__bars">
                 <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 65%;"></div>
                 <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 58%;"></div>
@@ -114,7 +114,7 @@
             <span class="consumption-chart__percent consumption-chart__percent--under">-10.8%</span>
         </div>
         <div class="consumption-chart__row">
-            <span class="consumption-chart__label">CT Scanner bung</span>
+            <span class="consumption-chart__label">CT Scanner bụng</span>
             <div class="consumption-chart__bars">
                 <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 45%;"></div>
                 <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 48%;"></div>
@@ -122,7 +122,7 @@
             <span class="consumption-chart__percent consumption-chart__percent--over">+6.7%</span>
         </div>
         <div class="consumption-chart__row">
-            <span class="consumption-chart__label">Thay khop hang</span>
+            <span class="consumption-chart__label">Thay khớp háng</span>
             <div class="consumption-chart__bars">
                 <div class="consumption-chart__bar consumption-chart__bar--norm" style="width: 90%;"></div>
                 <div class="consumption-chart__bar consumption-chart__bar--actual" style="width: 85%;"></div>
@@ -132,7 +132,7 @@
     </div>
     <div class="consumption-chart__legend">
         <div class="consumption-chart__legend-item"><span class="consumption-chart__legend-dot consumption-chart__legend-dot--norm"></span> Định mức</div>
-        <div class="consumption-chart__legend-item"><span class="consumption-chart__legend-dot consumption-chart__legend-dot--actual"></span> Thuc te</div>
+        <div class="consumption-chart__legend-item"><span class="consumption-chart__legend-dot consumption-chart__legend-dot--actual"></span> Thực tế</div>
     </div>
 </div>
 
@@ -151,7 +151,7 @@
         </thead>
         <tbody>
             <tr>
-                <td><span class="data-table__name">Xét nghiệm cong thuc mau</span></td>
+                <td><span class="data-table__name">Xét nghiệm công thức máu</span></td>
                 <td>2,400</td>
                 <td>2,623</td>
                 <td><span class="deviation-up">+223</span></td>
@@ -159,7 +159,7 @@
                 <td><span class="deviation-up">&#8593;</span></td>
             </tr>
             <tr>
-                <td><span class="data-table__name">Chup X-quang nguc</span></td>
+                <td><span class="data-table__name">Chụp X-quang ngực</span></td>
                 <td>1,800</td>
                 <td>1,651</td>
                 <td><span class="deviation-down">-149</span></td>
@@ -167,7 +167,7 @@
                 <td><span class="deviation-down">&#8595;</span></td>
             </tr>
             <tr>
-                <td><span class="data-table__name">Mo nội soi tui mat</span></td>
+                <td><span class="data-table__name">Mổ nội soi túi mật</span></td>
                 <td>960</td>
                 <td>1,107</td>
                 <td><span class="deviation-up">+147</span></td>
@@ -175,7 +175,7 @@
                 <td><span class="deviation-up">&#8593;</span></td>
             </tr>
             <tr>
-                <td><span class="data-table__name">Nội soi da day</span></td>
+                <td><span class="data-table__name">Nội soi dạ dày</span></td>
                 <td>1,400</td>
                 <td>1,301</td>
                 <td><span class="deviation-down">-99</span></td>
@@ -183,7 +183,7 @@
                 <td><span class="deviation-down">&#8595;</span></td>
             </tr>
             <tr>
-                <td><span class="data-table__name">Sinh thiet gan</span></td>
+                <td><span class="data-table__name">Sinh thiết gan</span></td>
                 <td>500</td>
                 <td>520</td>
                 <td><span class="deviation-up">+20</span></td>
@@ -191,7 +191,7 @@
                 <td><span class="deviation-neutral">&#8594;</span></td>
             </tr>
             <tr>
-                <td><span class="data-table__name">XN Sinh hoa mau</span></td>
+                <td><span class="data-table__name">XN Sinh hóa máu</span></td>
                 <td>2,000</td>
                 <td>1,784</td>
                 <td><span class="deviation-down">-216</span></td>
@@ -199,7 +199,7 @@
                 <td><span class="deviation-down">&#8595;</span></td>
             </tr>
             <tr>
-                <td><span class="data-table__name">CT Scanner bung</span></td>
+                <td><span class="data-table__name">CT Scanner bụng</span></td>
                 <td>600</td>
                 <td>640</td>
                 <td><span class="deviation-up">+40</span></td>
@@ -207,7 +207,7 @@
                 <td><span class="deviation-neutral">&#8594;</span></td>
             </tr>
             <tr>
-                <td><span class="data-table__name">Phẫu thuật thay khop hang</span></td>
+                <td><span class="data-table__name">Phẫu thuật thay khớp háng</span></td>
                 <td>1,080</td>
                 <td>1,020</td>
                 <td><span class="deviation-down">-60</span></td>

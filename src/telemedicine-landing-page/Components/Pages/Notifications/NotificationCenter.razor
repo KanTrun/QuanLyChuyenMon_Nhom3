@@ -7,7 +7,7 @@
 <div class="module-page__header">
     <div class="module-page__header-left">
         <h1>Trung tâm Thông báo</h1>
-        <p>Thông báo hệ thống va cập nhật moi nhat</p>
+        <p>Thông báo hệ thống và cập nhật mới nhất</p>
     </div>
     <div class="module-page__actions">
         <button class="btn-ghost" aria-label="Đọc đánh dấu tất cả">
@@ -21,7 +21,7 @@
 <div class="category-tabs" role="tablist" aria-label="Lọc thông báo">
     <button class="category-tab @(activeFilter == "all" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeFilter == "all" ? "true" : "false")" @onclick='() => activeFilter = "all"' >Tất cả <span class="category-tab__count">15</span></button>
     <button class="category-tab @(activeFilter == "unread" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeFilter == "unread" ? "true" : "false")" @onclick='() => activeFilter = "unread"' >Chưa đọc <span class="category-tab__count">7</span></button>
-    <button class="category-tab @(activeFilter == "permission" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeFilter == "permission" ? "true" : "false")" @onclick='() => activeFilter = "permission"' >Quyen <span class="category-tab__count">3</span></button>
+    <button class="category-tab @(activeFilter == "permission" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeFilter == "permission" ? "true" : "false")" @onclick='() => activeFilter = "permission"' >Quyền <span class="category-tab__count">3</span></button>
     <button class="category-tab @(activeFilter == "procedure" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeFilter == "procedure" ? "true" : "false")" @onclick='() => activeFilter = "procedure"' >Quy trình <span class="category-tab__count">5</span></button>
     <button class="category-tab @(activeFilter == "protocol" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeFilter == "protocol" ? "true" : "false")" @onclick='() => activeFilter = "protocol"' >Phác đồ <span class="category-tab__count">2</span></button>
     <button class="category-tab @(activeFilter == "system" ? "category-tab--active" : "")" role="tab" aria-selected="@(activeFilter == "system" ? "true" : "false")" @onclick='() => activeFilter = "system"' >Hệ thống <span class="category-tab__count">5</span></button>
@@ -30,17 +30,17 @@
 <!-- Notification List -->
 <div class="notification-list glass-card" style="padding:var(--space-4);">
     <!-- Group: Hom nay -->
-    <div class="notification-group__title">Hom nay</div>
+    <div class="notification-group__title">Hôm nay</div>
 
     <div class="notification-item notification-item--unread">
         <div class="notification-item__icon notification-item__icon--permission">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l5.5 3v4c0 2.8-2.2 5.2-5.5 6.5-3.3-1.3-5.5-3.7-5.5-6.5v-4L8 1.5z" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
         </div>
         <div class="notification-item__content">
-            <div class="notification-item__title">Quyen truy cap đã được cập nhật</div>
-            <div class="notification-item__desc">Quyền đối với bạn đã thay đổi bởi Admin Tran Van A. Kiem tra phân quyền moi.</div>
+            <div class="notification-item__title">Quyền truy cập đã được cập nhật</div>
+            <div class="notification-item__desc">Quyền đối với bạn đã thay đổi bởi Admin Trần Văn A. Kiểm tra phân quyền mới.</div>
         </div>
-        <span class="notification-item__time">2 gio trước</span>
+        <span class="notification-item__time">2 giờ trước</span>
     </div>
 
     <div class="notification-item notification-item--unread">
@@ -48,10 +48,10 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 2.5h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 8.5h4M6 11h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         </div>
         <div class="notification-item__content">
-            <div class="notification-item__title">Quy trình moi duoc ban hanh</div>
-            <div class="notification-item__desc">QT-015 "Quy trình mo tim ho" đã được ban hành phiên bản v3.0</div>
+            <div class="notification-item__title">Quy trình mới được ban hành</div>
+            <div class="notification-item__desc">QT-015 "Quy trình mổ tim hở" đã được ban hành phiên bản v3.0</div>
         </div>
-        <span class="notification-item__time">3 gio trước</span>
+        <span class="notification-item__time">3 giờ trước</span>
     </div>
 
     <div class="notification-item notification-item--unread">
@@ -60,9 +60,9 @@
         </div>
         <div class="notification-item__content">
             <div class="notification-item__title">Chờ phê duyệt</div>
-            <div class="notification-item__desc">QT-008 can ban phê duyệt trước 20/04/2024. Vui long kiem tra va phê duyệt.</div>
+            <div class="notification-item__desc">QT-008 cần bạn phê duyệt trước 20/04/2024. Vui lòng kiểm tra và phê duyệt.</div>
         </div>
-        <span class="notification-item__time">4 gio trước</span>
+        <span class="notification-item__time">4 giờ trước</span>
     </div>
 
     <div class="notification-item notification-item--unread">
@@ -73,21 +73,21 @@
             <div class="notification-item__title">Cảnh báo tồn kho</div>
             <div class="notification-item__desc">Thuốc Amoxicillin 1g sắp hết (còn 50 viên). Cần đặt hàng bổ sung.</div>
         </div>
-        <span class="notification-item__time">5 gio trước</span>
+        <span class="notification-item__time">5 giờ trước</span>
     </div>
 
     <!-- Group: Hom qua -->
-    <div class="notification-group__title">Hom qua</div>
+    <div class="notification-group__title">Hôm qua</div>
 
     <div class="notification-item notification-item--unread">
         <div class="notification-item__icon notification-item__icon--protocol">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a3 3 0 013 3v.5h.5a1.5 1.5 0 011.5 1.5v5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 013 12V7a1.5 1.5 0 011.5-1.5H5V5a3 3 0 013-3z" stroke="currentColor" stroke-width="1.2"/></svg>
         </div>
         <div class="notification-item__content">
-            <div class="notification-item__title">Phác đồ da cập nhật</div>
-            <div class="notification-item__desc">Phác đồ điều trị DTD type 2 phien ban 1.5 đã chính thức ban hành</div>
+            <div class="notification-item__title">Phác đồ đã cập nhật</div>
+            <div class="notification-item__desc">Phác đồ điều trị ĐTĐ type 2 phiên bản 1.5 đã chính thức ban hành</div>
         </div>
-        <span class="notification-item__time">Hom qua 14:30</span>
+        <span class="notification-item__time">Hôm qua 14:30</span>
     </div>
 
     <div class="notification-item notification-item--unread">
@@ -98,7 +98,7 @@
             <div class="notification-item__title">Yêu cầu thay đổi quyền đã được duyệt</div>
             <div class="notification-item__desc">Yêu cầu cấp quyền chỉnh sửa cho nhóm Điều dưỡng đã được Admin phê duyệt</div>
         </div>
-        <span class="notification-item__time">Hom qua 10:15</span>
+        <span class="notification-item__time">Hôm qua 10:15</span>
     </div>
 
     <div class="notification-item notification-item--unread">
@@ -106,24 +106,24 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 2.5h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 8.5h4M6 11h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         </div>
         <div class="notification-item__content">
-            <div class="notification-item__title">Quy trình can xem xet lai</div>
-            <div class="notification-item__desc">QT-003 "Quy trình lay mau xét nghiệm" đã quá hạn xem xét 30 ngày</div>
+            <div class="notification-item__title">Quy trình cần xem xét lại</div>
+            <div class="notification-item__desc">QT-003 "Quy trình lấy mẫu xét nghiệm" đã quá hạn xem xét 30 ngày</div>
         </div>
-        <span class="notification-item__time">Hom qua 09:00</span>
+        <span class="notification-item__time">Hôm qua 09:00</span>
     </div>
 
     <!-- Group: Tuan nay -->
-    <div class="notification-group__title">Tuan nay</div>
+    <div class="notification-group__title">Tuần này</div>
 
     <div class="notification-item">
         <div class="notification-item__icon notification-item__icon--system">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         </div>
         <div class="notification-item__content">
-            <div class="notification-item__title">Bao tri hệ thống thanh cong</div>
-            <div class="notification-item__desc">Hệ thống đã được nang cap len phien ban 2.4.1</div>
+            <div class="notification-item__title">Bảo trì hệ thống thành công</div>
+            <div class="notification-item__desc">Hệ thống đã được nâng cấp lên phiên bản 2.4.1</div>
         </div>
-        <span class="notification-item__time">2 ngay trước</span>
+        <span class="notification-item__time">2 ngày trước</span>
     </div>
 
     <div class="notification-item">
@@ -131,10 +131,10 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 2.5h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 8.5h4M6 11h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         </div>
         <div class="notification-item__content">
-            <div class="notification-item__title">Quy trình moi da tao thanh cong</div>
-            <div class="notification-item__desc">QT-020 "Quy trình cấp cứu dot quy" đã lưu nháp thành công</div>
+            <div class="notification-item__title">Quy trình mới đã tạo thành công</div>
+            <div class="notification-item__desc">QT-020 "Quy trình cấp cứu đột quỵ" đã lưu nháp thành công</div>
         </div>
-        <span class="notification-item__time">3 ngay trước</span>
+        <span class="notification-item__time">3 ngày trước</span>
     </div>
 
     <div class="notification-item">
@@ -142,10 +142,10 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l5.5 3v4c0 2.8-2.2 5.2-5.5 6.5-3.3-1.3-5.5-3.7-5.5-6.5v-4L8 1.5z" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
         </div>
         <div class="notification-item__content">
-            <div class="notification-item__title">Vai trò moi duoc them</div>
-            <div class="notification-item__desc">Vai trò "Trưởng Khoa" đã được them vao hệ thống voi 15 quyen co ban</div>
+            <div class="notification-item__title">Vai trò mới được thêm</div>
+            <div class="notification-item__desc">Vai trò "Trưởng Khoa" đã được thêm vào hệ thống với 15 quyền cơ bản</div>
         </div>
-        <span class="notification-item__time">3 ngay trước</span>
+        <span class="notification-item__time">3 ngày trước</span>
     </div>
 
     <div class="notification-item">
@@ -156,7 +156,7 @@
             <div class="notification-item__title">Sao lưu dữ liệu tự động</div>
             <div class="notification-item__desc">Sao lưu dữ liệu định kỳ đã hoàn tất lúc 02:00 AM</div>
         </div>
-        <span class="notification-item__time">4 ngay trước</span>
+        <span class="notification-item__time">4 ngày trước</span>
     </div>
 
     <div class="notification-item">
@@ -164,10 +164,10 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a3 3 0 013 3v.5h.5a1.5 1.5 0 011.5 1.5v5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 013 12V7a1.5 1.5 0 011.5-1.5H5V5a3 3 0 013-3z" stroke="currentColor" stroke-width="1.2"/></svg>
         </div>
         <div class="notification-item__content">
-            <div class="notification-item__title">Phác đồ chăm sóc moi</div>
-            <div class="notification-item__desc">"Chăm sóc bệnh nhân sau mo tim" v1.2 đang chờ phê duyệt</div>
+            <div class="notification-item__title">Phác đồ chăm sóc mới</div>
+            <div class="notification-item__desc">"Chăm sóc bệnh nhân sau mổ tim" v1.2 đang chờ phê duyệt</div>
         </div>
-        <span class="notification-item__time">5 ngay trước</span>
+        <span class="notification-item__time">5 ngày trước</span>
     </div>
 
     <div class="notification-item">
@@ -176,9 +176,9 @@
         </div>
         <div class="notification-item__content">
             <div class="notification-item__title">SLA sắp hết hạn</div>
-            <div class="notification-item__desc">QT-012 "Quy trình tham kham ngoai tru" cần review trước 25/03/2024</div>
+            <div class="notification-item__desc">QT-012 "Quy trình thăm khám ngoại trú" cần review trước 25/03/2024</div>
         </div>
-        <span class="notification-item__time">5 ngay trước</span>
+        <span class="notification-item__time">5 ngày trước</span>
     </div>
 
     <div class="notification-item">
@@ -186,10 +186,10 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         </div>
         <div class="notification-item__content">
-            <div class="notification-item__title">Thông báo bao tri hệ thống</div>
-            <div class="notification-item__desc">Hệ thống se bao tri vao 02:00 AM ngay 20/03/2024. Dự kiến 30 phút.</div>
+            <div class="notification-item__title">Thông báo bảo trì hệ thống</div>
+            <div class="notification-item__desc">Hệ thống sẽ bảo trì vào 02:00 AM ngày 20/03/2024. Dự kiến 30 phút.</div>
         </div>
-        <span class="notification-item__time">6 ngay trước</span>
+        <span class="notification-item__time">6 ngày trước</span>
     </div>
 </div>
 

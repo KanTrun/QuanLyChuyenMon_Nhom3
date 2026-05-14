@@ -7,7 +7,7 @@
 <div class="module-page__header">
     <div class="module-page__header-left">
         <h1>Tạo Quy trình mới</h1>
-        <p>Thiết lập quy trình kỹ thuật chuyên môn theo tung buoc</p>
+        <p>Thiết lập quy trình kỹ thuật chuyên môn theo từng bước</p>
     </div>
 </div>
 
@@ -99,7 +99,7 @@
     {
         <!-- Step 2: Định nghĩa bước -->
         <div class="form-section">
-            <h2 class="form-section__title">Định nghĩa các bước thuc hien</h2>
+            <h2 class="form-section__title">Định nghĩa các bước thực hiện</h2>
             <div class="step-list">
                 <div class="step-list__item">
                     <div class="step-list__handle">
@@ -112,9 +112,9 @@
                             <input type="text" class="form-input" placeholder="VD: Tiếp nhận bệnh nhân" />
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Vai trò thuc hien</label>
+                            <label>Vai trò thực hiện</label>
                             <select class="form-select">
-                                <option value="">-- Chon vai trò --</option>
+                                <option value="">-- Chọn vai trò --</option>
                                 <option>Bác sĩ</option>
                                 <option>Điều dưỡng</option>
                                 <option>Dược sĩ</option>
@@ -123,7 +123,7 @@
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom: 0; grid-column: 1 / -1;">
-                            <label>Mô tả buoc</label>
+                            <label>Mô tả bước</label>
                             <textarea class="form-input form-input--textarea" style="min-height: 60px;" placeholder="Mô tả chi tiết..."></textarea>
                         </div>
                     </div>
@@ -142,9 +142,9 @@
                             <input type="text" class="form-input" placeholder="VD: Kham lâm sàng" />
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Vai trò thuc hien</label>
+                            <label>Vai trò thực hiện</label>
                             <select class="form-select">
-                                <option value="">-- Chon vai trò --</option>
+                                <option value="">-- Chọn vai trò --</option>
                                 <option>Bác sĩ</option>
                                 <option>Điều dưỡng</option>
                                 <option>Dược sĩ</option>
@@ -153,7 +153,7 @@
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom: 0; grid-column: 1 / -1;">
-                            <label>Mô tả buoc</label>
+                            <label>Mô tả bước</label>
                             <textarea class="form-input form-input--textarea" style="min-height: 60px;" placeholder="Mô tả chi tiết..."></textarea>
                         </div>
                     </div>
@@ -173,7 +173,7 @@
     {
         <!-- Step 3: Điều kiện &amp; SLA -->
         <div class="form-section">
-            <h2 class="form-section__title">Điều kiện va SLA cho tung buoc</h2>
+            <h2 class="form-section__title">Điều kiện và SLA cho từng bước</h2>
             <div class="step-list">
                 <div class="step-list__item" style="grid-template-columns: auto 1fr;">
                     <span class="step-list__num">1</span>
@@ -184,14 +184,14 @@
                                 <input type="number" class="form-input" style="width: 80px;" placeholder="15" />
                                 <select class="form-select" style="width: 100px;">
                                     <option>phút</option>
-                                    <option>gio</option>
-                                    <option>ngay</option>
+                                    <option>giờ</option>
+                                    <option>ngày</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Điều kiện chuyen buoc</label>
-                            <input type="text" class="form-input" placeholder="VD: Bệnh nhân co giay gioi thieu" />
+                            <label>Điều kiện chuyển bước</label>
+                            <input type="text" class="form-input" placeholder="VD: Bệnh nhân có giấy giới thiệu" />
                         </div>
                         <div class="form-group" style="margin-bottom: 0; grid-column: 1 / -1;">
                             <label class="form-checkbox"><input type="checkbox" checked /> Cảnh báo khi vượt SLA</label>
@@ -207,13 +207,13 @@
                                 <input type="number" class="form-input" style="width: 80px;" placeholder="30" />
                                 <select class="form-select" style="width: 100px;">
                                     <option>phút</option>
-                                    <option>gio</option>
-                                    <option>ngay</option>
+                                    <option>giờ</option>
+                                    <option>ngày</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Điều kiện chuyen buoc</label>
+                            <label>Điều kiện chuyển bước</label>
                             <input type="text" class="form-input" placeholder="VD: Hoàn thành tiếp nhận" />
                         </div>
                         <div class="form-group" style="margin-bottom: 0; grid-column: 1 / -1;">
@@ -270,14 +270,14 @@
             <div class="summary-card">
                 <div class="summary-card__title">Thông tin cơ bản</div>
                 <div class="summary-card__row"><span class="summary-card__label">Mã quy trình</span><span class="summary-card__value">QT-011</span></div>
-                <div class="summary-card__row"><span class="summary-card__label">Ten</span><span class="summary-card__value">Quy trình mẫu</span></div>
-                <div class="summary-card__row"><span class="summary-card__label">Loai</span><span class="summary-card__value">Kỹ thuật</span></div>
+                <div class="summary-card__row"><span class="summary-card__label">Tên</span><span class="summary-card__value">Quy trình mẫu</span></div>
+                <div class="summary-card__row"><span class="summary-card__label">Loại</span><span class="summary-card__value">Kỹ thuật</span></div>
                 <div class="summary-card__row"><span class="summary-card__label">Khoa/Phòng</span><span class="summary-card__value">Ngoại tổng hợp</span></div>
             </div>
             <div class="summary-card">
-                <div class="summary-card__title">Các bước (2 buoc)</div>
-                <div class="summary-card__row"><span class="summary-card__label">B1</span><span class="summary-card__value">Tiep nhan bệnh nhân - Điều dưỡng - 15 phút</span></div>
-                <div class="summary-card__row"><span class="summary-card__label">B2</span><span class="summary-card__value">Kham lâm sàng - Bác sĩ - 30 phút</span></div>
+                <div class="summary-card__title">Các bước (2 bước)</div>
+                <div class="summary-card__row"><span class="summary-card__label">B1</span><span class="summary-card__value">Tiếp nhận bệnh nhân - Điều dưỡng - 15 phút</span></div>
+                <div class="summary-card__row"><span class="summary-card__label">B2</span><span class="summary-card__value">Khám lâm sàng - Bác sĩ - 30 phút</span></div>
             </div>
             <div class="summary-card">
                 <div class="summary-card__title">Ánh xạ chức năng (1 anh xa)</div>

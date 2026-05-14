@@ -21,17 +21,17 @@
 
     <!-- Row 2: Stats Cards -->
     <section class="dashboard__stats reveal is-visible" aria-label="Thống kê tổng quan">
-        <StatCard Title="Quy trình Active" Value="128" TrendText="+5 thang nay" TrendDirection="up" ColorClass="primary">
+        <StatCard Title="Quy trình Active" Value="128" TrendText="+5 tháng này" TrendDirection="up" ColorClass="primary">
             <Icon>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.5" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </Icon>
         </StatCard>
-        <StatCard Title="Chờ phê duyệt" Value="12" TrendText="3 khan cap" TrendDirection="neutral" ColorClass="warning">
+        <StatCard Title="Chờ phê duyệt" Value="12" TrendText="3 khẩn cấp" TrendDirection="neutral" ColorClass="warning">
             <Icon>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </Icon>
         </StatCard>
-        <StatCard Title="Phác đồ lâm sàng" Value="45" TrendText="+2 moi" TrendDirection="up" ColorClass="success">
+        <StatCard Title="Phác đồ lâm sàng" Value="45" TrendText="+2 mới" TrendDirection="up" ColorClass="success">
             <Icon>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 4a4 4 0 014 4v1h2a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7a2 2 0 012-2h2V8a4 4 0 014-4z" stroke="currentColor" stroke-width="1.5"/><path d="M10 14h4M12 12v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </Icon>
@@ -90,7 +90,7 @@
                     </div>
                     <h4 class="dashboard__module-name">@module.Name</h4>
                     <p class="dashboard__module-desc">@module.Description</p>
-                    <span class="dashboard__module-link">Truy cap <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="dashboard__module-link">Truy cập <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                 </a>
             }
         </div>
@@ -125,7 +125,7 @@
             <div class="dashboard__chart">
                 <h3 class="dashboard__chart-title">Thống kê nhanh</h3>
                 <p class="dashboard__chart-subtitle">Số lượng quy trình theo khoa</p>
-                <div class="dashboard__bar-chart" role="img" aria-label="Bieu do quy trình theo khoa">
+                <div class="dashboard__bar-chart" role="img" aria-label="Biểu đồ quy trình theo khoa">
                     <div class="dashboard__bar-row">
                         <span class="dashboard__bar-label">Nội khoa</span>
                         <div class="dashboard__bar-track"><div class="dashboard__bar-fill dashboard__bar-fill--1" style="width: 85%;"></div></div>
@@ -137,7 +137,7 @@
                         <span class="dashboard__bar-value">28</span>
                     </div>
                     <div class="dashboard__bar-row">
-                        <span class="dashboard__bar-label">San khoa</span>
+                        <span class="dashboard__bar-label">Sản khoa</span>
                         <div class="dashboard__bar-track"><div class="dashboard__bar-fill dashboard__bar-fill--3" style="width: 55%;"></div></div>
                         <span class="dashboard__bar-value">22</span>
                     </div>
@@ -152,7 +152,7 @@
                         <span class="dashboard__bar-value">16</span>
                     </div>
                     <div class="dashboard__bar-row">
-                        <span class="dashboard__bar-label">Duoc</span>
+                        <span class="dashboard__bar-label">Dược</span>
                         <div class="dashboard__bar-track"><div class="dashboard__bar-fill dashboard__bar-fill--6" style="width: 25%;"></div></div>
                         <span class="dashboard__bar-value">10</span>
                     </div>
@@ -175,14 +175,14 @@
     {
         new() { Type = "procedure_updated", Title = "Cập nhật quy trình", Description = "Quy trình phẫu thuật nội soi dạ dày phiên bản 3.2 đã được cập nhật", User = "BS. Tran Minh Duc", Timestamp = "5 phút trước" },
         new() { Type = "protocol_approved", Title = "Phê duyệt phác đồ", Description = "Phác đồ điều trị viêm phổi cộng đồng đã được Hội đồng phê duyệt", User = "PGS.TS. Le Van Hoa", Timestamp = "32 phút trước" },
-        new() { Type = "permission_changed", Title = "Thay đổi quyền", Description = "Quyền thực hiện kỹ thuật nội soi được cấp cho Khoa Nội", User = "Admin He Thong", Timestamp = "1 gio trước" },
-        new() { Type = "version_published", Title = "Ban hành phiên bản", Description = "Quy trình đặt nội khí quản phiên bản 2.0 đã được ban hành chính thức", User = "TS. Nguyen Thi Mai", Timestamp = "2 gio trước" },
-        new() { Type = "procedure_updated", Title = "Sửa đổi quy trình", Description = "Cập nhật định mức vật tư cho quy trình mổ tim hở - Khoa Tim mạch", User = "BS. Pham Quoc Viet", Timestamp = "3 gio trước" },
-        new() { Type = "permission_changed", Title = "Gia hạn quyền", Description = "Quyền phê duyệt quy trình Khoa Ngoại gia hạn thêm 6 tháng", User = "Admin He Thong", Timestamp = "4 gio trước" },
-        new() { Type = "protocol_approved", Title = "Phác đồ mới", Description = "Phác đồ xử trí sốc phản vệ tại phòng khám đã được thêm vào hệ thống", User = "PGS.TS. Hoang Anh", Timestamp = "5 gio trước" },
-        new() { Type = "version_published", Title = "Xuất bản tài liệu", Description = "Hướng dẫn sử dụng máy thở cho bệnh nhân COVID-19 đã xuất bản", User = "DS. Tran Thi Lan", Timestamp = "6 gio trước" },
-        new() { Type = "procedure_updated", Title = "Cập nhật SOP", Description = "SOP vệ sinh khử trùng phòng mổ đã cập nhật theo tiêu chuẩn JCI 2024", User = "CN. Vo Van Nam", Timestamp = "Hom qua" },
-        new() { Type = "permission_changed", Title = "Thu hồi quyền", Description = "Quyền chỉnh sửa phác đồ của BS. Nguyễn X đã hết hạn và được thu hồi", User = "Admin He Thong", Timestamp = "Hom qua" },
+        new() { Type = "permission_changed", Title = "Thay đổi quyền", Description = "Quyền thực hiện kỹ thuật nội soi được cấp cho Khoa Nội", User = "Admin Hệ thống", Timestamp = "1 giờ trước" },
+        new() { Type = "version_published", Title = "Ban hành phiên bản", Description = "Quy trình đặt nội khí quản phiên bản 2.0 đã được ban hành chính thức", User = "TS. Nguyen Thi Mai", Timestamp = "2 giờ trước" },
+        new() { Type = "procedure_updated", Title = "Sửa đổi quy trình", Description = "Cập nhật định mức vật tư cho quy trình mổ tim hở - Khoa Tim mạch", User = "BS. Pham Quoc Viet", Timestamp = "3 giờ trước" },
+        new() { Type = "permission_changed", Title = "Gia hạn quyền", Description = "Quyền phê duyệt quy trình Khoa Ngoại gia hạn thêm 6 tháng", User = "Admin Hệ thống", Timestamp = "4 giờ trước" },
+        new() { Type = "protocol_approved", Title = "Phác đồ mới", Description = "Phác đồ xử trí sốc phản vệ tại phòng khám đã được thêm vào hệ thống", User = "PGS.TS. Hoang Anh", Timestamp = "5 giờ trước" },
+        new() { Type = "version_published", Title = "Xuất bản tài liệu", Description = "Hướng dẫn sử dụng máy thở cho bệnh nhân COVID-19 đã xuất bản", User = "DS. Tran Thi Lan", Timestamp = "6 giờ trước" },
+        new() { Type = "procedure_updated", Title = "Cập nhật SOP", Description = "SOP vệ sinh khử trùng phòng mổ đã cập nhật theo tiêu chuẩn JCI 2024", User = "CN. Vo Van Nam", Timestamp = "Hôm qua" },
+        new() { Type = "permission_changed", Title = "Thu hồi quyền", Description = "Quyền chỉnh sửa phác đồ của BS. Nguyễn X đã hết hạn và được thu hồi", User = "Admin Hệ thống", Timestamp = "Hôm qua" },
     };
 
     private record ApprovalItem(string Name, string Requester, string Date, string Priority, string PriorityLabel);
@@ -190,9 +190,9 @@
     private List<ApprovalItem> pendingApprovals = new()
     {
         new("QT Phẫu thuật nội soi gan", "BS. Tran Van Binh", "12/05/2025", "high", "Khẩn cấp"),
-        new("Phác đồ điều trị ung thu phoi", "PGS. Nguyen Thi Hoa", "11/05/2025", "high", "Khẩn cấp"),
+        new("Phác đồ điều trị ung thư phổi", "PGS. Nguyen Thi Hoa", "11/05/2025", "high", "Khẩn cấp"),
         new("QT Xét nghiệm HIV nhanh", "BS. Le Minh Tuan", "10/05/2025", "medium", "Bình thường"),
-        new("Định mức vật tư mo tim", "DS. Pham Anh Thu", "09/05/2025", "medium", "Bình thường"),
+        new("Định mức vật tư mổ tim", "DS. Pham Anh Thu", "09/05/2025", "medium", "Bình thường"),
         new("QT Chăm sóc bệnh nhân ICU", "DD. Hoang Thi Mai", "08/05/2025", "low", "Thấp"),
     };
 

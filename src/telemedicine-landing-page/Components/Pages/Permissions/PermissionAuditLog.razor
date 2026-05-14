@@ -21,7 +21,7 @@
 <div class="filter-bar">
     <div class="date-range">
         <input type="date" value="2024-01-01" />
-        <span class="date-range__sep">den</span>
+        <span class="date-range__sep">đến</span>
         <input type="date" value="2024-04-15" />
     </div>
     <div class="filter-bar__search" style="min-width: 160px;">
@@ -70,19 +70,19 @@
                             <div class="audit-log__diff">
                                 <div>
                                     <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">Xem QT: Co
-Tao QT: Co
-Sua QT: Co
-Xoa QT: Khong
-Phê duyệt: Khong</div>
+                                    <div class="audit-log__diff-before">Xem QT: Có
+Tạo QT: Có
+Sửa QT: Có
+Xóa QT: Không
+Phê duyệt: Không</div>
                                 </div>
                                 <div>
                                     <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
-                                    <div class="audit-log__diff-after">Xem QT: Co
-Tao QT: Co
-Sua QT: Co
-Xoa QT: Co (+)
-Phê duyệt: Co (+)</div>
+                                    <div class="audit-log__diff-after">Xem QT: Có
+Tạo QT: Có
+Sửa QT: Có
+Xóa QT: Có (+)
+Phê duyệt: Có (+)</div>
                                 </div>
                             </div>
                         </div>
@@ -106,15 +106,15 @@ Phê duyệt: Co (+)</div>
                             <div class="audit-log__diff">
                                 <div>
                                     <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">Khoa: Ngoai TH
-Xem DM Ngoai: Co
-Ghi nhan CS: Co</div>
+                                    <div class="audit-log__diff-before">Khoa: Ngoại TH
+Xem DM Ngoại: Có
+Ghi nhận CS: Có</div>
                                 </div>
                                 <div>
                                     <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
                                     <div class="audit-log__diff-after">Khoa: Nhi (+)
-Xem DM Nhi: Co (+)
-Ghi nhan CS Nhi: Co (+)</div>
+Xem DM Nhi: Có (+)
+Ghi nhận CS Nhi: Có (+)</div>
                                 </div>
                             </div>
                         </div>
@@ -125,9 +125,9 @@ Ghi nhan CS Nhi: Co (+)</div>
                 <td><span class="audit-log__expand-icon @(expandedRow == 3 ? "audit-log__expand-icon--open" : "")"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></td>
                 <td>12/04/2024 10:00</td>
                 <td>Admin Le</td>
-                <td>Nhom: Dược sĩ</td>
+                <td>Nhóm: Dược sĩ</td>
                 <td>Gán quyền</td>
-                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Them quyen xem phác đồ</td>
+                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Thêm quyền xem phác đồ</td>
                 <td><span class="status-badge status-badge--pending"><span class="status-badge__dot"></span>Chờ áp dụng</span></td>
             </tr>
             @if (expandedRow == 3)
@@ -138,13 +138,13 @@ Ghi nhan CS Nhi: Co (+)</div>
                             <div class="audit-log__diff">
                                 <div>
                                     <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">Xem PD: Khong
-Ap dung PD: Khong</div>
+                                    <div class="audit-log__diff-before">Xem PĐ: Không
+Áp dụng PĐ: Không</div>
                                 </div>
                                 <div>
                                     <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
-                                    <div class="audit-log__diff-after">Xem PD: Co (+)
-Ap dung PD: Co (+)</div>
+                                    <div class="audit-log__diff-after">Xem PĐ: Có (+)
+Áp dụng PĐ: Có (+)</div>
                                 </div>
                             </div>
                         </div>
@@ -169,14 +169,14 @@ Ap dung PD: Co (+)</div>
                                 <div>
                                     <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
                                     <div class="audit-log__diff-before">Trạng thái: Active
-Xem QT: Co
-XN mau: Co
-Nhap KQ: Co</div>
+Xem QT: Có
+XN máu: Có
+Nhập KQ: Có</div>
                                 </div>
                                 <div>
                                     <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
                                     <div class="audit-log__diff-after">Trạng thái: Inactive
-Tất cả quyen: Thu hồi</div>
+Tất cả quyền: Thu hồi</div>
                                 </div>
                             </div>
                         </div>
@@ -200,11 +200,11 @@ Tất cả quyen: Thu hồi</div>
                             <div class="audit-log__diff">
                                 <div>
                                     <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">Phê duyệt QT: Khong</div>
+                                    <div class="audit-log__diff-before">Phê duyệt QT: Không</div>
                                 </div>
                                 <div>
                                     <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
-                                    <div class="audit-log__diff-after">Phê duyệt QT: Co (+)</div>
+                                    <div class="audit-log__diff-after">Phê duyệt QT: Có (+)</div>
                                 </div>
                             </div>
                         </div>
@@ -215,9 +215,9 @@ Tất cả quyen: Thu hồi</div>
                 <td><span class="audit-log__expand-icon @(expandedRow == 6 ? "audit-log__expand-icon--open" : "")"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></td>
                 <td>05/04/2024 11:20</td>
                 <td>Admin Le</td>
-                <td>Nhom: QA</td>
+                <td>Nhóm: QA</td>
                 <td>Điều chỉnh</td>
-                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Cập nhật quyen kiem soat CL</td>
+                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Cập nhật quyền kiểm soát CL</td>
                 <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Đã áp dụng</span></td>
             </tr>
             @if (expandedRow == 6)
@@ -229,12 +229,12 @@ Tất cả quyen: Thu hồi</div>
                                 <div>
                                     <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
                                     <div class="audit-log__diff-before">KSCL: Xem
-Báo cáo CL: Khong</div>
+Báo cáo CL: Không</div>
                                 </div>
                                 <div>
                                     <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
-                                    <div class="audit-log__diff-after">KSCL: Xem + Sua (+)
-Báo cáo CL: Co (+)</div>
+                                    <div class="audit-log__diff-after">KSCL: Xem + Sửa (+)
+Báo cáo CL: Có (+)</div>
                                 </div>
                             </div>
                         </div>
@@ -248,7 +248,7 @@ Báo cáo CL: Co (+)</div>
                 <td>BS. Vu Thi E</td>
                 <td>Gán quyền</td>
                 <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Nhận việc mới - Khoa Tim</td>
-                <td><span class="status-badge status-badge--archived"><span class="status-badge__dot"></span>Huy</span></td>
+                <td><span class="status-badge status-badge--archived"><span class="status-badge__dot"></span>Hủy</span></td>
             </tr>
             @if (expandedRow == 7)
             {
@@ -258,13 +258,13 @@ Báo cáo CL: Co (+)</div>
                             <div class="audit-log__diff">
                                 <div>
                                     <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">(khong co quyen)</div>
+                                    <div class="audit-log__diff-before">(không có quyền)</div>
                                 </div>
                                 <div>
                                     <div class="audit-log__diff-label" style="color: #059669;">Sau (đã hủy)</div>
-                                    <div class="audit-log__diff-after">Xem QT Tim: Co
-Tao QT: Co
--- DA HUY --</div>
+                                    <div class="audit-log__diff-after">Xem QT Tim: Có
+Tạo QT: Có
+-- ĐÃ HỦY --</div>
                                 </div>
                             </div>
                         </div>
@@ -275,9 +275,9 @@ Tao QT: Co
                 <td><span class="audit-log__expand-icon @(expandedRow == 8 ? "audit-log__expand-icon--open" : "")"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 3l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></td>
                 <td>28/03/2024 15:30</td>
                 <td>System</td>
-                <td>Nhom: Điều dưỡng</td>
+                <td>Nhóm: Điều dưỡng</td>
                 <td>Điều chỉnh</td>
-                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Cập nhật quyen theo QD moi</td>
+                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Cập nhật quyền theo QĐ mới</td>
                 <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Đã áp dụng</span></td>
             </tr>
             @if (expandedRow == 8)
@@ -288,15 +288,15 @@ Tao QT: Co
                             <div class="audit-log__diff">
                                 <div>
                                     <div class="audit-log__diff-label" style="color: var(--color-danger);">Trước</div>
-                                    <div class="audit-log__diff-before">Ghi nhan CS: Co
-Báo cáo DD: Khong
-Xem PD: Khong</div>
+                                    <div class="audit-log__diff-before">Ghi nhận CS: Có
+Báo cáo ĐD: Không
+Xem PĐ: Không</div>
                                 </div>
                                 <div>
                                     <div class="audit-log__diff-label" style="color: #059669;">Sau</div>
-                                    <div class="audit-log__diff-after">Ghi nhan CS: Co
-Báo cáo DD: Co (+)
-Xem PD: Co (+)</div>
+                                    <div class="audit-log__diff-after">Ghi nhận CS: Có
+Báo cáo ĐD: Có (+)
+Xem PĐ: Có (+)</div>
                                 </div>
                             </div>
                         </div>

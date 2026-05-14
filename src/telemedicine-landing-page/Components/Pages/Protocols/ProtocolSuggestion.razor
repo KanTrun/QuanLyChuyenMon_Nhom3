@@ -7,7 +7,7 @@
 <div class="module-page__header" style="justify-content:center;text-align:center;">
     <div class="module-page__header-left" style="align-items:center;">
         <h1>Gợi ý Phác đồ theo Chẩn đoán</h1>
-        <p>Nhập mã ICD hoặc chẩn đoán de tim phác đồ phù hợp</p>
+        <p>Nhập mã ICD hoặc chẩn đoán để tìm phác đồ phù hợp</p>
     </div>
 </div>
 
@@ -19,7 +19,7 @@
         </span>
         <input type="text" class="suggestion-search__input" placeholder="Nhập mã ICD hoặc tên bệnh..." value="@searchQuery" @oninput="OnSearchInput" aria-label="Tìm kiếm ICD hoặc chẩn đoán" />
     </div>
-    <p class="suggestion-search__examples">VD: J18.9 - Viem phoi, E11.9 - Dai thao duong type 2, C34.9 - Ung thu phoi</p>
+    <p class="suggestion-search__examples">VD: J18.9 - Viêm phổi, E11.9 - Đái tháo đường type 2, C34.9 - Ung thư phổi</p>
     <button class="btn-primary" style="margin-top:var(--space-4);padding:var(--space-3) var(--space-8);" @onclick="DoSearch">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         Tìm kiếm
@@ -33,30 +33,30 @@
     <div class="glass-card" style="padding:var(--space-4) var(--space-5);margin-bottom:var(--space-5);">
         <div style="display:flex;align-items:center;gap:var(--space-6);flex-wrap:wrap;font-size:var(--text-sm);">
             <span style="color:var(--color-muted);">Bệnh nhân: <strong style="color:var(--color-ink);">Nguyen Van X</strong></span>
-            <span style="color:var(--color-muted);">Tuoi: <strong style="color:var(--color-ink);">58</strong></span>
-            <span style="color:var(--color-muted);">Gioi: <strong style="color:var(--color-ink);">Nam</strong></span>
+            <span style="color:var(--color-muted);">Tuổi: <strong style="color:var(--color-ink);">58</strong></span>
+            <span style="color:var(--color-muted);">Giới: <strong style="color:var(--color-ink);">Nam</strong></span>
             <span style="color:var(--color-muted);">Tiền sử: <strong style="color:var(--color-ink);">Tăng huyết áp, Đái tháo đường type 2</strong></span>
         </div>
     </div>
 
-    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--color-ink);margin-bottom:var(--space-5);">Tim thay 3 phác đồ phù hợp voi J18.9 - Viêm phổi không xác định</h3>
+    <h3 style="font-size:var(--text-base);font-weight:600;color:var(--color-ink);margin-bottom:var(--space-5);">Tìm thấy 3 phác đồ phù hợp với J18.9 - Viêm phổi không xác định</h3>
 
     <!-- Result 1 -->
     <div class="suggestion-result">
         <div class="suggestion-result__header">
             <div>
-                <div class="suggestion-result__name">Phác đồ điều trị viem phoi cong dong</div>
+                <div class="suggestion-result__name">Phác đồ điều trị viêm phổi cộng đồng</div>
                 <div style="display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-1);font-size:var(--text-xs);color:var(--color-muted);">
                     <span>v2.0</span>
-                    <span>Ap dung: 128 lan</span>
+                    <span>Áp dụng: 128 lần</span>
                     <span class="protocol-card__type-badge protocol-card__type-badge--treatment" style="font-size:10px;">Phác đồ</span>
                 </div>
             </div>
             <span class="suggestion-result__match suggestion-result__match--high">95% phù hợp</span>
         </div>
-        <div class="suggestion-result__reason">Phu hop ICD J18.9, khong co chống chỉ định voi tien su bệnh nhân</div>
+        <div class="suggestion-result__reason">Phù hợp ICD J18.9, không có chống chỉ định với tiền sử bệnh nhân</div>
         <div class="suggestion-result__actions">
-            <button class="btn-primary" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Ap dung</button>
+            <button class="btn-primary" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Áp dụng</button>
             <a href="/protocols/PD-001" class="btn-ghost" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Xem chi tiết</a>
         </div>
     </div>
@@ -65,10 +65,10 @@
     <div class="suggestion-result">
         <div class="suggestion-result__header">
             <div>
-                <div class="suggestion-result__name">Phác đồ khang sinh kinh nghiem</div>
+                <div class="suggestion-result__name">Phác đồ kháng sinh kinh nghiệm</div>
                 <div style="display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-1);font-size:var(--text-xs);color:var(--color-muted);">
                     <span>v4.0</span>
-                    <span>Ap dung: 256 lan</span>
+                    <span>Áp dụng: 256 lần</span>
                     <span class="protocol-card__type-badge protocol-card__type-badge--treatment" style="font-size:10px;">Phác đồ</span>
                 </div>
             </div>
@@ -76,7 +76,7 @@
         </div>
         <div class="suggestion-result__reason">Áp dụng cho nhiễm trùng hô hấp nói chung, bao gồm viêm phổi</div>
         <div class="suggestion-result__actions">
-            <button class="btn-primary" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Ap dung</button>
+            <button class="btn-primary" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Áp dụng</button>
             <a href="/protocols/PD-008" class="btn-ghost" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Xem chi tiết</a>
         </div>
     </div>
@@ -85,10 +85,10 @@
     <div class="suggestion-result">
         <div class="suggestion-result__header">
             <div>
-                <div class="suggestion-result__name">Chăm sóc bệnh nhân tho may</div>
+                <div class="suggestion-result__name">Chăm sóc bệnh nhân thở máy</div>
                 <div style="display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-1);font-size:var(--text-xs);color:var(--color-muted);">
                     <span>v2.0</span>
-                    <span>Ap dung: 34 lan</span>
+                    <span>Áp dụng: 34 lần</span>
                     <span class="protocol-card__type-badge protocol-card__type-badge--care" style="font-size:10px;">Chăm sóc</span>
                 </div>
             </div>
@@ -100,7 +100,7 @@
             Cần đánh giá thêm
         </span>
         <div class="suggestion-result__actions" style="margin-top:var(--space-3);">
-            <button class="btn-secondary" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Ap dung</button>
+            <button class="btn-secondary" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Áp dụng</button>
             <a href="/protocols/PD-007" class="btn-ghost" style="padding:var(--space-2) var(--space-4);font-size:var(--text-sm);">Xem chi tiết</a>
         </div>
     </div>
