@@ -1,0 +1,215 @@
+@page "/procedures/publish"
+@layout AppLayout
+
+<PageTitle>Ban hanh Quy trinh - QLCM Pro</PageTitle>
+
+<!-- Page Header -->
+<div class="module-page__header">
+    <div class="module-page__header-left">
+        <h1>Ban hanh Quy trinh</h1>
+        <p>Theo doi trang thai ban hanh cac phien ban quy trinh</p>
+    </div>
+    <div class="module-page__actions">
+        <button class="btn-secondary">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2h10v10H2z" stroke="currentColor" stroke-width="1.5" rx="1"/><path d="M5 5h4M5 7h4M5 9h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Xem danh sach
+        </button>
+    </div>
+</div>
+
+<!-- Kanban Board -->
+<div class="kanban-board">
+    <!-- Column: Nhap (Draft) -->
+    <div class="kanban-column kanban-column--draft">
+        <div class="kanban-column__header">
+            <span class="kanban-column__title">Nhap</span>
+            <span class="kanban-column__count">2</span>
+        </div>
+        <div class="kanban-column__body">
+            <div class="kanban-card">
+                <div class="kanban-card__handle"></div>
+                <div class="kanban-card__title">QT Mo tim ho</div>
+                <div class="kanban-card__meta">
+                    <span class="kanban-card__version">v3.0</span>
+                    <span class="kanban-card__tag">Tim mach</span>
+                </div>
+                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
+                    <span>BS. Tran Van B</span>
+                    <span>10/04/2024</span>
+                </div>
+            </div>
+            <div class="kanban-card">
+                <div class="kanban-card__handle"></div>
+                <div class="kanban-card__title">QT Cham soc sau mo</div>
+                <div class="kanban-card__meta">
+                    <span class="kanban-card__version">v2.0</span>
+                    <span class="kanban-card__tag">Dieu duong</span>
+                </div>
+                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
+                    <span>DD. Le Thi C</span>
+                    <span>08/04/2024</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column: Cho duyet (Pending) -->
+    <div class="kanban-column kanban-column--pending">
+        <div class="kanban-column__header">
+            <span class="kanban-column__title">Cho duyet</span>
+            <span class="kanban-column__count">3</span>
+        </div>
+        <div class="kanban-column__body">
+            <div class="kanban-card">
+                <div class="kanban-card__handle"></div>
+                <div class="kanban-card__title">QT Xet nghiem PCR</div>
+                <div class="kanban-card__meta">
+                    <span class="kanban-card__version">v1.2</span>
+                    <span class="kanban-card__tag">Vi sinh</span>
+                </div>
+                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
+                    <span>KTV. Pham Van D</span>
+                    <span>12/04/2024</span>
+                </div>
+            </div>
+            <div class="kanban-card">
+                <div class="kanban-card__handle"></div>
+                <div class="kanban-card__title">QT Noi soi khop goi</div>
+                <div class="kanban-card__meta">
+                    <span class="kanban-card__version">v1.2</span>
+                    <span class="kanban-card__tag">Chinh hinh</span>
+                </div>
+                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
+                    <span>BS. Nguyen Van E</span>
+                    <span>05/04/2024</span>
+                </div>
+            </div>
+            <div class="kanban-card">
+                <div class="kanban-card__handle"></div>
+                <div class="kanban-card__title">QT Sinh thiet gan</div>
+                <div class="kanban-card__meta">
+                    <span class="kanban-card__version">v1.1</span>
+                    <span class="kanban-card__tag">Tieu hoa</span>
+                </div>
+                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
+                    <span>BS. Vu Van F</span>
+                    <span>12/04/2024</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column: Da duyet (Approved) -->
+    <div class="kanban-column kanban-column--approved">
+        <div class="kanban-column__header">
+            <span class="kanban-column__title">Da duyet</span>
+            <span class="kanban-column__count">2</span>
+        </div>
+        <div class="kanban-column__body">
+            <div class="kanban-card">
+                <div class="kanban-card__handle"></div>
+                <div class="kanban-card__title">QT Truyen mau</div>
+                <div class="kanban-card__meta">
+                    <span class="kanban-card__version">v2.1</span>
+                    <span class="kanban-card__tag">Huyet hoc</span>
+                </div>
+                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
+                    <span>BS. Hoang Van G</span>
+                    <span>14/04/2024</span>
+                </div>
+            </div>
+            <div class="kanban-card">
+                <div class="kanban-card__handle"></div>
+                <div class="kanban-card__title">QT Sieu am thai</div>
+                <div class="kanban-card__meta">
+                    <span class="kanban-card__version">v1.5</span>
+                    <span class="kanban-card__tag">San khoa</span>
+                </div>
+                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
+                    <span>BS. Tran Thi H</span>
+                    <span>13/04/2024</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column: Ban hanh (Published) -->
+    <div class="kanban-column kanban-column--published">
+        <div class="kanban-column__header">
+            <span class="kanban-column__title">Ban hanh</span>
+            <span class="kanban-column__count">3</span>
+        </div>
+        <div class="kanban-column__body">
+            <div class="kanban-card">
+                <div class="kanban-card__handle"></div>
+                <div class="kanban-card__title">QT Mo noi soi o bung</div>
+                <div class="kanban-card__meta">
+                    <span class="kanban-card__version">v2.1</span>
+                    <span class="kanban-card__tag">Ngoai TH</span>
+                </div>
+                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
+                    <span>PGS. Nguyen Van A</span>
+                    <span>15/03/2024</span>
+                </div>
+            </div>
+            <div class="kanban-card">
+                <div class="kanban-card__handle"></div>
+                <div class="kanban-card__title">QT Cham soc vet thuong</div>
+                <div class="kanban-card__meta">
+                    <span class="kanban-card__version">v3.0</span>
+                    <span class="kanban-card__tag">Dieu duong</span>
+                </div>
+                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
+                    <span>DD. Pham Thi I</span>
+                    <span>18/03/2024</span>
+                </div>
+            </div>
+            <div class="kanban-card">
+                <div class="kanban-card__handle"></div>
+                <div class="kanban-card__title">QT Cap cuu ngung tuan hoan</div>
+                <div class="kanban-card__meta">
+                    <span class="kanban-card__version">v4.1</span>
+                    <span class="kanban-card__tag">Cap cuu</span>
+                </div>
+                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
+                    <span>PGS. Le Van K</span>
+                    <span>28/01/2024</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column: Thay the (Superseded) -->
+    <div class="kanban-column kanban-column--superseded">
+        <div class="kanban-column__header">
+            <span class="kanban-column__title">Thay the</span>
+            <span class="kanban-column__count">2</span>
+        </div>
+        <div class="kanban-column__body">
+            <div class="kanban-card">
+                <div class="kanban-card__handle"></div>
+                <div class="kanban-card__title">QT Mo noi soi</div>
+                <div class="kanban-card__meta">
+                    <span class="kanban-card__version">v1.0</span>
+                    <span class="kanban-card__tag">Ngoai TH</span>
+                </div>
+                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
+                    <span>BS. Nguyen Van A</span>
+                    <span>15/06/2023</span>
+                </div>
+            </div>
+            <div class="kanban-card">
+                <div class="kanban-card__handle"></div>
+                <div class="kanban-card__title">QT Xet nghiem dong mau</div>
+                <div class="kanban-card__meta">
+                    <span class="kanban-card__version">v1.0</span>
+                    <span class="kanban-card__tag">Xet nghiem</span>
+                </div>
+                <div class="kanban-card__meta" style="margin-top: var(--space-2);">
+                    <span>KTV. Tran Van L</span>
+                    <span>01/03/2023</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

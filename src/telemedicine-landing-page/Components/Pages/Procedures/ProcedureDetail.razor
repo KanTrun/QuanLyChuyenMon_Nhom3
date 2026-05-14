@@ -1,0 +1,309 @@
+@page "/procedures/{Id}"
+@layout AppLayout
+
+<PageTitle>Chi tiet Quy trinh - QLCM Pro</PageTitle>
+
+<!-- Breadcrumb -->
+<nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/dashboard">Dashboard</a>
+    <span class="breadcrumb__sep">&rsaquo;</span>
+    <a href="/procedures">Quy trinh</a>
+    <span class="breadcrumb__sep">&rsaquo;</span>
+    <span class="breadcrumb__current">QT-001</span>
+</nav>
+
+<!-- Detail Header -->
+<div class="detail-header">
+    <div>
+        <div class="detail-header__title">
+            <h1>Quy trinh mo noi soi o bung</h1>
+            <div class="detail-header__badges">
+                <span class="code-badge">QT-001</span>
+                <span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span>
+            </div>
+        </div>
+    </div>
+    <div class="module-page__actions">
+        <button class="btn-secondary">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10 1.5l2.5 2.5L5 11.5H2.5V9L10 1.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            Chinh sua
+        </button>
+        <button class="btn-primary">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Gui duyet
+        </button>
+        <button class="btn-ghost">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 4h12v8a1 1 0 01-1 1H2a1 1 0 01-1-1V4zM3 4V2.5A1.5 1.5 0 014.5 1h5A1.5 1.5 0 0111 2.5V4" stroke="currentColor" stroke-width="1.5"/></svg>
+            Luu tru
+        </button>
+        <button class="btn-ghost">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 11V3h5l3 3v5a1 1 0 01-1 1H4a1 1 0 01-1-1z" stroke="currentColor" stroke-width="1.5"/><path d="M8 3v3h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Xuat PDF
+        </button>
+    </div>
+</div>
+
+<!-- Tab Navigation -->
+<div class="tab-nav" role="tablist">
+    <button class="tab-nav__item @(activeTab == "overview" ? "tab-nav__item--active" : "")" @onclick='() => activeTab = "overview"' role="tab">Tong quan</button>
+    <button class="tab-nav__item @(activeTab == "steps" ? "tab-nav__item--active" : "")" @onclick='() => activeTab = "steps"' role="tab">Cac buoc</button>
+    <button class="tab-nav__item @(activeTab == "mapping" ? "tab-nav__item--active" : "")" @onclick='() => activeTab = "mapping"' role="tab">Anh xa chuc nang</button>
+    <button class="tab-nav__item @(activeTab == "versions" ? "tab-nav__item--active" : "")" @onclick='() => activeTab = "versions"' role="tab">Lich su phien ban</button>
+    <button class="tab-nav__item @(activeTab == "docs" ? "tab-nav__item--active" : "")" @onclick='() => activeTab = "docs"' role="tab">Tai lieu</button>
+</div>
+
+<!-- Tab: Tong quan -->
+@if (activeTab == "overview")
+{
+    <div class="metadata-grid">
+        <div class="metadata-item">
+            <span class="metadata-item__label">Ma quy trinh</span>
+            <span class="metadata-item__value">QT-001</span>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-item__label">Ten quy trinh</span>
+            <span class="metadata-item__value">Quy trinh mo noi soi o bung</span>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-item__label">Loai quy trinh</span>
+            <span class="metadata-item__value">Phau thuat</span>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-item__label">Khoa/Phong ap dung</span>
+            <span class="metadata-item__value">Ngoai tong hop, Phau thuat</span>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-item__label">Ngay tao</span>
+            <span class="metadata-item__value">15/06/2023</span>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-item__label">Nguoi tao</span>
+            <span class="metadata-item__value">PGS.TS. Nguyen Van Hung</span>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-item__label">Trang thai</span>
+            <span class="metadata-item__value"><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Hoat dong</span></span>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-item__label">Phien ban hien tai</span>
+            <span class="metadata-item__value">v2.1</span>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-item__label">Thoi gian hieu luc</span>
+            <span class="metadata-item__value">15/03/2024 - 15/03/2025</span>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-item__label">Mo ta</span>
+            <span class="metadata-item__value">Quy trinh chuan hoa cac buoc thuc hien phau thuat noi soi o bung, bao gom tu khau chuan bi benh nhan, gay me, thuc hien phau thuat den theo doi hau phau.</span>
+        </div>
+    </div>
+}
+
+<!-- Tab: Cac buoc -->
+@if (activeTab == "steps")
+{
+    <div class="timeline">
+        <div class="timeline__item">
+            <div class="timeline__node timeline__node--completed">1</div>
+            <div class="timeline__card">
+                <div class="timeline__card-title">Tiep nhan benh nhan</div>
+                <div class="timeline__card-meta">
+                    <span class="timeline__meta-item"><span class="role-badge">Dieu duong</span></span>
+                    <span class="timeline__meta-item">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        SLA: 15 phut
+                    </span>
+                    <span class="timeline__meta-item">DK: Benh nhan co giay gioi thieu</span>
+                </div>
+            </div>
+        </div>
+        <div class="timeline__item">
+            <div class="timeline__node timeline__node--completed">2</div>
+            <div class="timeline__card">
+                <div class="timeline__card-title">Kham lam sang</div>
+                <div class="timeline__card-meta">
+                    <span class="timeline__meta-item"><span class="role-badge">Bac si</span></span>
+                    <span class="timeline__meta-item">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        SLA: 30 phut
+                    </span>
+                    <span class="timeline__meta-item">DK: Hoan thanh tiep nhan</span>
+                </div>
+            </div>
+        </div>
+        <div class="timeline__item">
+            <div class="timeline__node timeline__node--completed">3</div>
+            <div class="timeline__card">
+                <div class="timeline__card-title">Chi dinh xet nghiem</div>
+                <div class="timeline__card-meta">
+                    <span class="timeline__meta-item"><span class="role-badge">Bac si</span></span>
+                    <span class="timeline__meta-item">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        SLA: 10 phut
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="timeline__item">
+            <div class="timeline__node">4</div>
+            <div class="timeline__card">
+                <div class="timeline__card-title">Thuc hien xet nghiem</div>
+                <div class="timeline__card-meta">
+                    <span class="timeline__meta-item"><span class="role-badge">Ky thuat vien</span></span>
+                    <span class="timeline__meta-item">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        SLA: 60 phut
+                    </span>
+                    <span class="timeline__meta-item">DK: Chi dinh duoc duyet</span>
+                </div>
+            </div>
+        </div>
+        <div class="timeline__item">
+            <div class="timeline__node">5</div>
+            <div class="timeline__card">
+                <div class="timeline__card-title">Doc ket qua va ket luan</div>
+                <div class="timeline__card-meta">
+                    <span class="timeline__meta-item"><span class="role-badge">Bac si</span></span>
+                    <span class="timeline__meta-item">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        SLA: 20 phut
+                    </span>
+                    <span class="timeline__meta-item">DK: Hoan thanh xet nghiem</span>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Tab: Anh xa chuc nang -->
+@if (activeTab == "mapping")
+{
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ma man hinh</th>
+                    <th>Ten chuc nang</th>
+                    <th>Che do</th>
+                    <th>Trang thai</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="data-table__code">SCR-001</span></td>
+                    <td>Man hinh tiep nhan benh nhan</td>
+                    <td><span class="status-badge status-badge--pending">Chan cung</span></td>
+                    <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Dang kich hoat</span></td>
+                </tr>
+                <tr>
+                    <td><span class="data-table__code">SCR-002</span></td>
+                    <td>Man hinh ke don thuoc</td>
+                    <td><span class="status-badge status-badge--draft">Canh bao</span></td>
+                    <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Dang kich hoat</span></td>
+                </tr>
+                <tr>
+                    <td><span class="data-table__code">SCR-003</span></td>
+                    <td>Man hinh chi dinh xet nghiem</td>
+                    <td><span class="status-badge status-badge--pending">Chan cung</span></td>
+                    <td><span class="status-badge status-badge--active"><span class="status-badge__dot"></span>Dang kich hoat</span></td>
+                </tr>
+                <tr>
+                    <td><span class="data-table__code">SCR-004</span></td>
+                    <td>Man hinh ket luan ca kham</td>
+                    <td><span class="status-badge status-badge--draft">Canh bao</span></td>
+                    <td><span class="status-badge status-badge--superseded"><span class="status-badge__dot"></span>Tam dung</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+}
+
+<!-- Tab: Lich su phien ban -->
+@if (activeTab == "versions")
+{
+    <div class="version-timeline">
+        <div class="version-timeline__item version-timeline__item--active">
+            <div class="version-timeline__dot"></div>
+            <div class="version-timeline__content">
+                <div class="version-timeline__header">
+                    <span class="version-timeline__version">v2.1</span>
+                    <span class="status-badge status-badge--active">Hien tai</span>
+                </div>
+                <div class="version-timeline__desc">Cap nhat buoc 3 va 4 - them kiem tra chat luong mau benh pham</div>
+                <div class="version-timeline__meta">15/03/2024 - BS. Nguyen Van A</div>
+            </div>
+        </div>
+        <div class="version-timeline__item version-timeline__item--old">
+            <div class="version-timeline__dot"></div>
+            <div class="version-timeline__content">
+                <div class="version-timeline__header">
+                    <span class="version-timeline__version">v2.0</span>
+                    <span class="status-badge status-badge--superseded">Da thay the</span>
+                </div>
+                <div class="version-timeline__desc">Them buoc kiem tra chat luong - ap dung quy trinh 5S</div>
+                <div class="version-timeline__meta">01/01/2024 - PGS.TS. Tran Thi B</div>
+            </div>
+        </div>
+        <div class="version-timeline__item version-timeline__item--old">
+            <div class="version-timeline__dot"></div>
+            <div class="version-timeline__content">
+                <div class="version-timeline__header">
+                    <span class="version-timeline__version">v1.0</span>
+                    <span class="status-badge status-badge--archived">Luu tru</span>
+                </div>
+                <div class="version-timeline__desc">Phien ban dau tien - xay dung theo huong dan cua Bo Y te</div>
+                <div class="version-timeline__meta">15/06/2023 - PGS.TS. Nguyen Van Hung</div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Tab: Tai lieu -->
+@if (activeTab == "docs")
+{
+    <div class="file-list">
+        <div class="file-list__item">
+            <div class="file-list__icon">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 2h5l4 4v8a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/><path d="M9 2v4h4" stroke="currentColor" stroke-width="1.5"/></svg>
+            </div>
+            <div>
+                <div class="file-list__name">SOP_Mo_Noi_Soi_v2.1.pdf</div>
+                <div style="font-size: var(--text-xs); color: var(--color-muted);">Quy trinh thao tac chuan</div>
+            </div>
+            <span class="file-list__size">2.4 MB</span>
+        </div>
+        <div class="file-list__item">
+            <div class="file-list__icon">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 2h5l4 4v8a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/><path d="M9 2v4h4" stroke="currentColor" stroke-width="1.5"/></svg>
+            </div>
+            <div>
+                <div class="file-list__name">Huong_Dan_Ky_Thuat_Noi_Soi.pdf</div>
+                <div style="font-size: var(--text-xs); color: var(--color-muted);">Tai lieu huong dan ky thuat chi tiet</div>
+            </div>
+            <span class="file-list__size">5.1 MB</span>
+        </div>
+        <div class="file-list__item">
+            <div class="file-list__icon">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 2h5l4 4v8a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/><path d="M9 2v4h4" stroke="currentColor" stroke-width="1.5"/></svg>
+            </div>
+            <div>
+                <div class="file-list__name">Bieu_Mau_Kiem_Soat_Chat_Luong.docx</div>
+                <div style="font-size: var(--text-xs); color: var(--color-muted);">Bieu mau kiem soat va bao cao</div>
+            </div>
+            <span class="file-list__size">340 KB</span>
+        </div>
+    </div>
+
+    <div class="upload-area">
+        <div class="upload-area__icon">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><path d="M20 8v16M14 14l6-6 6 6M8 28v4a2 2 0 002 2h20a2 2 0 002-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="upload-area__text">Keo tha tai lieu vao day hoac click de tai len</div>
+        <div class="upload-area__hint">Ho tro: PDF, DOCX, XLSX (toi da 20MB)</div>
+    </div>
+}
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    private string activeTab = "overview";
+}

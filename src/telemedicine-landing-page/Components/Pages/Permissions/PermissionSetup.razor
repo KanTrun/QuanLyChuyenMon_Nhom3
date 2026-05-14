@@ -1,0 +1,255 @@
+@page "/permissions"
+@layout AppLayout
+
+<PageTitle>Thiet lap Phan quyen - QLCM Pro</PageTitle>
+
+<!-- Page Header -->
+<div class="module-page__header">
+    <div class="module-page__header-left">
+        <h1>Thiet lap Phan quyen</h1>
+        <p>Quan ly quyen truy cap theo vai tro va chuc nang</p>
+    </div>
+    <div class="module-page__actions">
+        <button class="btn-primary">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 11V3h10v8a1 1 0 01-1 1H3a1 1 0 01-1-1z" stroke="currentColor" stroke-width="1.5"/><path d="M5 6h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Luu thay doi
+        </button>
+        <button class="btn-secondary">Huy</button>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="filter-bar">
+    <div class="tab-toggle">
+        <button class="tab-toggle__btn tab-toggle__btn--active">Theo Vai tro</button>
+        <button class="tab-toggle__btn">Theo Nguoi dung</button>
+    </div>
+    <select class="filter-bar__select">
+        <option>Tat ca khoa/phong</option>
+        <option>Ngoai tong hop</option>
+        <option>Noi tong hop</option>
+        <option>Xet nghiem</option>
+        <option>Chan doan hinh anh</option>
+    </select>
+    <div class="filter-bar__search">
+        <span class="filter-bar__search-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </span>
+        <input type="text" placeholder="Tim vai tro hoac nguoi dung..." />
+    </div>
+</div>
+
+<!-- Permission Matrix -->
+<div class="permission-matrix">
+    <table>
+        <thead>
+            <tr>
+                <th>Chuc nang</th>
+                <th>Bac si</th>
+                <th>Dieu duong</th>
+                <th>Duoc si</th>
+                <th>KTV</th>
+                <th>Quan tri</th>
+                <th>Lanh dao</th>
+                <th>QA</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Group: Quy trinh F01 -->
+            <tr class="permission-matrix__group-row">
+                <td colspan="8">Quy trinh (F01)</td>
+            </tr>
+            <tr>
+                <td>Xem quy trinh</td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+            </tr>
+            <tr>
+                <td>Tao quy trinh</td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+            </tr>
+            <tr>
+                <td>Sua quy trinh</td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+            </tr>
+            <tr>
+                <td>Xoa quy trinh</td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+            </tr>
+            <tr>
+                <td>Gui duyet</td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+            </tr>
+            <tr>
+                <td>Phe duyet</td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+            </tr>
+
+            <!-- Group: Phan quyen F02 -->
+            <tr class="permission-matrix__group-row">
+                <td colspan="8">Phan quyen (F02)</td>
+            </tr>
+            <tr>
+                <td>Xem quyen</td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+            </tr>
+            <tr>
+                <td>Gan quyen</td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+            </tr>
+            <tr>
+                <td>Thu hoi quyen</td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+            </tr>
+
+            <!-- Group: Danh muc F05 -->
+            <tr class="permission-matrix__group-row">
+                <td colspan="8">Danh muc (F05)</td>
+            </tr>
+            <tr>
+                <td>Xem danh muc</td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+            </tr>
+            <tr>
+                <td>Tao danh muc</td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+            </tr>
+            <tr>
+                <td>Sua danh muc</td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+            </tr>
+            <tr>
+                <td>Xoa danh muc</td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+            </tr>
+
+            <!-- Group: Phac do F06 -->
+            <tr class="permission-matrix__group-row">
+                <td colspan="8">Phac do (F06)</td>
+            </tr>
+            <tr>
+                <td>Xem phac do</td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+            </tr>
+            <tr>
+                <td>Tao phac do</td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+            </tr>
+            <tr>
+                <td>Ap dung phac do</td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Legend -->
+<div class="matrix-legend">
+    <div class="matrix-legend__item">
+        <input type="checkbox" checked disabled style="width: 14px; height: 14px; accent-color: var(--color-primary);" />
+        <span>Co quyen</span>
+    </div>
+    <div class="matrix-legend__item">
+        <input type="checkbox" disabled style="width: 14px; height: 14px;" />
+        <span>Khong co quyen</span>
+    </div>
+    <div class="matrix-legend__item">
+        <span style="display: inline-block; width: 14px; height: 14px; background: var(--color-border); border-radius: 3px;"></span>
+        <span>Ke thua tu nhom</span>
+    </div>
+</div>
