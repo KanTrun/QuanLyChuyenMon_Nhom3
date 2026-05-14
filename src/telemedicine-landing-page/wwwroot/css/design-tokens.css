@@ -1,81 +1,219 @@
 /* ═══════════════════════════════════════════════════
-   BỆNH VIỆN SỐ — Modern Healthcare Design System
-   Color Palette: Soft Medical Blue + Calming Teal + Clean UI
+   DESIGN TOKENS — Premium Healthcare Design System
+   Awwwards-level visual foundation with rich palette,
+   elevation system, spacing scale, and motion tokens
    ═══════════════════════════════════════════════════ */
 
 :root {
     color-scheme: light;
 
-    /* ── Primary Palette (Soft Medical) ── */
-    --color-primary: #3182CE;
-    --color-primary-light: #63B3ED;
-    --color-primary-deep: #2B6CB0;
-    
-    /* ── Secondary Palette (Calming Teal) ── */
-    --color-secondary: #319795;
-    --color-secondary-light: #4FD1C5;
-    --color-secondary-deep: #285E61;
+    /* ── Primary Palette (Deep Medical Blues) ── */
+    --color-primary: #2563eb;
+    --color-primary-light: #60a5fa;
+    --color-primary-deep: #1e3a5f;
+    --color-primary-darker: #0f172a;
+    --color-primary-muted: #3b82f6;
+    --color-primary-50: #eff6ff;
+    --color-primary-100: #dbeafe;
+    --color-primary-200: #bfdbfe;
+    --color-primary-300: #93c5fd;
+    --color-primary-400: #60a5fa;
+    --color-primary-500: #3b82f6;
+    --color-primary-600: #2563eb;
+    --color-primary-700: #1d4ed8;
+    --color-primary-800: #1e3a5f;
+    --color-primary-900: #0f172a;
+
+    /* ── Secondary Palette (Warm Teals) ── */
+    --color-secondary: #0d9488;
+    --color-secondary-light: #14b8a6;
+    --color-secondary-deep: #0f766e;
+    --color-secondary-muted: #2dd4bf;
+    --color-secondary-50: #f0fdfa;
+    --color-secondary-100: #ccfbf1;
+    --color-secondary-200: #99f6e4;
+    --color-secondary-300: #5eead4;
+    --color-secondary-400: #2dd4bf;
+    --color-secondary-500: #14b8a6;
+    --color-secondary-600: #0d9488;
+    --color-secondary-700: #0f766e;
+    --color-secondary-800: #115e59;
+    --color-secondary-900: #134e4a;
+
+    /* ── Accent Palette (Coral/Orange) ── */
+    --color-accent: #f97316;
+    --color-accent-light: #fb923c;
+    --color-accent-deep: #ea580c;
+    --color-accent-muted: #fdba74;
+    --color-accent-50: #fff7ed;
+    --color-accent-100: #ffedd5;
+    --color-accent-200: #fed7aa;
+    --color-accent-300: #fdba74;
+    --color-accent-400: #fb923c;
+    --color-accent-500: #f97316;
+    --color-accent-600: #ea580c;
 
     /* ── Semantic Colors ── */
-    --color-accent: #ED8936; /* Soft Orange/Coral for highlights */
-    --color-success: #48BB78;
-    --color-warning: #ECC94B;
-    --color-danger: #F56565;
+    --color-success: #10b981;
+    --color-success-light: #34d399;
+    --color-warning: #f59e0b;
+    --color-warning-light: #fbbf24;
+    --color-danger: #ef4444;
+    --color-danger-light: #f87171;
+    --color-info: #06b6d4;
+    --color-info-light: #22d3ee;
 
-    /* ── Surface & Background (Soft UI) ── */
-    --color-ink: #2D3748;
-    --color-muted: #718096;
-    --color-subtle: #A0AEC0;
-    --color-page: #F7FAFC; /* Clean, very light blue/gray */
-    --color-surface: #FFFFFF;
-    --color-soft: #EDF2F7;
-    --color-ivory: #FFFFFF;
-    --color-warm-gray: #E2E8F0;
+    /* ── Surface & Background ── */
+    --color-ink: #1e293b;
+    --color-ink-light: #334155;
+    --color-muted: #64748b;
+    --color-subtle: #94a3b8;
+    --color-page: #f8fafc;
+    --color-surface: #ffffff;
+    --color-soft: #f1f5f9;
+    --color-ivory: #ffffff;
+    --color-warm-gray: #e2e8f0;
+    --color-border: #e2e8f0;
+    --color-border-light: #f1f5f9;
 
     /* ── Soft Accents ── */
-    --color-mint: #E6FFFA;
-    --color-sky: #EBF8FF;
-    --color-blue: #EBF8FF;
-    --color-coral-soft: #FFF5F5;
+    --color-mint: #ecfdf5;
+    --color-sky: #f0f9ff;
+    --color-blue: #eff6ff;
+    --color-coral-soft: #fff7ed;
+    --color-lavender: #f5f3ff;
+    --color-rose: #fff1f2;
 
-    /* ── Glassmorphism (Softer) ── */
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.4);
-    --glass-blur: blur(12px);
-    --glass-bg-dark: rgba(45, 55, 72, 0.85);
-    --glass-border-dark: rgba(255, 255, 255, 0.1);
+    /* ── Glassmorphism Tokens ── */
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-bg-heavy: rgba(255, 255, 255, 0.88);
+    --glass-bg-light: rgba(255, 255, 255, 0.45);
+    --glass-border: rgba(255, 255, 255, 0.35);
+    --glass-border-strong: rgba(255, 255, 255, 0.6);
+    --glass-blur: blur(16px);
+    --glass-blur-heavy: blur(24px);
+    --glass-blur-light: blur(8px);
+    --glass-bg-dark: rgba(15, 23, 42, 0.88);
+    --glass-border-dark: rgba(255, 255, 255, 0.08);
+    --glass-bg-tinted: rgba(37, 99, 235, 0.05);
 
-    /* ── Shadows (Soft UI) ── */
-    --shadow-soft: 0 10px 25px rgba(49, 130, 206, 0.05);
-    --shadow-medium: 0 10px 30px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
-    --shadow-strong: 0 20px 40px rgba(0, 0, 0, 0.08);
-    --shadow-accent: 0 8px 20px rgba(49, 130, 206, 0.15);
-    --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.02);
-    --shadow-glow: 0 0 20px rgba(49, 130, 206, 0.1);
-    --shadow-card-hover: 0 15px 35px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(49, 130, 206, 0.05);
+    /* ── Elevation Shadow System (5 levels) ── */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+    --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.06);
+    --shadow-2xl: 0 32px 64px rgba(0, 0, 0, 0.16), 0 12px 24px rgba(0, 0, 0, 0.08);
 
-    /* ── Radius ── */
+    /* ── Legacy Shadow Aliases ── */
+    --shadow-soft: 0 4px 16px rgba(37, 99, 235, 0.06);
+    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+    --shadow-strong: 0 20px 48px rgba(0, 0, 0, 0.1);
+    --shadow-accent: 0 8px 24px rgba(37, 99, 235, 0.2);
+    --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+    --shadow-glow: 0 0 24px rgba(37, 99, 235, 0.15);
+    --shadow-card-hover: 0 20px 40px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(37, 99, 235, 0.08);
+    --shadow-colored: 0 8px 24px rgba(13, 148, 136, 0.15);
+    --shadow-accent-glow: 0 0 32px rgba(249, 115, 22, 0.2);
+
+    /* ── Radius Tokens ── */
+    --radius-xs: 4px;
     --radius-sm: 8px;
+    --radius-md: 12px;
     --radius-card: 16px;
     --radius-lg: 20px;
     --radius-xl: 24px;
+    --radius-2xl: 32px;
+    --radius-3xl: 40px;
     --radius-pill: 999px;
+    --radius-circle: 50%;
+
+    /* ── Spacing Scale (4px base) ── */
+    --space-1: 0.25rem;   /* 4px */
+    --space-2: 0.5rem;    /* 8px */
+    --space-3: 0.75rem;   /* 12px */
+    --space-4: 1rem;      /* 16px */
+    --space-5: 1.25rem;   /* 20px */
+    --space-6: 1.5rem;    /* 24px */
+    --space-7: 1.75rem;   /* 28px */
+    --space-8: 2rem;      /* 32px */
+    --space-9: 2.25rem;   /* 36px */
+    --space-10: 2.5rem;   /* 40px */
+    --space-11: 2.75rem;  /* 44px */
+    --space-12: 3rem;     /* 48px */
+    --space-13: 3.25rem;  /* 52px */
+    --space-14: 3.5rem;   /* 56px */
+    --space-15: 3.75rem;  /* 60px */
+    --space-16: 4rem;     /* 64px */
+
+    /* ── Typography Scale (clamp-based fluid) ── */
+    --text-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.75rem);
+    --text-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.875rem);
+    --text-base: clamp(0.9rem, 0.85rem + 0.25vw, 1rem);
+    --text-lg: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+    --text-xl: clamp(1.1rem, 1rem + 0.4vw, 1.25rem);
+    --text-2xl: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+    --text-3xl: clamp(1.5rem, 1.25rem + 1vw, 1.875rem);
+    --text-4xl: clamp(1.875rem, 1.5rem + 1.5vw, 2.5rem);
+    --text-5xl: clamp(2.25rem, 1.75rem + 2vw, 3.25rem);
+    --text-6xl: clamp(2.75rem, 2rem + 3vw, 4.5rem);
 
     /* ── Typography ── */
-    --site-width: 1200px;
-    --font-heading: "Inter", "Segoe UI", sans-serif; /* Moving away from Serif for a cleaner, modern tech feel */
-    --font-body: "Inter", "Segoe UI", sans-serif;
+    --site-width: 1240px;
+    --font-heading: "Inter", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+    --font-display: "Playfair Display", Georgia, serif;
 
-    /* ── Motion ── */
+    /* ── Motion Tokens ── */
+    --motion-instant: 100ms cubic-bezier(0.4, 0, 0.2, 1);
     --motion-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --motion-standard: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    --motion-expressive: 500ms cubic-bezier(0.2, 0, 0, 1);
-    --motion-spring: 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    --motion-moderate: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    --motion-expressive: 600ms cubic-bezier(0.16, 1, 0.3, 1);
+    --motion-spring: 700ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    --motion-slow: 800ms cubic-bezier(0.16, 1, 0.3, 1);
+    --motion-dramatic: 1000ms cubic-bezier(0.16, 1, 0.3, 1);
 
-    /* ── Gradients ── */
-    --gradient-primary: linear-gradient(135deg, #3182CE, #63B3ED);
-    --gradient-secondary: linear-gradient(135deg, #319795, #4FD1C5);
-    --gradient-hero: linear-gradient(160deg, #EBF8FF 0%, #F7FAFC 100%);
-    --gradient-warm: linear-gradient(180deg, #F7FAFC, #FFFFFF);
-    --gradient-section: linear-gradient(180deg, rgba(247, 250, 252, 0), rgba(237, 242, 247, 0.5));
+    /* ── Easing Functions ── */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-in-out-circ: cubic-bezier(0.85, 0, 0.15, 1);
+    --ease-elastic: cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ── Gradient Meshes ── */
+    --gradient-primary: linear-gradient(135deg, #2563eb, #60a5fa);
+    --gradient-secondary: linear-gradient(135deg, #0d9488, #14b8a6);
+    --gradient-accent: linear-gradient(135deg, #f97316, #fb923c);
+    --gradient-hero: linear-gradient(160deg, #f0f9ff 0%, #f8fafc 40%, #ecfdf5 100%);
+    --gradient-warm: linear-gradient(180deg, #f8fafc, #ffffff);
+    --gradient-section: linear-gradient(180deg, rgba(248, 250, 252, 0), rgba(241, 245, 249, 0.6));
+    --gradient-hero-mesh: radial-gradient(ellipse 80% 60% at 20% 30%, rgba(37, 99, 235, 0.06) 0%, transparent 60%),
+                          radial-gradient(ellipse 60% 80% at 80% 70%, rgba(13, 148, 136, 0.05) 0%, transparent 60%),
+                          radial-gradient(ellipse 50% 50% at 50% 50%, rgba(249, 115, 22, 0.03) 0%, transparent 50%);
+    --gradient-section-mesh: radial-gradient(ellipse 70% 50% at 30% 20%, rgba(37, 99, 235, 0.04) 0%, transparent 60%),
+                             radial-gradient(ellipse 50% 70% at 70% 80%, rgba(13, 148, 136, 0.03) 0%, transparent 60%);
+    --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.6));
+    --gradient-card-hover: linear-gradient(145deg, rgba(255, 255, 255, 1), rgba(240, 249, 255, 0.8));
+    --gradient-dark: linear-gradient(160deg, #0f172a, #1e293b);
+    --gradient-dark-mesh: radial-gradient(ellipse 60% 50% at 20% 80%, rgba(37, 99, 235, 0.12) 0%, transparent 60%),
+                          radial-gradient(ellipse 50% 60% at 80% 20%, rgba(13, 148, 136, 0.08) 0%, transparent 60%);
+    --gradient-text: linear-gradient(135deg, #2563eb, #0d9488);
+    --gradient-text-warm: linear-gradient(135deg, #f97316, #ef4444);
+    --gradient-gold: linear-gradient(135deg, #f59e0b, #fbbf24);
+    --gradient-shimmer: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+
+    /* ── Z-Index Scale ── */
+    --z-base: 0;
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-overlay: 300;
+    --z-modal: 400;
+    --z-toast: 500;
+
+    /* ── Parallax & Scroll Tokens ── */
+    --parallax-slow: 0.3;
+    --parallax-medium: 0.6;
+    --parallax-fast: 0.9;
+    --scroll-progress: 0;
 }
