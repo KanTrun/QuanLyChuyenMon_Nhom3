@@ -52,10 +52,23 @@
                 var rect = el.getBoundingClientRect();
                 var elementTop = rect.top + scrollY;
                 var offset = (scrollY - elementTop) * speed;
-                el.style.transform = 'translateY(' + offset + 'px)';
+                var baseTransform = el.getAttribute('data-base-transform') || '';
+                if (baseTransform) {
+                    el.style.transform = baseTransform + ' translateY(' + offset + 'px)';
+                } else {
+                    el.style.transform = 'translateY(' + offset + 'px)';
+                }
             });
             ticking = false;
         }
+
+        // Cache existing CSS transforms as base transforms
+        parallaxElements.forEach(function (el) {
+            var computed = window.getComputedStyle(el).transform;
+            if (computed && computed !== 'none') {
+                el.setAttribute('data-base-transform', computed);
+            }
+        });
 
         window.addEventListener('scroll', function () {
             if (!ticking) {

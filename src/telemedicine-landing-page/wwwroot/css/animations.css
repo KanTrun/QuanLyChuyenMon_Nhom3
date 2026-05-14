@@ -233,21 +233,6 @@
     100% { transform: translateX(-50%); }
 }
 
-/* ── Scan Line ── */
-@keyframes scan-line {
-    0% {
-        top: -2px;
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.6;
-    }
-    100% {
-        top: 100%;
-        opacity: 0;
-    }
-}
-
 /* ── Progress Fill ── */
 @keyframes progress-fill {
     from {
@@ -409,6 +394,15 @@
     right: 30%;
     background: radial-gradient(circle, rgba(249, 115, 22, 0.06), transparent 70%);
     animation: orb-drift-1 15s ease-in-out infinite reverse;
+}
+
+.orb-4 {
+    width: 250px;
+    height: 250px;
+    bottom: -5%;
+    right: 20%;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.06), transparent 70%);
+    animation: orb-drift-2 20s ease-in-out infinite;
 }
 
 /* ── Gold Decorative Line ── */

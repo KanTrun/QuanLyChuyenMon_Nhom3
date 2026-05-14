@@ -109,11 +109,6 @@
     font-size: 0.9rem;
 }
 
-.rating-stars::before {
-    content: '\2605\2605\2605\2605\2605';
-    letter-spacing: 0.1em;
-}
-
 /* ── Header within section ── */
 .testimonials-section .section-heading {
     padding: 0 clamp(1rem, 5vw, 4rem);

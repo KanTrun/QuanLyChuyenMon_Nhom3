@@ -1,15 +1,15 @@
 <section id="specialists" class="site-shell specialists-section section-decorated" aria-labelledby="specialists-title">
     <div class="section-heading reveal">
-        <p class="eyebrow">Danh ba chuyen khoa</p>
-        <h2 id="specialists-title">Tim bac si theo chuyen khoa va lich trong ngay.</h2>
-        <a class="text-link" href="@Links.FindSpecialistUrl">Xem tat ca chuyen khoa</a>
+        <p class="eyebrow">Danh bạ chuyên khoa</p>
+        <h2 id="specialists-title">Tìm bác sĩ theo chuyên khoa và lịch trong ngày.</h2>
+        <a class="text-link" href="@Links.FindSpecialistUrl">Xem tất cả chuyên khoa</a>
     </div>
 
-    <div class="filter-row reveal" aria-label="Bo loc chuyen khoa de xuat">
-        <span class="filter-pill hover-glow">Tim mach</span>
-        <span class="filter-pill hover-glow">Noi tiet</span>
+    <div class="filter-row reveal" aria-label="Bộ lọc chuyên khoa đề xuất">
+        <span class="filter-pill hover-glow">Tim mạch</span>
+        <span class="filter-pill hover-glow">Nội tiết</span>
         <span class="filter-pill hover-glow">Nhi khoa</span>
-        <span class="filter-pill hover-glow active">Co lich trong ngay</span>
+        <span class="filter-pill hover-glow active">Có lịch trong ngày</span>
     </div>
 
     <div class="specialist-grid">
@@ -23,7 +23,7 @@
                         <span class="availability-dot" aria-hidden="true"></span>
                         @specialist.Availability
                     </p>
-                    <a class="btn-book" href="@Links.FindSpecialistUrl">Dat lich</a>
+                    <a class="btn-book" href="@Links.FindSpecialistUrl">Đặt lịch</a>
                 </div>
                 <div class="specialist-info">
                     <p class="specialty">@specialist.Specialty</p>
@@ -32,11 +32,11 @@
                 </div>
                 <dl>
                     <div>
-                        <dt>Lich gan nhat</dt>
+                        <dt>Lịch gần nhất</dt>
                         <dd>@specialist.Availability</dd>
                     </div>
                     <div>
-                        <dt>Ngon ngu</dt>
+                        <dt>Ngôn ngữ</dt>
                         <dd>@specialist.Languages</dd>
                     </div>
                 </dl>
