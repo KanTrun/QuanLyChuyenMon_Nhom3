@@ -2,37 +2,42 @@
     <div class="site-shell tracking-layout">
         <div class="tracking-panel reveal-left">
             <div class="panel-header">
-                <span>Dòng chăm sóc</span>
-                <strong>Hôm nay</strong>
+                <span>Dong cham soc</span>
+                <strong>Hom nay</strong>
             </div>
+            @{ var metricIdx = 0; }
             @foreach (var metric in Metrics)
             {
-                <article class="metric-card @metric.ToneClass">
-                    <div>
-                        <span>@metric.Label</span>
-                        <strong>@metric.Value</strong>
-                        <p>@metric.Context</p>
+                <article class="metric-card @metric.ToneClass stagger-@(++metricIdx)">
+                    <div class="metric-content">
+                        <span class="metric-label">@metric.Label</span>
+                        <strong class="metric-value counter-animate">@metric.Value</strong>
+                        <p class="metric-context">@metric.Context</p>
                     </div>
-                    <div class="metric-bar"
-                         role="progressbar"
-                         aria-label="@metric.Label: @metric.ProgressPercent phần trăm"
-                         aria-valuemin="0"
-                         aria-valuemax="100"
-                         aria-valuenow="@metric.ProgressPercent">
-                        <span style="width: @(metric.ProgressPercent)%"></span>
+                    <div class="metric-ring-wrapper">
+                        <svg class="progress-ring" viewBox="0 0 80 80" aria-label="@metric.Label: @metric.ProgressPercent phan tram">
+                            <circle class="progress-ring-bg" cx="40" cy="40" r="34" />
+                            <circle class="progress-ring-fill @metric.ToneClass" cx="40" cy="40" r="34"
+                                    style="stroke-dasharray: @(metric.ProgressPercent * 2.136) 213.6" />
+                        </svg>
+                        <span class="ring-label">@metric.ProgressPercent%</span>
                     </div>
                 </article>
             }
         </div>
 
         <div class="section-copy reveal-right">
-            <p class="eyebrow">Theo dõi sức khỏe</p>
-            <h2 id="tracking-title">Chỉ số sức khỏe đi cùng lần khám tiếp theo.</h2>
+            <p class="eyebrow">Theo doi suc khoe</p>
+            <h2 id="tracking-title" class="text-gradient">Chi so suc khoe di cung lan kham tiep theo.</h2>
             <p>
-                Người bệnh theo dõi huyết áp, đường huyết, giấc ngủ và lịch dùng thuốc.
-                Bác sĩ có ngữ cảnh trước khi vào phòng khám video.
+                Nguoi benh theo doi huyet ap, duong huyet, giac ngu va lich dung thuoc.
+                Bac si co ngu canh truoc khi vao phong kham video.
             </p>
-            <span class="gold-line"></span>
+            <div class="decorative-rings" aria-hidden="true">
+                <span class="deco-ring deco-ring-1"></span>
+                <span class="deco-ring deco-ring-2"></span>
+                <span class="deco-ring deco-ring-3"></span>
+            </div>
         </div>
     </div>
 </section>

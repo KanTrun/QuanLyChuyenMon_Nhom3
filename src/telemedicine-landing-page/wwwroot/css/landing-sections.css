@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════
-   LANDING SECTIONS — Trust Ticker + Shared Styles
-   Marquee/ticker layout, shared card and section styles
+   LANDING SECTIONS — Trust Ticker + Video Section + Shared Styles
+   Marquee/ticker layout, video consultation, shared card and section styles
    ═══════════════════════════════════════════════════ */
 
 /* ── Trust Ticker (Infinite Marquee) ── */
@@ -125,14 +125,23 @@
     padding-bottom: 0.75rem;
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 
-.consult-header strong {
+.consult-header .encryption-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     color: var(--color-success);
     font-size: 0.78rem;
+    font-weight: 600;
     padding: 0.3rem 0.7rem;
     background: rgba(16, 185, 129, 0.1);
     border-radius: var(--radius-pill);
+}
+
+.consult-header .encryption-badge svg {
+    color: var(--color-success);
 }
 
 .consult-grid {
@@ -167,17 +176,119 @@
 .vital-card {
     display: grid;
     align-content: end;
+    position: relative;
     background: linear-gradient(135deg, rgba(13, 148, 136, 0.05), rgba(37, 99, 235, 0.05));
     border: 1px solid rgba(37, 99, 235, 0.1);
 }
 
 .vital-card strong { font-family: var(--font-heading); font-size: 1.3rem; color: var(--color-primary-deep); }
+.vital-unit { font-size: 0.75rem; font-weight: 500; color: var(--color-muted); }
+
+.pulse-dot {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-success);
+    animation: pulse-glow 1.5s ease-in-out infinite;
+}
 
 .call-flow { border-top: 1px solid var(--glass-border); padding-top: 0.85rem; margin-top: 0.5rem; }
 .call-flow summary { min-height: 44px; cursor: pointer; font-weight: 700; color: var(--color-primary-deep); font-size: 0.9rem; transition: color var(--motion-fast); }
 .call-flow summary:hover { color: var(--color-primary); }
 .call-flow ol { padding-left: 1.25rem; margin-top: 0.75rem; }
 .call-flow li { font-size: 0.88rem; color: var(--color-muted); margin-bottom: 0.5rem; }
+
+/* ── Step Process ── */
+.step-process {
+    position: relative;
+    margin-top: 2rem;
+    padding-left: 1.5rem;
+}
+
+.step-line {
+    position: absolute;
+    left: 15px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--color-primary-light), var(--color-secondary), var(--color-accent));
+    background-size: 100% 200%;
+    animation: step-line-flow 3s ease-in-out infinite;
+    border-radius: 2px;
+}
+
+@keyframes step-line-flow {
+    0%, 100% { background-position: 0% 0%; }
+    50% { background-position: 0% 100%; }
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    position: relative;
+}
+
+.step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    z-index: 1;
+}
+
+.step-item p {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--color-ink);
+}
+
+/* ── Live Badge ── */
+.live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-secondary-deep);
+    background: rgba(13, 148, 136, 0.08);
+    border: 1px solid rgba(13, 148, 136, 0.2);
+    border-radius: var(--radius-pill);
+}
+
+.live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-secondary);
+    animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.4);
+    }
+    50% {
+        opacity: 0.7;
+        box-shadow: 0 0 0 6px rgba(13, 148, 136, 0);
+    }
+}
 
 /* ── Specialists Section ── */
 .specialists-section { padding: clamp(5rem, 10vw, 8rem) 0; position: relative; }
@@ -193,5 +304,25 @@
 
     .ticker-card {
         min-width: 240px;
+    }
+}
+
+/* ── Video Section Responsive ── */
+@media (max-width: 900px) {
+    .split-section, .tracking-layout {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+    .step-process {
+        padding-left: 1rem;
+    }
+
+    .consult-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .consult-main {
+        min-height: 220px;
     }
 }

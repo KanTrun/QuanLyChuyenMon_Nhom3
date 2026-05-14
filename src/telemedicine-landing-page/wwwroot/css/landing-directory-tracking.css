@@ -1,4 +1,9 @@
-/* ── Specialist Directory + Tracking ── */
+/* ═══════════════════════════════════════════════════
+   LANDING — Specialist Directory + Health Tracking
+   Interactive card grid, hover overlays, progress rings
+   ═══════════════════════════════════════════════════ */
+
+/* ── Section Heading Links ── */
 .section-heading .text-link {
     grid-row: 2;
     grid-column: 2;
@@ -9,8 +14,10 @@
 }
 .section-heading .text-link:hover { color: var(--color-primary-deep); }
 
+/* ── Filter Row ── */
 .filter-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1.5rem 0; }
-.filter-row span {
+
+.filter-pill {
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-pill);
     background: var(--glass-bg);
@@ -19,41 +26,161 @@
     color: var(--color-muted);
     font-size: 0.88rem;
     font-weight: 500;
-    transition: border-color var(--motion-fast), color var(--motion-fast), box-shadow var(--motion-fast);
+    transition: border-color var(--motion-fast), color var(--motion-fast), box-shadow var(--motion-fast), background var(--motion-fast);
     cursor: pointer;
 }
-.filter-row span:hover {
+
+.filter-pill:hover,
+.filter-pill.hover-glow:hover {
     border-color: var(--color-primary-light);
     color: var(--color-primary-deep);
-    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.1);
+    box-shadow: 0 0 16px rgba(37, 99, 235, 0.2), 0 4px 12px rgba(37, 99, 235, 0.1);
 }
 
-.specialist-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+.filter-pill.active {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+}
+
+/* ── Specialist Grid ── */
+.specialist-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
 .specialist-card {
     display: grid;
     gap: 1rem;
     padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
     transition: transform var(--motion-standard), box-shadow var(--motion-standard), border-color var(--motion-standard);
     cursor: pointer;
 }
+
 .specialist-card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-card-hover);
-    border-color: rgba(49, 130, 206, 0.2);
+    border-color: rgba(37, 99, 235, 0.2);
 }
 
-.specialist-photo { min-height: 210px; border-radius: var(--radius-card); background: rgba(49, 130, 206, 0.05); }
-.specialty, .specialist-card h3 { margin-bottom: 0.35rem; }
-.specialty { color: var(--color-secondary); font-weight: 700; font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; }
+/* ── Specialist Photo ── */
+.specialist-photo {
+    min-height: 210px;
+    border-radius: var(--radius-card);
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(13, 148, 136, 0.06));
+    position: relative;
+}
+
+.specialist-photo.tone-sky { background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(37, 99, 235, 0.06)); }
+.specialist-photo.tone-mint { background: linear-gradient(135deg, rgba(13, 148, 136, 0.12), rgba(16, 185, 129, 0.06)); }
+.specialist-photo.tone-rose { background: linear-gradient(135deg, rgba(244, 63, 94, 0.1), rgba(251, 113, 133, 0.06)); }
+.specialist-photo.tone-amber { background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(251, 191, 36, 0.06)); }
+
+/* ── Specialist Overlay ── */
+.specialist-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1.5rem 1.25rem;
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.97) 60%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    transform: translateY(100%);
+    transition: transform var(--motion-standard);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.specialist-card:hover .specialist-overlay {
+    transform: translateY(0);
+}
+
+.availability-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+
+.availability-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-success);
+    animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+.btn-book {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1.25rem;
+    background: var(--gradient-primary);
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-radius: var(--radius-pill);
+    text-decoration: none;
+    transition: transform var(--motion-fast), box-shadow var(--motion-fast);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.btn-book:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+}
+
+/* ── Specialist Info ── */
+.specialist-info { display: grid; gap: 0.2rem; }
+.specialty { color: var(--color-secondary); font-weight: 700; font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.35rem; }
+.specialist-card h3 { margin-bottom: 0.2rem; font-size: 1.05rem; }
+.department { color: var(--color-muted); font-size: 0.88rem; }
+
 .specialist-card dl, .specialist-card dd { margin: 0; }
 .specialist-card dl { display: grid; gap: 0.5rem; }
 .specialist-card dt { color: var(--color-muted); font-size: 0.82rem; }
 .specialist-card dd { font-weight: 600; color: var(--color-ink); }
 
-/* ── Health Tracking ── */
+/* ═══════════════════════════════════════════════════
+   HEALTH TRACKING — Dashboard Style
+   ═══════════════════════════════════════════════════ */
+
+/* ── Tracking Layout ── */
+.tracking-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: center;
+    gap: clamp(3rem, 7vw, 6rem);
+}
+
+/* ── Tracking Panel ── */
+.tracking-panel {
+    perspective: 1000px;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+.panel-header strong { color: var(--color-primary); font-weight: 600; }
+
+/* ── Metric Card ── */
 .metric-card {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 120px;
+    grid-template-columns: 1fr 80px;
     gap: 1rem;
     align-items: center;
     margin-top: 0.8rem;
@@ -62,29 +189,136 @@
     transition: transform var(--motion-standard), box-shadow var(--motion-standard);
     background: var(--color-surface);
     border: 1px solid var(--color-warm-gray);
+    position: relative;
 }
-.metric-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); border-color: var(--color-primary-light); }
-.metric-card strong { display: block; font-family: var(--font-heading); font-size: 1.6rem; color: var(--color-primary-deep); font-weight: 800; }
-.metric-card p { margin-bottom: 0; font-size: 0.85rem; color: var(--color-muted); }
 
-.metric-bar {
-    height: 8px;
-    overflow: hidden;
-    border-radius: var(--radius-pill);
-    background: var(--color-soft);
+.metric-card:nth-child(odd) {
+    transform: translateX(4px) rotate(0.3deg);
 }
-.metric-bar span {
+
+.metric-card:nth-child(even) {
+    transform: translateX(-4px) rotate(-0.3deg);
+}
+
+.metric-card:hover {
+    transform: translateY(-3px) rotate(0deg) !important;
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary-light);
+    z-index: 2;
+}
+
+.metric-content { display: grid; gap: 0.25rem; }
+.metric-label { font-size: 0.82rem; color: var(--color-muted); font-weight: 500; }
+
+.metric-value {
     display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: var(--gradient-secondary);
-    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-heading);
+    font-size: 1.6rem;
+    color: var(--color-primary-deep);
+    font-weight: 800;
+    line-height: 1.2;
 }
 
-.panel-header {
+.metric-context { margin-bottom: 0; font-size: 0.82rem; color: var(--color-muted); }
+
+/* ── Progress Ring ── */
+.metric-ring-wrapper {
+    position: relative;
     display: flex;
-    justify-content: space-between;
-    color: var(--color-muted);
-    font-size: 0.85rem;
+    align-items: center;
+    justify-content: center;
 }
-.panel-header strong { color: var(--color-primary); font-weight: 600; }
+
+.progress-ring {
+    width: 80px;
+    height: 80px;
+    transform: rotate(-90deg);
+}
+
+.progress-ring-bg {
+    fill: none;
+    stroke: var(--color-soft);
+    stroke-width: 6;
+}
+
+.progress-ring-fill {
+    fill: none;
+    stroke: var(--color-primary);
+    stroke-width: 6;
+    stroke-linecap: round;
+    transition: stroke-dasharray 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-ring-fill.tone-sky { stroke: var(--color-primary); }
+.progress-ring-fill.tone-mint { stroke: var(--color-secondary); }
+.progress-ring-fill.tone-rose { stroke: var(--color-accent); }
+.progress-ring-fill.tone-amber { stroke: #f59e0b; }
+
+.ring-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-ink);
+}
+
+/* ── Decorative Rings ── */
+.decorative-rings {
+    position: relative;
+    height: 120px;
+    margin-top: 2rem;
+}
+
+.deco-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid;
+    opacity: 0.15;
+}
+
+.deco-ring-1 {
+    width: 80px; height: 80px;
+    top: 10px; left: 0;
+    border-color: var(--color-primary);
+    animation: float-gentle 4s ease-in-out infinite;
+}
+.deco-ring-2 {
+    width: 50px; height: 50px;
+    top: 40px; left: 60px;
+    border-color: var(--color-secondary);
+    animation: float-gentle 5s ease-in-out infinite 0.5s;
+}
+.deco-ring-3 {
+    width: 100px; height: 100px;
+    top: 0; left: 30px;
+    border-color: var(--color-accent);
+    animation: float-gentle 6s ease-in-out infinite 1s;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+    .specialist-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tracking-layout {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+    .metric-card {
+        grid-template-columns: 1fr 70px;
+    }
+
+    .metric-card:nth-child(odd),
+    .metric-card:nth-child(even) {
+        transform: none;
+    }
+
+    .progress-ring {
+        width: 70px;
+        height: 70px;
+    }
+}

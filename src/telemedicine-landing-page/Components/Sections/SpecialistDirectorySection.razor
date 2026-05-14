@@ -1,15 +1,15 @@
 <section id="specialists" class="site-shell specialists-section section-decorated" aria-labelledby="specialists-title">
     <div class="section-heading reveal">
-        <p class="eyebrow">Danh bạ chuyên khoa</p>
-        <h2 id="specialists-title">Tìm bác sĩ theo chuyên khoa và lịch trong ngày.</h2>
-        <a class="text-link" href="@Links.FindSpecialistUrl">Xem tất cả chuyên khoa</a>
+        <p class="eyebrow">Danh ba chuyen khoa</p>
+        <h2 id="specialists-title">Tim bac si theo chuyen khoa va lich trong ngay.</h2>
+        <a class="text-link" href="@Links.FindSpecialistUrl">Xem tat ca chuyen khoa</a>
     </div>
 
-    <div class="filter-row reveal" aria-label="Bộ lọc chuyên khoa đề xuất">
-        <span>Tim mạch</span>
-        <span>Nội tiết</span>
-        <span>Nhi khoa</span>
-        <span>Có lịch trong ngày</span>
+    <div class="filter-row reveal" aria-label="Bo loc chuyen khoa de xuat">
+        <span class="filter-pill hover-glow">Tim mach</span>
+        <span class="filter-pill hover-glow">Noi tiet</span>
+        <span class="filter-pill hover-glow">Nhi khoa</span>
+        <span class="filter-pill hover-glow active">Co lich trong ngay</span>
     </div>
 
     <div class="specialist-grid">
@@ -18,18 +18,25 @@
         {
             <article class="specialist-card reveal stagger-@(++idx)">
                 <div class="specialist-photo @specialist.ToneClass" aria-hidden="true"></div>
-                <div>
+                <div class="specialist-overlay">
+                    <p class="availability-status">
+                        <span class="availability-dot" aria-hidden="true"></span>
+                        @specialist.Availability
+                    </p>
+                    <a class="btn-book" href="@Links.FindSpecialistUrl">Dat lich</a>
+                </div>
+                <div class="specialist-info">
                     <p class="specialty">@specialist.Specialty</p>
                     <h3>@specialist.Name</h3>
-                    <p>@specialist.Department</p>
+                    <p class="department">@specialist.Department</p>
                 </div>
                 <dl>
                     <div>
-                        <dt>Lịch gần nhất</dt>
+                        <dt>Lich gan nhat</dt>
                         <dd>@specialist.Availability</dd>
                     </div>
                     <div>
-                        <dt>Ngôn ngữ</dt>
+                        <dt>Ngon ngu</dt>
                         <dd>@specialist.Languages</dd>
                     </div>
                 </dl>
