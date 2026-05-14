@@ -1,21 +1,217 @@
 @page "/"
-@inject ILandingPageContentService Content
-@inject IOptions<LandingPageLinksOptions> LinksOptions
 
-<PageTitle>Bệnh viện số | Khám từ xa</PageTitle>
+<PageTitle>QLCM Pro | Hệ thống Quản lý Quy trình Kỹ thuật Chuyên môn</PageTitle>
 
-<main id="main-content" class="landing-page">
-    <HeroSection Links="Links" Stats="Content.GetStats()" />
-    <TrustRailSection Signals="Content.GetTrustSignals()" />
-    <CreativeFeaturesSection />
-    <VideoConsultationSection />
-    <SpecialistDirectorySection Specialists="Content.GetSpecialists()" Links="Links" />
-    <HealthTrackingSection Metrics="Content.GetHealthMetrics()" />
-    <TestimonialsSection />
-    <AppDownloadSection Links="Links" />
-    <FooterSection Links="Links" />
+<HeadContent>
+    <meta property="og:title" content="QLCM Pro - Hệ thống Quản lý Quy trình Kỹ thuật Chuyên môn" />
+    <meta property="og:description" content="Chuẩn hóa quy trình, phân quyền, kiểm soát chất lượng và tuân thủ cho bệnh viện." />
+    <meta property="og:type" content="website" />
+    <meta name="robots" content="index, follow" />
+</HeadContent>
+
+<main id="main-content" class="welcome-page">
+    <!-- Floating Glass Navbar -->
+    <nav class="welcome-navbar" aria-label="Thanh điều hướng chính">
+        <div class="welcome-navbar-inner">
+            <a href="/" class="welcome-navbar-logo" aria-label="QLCM Pro - Trang chủ">
+                <span class="welcome-navbar-logo-icon">QM</span>
+                <span>QLCM Pro</span>
+            </a>
+            <div class="welcome-navbar-actions">
+                <a href="/login" class="button button-ghost">Đăng nhập</a>
+                <a href="/register" class="button button-primary">Đăng ký</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="welcome-hero" aria-labelledby="hero-heading">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="orb orb-4"></div>
+
+        <div class="welcome-hero-content reveal">
+            <div class="welcome-hero-eyebrow">
+                <span class="welcome-hero-eyebrow-dot"></span>
+                Hệ thống quản lý chuyên môn bệnh viện
+            </div>
+            <h1 id="hero-heading">
+                Chuẩn hóa Quy trình. <span class="text-gradient">Nâng tầm Chuyên môn.</span>
+            </h1>
+            <p class="welcome-hero-description">
+                Nền tảng quản lý quy trình kỹ thuật, phân quyền RBAC đa tầng, kiểm soát chất lượng 
+                và tuân thủ chuyên môn toàn diện cho bệnh viện. Số hóa mọi quy trình, 
+                từ ban hành đến giám sát thực hiện.
+            </p>
+            <div class="welcome-hero-actions">
+                <a href="/login" class="button button-glow">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    Đăng nhập
+                </a>
+                <a href="/register" class="button button-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    Đăng ký tài khoản
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Stats Strip -->
+    <section class="welcome-stats reveal" aria-label="Thống kê hệ thống">
+        <div class="welcome-stats-grid stagger-children">
+            <div class="welcome-stat-item">
+                <span class="welcome-stat-value">500+</span>
+                <span class="welcome-stat-label">Quy trình kỹ thuật</span>
+            </div>
+            <div class="welcome-stat-item">
+                <span class="welcome-stat-value">50+</span>
+                <span class="welcome-stat-label">Khoa / Phòng ban</span>
+            </div>
+            <div class="welcome-stat-item">
+                <span class="welcome-stat-value">2,000+</span>
+                <span class="welcome-stat-label">Nhân viên y tế</span>
+            </div>
+            <div class="welcome-stat-item">
+                <span class="welcome-stat-value">99.9%</span>
+                <span class="welcome-stat-label">Uptime hệ thống</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="welcome-features" aria-labelledby="features-heading">
+        <div class="welcome-features-header reveal">
+            <p class="eyebrow">Hệ sinh thái toàn diện</p>
+            <h2 id="features-heading">6 Module Quản lý Chuyên môn</h2>
+            <p>Bao phủ toàn bộ nghiệp vụ từ ban hành quy trình, phân quyền, đến giám sát chất lượng lâm sàng.</p>
+        </div>
+
+        <div class="welcome-features-grid stagger-children">
+            <!-- F01: Quy trinh ky thuat -->
+            <article class="welcome-feature-card reveal">
+                <div class="welcome-feature-icon welcome-feature-icon-blue">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+                </div>
+                <h3>Quy trình Kỹ thuật</h3>
+                <p>Quản lý quy trình, bước thực hiện, SLA và ánh xạ chức năng. Theo dõi tiến độ thực thi theo thời gian thực.</p>
+                <span class="welcome-feature-tag">F01</span>
+            </article>
+
+            <!-- F02: Thiet lap phan quyen -->
+            <article class="welcome-feature-card reveal">
+                <div class="welcome-feature-icon welcome-feature-icon-teal">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                </div>
+                <h3>Thiết lập Phân quyền</h3>
+                <p>Gán quyền theo tài khoản, nhóm, vai trò, khoa/phòng. Hỗ trợ RBAC đa tầng với kiểm soát truy cập chi tiết.</p>
+                <span class="welcome-feature-tag">F02</span>
+            </article>
+
+            <!-- F03: Dieu chinh phan quyen -->
+            <article class="welcome-feature-card reveal">
+                <div class="welcome-feature-icon welcome-feature-icon-orange">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </div>
+                <h3>Điều chỉnh Phân quyền</h3>
+                <p>Cập nhật quyền theo hiệu lực, log thay đổi, thông báo tự động. Quản lý vòng đời phân quyền minh bạch.</p>
+                <span class="welcome-feature-tag">F03</span>
+            </article>
+
+            <!-- F04: Ban hanh quy trinh -->
+            <article class="welcome-feature-card reveal">
+                <div class="welcome-feature-icon welcome-feature-icon-purple">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>
+                </div>
+                <h3>Ban hành Quy trình</h3>
+                <p>Soạn thảo, phê duyệt, ban hành, quản lý phiên bản. Quy trình phê duyệt đa cấp với chữ ký số.</p>
+                <span class="welcome-feature-tag">F04</span>
+            </article>
+
+            <!-- F05: Danh muc ky thuat -->
+            <article class="welcome-feature-card reveal">
+                <div class="welcome-feature-icon welcome-feature-icon-rose">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                </div>
+                <h3>Danh mục Kỹ thuật</h3>
+                <p>Quản lý định mức vật tư, thuốc, thiết bị, báo cáo tiêu thụ. Tối ưu chi phí với phân tích dữ liệu thông minh.</p>
+                <span class="welcome-feature-tag">F05</span>
+            </article>
+
+            <!-- F06: Phac do lam sang -->
+            <article class="welcome-feature-card reveal">
+                <div class="welcome-feature-icon welcome-feature-icon-emerald">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                </div>
+                <h3>Phác đồ Lâm sàng</h3>
+                <p>Phác đồ, chăm sóc, gợi ý theo ICD, lịch sử áp dụng. Hỗ trợ quyết định lâm sàng dựa trên bằng chứng.</p>
+                <span class="welcome-feature-tag">F06</span>
+            </article>
+        </div>
+    </section>
+
+    <!-- Why Section -->
+    <section class="welcome-why" aria-labelledby="why-heading">
+        <div class="welcome-why-header reveal">
+            <p class="eyebrow">Tại sao chọn QLCM Pro</p>
+            <h2 id="why-heading">Lợi ích vượt trội</h2>
+        </div>
+
+        <div class="welcome-why-grid stagger-children">
+            <article class="welcome-why-card reveal">
+                <div class="welcome-why-card-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h3>An toàn &amp; Kiểm soát</h3>
+                <p>Audit trail bất biến, phân quyền RBAC đa tầng, log mọi thao tác. Đảm bảo trách nhiệm giải trình và truy vết toàn bộ hệ thống.</p>
+            </article>
+
+            <article class="welcome-why-card reveal">
+                <div class="welcome-why-card-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <h3>Hiệu quả &amp; Chuẩn hóa</h3>
+                <p>SLA tự động, workflow phê duyệt đa cấp, chuẩn hóa quy trình toàn viện. Giảm thời gian xử lý, tăng năng suất chuyên môn.</p>
+            </article>
+
+            <article class="welcome-why-card reveal">
+                <div class="welcome-why-card-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </div>
+                <h3>Minh bạch &amp; Tuân thủ</h3>
+                <p>Quản lý phiên bản quy trình, tuân thủ quy định Bộ Y tế, kiểm tra chéo tự động. Sẵn sàng kiểm định chất lượng bệnh viện.</p>
+            </article>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="welcome-cta reveal" aria-labelledby="cta-heading">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="welcome-cta-content">
+            <h2 id="cta-heading">Bắt đầu quản lý chuyên môn ngay hôm nay</h2>
+            <p>Đăng nhập hoặc tạo tài khoản để trải nghiệm hệ thống quản lý quy trình kỹ thuật chuyên môn toàn diện nhất.</p>
+            <div class="welcome-cta-actions">
+                <a href="/login" class="button button-glow">Đăng nhập hệ thống</a>
+                <a href="/register" class="button button-outline" style="border-color: rgba(255,255,255,0.3); color: white;">Tạo tài khoản mới</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="welcome-footer" aria-label="Chân trang">
+        <div class="welcome-footer-content">
+            <div class="welcome-footer-brand">
+                <span class="welcome-navbar-logo-icon" style="width:28px; height:28px; font-size:0.65rem;">QM</span>
+                QLCM Pro v1.0
+            </div>
+            <ul class="welcome-footer-links">
+                <li><a href="#">Giới thiệu</a></li>
+                <li><a href="#">Hướng dẫn</a></li>
+                <li><a href="#">Liên hệ</a></li>
+                <li><a href="#">Bảo mật</a></li>
+            </ul>
+            <span class="welcome-footer-copy">&copy; 2024 QLCM Pro. Bản quyền thuộc bệnh viện.</span>
+        </div>
+    </footer>
 </main>
-
-@code {
-    private LandingPageLinksOptions Links => LinksOptions.Value;
-}
