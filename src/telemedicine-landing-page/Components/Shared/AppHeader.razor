@@ -1,0 +1,136 @@
+@* AppHeader.razor - Top header with search, notifications, user menu *@
+
+<header class="app-header" role="banner">
+    <!-- Mobile hamburger -->
+    <button class="app-header__hamburger" @onclick="OnHamburgerClick" aria-label="Mo menu" title="Mo menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </button>
+
+    <!-- Breadcrumb -->
+    <div class="app-header__breadcrumb" aria-label="Breadcrumb">
+        <span class="app-header__breadcrumb-home">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8l6-5 6 5v5a1 1 0 01-1 1H3a1 1 0 01-1-1V8z" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+        <span class="app-header__breadcrumb-sep">/</span>
+        <span class="app-header__breadcrumb-current">@PageTitle</span>
+    </div>
+
+    <!-- Search -->
+    <div class="app-header__search">
+        <svg class="app-header__search-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12.5 12.5L16 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input type="search" class="app-header__search-input" placeholder="Tim kiem quy trinh, nguoi dung, phac do..." aria-label="Tim kiem" />
+        <kbd class="app-header__search-kbd" aria-hidden="true">Ctrl+K</kbd>
+    </div>
+
+    <!-- Right Actions -->
+    <div class="app-header__actions">
+        <!-- Notifications -->
+        <button class="app-header__action-btn app-header__notification-btn" @onclick="ToggleNotifications" aria-label="Thong bao" title="Xem thong bao">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M10 2a5 5 0 015 5v3l2 2H3l2-2V7a5 5 0 015-5z" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M8 15a2 2 0 004 0" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            <span class="app-header__badge" aria-label="3 thong bao chua doc">3</span>
+        </button>
+
+        <!-- Notifications Dropdown -->
+        @if (showNotifications)
+        {
+            <div class="app-header__dropdown app-header__notifications-dropdown" role="menu" aria-label="Thong bao gan day">
+                <div class="app-header__dropdown-header">
+                    <h4>Thong bao</h4>
+                    <a href="/notifications">Xem tat ca</a>
+                </div>
+                <div class="app-header__dropdown-list">
+                    <div class="app-header__notification-item app-header__notification-item--unread">
+                        <div class="app-header__notification-icon app-header__notification-icon--info">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M7 4v3M7 9h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="app-header__notification-content">
+                            <p>Quy trinh "Phau thuat noi soi" cho phe duyet</p>
+                            <span>5 phut truoc</span>
+                        </div>
+                    </div>
+                    <div class="app-header__notification-item app-header__notification-item--unread">
+                        <div class="app-header__notification-icon app-header__notification-icon--success">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 7l2 2 3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="app-header__notification-content">
+                            <p>Phac do "Dieu tri viem phoi" da duoc phe duyet</p>
+                            <span>1 gio truoc</span>
+                        </div>
+                    </div>
+                    <div class="app-header__notification-item">
+                        <div class="app-header__notification-icon app-header__notification-icon--warning">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l6 11H1L7 1z" stroke="currentColor" stroke-width="1.5"/><path d="M7 5v3M7 10h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="app-header__notification-content">
+                            <p>Quyen truy cap Khoa Ngoai se het han trong 3 ngay</p>
+                            <span>3 gio truoc</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- User Menu -->
+        <button class="app-header__user-btn" @onclick="ToggleUserMenu" aria-label="Menu nguoi dung" title="Menu tai khoan">
+            <div class="app-header__user-avatar">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M3 18c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <span class="app-header__user-name">BS. Nguyen Van A</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" class="app-header__chevron" aria-hidden="true"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+
+        @if (showUserMenu)
+        {
+            <div class="app-header__dropdown app-header__user-dropdown" role="menu" aria-label="Menu tai khoan">
+                <a href="/settings" class="app-header__dropdown-item" role="menuitem">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 15c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5"/></svg>
+                    Ho so ca nhan
+                </a>
+                <a href="/settings" class="app-header__dropdown-item" role="menuitem">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    Cai dat
+                </a>
+                <hr class="app-header__dropdown-divider" />
+                <a href="/login" class="app-header__dropdown-item app-header__dropdown-item--danger" role="menuitem">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 14H3a1 1 0 01-1-1V3a1 1 0 011-1h3M11 11l3-3-3-3M14 8H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Dang xuat
+                </a>
+            </div>
+        }
+    </div>
+</header>
+
+@code {
+    [Parameter] public string PageTitle { get; set; } = "Dashboard";
+    [Parameter] public EventCallback OnHamburgerClicked { get; set; }
+
+    private bool showNotifications = false;
+    private bool showUserMenu = false;
+
+    private void ToggleNotifications()
+    {
+        showNotifications = !showNotifications;
+        showUserMenu = false;
+    }
+
+    private void ToggleUserMenu()
+    {
+        showUserMenu = !showUserMenu;
+        showNotifications = false;
+    }
+
+    private async Task OnHamburgerClick()
+    {
+        showNotifications = false;
+        showUserMenu = false;
+        await OnHamburgerClicked.InvokeAsync();
+    }
+}

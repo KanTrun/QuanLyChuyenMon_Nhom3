@@ -1,0 +1,61 @@
+@* ActivityFeed.razor - Recent activity feed with timeline connector *@
+
+<div class="activity-feed">
+    <div class="activity-feed__header">
+        <h3 class="activity-feed__title">Hoat dong gan day</h3>
+        <a href="/reports" class="activity-feed__link">Xem tat ca</a>
+    </div>
+    <div class="activity-feed__list">
+        @foreach (var item in Activities)
+        {
+            <div class="activity-feed__item">
+                <div class="activity-feed__connector" aria-hidden="true">
+                    <div class="activity-feed__dot activity-feed__dot--@item.Type"></div>
+                    <div class="activity-feed__line"></div>
+                </div>
+                <div class="activity-feed__content">
+                    <div class="activity-feed__icon activity-feed__icon--@item.Type">
+                        @if (item.Type == "procedure_updated")
+                        {
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3h10v10H3z" stroke="currentColor" stroke-width="1.5" rx="2"/><path d="M6 6h4M6 8h4M6 10h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        }
+                        else if (item.Type == "permission_changed")
+                        {
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l5 3v4c0 2.8-2 5-5 6-3-1-5-3.2-5-6V5l5-3z" stroke="currentColor" stroke-width="1.5"/></svg>
+                        }
+                        else if (item.Type == "protocol_approved")
+                        {
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        }
+                        else
+                        {
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v6l4 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/></svg>
+                        }
+                    </div>
+                    <div class="activity-feed__details">
+                        <p class="activity-feed__description">
+                            <strong>@item.Title</strong> — @item.Description
+                        </p>
+                        <div class="activity-feed__meta">
+                            <span class="activity-feed__user">@item.User</span>
+                            <span class="activity-feed__time">@item.Timestamp</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<ActivityItem> Activities { get; set; } = new();
+
+    public class ActivityItem
+    {
+        public string Type { get; set; } = ""; // procedure_updated, permission_changed, protocol_approved, version_published
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string User { get; set; } = "";
+        public string Timestamp { get; set; } = "";
+    }
+}

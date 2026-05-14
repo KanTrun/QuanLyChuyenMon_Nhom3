@@ -1,0 +1,48 @@
+@inherits LayoutComponentBase
+
+@* AppLayout.razor - Authenticated area layout with sidebar + header + content *@
+
+<div class="app-layout @(sidebarCollapsed ? "app-layout--sidebar-collapsed" : "")">
+    <!-- Mobile Overlay Backdrop -->
+    @if (mobileMenuOpen)
+    {
+        <div class="app-layout__backdrop" @onclick="CloseMobileMenu" aria-hidden="true"></div>
+    }
+
+    <!-- Sidebar -->
+    <div class="app-layout__sidebar @(mobileMenuOpen ? "app-layout__sidebar--mobile-open" : "")">
+        <SidebarNav IsCollapsed="@sidebarCollapsed" IsCollapsedChanged="OnSidebarCollapsedChanged" />
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="app-layout__main">
+        <!-- Header -->
+        <AppHeader PageTitle="@pageTitle" OnHamburgerClicked="ToggleMobileMenu" />
+
+        <!-- Page Content -->
+        <main class="app-layout__content" id="main-content" role="main">
+            @Body
+        </main>
+    </div>
+</div>
+
+@code {
+    private bool sidebarCollapsed = false;
+    private bool mobileMenuOpen = false;
+    private string pageTitle = "Dashboard";
+
+    private void OnSidebarCollapsedChanged(bool collapsed)
+    {
+        sidebarCollapsed = collapsed;
+    }
+
+    private void ToggleMobileMenu()
+    {
+        mobileMenuOpen = !mobileMenuOpen;
+    }
+
+    private void CloseMobileMenu()
+    {
+        mobileMenuOpen = false;
+    }
+}
