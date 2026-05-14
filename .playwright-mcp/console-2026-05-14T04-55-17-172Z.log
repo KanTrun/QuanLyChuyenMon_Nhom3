@@ -1,0 +1,1 @@
+[  497263ms] [LOG] BubbleGum::addComponent unsupported component 'TouchHoverComponent'. Reason: 'TouchHoverComponent.IS_SUPPORTED' returned false @ https://www.apple.com/v/app-store/c/built/scripts/main.built.js:0

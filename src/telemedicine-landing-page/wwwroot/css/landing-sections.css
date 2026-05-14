@@ -1,0 +1,140 @@
+.metric-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.metric-strip span {
+    display: grid;
+    gap: 0.25rem;
+    border-radius: var(--radius-card);
+    background: var(--color-soft);
+    padding: 0.75rem;
+    color: var(--color-muted);
+    font-size: 0.78rem;
+}
+
+.metric-strip strong {
+    color: var(--color-ink);
+    font-size: 1.05rem;
+}
+
+.trust-rail {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: -2rem;
+    position: relative;
+    z-index: 4;
+}
+
+.trust-item,
+.specialist-card,
+.consult-preview,
+.tracking-panel,
+.qr-panel {
+    border: 1px solid rgba(22, 119, 168, 0.12);
+    border-radius: var(--radius-card);
+    background: rgba(255, 255, 255, 0.86);
+    box-shadow: var(--shadow-soft), var(--shadow-inset);
+}
+
+.trust-item {
+    padding: 1.2rem;
+}
+
+.trust-item strong {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 1.55rem;
+}
+
+.trust-item span {
+    font-weight: 800;
+}
+
+.trust-item p {
+    margin-bottom: 0;
+}
+
+.split-section,
+.tracking-layout,
+.download-section {
+    display: grid;
+    grid-template-columns: minmax(0, 0.82fr) minmax(320px, 1fr);
+    align-items: center;
+    gap: clamp(2rem, 6vw, 5rem);
+}
+
+.video-section,
+.tracking-section {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(223, 246, 236, 0.44));
+}
+
+.consult-preview,
+.tracking-panel,
+.qr-panel {
+    padding: 1rem;
+}
+
+.consult-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 150px;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.consult-main {
+    position: relative;
+    min-height: 360px;
+    inset: auto;
+    display: flex;
+    align-items: end;
+    padding: 1rem;
+    color: white;
+    font-weight: 800;
+}
+
+.consult-side {
+    display: grid;
+    gap: 1rem;
+}
+
+.mini-video,
+.vital-card {
+    min-height: 150px;
+    border-radius: var(--radius-card);
+    padding: 0.8rem;
+    font-weight: 800;
+}
+
+.vital-card {
+    display: grid;
+    align-content: end;
+    background: var(--color-coral-soft);
+}
+
+.call-flow {
+    border-top: 1px solid var(--color-subtle);
+    padding-top: 0.9rem;
+}
+
+.call-flow summary {
+    min-height: 44px;
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.specialists-section {
+    padding: clamp(4rem, 8vw, 7rem) 0;
+}
+
+.section-heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+}
+
+.section-heading .eyebrow,
+.section-heading h2 {
+    grid-column: 1;
+}

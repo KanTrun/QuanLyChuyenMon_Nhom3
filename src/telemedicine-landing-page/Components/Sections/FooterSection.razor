@@ -1,0 +1,21 @@
+<footer id="privacy" class="site-footer" aria-label="Thông tin bổ sung">
+    <div class="site-shell footer-grid">
+        <div>
+            <a class="brand-mark" href="/" aria-label="Trang chủ Bệnh viện số">
+                <span class="brand-symbol" aria-hidden="true"></span>
+                <span>Bệnh viện số</span>
+            </a>
+            <p>Trang giới thiệu mẫu cho dịch vụ khám từ xa của hệ thống bệnh viện.</p>
+        </div>
+        <nav aria-label="Liên kết cuối trang">
+            <a href="@Links.PrivacyUrl">Quyền riêng tư</a>
+            <a href="@Links.ContactUrl">Liên hệ</a>
+            <a href="#consultation">Tư vấn video</a>
+        </nav>
+    </div>
+</footer>
+
+@code {
+    [Parameter, EditorRequired]
+    public required LandingPageLinksOptions Links { get; set; }
+}

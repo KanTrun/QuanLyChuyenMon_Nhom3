@@ -1,0 +1,15 @@
+<section class="trust-rail site-shell" aria-label="Tin cậy và vận hành">
+    @foreach (var signal in Signals)
+    {
+        <article class="trust-item reveal">
+            <strong>@signal.Value</strong>
+            <span>@signal.Label</span>
+            <p>@signal.Detail</p>
+        </article>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public required IReadOnlyList<TrustSignal> Signals { get; set; }
+}

@@ -1,0 +1,170 @@
+- generic [active] [ref=e1]:
+  - link "Chuyển đến nội dung chính" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - main [ref=e3]:
+    - generic "Điều hướng chính" [ref=e4]:
+      - link "Trang chủ Bệnh viện số" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e7]: Bệnh viện số
+      - link "Bắt đầu khám" [ref=e8] [cursor=pointer]:
+        - /url: "#consultation"
+    - region "Chăm sóc liên tục, từ phòng khám đến màn hình nhà bạn." [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - paragraph [ref=e12]: Nền tảng khám từ xa cho hệ thống bệnh viện
+          - heading "Chăm sóc liên tục, từ phòng khám đến màn hình nhà bạn." [level=1] [ref=e13]
+          - paragraph [ref=e14]: Đặt lịch, gặp bác sĩ qua video bảo mật, xem hồ sơ sức khỏe và theo dõi chỉ số trong một trải nghiệm nhẹ, rõ ràng và đáng tin cậy.
+          - generic "Hành động chính" [ref=e15]:
+            - link "Bắt đầu khám video" [ref=e16] [cursor=pointer]:
+              - /url: "#consultation"
+            - link "Tìm bác sĩ" [ref=e17] [cursor=pointer]:
+              - /url: "#specialists"
+        - generic "Màn hình xem trước ứng dụng khám từ xa" [ref=e18]:
+          - generic [ref=e19]:
+            - generic [ref=e20]: Phiên khám bảo mật
+            - strong [ref=e21]: 09:40
+          - generic [ref=e25]: Sẵn sàng tư vấn
+          - generic [ref=e26]:
+            - generic [ref=e27]:
+              - strong [ref=e28]: 12 phút
+              - text: thời gian kết nối trung bình
+            - generic [ref=e29]:
+              - strong [ref=e30]: 38+
+              - text: chuyên khoa sẵn sàng
+            - generic [ref=e31]:
+              - strong [ref=e32]: 24/7
+              - text: điều phối cấp cứu từ xa
+    - region "Tin cậy và vận hành" [ref=e33]:
+      - article [ref=e34]:
+        - strong [ref=e35]: ISO 27001
+        - text: Bảo mật dữ liệu
+        - paragraph [ref=e36]: Mã hóa phiên tư vấn và lịch sử trao đổi
+      - article [ref=e37]:
+        - strong [ref=e38]: 4.8/5
+        - text: Hài lòng người bệnh
+        - paragraph [ref=e39]: Đánh giá từ các lần tái khám trực tuyến
+      - article [ref=e40]:
+        - strong [ref=e41]: 98.6%
+        - text: Hồ sơ đồng bộ
+        - paragraph [ref=e42]: Kết quả, đơn thuốc và lịch hẹn cập nhật liên tục
+    - region "Một phiên khám rõ ràng cho cả bác sĩ và người bệnh." [ref=e43]:
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - paragraph [ref=e46]: Xem trước tư vấn video
+          - heading "Một phiên khám rõ ràng cho cả bác sĩ và người bệnh." [level=2] [ref=e47]
+          - paragraph [ref=e48]: Giao diện ưu tiên âm thanh, hình ảnh, thông tin sinh tồn và ghi chú lâm sàng. Mọi nội dung trong bản xem trước vẫn đọc được khi tắt chuyển động.
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - generic [ref=e51]: Phòng khám từ xa
+            - strong [ref=e52]: Đã mã hóa
+          - generic [ref=e53]:
+            - generic [ref=e55]: BS. Minh An
+            - complementary [ref=e56]:
+              - generic [ref=e57]: Người bệnh
+              - generic [ref=e58]:
+                - generic [ref=e59]: Mạch
+                - strong [ref=e60]: 72 bpm
+          - group [ref=e61]:
+            - generic "Xem quy trình cuộc gọi" [ref=e62] [cursor=pointer]
+    - region "Tìm bác sĩ theo chuyên khoa và lịch trong ngày." [ref=e63]:
+      - generic [ref=e64]:
+        - paragraph [ref=e65]: Danh bạ chuyên khoa
+        - heading "Tìm bác sĩ theo chuyên khoa và lịch trong ngày." [level=2] [ref=e66]
+        - link "Xem tất cả chuyên khoa" [ref=e67] [cursor=pointer]:
+          - /url: "#specialists"
+      - generic "Bộ lọc chuyên khoa đề xuất" [ref=e68]:
+        - generic [ref=e69]: Tim mạch
+        - generic [ref=e70]: Nội tiết
+        - generic [ref=e71]: Nhi khoa
+        - generic [ref=e72]: Có lịch trong ngày
+      - generic [ref=e73]:
+        - article [ref=e74]:
+          - generic [ref=e76]:
+            - paragraph [ref=e77]: Tim mạch
+            - heading "BS. Nguyễn Minh An" [level=3] [ref=e78]
+            - paragraph [ref=e79]: Trung tâm tim mạch
+          - generic [ref=e80]:
+            - generic [ref=e81]:
+              - term [ref=e82]: Lịch gần nhất
+              - definition [ref=e83]: Còn lịch 09:40
+            - generic [ref=e84]:
+              - term [ref=e85]: Ngôn ngữ
+              - definition [ref=e86]: Việt / Anh
+        - article [ref=e87]:
+          - generic [ref=e89]:
+            - paragraph [ref=e90]: Nội tiết
+            - heading "ThS. Trần Phương Linh" [level=3] [ref=e91]
+            - paragraph [ref=e92]: Phòng khám tiểu đường
+          - generic [ref=e93]:
+            - generic [ref=e94]:
+              - term [ref=e95]: Lịch gần nhất
+              - definition [ref=e96]: Còn lịch 11:20
+            - generic [ref=e97]:
+              - term [ref=e98]: Ngôn ngữ
+              - definition [ref=e99]: Việt
+        - article [ref=e100]:
+          - generic [ref=e102]:
+            - paragraph [ref=e103]: Nhi khoa
+            - heading "BS. Lê Quang Huy" [level=3] [ref=e104]
+            - paragraph [ref=e105]: Đơn vị chăm sóc trẻ em
+          - generic [ref=e106]:
+            - generic [ref=e107]:
+              - term [ref=e108]: Lịch gần nhất
+              - definition [ref=e109]: Còn lịch 14:10
+            - generic [ref=e110]:
+              - term [ref=e111]: Ngôn ngữ
+              - definition [ref=e112]: Việt / Pháp
+    - region "Chỉ số sức khỏe đi cùng lần khám tiếp theo." [ref=e113]:
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - generic [ref=e116]:
+            - generic [ref=e117]: Dòng chăm sóc
+            - strong [ref=e118]: Hôm nay
+          - article [ref=e119]:
+            - generic [ref=e120]:
+              - text: Huyết áp
+              - strong [ref=e121]: 118/76
+              - paragraph [ref=e122]: ổn định 7 ngày
+            - generic "78 phần trăm" [ref=e123]
+          - article [ref=e125]:
+            - generic [ref=e126]:
+              - text: Đường huyết
+              - strong [ref=e127]: "5.8"
+              - paragraph [ref=e128]: mmol/L trước ăn
+            - generic "64 phần trăm" [ref=e129]
+          - article [ref=e131]:
+            - generic [ref=e132]:
+              - text: Giấc ngủ
+              - strong [ref=e133]: 7h20
+              - paragraph [ref=e134]: theo dõi tự động
+            - generic "72 phần trăm" [ref=e135]
+        - generic [ref=e137]:
+          - paragraph [ref=e138]: Theo dõi sức khỏe
+          - heading "Chỉ số sức khỏe đi cùng lần khám tiếp theo." [level=2] [ref=e139]
+          - paragraph [ref=e140]: Người bệnh theo dõi huyết áp, đường huyết, giấc ngủ và lịch dùng thuốc. Bác sĩ có ngữ cảnh trước khi vào phòng khám video.
+    - region "Tải ứng dụng để tiếp tục chăm sóc sau mỗi lần khám." [ref=e141]:
+      - generic [ref=e142]:
+        - paragraph [ref=e143]: Mobile app
+        - heading "Tải ứng dụng để tiếp tục chăm sóc sau mỗi lần khám." [level=2] [ref=e144]
+        - paragraph [ref=e145]: Lịch hẹn, tin nhắn, kết quả và hướng dẫn tái khám nằm trong một ứng dụng duy nhất.
+        - generic "Tải ứng dụng" [ref=e146]:
+          - link "App Store" [ref=e147] [cursor=pointer]:
+            - /url: https://www.apple.com/app-store/
+          - link "Google Play" [ref=e148] [cursor=pointer]:
+            - /url: https://play.google.com/store
+      - generic "Mã QR tải ứng dụng mẫu" [ref=e149]:
+        - paragraph [ref=e200]: Quét mã tại quầy tiếp đón hoặc trong email xác nhận lịch hẹn.
+    - generic "Thông tin bổ sung" [ref=e201]:
+      - generic [ref=e202]:
+        - generic [ref=e203]:
+          - link "Trang chủ Bệnh viện số" [ref=e204] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e206]: Bệnh viện số
+          - paragraph [ref=e207]: Trang giới thiệu mẫu cho dịch vụ khám từ xa của hệ thống bệnh viện.
+        - navigation "Liên kết cuối trang" [ref=e208]:
+          - link "Quyền riêng tư" [ref=e209] [cursor=pointer]:
+            - /url: "#privacy"
+          - link "Liên hệ" [ref=e210] [cursor=pointer]:
+            - /url: mailto:telehealth@benhvien.local
+          - link "Tư vấn video" [ref=e211] [cursor=pointer]:
+            - /url: "#consultation"

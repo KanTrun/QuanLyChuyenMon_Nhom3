@@ -1,6 +1,11 @@
 # Project Overview PDR
 
-## Overview
+## Current Implementation Scope
+Repo hiện có một ứng dụng Blazor Web App cho trang chủ khám từ xa tại `src/telemedicine-landing-page`. Scope hiện tại là landing page nền cho hệ thống bệnh viện: hero tiếng Việt, preview tư vấn video, danh bạ bác sĩ chuyên khoa, theo dõi sức khỏe, CTA tải ứng dụng và cấu hình link qua `LandingPageLinks`.
+
+Landing page không lưu dữ liệu người bệnh, không có DB/CMS/API và chưa triển khai đặt lịch thật. Nếu mở rộng sang đặt lịch, hồ sơ bệnh án hoặc tư vấn video thật, cần bổ sung API C#, phân quyền server-side, audit và review tuân thủ dữ liệu y tế.
+
+## Legacy Procedure Module Overview
 Module quản lý quy trình kỹ thuật chuyên môn dùng để chuẩn hóa quy trình nghiệp vụ bệnh viện, quản lý phân quyền theo vai trò, kiểm soát thao tác theo quy trình, version hóa tài liệu, liên kết định mức vật tư/thuốc/thiết bị, và hỗ trợ tra cứu phác đồ lâm sàng.
 
 ## Scope

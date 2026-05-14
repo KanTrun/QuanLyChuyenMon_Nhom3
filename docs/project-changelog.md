@@ -1,5 +1,21 @@
 # Project Changelog
 
+## 2026-05-14
+### Added
+| Item | Description |
+|---|---|
+| Telemedicine landing page | Tạo Blazor Web App `net9.0` cho trang chủ khám từ xa của hệ thống bệnh viện |
+| Soft healthcare UI | Thêm hero, preview tư vấn video, danh bạ chuyên khoa, theo dõi sức khỏe, CTA tải ứng dụng |
+| Vietnamese content | Toàn bộ copy hiển thị chính dùng tiếng Việt có dấu |
+| Tests | Thêm xUnit tests cho content service và cấu hình CTA |
+| README | Thêm hướng dẫn chạy/build/test dự án |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 4 tests |
+
 ## 2026-05-11
 ### Added
 | Item | Description |

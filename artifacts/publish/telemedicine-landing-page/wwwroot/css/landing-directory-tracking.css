@@ -1,0 +1,101 @@
+.section-heading .text-link {
+    grid-row: 2;
+    grid-column: 2;
+    color: var(--color-primary-strong);
+    font-weight: 800;
+}
+
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 1.5rem 0;
+}
+
+.filter-row span {
+    border: 1px solid rgba(22, 119, 168, 0.12);
+    border-radius: var(--radius-pill);
+    background: white;
+    padding: 0.55rem 0.85rem;
+    color: var(--color-muted);
+}
+
+.specialist-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.specialist-card {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.specialist-photo {
+    min-height: 210px;
+    border-radius: var(--radius-card);
+}
+
+.specialty,
+.specialist-card h3 {
+    margin-bottom: 0.35rem;
+}
+
+.specialty {
+    color: var(--color-primary-strong);
+    font-weight: 800;
+}
+
+.specialist-card dl,
+.specialist-card dd {
+    margin: 0;
+}
+
+.specialist-card dl {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.specialist-card dt {
+    color: var(--color-muted);
+    font-size: 0.82rem;
+}
+
+.specialist-card dd {
+    font-weight: 800;
+}
+
+.metric-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 120px;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 0.8rem;
+    border-radius: var(--radius-card);
+    padding: 1rem;
+}
+
+.metric-card strong {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 1.6rem;
+}
+
+.metric-card p {
+    margin-bottom: 0;
+}
+
+.metric-bar {
+    height: 10px;
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    background: rgba(23, 50, 77, 0.1);
+}
+
+.metric-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-primary);
+}

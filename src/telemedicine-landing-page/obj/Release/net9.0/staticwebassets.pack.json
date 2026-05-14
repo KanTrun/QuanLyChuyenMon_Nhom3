@@ -1,0 +1,53 @@
+{
+  "Files": [
+    {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css",
+      "PackagePath": "staticwebassets\\css\\base-layout.css"
+    },
+    {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css",
+      "PackagePath": "staticwebassets\\css\\design-tokens.css"
+    },
+    {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css",
+      "PackagePath": "staticwebassets\\css\\landing-directory-tracking.css"
+    },
+    {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css",
+      "PackagePath": "staticwebassets\\css\\landing-download-responsive.css"
+    },
+    {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css",
+      "PackagePath": "staticwebassets\\css\\landing-hero.css"
+    },
+    {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css",
+      "PackagePath": "staticwebassets\\css\\landing-sections.css"
+    },
+    {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\favicon.png",
+      "PackagePath": "staticwebassets\\favicon.png"
+    },
+    {
+      "Id": "obj\\Release\\net9.0\\staticwebassets\\msbuild.TelemedicineLandingPage.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj\\Release\\net9.0\\staticwebassets\\msbuild.TelemedicineLandingPage.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Release\\net9.0\\staticwebassets\\msbuild.build.TelemedicineLandingPage.props",
+      "PackagePath": "build\\TelemedicineLandingPage.props"
+    },
+    {
+      "Id": "obj\\Release\\net9.0\\staticwebassets\\msbuild.buildMultiTargeting.TelemedicineLandingPage.props",
+      "PackagePath": "buildMultiTargeting\\TelemedicineLandingPage.props"
+    },
+    {
+      "Id": "obj\\Release\\net9.0\\staticwebassets\\msbuild.buildTransitive.TelemedicineLandingPage.props",
+      "PackagePath": "buildTransitive\\TelemedicineLandingPage.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

@@ -1,0 +1,25 @@
+:root {
+    color-scheme: light;
+    --color-ink: #17324d;
+    --color-muted: #5f7084;
+    --color-subtle: #d6e4ee;
+    --color-page: #f5f9fb;
+    --color-surface: #ffffff;
+    --color-soft: #edf6f8;
+    --color-primary: #1677a8;
+    --color-primary-strong: #0d5d83;
+    --color-teal: #179c8e;
+    --color-mint: #dff6ec;
+    --color-sky: #e2f3fb;
+    --color-blue: #dfeeff;
+    --color-coral: #e9794f;
+    --color-coral-soft: #fff0e9;
+    --shadow-soft: 0 20px 60px rgba(23, 50, 77, 0.12);
+    --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    --radius-card: 8px;
+    --radius-pill: 999px;
+    --site-width: 1180px;
+    --font-heading: "Figtree", "Noto Sans", sans-serif;
+    --font-body: "Noto Sans", "Segoe UI", sans-serif;
+    --motion-standard: 240ms ease;
+}

@@ -1,6 +1,18 @@
 # Development Roadmap
 
-## Overview
+## Current Source Status
+Source hiện tại là landing page Blazor tại `src/telemedicine-landing-page`. Các phần roadmap về quy trình/RBAC bên dưới là legacy planning track, không phản ánh trạng thái source landing page.
+
+## Telemedicine Landing Page Track
+| Item | Status | Output |
+|---|---|---|
+| Stack scaffold | Complete | `telemedicine-landing-page.sln`, Blazor Web App `net9.0`, xUnit tests |
+| Home UI | Complete | Hero, preview tư vấn video, danh bạ chuyên khoa, theo dõi sức khỏe, CTA tải ứng dụng |
+| Vietnamese content | Complete | UI copy, aria labels, metadata and seed data use Vietnamese with diacritics |
+| Verification | Complete | Release build passed, 4 tests passed |
+| Next | Planned | Replace placeholder CTA/store/contact URLs and run browser/Lighthouse QA |
+
+## Legacy Procedure Module Roadmap
 Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Vì workspace chưa có source ứng dụng, trạng thái hiện tại là planning-ready, chưa code-ready.
 
 ## Milestones
@@ -19,21 +31,21 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Vì workspac
 | Requirement analysis | 100% |
 | Architecture blueprint | 100% |
 | Implementation plan | 100% |
-| Code implementation | 0% |
-| Test automation | 0% |
+| Code implementation | 0% for procedure module; landing page complete |
+| Test automation | 0% for procedure module; landing page has 4 tests |
 | Deployment readiness | 0% |
 
 ## Dependencies
 | Dependency | Needed For |
 |---|---|
-| Existing application source | Code implementation |
+| Existing procedure-module source | Code implementation for legacy procedure track |
 | Auth/user/department data | RBAC and scope |
 | Screen/function catalog | Procedure mapping and permission |
 | Inventory/pharmacy/equipment APIs | Resource checks |
 | Patient/diagnosis data model | Protocol suggestions |
 
 ## Next Milestone
-Phase 01 can start when actual backend/frontend/database stack is available.
+Landing page next step: replace placeholder CTA/store/contact URLs and run browser/Lighthouse QA. Procedure module Phase 01 can start when actual backend/frontend/database stack for that module is confirmed.
 
 ## Unresolved Questions
 | Question | Impact |

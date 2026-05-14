@@ -1,6 +1,24 @@
 # System Architecture
 
-## Overview
+## Telemedicine Landing Page Track
+Ngày 2026-05-14, repo có thêm một ứng dụng Blazor Web App riêng cho trang chủ khám từ xa tại `src/telemedicine-landing-page`.
+
+| Area | Decision |
+|---|---|
+| Runtime | ASP.NET Core Blazor Web App, `net9.0` |
+| Rendering | SSR-first Razor Components, không phụ thuộc JS cho nội dung chính |
+| Content source | `LandingPageContentService` seed dữ liệu chuyên khoa, chỉ số, tín hiệu tin cậy |
+| CTA config | `LandingPageLinks` trong `appsettings.json` |
+| Data persistence | Không lưu dữ liệu người bệnh trong scope landing page |
+| UI system | CSS token theo màu y tế dịu, Figtree/Noto Sans, motion nhẹ có `prefers-reduced-motion` |
+
+Landing page hiện là track độc lập với blueprint quản lý quy trình kỹ thuật chuyên môn. Nếu sau này tích hợp đặt lịch, tư vấn thật hoặc hồ sơ người bệnh, cần thêm API/server-side authorization và review tuân thủ dữ liệu y tế trước khi lưu PHI.
+
+## Legacy Procedure Module Architecture
+Kiến trúc dưới đây là blueprint logic cho module quản lý quy trình kỹ thuật chuyên môn. Track này là tài liệu nghiệp vụ độc lập với landing page Blazor hiện có; chưa có source triển khai riêng cho module quy trình/RBAC.
+
+## Legacy Notes
+For the procedure/RBAC module only:
 Kiến trúc dưới đây là blueprint logic cho module quản lý quy trình kỹ thuật chuyên môn. Workspace hiện chưa có source ứng dụng, nên tài liệu này không ràng buộc stack cụ thể.
 
 ## Logical Components

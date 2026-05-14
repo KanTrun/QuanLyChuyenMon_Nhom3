@@ -1,0 +1,34 @@
+<section id="download-app" class="site-shell download-section" aria-labelledby="download-title">
+    <div class="download-copy reveal">
+        <p class="eyebrow">Ứng dụng di động</p>
+        <h2 id="download-title">Tải ứng dụng để tiếp tục chăm sóc sau mỗi lần khám.</h2>
+        <p>Lịch hẹn, tin nhắn, kết quả và hướng dẫn tái khám nằm trong một ứng dụng duy nhất.</p>
+        <div class="store-actions" aria-label="Tải ứng dụng">
+            <a class="store-button" href="@Links.AppStoreUrl">App Store</a>
+            <a class="store-button" href="@Links.GooglePlayUrl">Google Play</a>
+        </div>
+    </div>
+
+    <div class="qr-panel reveal reveal-delay-1" aria-label="Mã QR tải ứng dụng mẫu">
+        <div class="qr-code" aria-hidden="true">
+            @for (var index = 0; index < 49; index++)
+            {
+                <span class="@GetQrCellClass(index)"></span>
+            }
+        </div>
+        <p>Quét mã tại quầy tiếp đón hoặc trong email xác nhận lịch hẹn.</p>
+    </div>
+</section>
+
+@code {
+    private static readonly HashSet<int> DarkCells =
+    [
+        0, 1, 2, 4, 6, 7, 8, 12, 14, 16, 18, 20, 22, 25, 27,
+        28, 30, 33, 35, 36, 38, 40, 42, 44, 45, 46, 48
+    ];
+
+    [Parameter, EditorRequired]
+    public required LandingPageLinksOptions Links { get; set; }
+
+    private static string GetQrCellClass(int index) => DarkCells.Contains(index) ? "is-dark" : "";
+}

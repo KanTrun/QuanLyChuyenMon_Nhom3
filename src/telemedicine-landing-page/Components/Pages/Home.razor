@@ -1,0 +1,19 @@
+@page "/"
+@inject ILandingPageContentService Content
+@inject IOptions<LandingPageLinksOptions> LinksOptions
+
+<PageTitle>Bệnh viện số | Khám từ xa</PageTitle>
+
+<main id="main-content" class="landing-page">
+    <HeroSection Links="Links" Stats="Content.GetStats()" />
+    <TrustRailSection Signals="Content.GetTrustSignals()" />
+    <VideoConsultationSection />
+    <SpecialistDirectorySection Specialists="Content.GetSpecialists()" Links="Links" />
+    <HealthTrackingSection Metrics="Content.GetHealthMetrics()" />
+    <AppDownloadSection Links="Links" />
+    <FooterSection Links="Links" />
+</main>
+
+@code {
+    private LandingPageLinksOptions Links => LinksOptions.Value;
+}
