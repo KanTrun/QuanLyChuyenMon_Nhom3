@@ -1,11 +1,13 @@
 using TelemedicineLandingPage.Components;
 using TelemedicineLandingPage.Models;
 using TelemedicineLandingPage.Services;
+using TelemedicineLandingPage.Services.Admin;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddSingleton<ILandingPageContentService, LandingPageContentService>();
+builder.Services.AddScoped<IAdminNavigationState, AdminNavigationState>();
 builder.Services.AddOptions<LandingPageLinksOptions>()
     .Bind(builder.Configuration.GetSection(LandingPageLinksOptions.SectionName))
     .Validate(options => options.HasValidUrls(), "Landing page CTA URLs must be absolute URLs or in-page anchors.")

@@ -1,0 +1,130 @@
+@inherits LayoutComponentBase
+@implements IAsyncDisposable
+@inject IAdminNavigationState NavState
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<div class="admin-shell" data-collapsed="@(NavState.IsSidebarCollapsed ? "true" : "false")">
+    @if (NavState.IsSidebarCollapsed)
+    {
+        <div class="admin-sidebar-overlay" @onclick="OnSidebarOverlayClick" aria-hidden="true"></div>
+    }
+
+    <AdminSidebar />
+
+    <div class="admin-main-column">
+        <AdminTopBar />
+
+        <main class="admin-content" id="main-content">
+            @Body
+        </main>
+
+        <div class="admin-shell-modal-host">
+            <CommandPaletteModal />
+        </div>
+    </div>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    Đã xảy ra lỗi không mong muốn.
+    <a href="." class="reload">Tải lại</a>
+    <span class="dismiss">x</span>
+</div>
+
+@code {
+    private DotNetObjectReference<AdminLayout>? _dotnetRef;
+    private int _hotkeyHandle = -1;
+    private bool _hotkeysRegistered;
+
+    protected override void OnInitialized()
+    {
+        NavState.StateChanged += OnStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _hotkeysRegistered)
+        {
+            return;
+        }
+
+        _hotkeysRegistered = true;
+        _dotnetRef = DotNetObjectReference.Create(this);
+        try
+        {
+            _hotkeyHandle = await JS.InvokeAsync<int>("qlcmShell.registerHotkeys", _dotnetRef);
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit went away before interop ran; nothing to do.
+        }
+        catch (Exception)
+        {
+            // Hotkeys are non-essential. Don't break the page if interop fails.
+        }
+    }
+
+    [JSInvokable]
+    public Task OnTogglePalette()
+    {
+        NavState.TogglePalette();
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task OnNavigateHotkey(int digit)
+    {
+        if (NavState.HotkeyMap.TryGetValue(digit, out var url))
+        {
+            Navigation.NavigateTo(url);
+        }
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task OnEscape()
+    {
+        if (NavState.IsPaletteOpen)
+        {
+            NavState.ClosePalette();
+        }
+        return Task.CompletedTask;
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnSidebarOverlayClick()
+    {
+        // On mobile, tapping the dimmed area collapses the sidebar back off-canvas.
+        if (NavState.IsSidebarCollapsed)
+        {
+            NavState.ToggleSidebar();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        NavState.StateChanged -= OnStateChanged;
+
+        if (_hotkeyHandle >= 0)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("qlcmShell.unregisterHotkeys", _hotkeyHandle);
+            }
+            catch (JSDisconnectedException)
+            {
+                // Circuit already closed; nothing to clean up.
+            }
+            catch (Exception)
+            {
+                // Best-effort cleanup.
+            }
+        }
+
+        _dotnetRef?.Dispose();
+    }
+}

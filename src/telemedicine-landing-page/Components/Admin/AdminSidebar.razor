@@ -1,0 +1,134 @@
+@inject IAdminNavigationState NavState
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<aside class="admin-sidebar" aria-label="Điều hướng quản trị">
+    <div class="admin-sidebar-brand">
+        <div class="admin-sidebar-brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3 4 7v6c0 4.5 3.4 7.5 8 8 4.6-.5 8-3.5 8-8V7l-8-4Z" />
+                <path d="M9 12h6M12 9v6" />
+            </svg>
+        </div>
+        <div class="admin-sidebar-brand-text">
+            <span class="admin-sidebar-brand-name">QLCM Pro</span>
+            <span class="admin-sidebar-brand-caption">Quản lý chuyên môn</span>
+        </div>
+    </div>
+
+    <nav class="admin-sidebar-nav" aria-label="Mục chính">
+        @foreach (var item in NavState.NavItems)
+        {
+            if (item.Children is { Count: > 0 } children)
+            {
+                var isOpen = CurrentPath.StartsWith(item.Url, StringComparison.OrdinalIgnoreCase);
+                <details class="admin-nav-group" open="@isOpen">
+                    <summary class="admin-nav-summary">
+                        <span class="admin-nav-icon" aria-hidden="true">@RenderIcon(item.Icon)</span>
+                        <span class="admin-nav-label">@item.Label</span>
+                        @if (!string.IsNullOrEmpty(item.Hotkey))
+                        {
+                            <span class="admin-nav-hotkey" aria-hidden="true">@item.Hotkey</span>
+                        }
+                        <span class="admin-nav-chevron" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </span>
+                    </summary>
+                    <ul class="admin-nav-children">
+                        @foreach (var child in children)
+                        {
+                            <li>
+                                <NavLink class="admin-nav-link admin-nav-child" ActiveClass="is-active" Match="GetMatchFor(child.Url)" href="@child.Url">
+                                    <span class="admin-nav-child-dot" aria-hidden="true"></span>
+                                    <span class="admin-nav-label">@child.Label</span>
+                                </NavLink>
+                            </li>
+                        }
+                    </ul>
+                </details>
+            }
+            else
+            {
+                <NavLink class="admin-nav-link" ActiveClass="is-active" Match="GetMatchFor(item.Url)" href="@item.Url">
+                    <span class="admin-nav-icon" aria-hidden="true">@RenderIcon(item.Icon)</span>
+                    <span class="admin-nav-label">@item.Label</span>
+                    @if (!string.IsNullOrEmpty(item.Hotkey))
+                    {
+                        <span class="admin-nav-hotkey" aria-hidden="true">@item.Hotkey</span>
+                    }
+                </NavLink>
+            }
+        }
+    </nav>
+
+    <div class="admin-sidebar-footer">
+        <button type="button" class="admin-sidebar-collapse" @onclick="OnToggleSidebar"
+                aria-label="@CollapseLabel" title="@CollapseLabel">
+            <span class="admin-sidebar-collapse-icon" aria-hidden="true">
+                @if (NavState.IsSidebarCollapsed)
+                {
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m9 18 6-6-6-6" />
+                    </svg>
+                }
+                else
+                {
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m15 18-6-6 6-6" />
+                    </svg>
+                }
+            </span>
+            <span class="admin-sidebar-collapse-label">@CollapseLabel</span>
+        </button>
+        <span class="admin-sidebar-version" aria-label="Phiên bản v2.0">v2.0</span>
+    </div>
+</aside>
+
+@code {
+    private string CurrentPath { get; set; } = "/admin";
+
+    private string CollapseLabel => NavState.IsSidebarCollapsed ? "Mở rộng thanh điều hướng" : "Thu gọn thanh điều hướng";
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        CurrentPath = ToRelative(Navigation.Uri);
+        NavState.StateChanged += OnStateChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs args)
+    {
+        CurrentPath = ToRelative(args.Location);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnToggleSidebar() => NavState.ToggleSidebar();
+
+    private static NavLinkMatch GetMatchFor(string url)
+        => string.Equals(url, "/admin", StringComparison.OrdinalIgnoreCase) ? NavLinkMatch.All : NavLinkMatch.Prefix;
+
+    private string ToRelative(string uri)
+    {
+        try
+        {
+            var path = new Uri(uri).AbsolutePath;
+            return string.IsNullOrEmpty(path) ? "/" : path;
+        }
+        catch
+        {
+            return "/";
+        }
+    }
+
+    private RenderFragment RenderIcon(string name) => builder => AdminIcons.Render(builder, name);
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        NavState.StateChanged -= OnStateChanged;
+    }
+}

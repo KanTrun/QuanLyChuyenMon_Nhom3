@@ -1,0 +1,262 @@
+@inject IAdminNavigationState NavState
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@implements IDisposable
+
+<header class="admin-topbar" role="banner">
+    <div class="admin-topbar-left">
+        <button type="button" class="admin-topbar-icon-button"
+                aria-label="Thu gọn thanh điều hướng"
+                title="Thu gọn thanh điều hướng"
+                @onclick="OnHamburgerClick">
+            <span aria-hidden="true">@Icon("menu")</span>
+        </button>
+        <nav class="admin-breadcrumb" aria-label="Đường dẫn">
+            <span class="admin-breadcrumb-parent">@_breadcrumbParent</span>
+            <span class="admin-breadcrumb-separator" aria-hidden="true">/</span>
+            <span class="admin-breadcrumb-current">@_breadcrumbCurrent</span>
+        </nav>
+    </div>
+
+    <div class="admin-topbar-right">
+        <button type="button" class="admin-search-trigger" @onclick="OpenPalette" aria-label="Mở tìm kiếm nhanh">
+            <span class="admin-search-trigger-icon" aria-hidden="true">@Icon("search")</span>
+            <span class="admin-search-trigger-label">Tìm kiếm nhanh...</span>
+            <span class="admin-search-trigger-chip" aria-hidden="true">Ctrl K</span>
+        </button>
+
+        <div class="admin-topbar-flyout-host">
+            <button type="button" class="admin-topbar-icon-button"
+                    aria-label="Thông báo (@NavState.UnreadNotifications chưa đọc)"
+                    title="Thông báo"
+                    @onclick="ToggleNotifications"
+                    @onclick:stopPropagation="true">
+                <span aria-hidden="true">@Icon("bell")</span>
+                @if (NavState.UnreadNotifications > 0)
+                {
+                    <span class="admin-topbar-badge" aria-hidden="true">@NavState.UnreadNotifications</span>
+                }
+            </button>
+            @if (_isNotificationsOpen)
+            {
+                <div class="admin-flyout admin-flyout-notifications" id="admin-flyout-notifications" role="dialog" aria-label="Thông báo gần đây">
+                    <div class="admin-flyout-header">
+                        <span class="admin-flyout-title">Thông báo gần đây</span>
+                        <span class="admin-flyout-meta">@NavState.UnreadNotifications chưa đọc</span>
+                    </div>
+                    <ul class="admin-flyout-list">
+                        @foreach (var note in NavState.NotificationPreviews)
+                        {
+                            <li class="admin-flyout-item">
+                                <span class="admin-flyout-item-title">@note.Title</span>
+                                <span class="admin-flyout-item-body">@note.Body</span>
+                                <span class="admin-flyout-item-meta">@note.Timestamp</span>
+                            </li>
+                        }
+                    </ul>
+                    <a class="admin-flyout-footer-link" href="/admin/cai-dat#thong-bao" @onclick="CloseFlyouts">Xem tất cả thông báo</a>
+                </div>
+            }
+        </div>
+
+        <button type="button" class="admin-topbar-icon-button"
+                aria-label="@(_theme == "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối")"
+                title="@(_theme == "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối")"
+                @onclick="OnToggleTheme">
+            <span aria-hidden="true">@Icon(_theme == "dark" ? "sun" : "moon")</span>
+        </button>
+
+        <button type="button" class="admin-topbar-icon-button"
+                aria-label="@(_isFullscreen ? "Thoát toàn màn hình" : "Bật toàn màn hình")"
+                title="@(_isFullscreen ? "Thoát toàn màn hình" : "Bật toàn màn hình")"
+                @onclick="OnToggleFullscreen">
+            <span aria-hidden="true">@Icon(_isFullscreen ? "fullscreen-exit" : "fullscreen")</span>
+        </button>
+
+        <div class="admin-topbar-flyout-host admin-topbar-user">
+            <button type="button" class="admin-user-trigger"
+                    aria-haspopup="menu"
+                    aria-expanded="@(_isUserMenuOpen ? "true" : "false")"
+                    @onclick="ToggleUserMenu"
+                    @onclick:stopPropagation="true">
+                <span class="admin-user-avatar" aria-hidden="true">NA</span>
+                <span class="admin-user-name">BS. Nguyễn Văn A</span>
+                <span class="admin-user-caret" aria-hidden="true">@Icon("chevron-down")</span>
+            </button>
+            @if (_isUserMenuOpen)
+            {
+                <div class="admin-flyout admin-flyout-user" id="admin-flyout-user" role="menu">
+                    <a class="admin-flyout-menu-item" href="/admin/cai-dat" role="menuitem" @onclick="CloseFlyouts">
+                        <span class="admin-flyout-menu-icon" aria-hidden="true">@Icon("user")</span>
+                        Hồ sơ
+                    </a>
+                    <a class="admin-flyout-menu-item" href="/admin/cai-dat" role="menuitem" @onclick="CloseFlyouts">
+                        <span class="admin-flyout-menu-icon" aria-hidden="true">@Icon("settings")</span>
+                        Tùy chọn
+                    </a>
+                    <div class="admin-flyout-divider" role="separator"></div>
+                    <a class="admin-flyout-menu-item admin-flyout-menu-danger" href="/login" role="menuitem" @onclick="CloseFlyouts">
+                        <span class="admin-flyout-menu-icon" aria-hidden="true">@Icon("logout")</span>
+                        Đăng xuất
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</header>
+
+@code {
+    private bool _isNotificationsOpen;
+    private bool _isUserMenuOpen;
+    private bool _isFullscreen;
+    private string _theme = "light";
+    private bool _initialThemeRead;
+    private string _breadcrumbParent = "Tổng quan";
+    private string _breadcrumbCurrent = "Bảng điều khiển";
+
+    private static readonly Dictionary<string, (string Parent, string Current)> BreadcrumbMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["/admin"] = ("Tổng quan", "Bảng điều khiển"),
+        ["/admin/quy-trinh"] = ("Quy trình", "Quy trình kỹ thuật"),
+        ["/admin/quy-trinh/tao"] = ("Quy trình", "Tạo mới"),
+        ["/admin/quy-trinh/phe-duyet"] = ("Quy trình", "Phê duyệt"),
+        ["/admin/phan-quyen"] = ("Phân quyền", "Vai trò"),
+        ["/admin/danh-muc"] = ("Danh mục", "Kỹ thuật chuyên môn"),
+        ["/admin/phac-do"] = ("Phác đồ", "Lâm sàng"),
+        ["/admin/bao-cao"] = ("Báo cáo", "Tổng hợp"),
+        ["/admin/bao-cao/tieu-thu"] = ("Báo cáo", "Tiêu thụ vật tư"),
+        ["/admin/lam-sang"] = ("Lâm sàng", "Bảng điều phối"),
+        ["/admin/cai-dat"] = ("Cài đặt", "Tài khoản"),
+    };
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        UpdateBreadcrumb(Navigation.Uri);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialThemeRead)
+        {
+            _initialThemeRead = true;
+            try
+            {
+                _theme = await JS.InvokeAsync<string>("qlcmShell.getThemePreference");
+                _isFullscreen = await JS.InvokeAsync<bool>("qlcmShell.isFullscreen");
+                StateHasChanged();
+            }
+            catch (JSDisconnectedException)
+            {
+                // Circuit closed; nothing else to do.
+            }
+            catch (Exception)
+            {
+                // Defaults already set.
+            }
+        }
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs args)
+    {
+        UpdateBreadcrumb(args.Location);
+        // Closing flyouts on navigation keeps the chrome tidy.
+        _isNotificationsOpen = false;
+        _isUserMenuOpen = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateBreadcrumb(string uri)
+    {
+        var path = ToRelative(uri);
+        if (BreadcrumbMap.TryGetValue(path, out var crumb))
+        {
+            _breadcrumbParent = crumb.Parent;
+            _breadcrumbCurrent = crumb.Current;
+        }
+        else
+        {
+            _breadcrumbParent = "Quản trị";
+            _breadcrumbCurrent = "Trang";
+        }
+    }
+
+    private static string ToRelative(string uri)
+    {
+        try
+        {
+            return new Uri(uri).AbsolutePath;
+        }
+        catch
+        {
+            return "/admin";
+        }
+    }
+
+    private void OnHamburgerClick() => NavState.ToggleSidebar();
+
+    private void OpenPalette() => NavState.OpenPalette();
+
+    private void ToggleNotifications()
+    {
+        _isNotificationsOpen = !_isNotificationsOpen;
+        if (_isNotificationsOpen)
+        {
+            _isUserMenuOpen = false;
+        }
+    }
+
+    private void ToggleUserMenu()
+    {
+        _isUserMenuOpen = !_isUserMenuOpen;
+        if (_isUserMenuOpen)
+        {
+            _isNotificationsOpen = false;
+        }
+    }
+
+    private void CloseFlyouts()
+    {
+        _isNotificationsOpen = false;
+        _isUserMenuOpen = false;
+    }
+
+    private async Task OnToggleTheme()
+    {
+        try
+        {
+            _theme = await JS.InvokeAsync<string>("qlcmShell.toggleTheme");
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
+    }
+
+    private async Task OnToggleFullscreen()
+    {
+        try
+        {
+            if (_isFullscreen)
+            {
+                await JS.InvokeVoidAsync("qlcmShell.exitFullscreen");
+                _isFullscreen = false;
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("qlcmShell.enterFullscreen");
+                _isFullscreen = true;
+            }
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception)
+        {
+            // Some browsers refuse fullscreen without a user gesture; ignore.
+        }
+    }
+
+    private RenderFragment Icon(string name) => builder => AdminIcons.Render(builder, name);
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}
