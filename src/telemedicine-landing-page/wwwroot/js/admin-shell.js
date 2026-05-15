@@ -34,6 +34,13 @@
         return key === 'k' && (event.ctrlKey || event.metaKey) && !event.altKey;
     }
 
+    function isChatbotToggle(event) {
+        if (event.altKey || event.shiftKey) return false;
+        if (!event.ctrlKey && !event.metaKey) return false;
+        if (event.key === '/' || event.code === 'Slash') return true;
+        return false;
+    }
+
     function isEscape(event) {
         return event.key === 'Escape' || event.key === 'Esc';
     }
@@ -48,6 +55,11 @@
                 if (isPaletteToggle(event)) {
                     event.preventDefault();
                     dotnetRef.invokeMethodAsync('OnTogglePalette');
+                    return;
+                }
+                if (isChatbotToggle(event)) {
+                    event.preventDefault();
+                    dotnetRef.invokeMethodAsync('OnToggleChatbot');
                     return;
                 }
                 if (isEscape(event)) {
@@ -167,6 +179,50 @@
         }
     }
 
+    function scrollToBottom(selector, smooth) {
+        if (!selector) return false;
+        var el = document.querySelector(selector);
+        if (!el) return false;
+        try {
+            if (smooth && typeof el.scrollTo === 'function') {
+                el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+            } else {
+                el.scrollTop = el.scrollHeight;
+            }
+            return true;
+        } catch (_) {
+            try { el.scrollTop = el.scrollHeight; return true; } catch (__) { return false; }
+        }
+    }
+
+    function isAtBottom(selector, threshold) {
+        if (!selector) return true;
+        var el = document.querySelector(selector);
+        if (!el) return true;
+        var t = (typeof threshold === 'number' && threshold >= 0) ? threshold : 24;
+        return (el.scrollHeight - el.scrollTop - el.clientHeight) <= t;
+    }
+
+    function autoGrowTextarea(selector, maxRows) {
+        if (!selector) return;
+        var el = document.querySelector(selector);
+        if (!el) return;
+        var rows = (typeof maxRows === 'number' && maxRows > 0) ? maxRows : 5;
+        var styles = window.getComputedStyle(el);
+        var lineHeight = parseFloat(styles.lineHeight);
+        if (!lineHeight || isNaN(lineHeight)) {
+            var fontSize = parseFloat(styles.fontSize) || 16;
+            lineHeight = fontSize * 1.4;
+        }
+        var paddingTop = parseFloat(styles.paddingTop) || 0;
+        var paddingBottom = parseFloat(styles.paddingBottom) || 0;
+        var maxHeight = lineHeight * rows + paddingTop + paddingBottom;
+        el.style.height = 'auto';
+        var next = Math.min(el.scrollHeight, maxHeight);
+        el.style.height = next + 'px';
+        el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden';
+    }
+
     var outsideClickHandlers = new Map();
 
     function registerOutsideClick(elementId, dotnetRef, methodName) {
@@ -216,5 +272,8 @@
         downloadCsv: downloadCsv,
         registerOutsideClick: registerOutsideClick,
         unregisterOutsideClick: unregisterOutsideClick,
+        scrollToBottom: scrollToBottom,
+        isAtBottom: isAtBottom,
+        autoGrowTextarea: autoGrowTextarea,
     };
 })(window);

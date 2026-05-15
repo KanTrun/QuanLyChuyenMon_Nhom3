@@ -1,0 +1,76 @@
+@inject IAdminNavigationState NavState
+@inject IChatbotService Chatbot
+@implements IDisposable
+
+<button type="button"
+        class="chatbot-launcher@(NavState.IsChatbotOpen ? " is-open" : null)"
+        aria-label="Mở trợ lý AI (Ctrl+/)"
+        title="Mở trợ lý AI (Ctrl+/)"
+        @onclick="OnClick">
+    <span class="chatbot-launcher-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l1.7-4.6A8.5 8.5 0 1 1 21 11.5z" />
+            <circle cx="8.5" cy="11.5" r="1" fill="currentColor" />
+            <circle cx="12" cy="11.5" r="1" fill="currentColor" />
+            <circle cx="15.5" cy="11.5" r="1" fill="currentColor" />
+        </svg>
+    </span>
+    @if (_hasUnread)
+    {
+        <span class="chatbot-launcher-dot" aria-hidden="true"></span>
+    }
+    <span class="visually-hidden">Mở trợ lý AI</span>
+</button>
+
+@code {
+    private bool _hasUnread;
+    private int _lastSeenCount;
+
+    protected override void OnInitialized()
+    {
+        NavState.StateChanged += OnStateChanged;
+        Chatbot.StateChanged += OnChatbotChanged;
+        _lastSeenCount = Chatbot.Messages.Count;
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnChatbotChanged()
+    {
+        var count = Chatbot.Messages.Count;
+        if (NavState.IsChatbotOpen)
+        {
+            _lastSeenCount = count;
+            if (_hasUnread)
+            {
+                _hasUnread = false;
+                InvokeAsync(StateHasChanged);
+            }
+            return;
+        }
+
+        if (count > _lastSeenCount)
+        {
+            // Only mark unread when the most recent change introduced an assistant message.
+            var latest = Chatbot.Messages.Count > 0 ? Chatbot.Messages[^1] : null;
+            if (latest is not null && latest.Role == ChatRole.Assistant)
+            {
+                _hasUnread = true;
+                InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    private void OnClick()
+    {
+        _hasUnread = false;
+        _lastSeenCount = Chatbot.Messages.Count;
+        NavState.OpenChatbot();
+    }
+
+    public void Dispose()
+    {
+        NavState.StateChanged -= OnStateChanged;
+        Chatbot.StateChanged -= OnChatbotChanged;
+    }
+}
