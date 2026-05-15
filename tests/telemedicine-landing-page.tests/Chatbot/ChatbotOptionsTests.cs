@@ -40,9 +40,9 @@ public class ChatbotOptionsTests
     {
         var opts = new ChatbotOptions();
 
-        Assert.Equal("Anthropic", opts.Provider);
-        Assert.Equal("claude-sonnet-4-5-20250929", opts.Model);
-        Assert.Equal("https://api.anthropic.com", opts.BaseUrl);
+        Assert.Equal("Gemini", opts.Provider);
+        Assert.Equal("gemini-2.5-flash", opts.Model);
+        Assert.Equal("https://generativelanguage.googleapis.com", opts.BaseUrl);
         Assert.Equal(string.Empty, opts.ApiKey);
         Assert.Equal(1024, opts.MaxTokens);
         Assert.Equal("2023-06-01", opts.AnthropicVersion);

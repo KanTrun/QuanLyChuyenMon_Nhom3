@@ -9,9 +9,9 @@ public sealed class ChatbotOptions
 {
     public const string SectionName = "Chatbot";
 
-    public string Provider { get; set; } = "Anthropic";
-    public string Model { get; set; } = "claude-sonnet-4-5-20250929";
-    public string BaseUrl { get; set; } = "https://api.anthropic.com";
+    public string Provider { get; set; } = "Gemini";
+    public string Model { get; set; } = "gemini-2.5-flash";
+    public string BaseUrl { get; set; } = "https://generativelanguage.googleapis.com";
     public string ApiKey { get; set; } = string.Empty;
     public int MaxTokens { get; set; } = 1024;
     public string AnthropicVersion { get; set; } = "2023-06-01";

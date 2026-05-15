@@ -27,16 +27,16 @@ builder.Services.AddScoped<IThemeBus, ThemeBus>();
 builder.Services.AddScoped<IToastService, ToastService>();
 builder.Services.AddScoped<IConfirmDialogService, ConfirmDialogService>();
 
-// Chatbot configuration + client (FEAT-004). The client choice is driven by the
-// presence of an Anthropic API key: empty key falls back to a friendly demo
-// stream so the UI exercises the same code path without external calls.
+// Chatbot configuration + client. The client choice is driven by the configured
+// provider plus the presence of an API key: an empty key falls back to a friendly
+// demo stream so the UI exercises the same code path without external calls.
 builder.Services.Configure<ChatbotOptions>(builder.Configuration.GetSection(ChatbotOptions.SectionName));
 var chatbotOpts = builder.Configuration.GetSection(ChatbotOptions.SectionName).Get<ChatbotOptions>() ?? new ChatbotOptions();
 if (string.IsNullOrWhiteSpace(chatbotOpts.ApiKey))
 {
     builder.Services.AddSingleton<IChatbotClient, DemoChatbotClient>();
 }
-else
+else if (string.Equals(chatbotOpts.Provider, "Anthropic", StringComparison.OrdinalIgnoreCase))
 {
     builder.Services.AddHttpClient<AnthropicChatbotClient>((sp, http) =>
     {
@@ -48,6 +48,20 @@ else
         http.Timeout = TimeSpan.FromSeconds(Math.Max(15, opts.RequestTimeoutSeconds));
     });
     builder.Services.AddSingleton<IChatbotClient>(sp => sp.GetRequiredService<AnthropicChatbotClient>());
+}
+else
+{
+    // Default provider is Google Gemini (free-tier friendly, picks up unknown providers too).
+    builder.Services.AddHttpClient<GeminiChatbotClient>((sp, http) =>
+    {
+        var opts = sp.GetRequiredService<IOptions<ChatbotOptions>>().Value;
+        if (!string.IsNullOrWhiteSpace(opts.BaseUrl))
+        {
+            http.BaseAddress = new Uri(opts.BaseUrl);
+        }
+        http.Timeout = TimeSpan.FromSeconds(Math.Max(15, opts.RequestTimeoutSeconds));
+    });
+    builder.Services.AddSingleton<IChatbotClient>(sp => sp.GetRequiredService<GeminiChatbotClient>());
 }
 builder.Services.AddScoped<IChatbotConversationStore, ChatbotConversationStore>();
 builder.Services.AddScoped<IChatbotService, ChatbotService>();

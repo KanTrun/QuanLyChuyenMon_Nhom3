@@ -23,7 +23,7 @@ public sealed record UserPreferences
     public AdminDensity Density { get; init; } = AdminDensity.Comfortable;
     public bool AnimationsEnabled { get; init; } = true;
     public NotificationChannelPrefs Notifications { get; init; } = new(true, true, false);
-    public string AiModel { get; init; } = "claude-sonnet-4-5-20250929";
+    public string AiModel { get; init; } = "gemini-2.5-flash";
     public double AiTemperature { get; init; } = 0.4;
     public string AiSystemPrompt { get; init; } =
         "Bạn là trợ lý nội bộ của bệnh viện QLCM Pro, trả lời ngắn gọn bằng tiếng Việt và luôn bám theo quy trình chuẩn của bệnh viện.";
