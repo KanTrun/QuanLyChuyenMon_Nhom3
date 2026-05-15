@@ -1,0 +1,126 @@
+@inject IPermissionService PermissionService
+@inject IToastService Toasts
+
+<article class="admin-panel">
+    <header class="admin-panel-head">
+        <div>
+            <h2 class="admin-panel-title">Tài khoản và vai trò</h2>
+            <p class="admin-panel-subtitle">Tổng @_users.Count tài khoản, @_users.Count(u => u.IsActive) đang hoạt động.</p>
+        </div>
+    </header>
+
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Họ và tên</th>
+                    <th>Email</th>
+                    <th>Khoa</th>
+                    <th>Vai trò</th>
+                    <th>Đăng nhập gần nhất</th>
+                    <th style="text-align:right;">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in _users)
+                {
+                    <tr>
+                        <td class="admin-table-cell-strong">@user.FullName</td>
+                        <td class="admin-table-cell-muted">@user.Email</td>
+                        <td>@AdminEnumLabels.GetLabel(user.Department)</td>
+                        <td>
+                            <div class="admin-card-tags">
+                                @foreach (var roleId in user.RoleIds)
+                                {
+                                    <AdminBadge Tone="tone-secondary">@RoleName(roleId)</AdminBadge>
+                                }
+                            </div>
+                        </td>
+                        <td class="admin-table-cell-muted">@(user.LastLogin?.ToString("dd/MM HH:mm") ?? "Chưa đăng nhập")</td>
+                        <td style="text-align:right;">
+                            <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => Open(user)">Phân quyền</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</article>
+
+<AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="@(value => _drawerOpen = value)"
+             Eyebrow="Tài khoản"
+             Title="@(_selected?.FullName ?? string.Empty)"
+             Subtitle="@(_selected is null ? null : $"{_selected.Email} • {AdminEnumLabels.GetLabel(_selected.Department)}")">
+    <ChildContent>
+        @if (_selected is { } user)
+        {
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Vai trò áp dụng</label>
+                @foreach (var role in _roles)
+                {
+                    <label style="display:flex; gap:10px; align-items:center; padding:6px 0; border-bottom:1px dashed var(--color-border-subtle);">
+                        <input type="checkbox" class="admin-permission-toggle" checked="@_assigned.Contains(role.Id)" @onchange="(e) => ToggleRole(role.Id, ((bool?)e.Value) ?? false)" />
+                        <div style="display:flex; flex-direction:column;">
+                            <span class="admin-table-cell-strong">@role.Name</span>
+                            <span class="admin-table-cell-muted">@role.Description</span>
+                        </div>
+                    </label>
+                }
+            </div>
+
+            <div class="admin-form-field">
+                <label class="admin-form-field-label" for="user-reason">Lý do cập nhật</label>
+                <textarea id="user-reason" class="admin-textarea" placeholder="VD: Bổ sung quyền lãnh đạo khoa cho ca trực mới." @bind="_reason"></textarea>
+            </div>
+        }
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _drawerOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="SaveAsync" disabled="@(_selected is null)">Lưu phân quyền</button>
+    </FooterContent>
+</AdminDrawer>
+
+@code {
+    private IReadOnlyList<UserAccountRecord> _users = Array.Empty<UserAccountRecord>();
+    private IReadOnlyList<RoleRecord> _roles = Array.Empty<RoleRecord>();
+    private UserAccountRecord? _selected;
+    private bool _drawerOpen;
+    private HashSet<Guid> _assigned = new();
+    private string _reason = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _users = PermissionService.ListUsers();
+        _roles = PermissionService.ListRoles();
+    }
+
+    private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? "(Không rõ)";
+
+    private void Open(UserAccountRecord user)
+    {
+        _selected = user;
+        _assigned = new HashSet<Guid>(user.RoleIds);
+        _reason = string.Empty;
+        _drawerOpen = true;
+    }
+
+    private void ToggleRole(Guid roleId, bool checkedValue)
+    {
+        if (checkedValue) _assigned.Add(roleId);
+        else _assigned.Remove(roleId);
+    }
+
+    private void SaveAsync()
+    {
+        if (_selected is null) return;
+        if (string.IsNullOrWhiteSpace(_reason))
+        {
+            Toasts.Show("Thiếu lý do cập nhật", "Vui lòng nhập lý do trước khi lưu phân quyền.", ToastVariant.Warning);
+            return;
+        }
+        PermissionService.AssignUserRoles(_selected.Id, _assigned.ToList(), _reason.Trim(), "BS. Đặng Thái Sơn");
+        Toasts.Show("Đã cập nhật phân quyền", _selected.FullName, ToastVariant.Success);
+        _users = PermissionService.ListUsers();
+        _drawerOpen = false;
+    }
+}

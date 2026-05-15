@@ -1,8 +1,124 @@
 @page "/admin/lam-sang"
 @layout AdminLayout
+@inject IClinicService ClinicService
+@inject IToastService Toasts
+@implements IDisposable
 
 <PageTitle>Lâm sàng | QLCM Pro</PageTitle>
 
-<AdminStubCard Eyebrow="Lâm sàng"
-               Title="Bảng điều phối lâm sàng"
-               Subtitle="Theo dõi phiên khám, ca trực và áp dụng phác đồ trong ngày." />
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Lâm sàng</span>
+            <h1 class="admin-page-title">Bảng điều phối lâm sàng</h1>
+            <p class="admin-page-subtitle">Theo dõi luồng tiếp nhận bệnh nhân theo ba trạng thái: đang chờ, đang thực hiện và hoàn thành.</p>
+        </div>
+        <div class="admin-page-actions">
+            <span class="admin-table-cell-muted">Tổng @_total phiên trong ngày</span>
+        </div>
+    </header>
+
+    <div class="admin-kanban">
+        @foreach (var column in _columns)
+        {
+            <article class="admin-kanban-col">
+                <header class="admin-kanban-col-head">
+                    <span class="admin-kanban-col-title">@AdminEnumLabels.GetLabel(column.Status)</span>
+                    <AdminBadge Tone="@AdminEnumLabels.GetTone(column.Status)">@column.Sessions.Count</AdminBadge>
+                </header>
+
+                @if (column.Sessions.Count == 0)
+                {
+                    <div class="admin-empty" style="padding:18px 8px;">
+                        <div class="admin-empty-title">Chưa có phiên</div>
+                        <div class="admin-empty-body">Chuyển phiên từ cột trước hoặc đợi tiếp nhận mới.</div>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var session in column.Sessions)
+                    {
+                        <div class="admin-kanban-card">
+                            <div class="admin-kanban-card-head">
+                                <div>
+                                    <div class="admin-kanban-card-name">@session.PatientName</div>
+                                    <div class="admin-table-cell-muted">@session.PatientCode • @AdminEnumLabels.GetLabel(session.Department)</div>
+                                </div>
+                                <AdminBadge Tone="tone-primary">@session.ScheduledAt.ToString("HH:mm")</AdminBadge>
+                            </div>
+                            <div class="admin-kanban-card-meta">
+                                <strong>@session.TechnicalService</strong><br />
+                                Phụ trách: @session.AssignedTo
+                            </div>
+                            @if (!string.IsNullOrEmpty(session.Note))
+                            {
+                                <div class="admin-table-cell-muted">Ghi chú: @session.Note</div>
+                            }
+                            <div class="admin-kanban-card-actions">
+                                @if (column.Status == ClinicSessionStatus.DangCho)
+                                {
+                                    <button type="button" class="admin-btn admin-btn-primary" @onclick='() => Move(session, ClinicSessionStatus.DangThucHien, "Bắt đầu")'>
+                                        Bắt đầu
+                                    </button>
+                                }
+                                else if (column.Status == ClinicSessionStatus.DangThucHien)
+                                {
+                                    <button type="button" class="admin-btn admin-btn-ghost" @onclick='() => Move(session, ClinicSessionStatus.DangCho, "Tạm dừng")'>
+                                        Tạm dừng
+                                    </button>
+                                    <button type="button" class="admin-btn admin-btn-primary" @onclick='() => Move(session, ClinicSessionStatus.HoanThanh, "Hoàn tất")'>
+                                        Hoàn tất
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="admin-btn admin-btn-ghost" @onclick='() => Move(session, ClinicSessionStatus.DangThucHien, "Mở lại")'>
+                                        Mở lại
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </article>
+        }
+    </div>
+</section>
+
+@code {
+    private List<KanbanColumn> _columns = new();
+    private int _total;
+
+    protected override void OnInitialized()
+    {
+        ClinicService.StateChanged += OnChanged;
+        Recompute();
+    }
+
+    private void OnChanged() => InvokeAsync(() => { Recompute(); StateHasChanged(); });
+
+    private void Recompute()
+    {
+        var all = ClinicService.ListAll();
+        _total = all.Count;
+        _columns = new List<KanbanColumn>
+        {
+            new(ClinicSessionStatus.DangCho, all.Where(s => s.Status == ClinicSessionStatus.DangCho).ToList()),
+            new(ClinicSessionStatus.DangThucHien, all.Where(s => s.Status == ClinicSessionStatus.DangThucHien).ToList()),
+            new(ClinicSessionStatus.HoanThanh, all.Where(s => s.Status == ClinicSessionStatus.HoanThanh).ToList()),
+        };
+    }
+
+    private void Move(ClinicSession session, ClinicSessionStatus next, string actionLabel)
+    {
+        ClinicService.Move(session.Id, next);
+        Toasts.Show($"{actionLabel} phiên lâm sàng", $"{session.PatientName} • {AdminEnumLabels.GetLabel(next)}", ToastVariant.Success);
+    }
+
+    public void Dispose()
+    {
+        ClinicService.StateChanged -= OnChanged;
+    }
+
+    private sealed record KanbanColumn(ClinicSessionStatus Status, IReadOnlyList<ClinicSession> Sessions);
+}

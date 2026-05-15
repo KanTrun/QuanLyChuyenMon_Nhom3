@@ -1,0 +1,510 @@
+using System.Globalization;
+using System.Text;
+using TelemedicineLandingPage.Models.Admin;
+
+namespace TelemedicineLandingPage.Services.Admin;
+
+/// <summary>
+/// Default singleton catalog service for technical services. Persists data in
+/// memory and exposes a stable CSV format used by both the export and import
+/// paths so a round-trip preserves rows.
+/// </summary>
+public sealed class CatalogService : ICatalogService
+{
+    public static readonly string[] CsvHeader =
+    {
+        "ServiceCode", "ServiceName", "ServiceType", "Department", "Status",
+        "ResourceType", "ResourceCode", "ResourceName", "Unit", "StandardQuantity", "Note",
+    };
+
+    private readonly object _gate = new();
+    private readonly List<TechnicalServiceRecord> _items;
+
+    public CatalogService()
+    {
+        _items = SeedData();
+    }
+
+    public event Action? StateChanged;
+
+    public IReadOnlyList<TechnicalServiceRecord> Search(CatalogFilter filter)
+    {
+        lock (_gate)
+        {
+            IEnumerable<TechnicalServiceRecord> query = _items;
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+            {
+                var needle = filter.Search.Trim();
+                query = query.Where(s =>
+                    s.Name.Contains(needle, StringComparison.OrdinalIgnoreCase) ||
+                    s.Code.Contains(needle, StringComparison.OrdinalIgnoreCase));
+            }
+            if (filter.ServiceType is { } st) query = query.Where(s => s.ServiceType == st);
+            if (filter.Department is { } dept) query = query.Where(s => s.Department == dept);
+            if (filter.Status is { } status) query = query.Where(s => s.Status == status);
+            return query.OrderBy(s => s.Code).ToList();
+        }
+    }
+
+    public TechnicalServiceRecord? GetById(Guid id)
+    {
+        lock (_gate) return _items.FirstOrDefault(s => s.Id == id);
+    }
+
+    public TechnicalServiceRecord Create(TechnicalServiceRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        var next = record with
+        {
+            Id = record.Id == Guid.Empty ? Guid.NewGuid() : record.Id,
+            UpdatedAt = DateTime.Now,
+        };
+        lock (_gate) _items.Add(next);
+        Raise();
+        return next;
+    }
+
+    public TechnicalServiceRecord Update(Guid id, TechnicalServiceRecord updated)
+    {
+        ArgumentNullException.ThrowIfNull(updated);
+        TechnicalServiceRecord next;
+        lock (_gate)
+        {
+            var index = _items.FindIndex(s => s.Id == id);
+            if (index < 0) throw new KeyNotFoundException($"Không tìm thấy kỹ thuật {id}.");
+            next = updated with { Id = id, UpdatedAt = DateTime.Now };
+            _items[index] = next;
+        }
+        Raise();
+        return next;
+    }
+
+    public void Archive(Guid id)
+    {
+        lock (_gate)
+        {
+            var index = _items.FindIndex(s => s.Id == id);
+            if (index < 0) return;
+            _items[index] = _items[index] with { Status = CatalogStatus.NgungSuDung, UpdatedAt = DateTime.Now };
+        }
+        Raise();
+    }
+
+    public void AddResourceNorm(Guid serviceId, ResourceNorm norm)
+    {
+        ArgumentNullException.ThrowIfNull(norm);
+        lock (_gate)
+        {
+            var index = _items.FindIndex(s => s.Id == serviceId);
+            if (index < 0) return;
+            var current = _items[index];
+            if (current.ResourceNorms.Any(r => string.Equals(r.ResourceCode, norm.ResourceCode, StringComparison.OrdinalIgnoreCase)))
+            {
+                return; // ignore duplicates by code
+            }
+            var nextNorms = current.ResourceNorms.Append(norm).ToList();
+            _items[index] = current with { ResourceNorms = nextNorms, UpdatedAt = DateTime.Now };
+        }
+        Raise();
+    }
+
+    public void RemoveResourceNorm(Guid serviceId, string resourceCode)
+    {
+        if (string.IsNullOrWhiteSpace(resourceCode)) return;
+        lock (_gate)
+        {
+            var index = _items.FindIndex(s => s.Id == serviceId);
+            if (index < 0) return;
+            var current = _items[index];
+            var nextNorms = current.ResourceNorms
+                .Where(r => !string.Equals(r.ResourceCode, resourceCode, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            _items[index] = current with { ResourceNorms = nextNorms, UpdatedAt = DateTime.Now };
+        }
+        Raise();
+    }
+
+    public int ImportFromCsv(string csv)
+    {
+        if (string.IsNullOrWhiteSpace(csv)) return 0;
+        var normalised = csv.StartsWith('\uFEFF') ? csv.TrimStart('\uFEFF') : csv;
+        var rows = AdminCsv.Parse(normalised);
+        if (rows.Count <= 1) return 0;
+
+        // Header row drives the column-to-field mapping so users can edit the file in Excel.
+        var header = rows[0].Select(c => c.Trim()).ToArray();
+        int IndexOf(string name)
+        {
+            for (var i = 0; i < header.Length; i++)
+            {
+                if (string.Equals(header[i], name, StringComparison.OrdinalIgnoreCase)) return i;
+            }
+            return -1;
+        }
+
+        int idxServiceCode = IndexOf("ServiceCode");
+        int idxServiceName = IndexOf("ServiceName");
+        int idxServiceType = IndexOf("ServiceType");
+        int idxDepartment = IndexOf("Department");
+        int idxStatus = IndexOf("Status");
+        int idxResType = IndexOf("ResourceType");
+        int idxResCode = IndexOf("ResourceCode");
+        int idxResName = IndexOf("ResourceName");
+        int idxUnit = IndexOf("Unit");
+        int idxQty = IndexOf("StandardQuantity");
+        int idxNote = IndexOf("Note");
+
+        if (idxServiceCode < 0 || idxServiceName < 0)
+        {
+            throw new InvalidOperationException("CSV thiếu cột ServiceCode hoặc ServiceName.");
+        }
+
+        var grouped = new Dictionary<string, (TechnicalServiceRecord Service, List<ResourceNorm> Norms)>(StringComparer.OrdinalIgnoreCase);
+
+        for (var r = 1; r < rows.Count; r++)
+        {
+            var row = rows[r];
+            if (row.Count == 0 || row.All(string.IsNullOrWhiteSpace)) continue;
+
+            string Get(int idx) => idx >= 0 && idx < row.Count ? row[idx].Trim() : string.Empty;
+            var serviceCode = Get(idxServiceCode);
+            if (string.IsNullOrWhiteSpace(serviceCode)) continue;
+
+            if (!grouped.TryGetValue(serviceCode, out var existing))
+            {
+                var record = new TechnicalServiceRecord
+                {
+                    Code = serviceCode,
+                    Name = Get(idxServiceName),
+                    ServiceType = ParseEnum(Get(idxServiceType), ServiceType.KyThuat),
+                    Department = ParseEnum(Get(idxDepartment), Department.HanhChinh),
+                    Status = ParseEnum(Get(idxStatus), CatalogStatus.HoatDong),
+                    ResourceNorms = Array.Empty<ResourceNorm>(),
+                };
+                grouped[serviceCode] = (record, new List<ResourceNorm>());
+            }
+
+            var resCode = Get(idxResCode);
+            if (!string.IsNullOrWhiteSpace(resCode))
+            {
+                var qtyText = Get(idxQty);
+                if (!decimal.TryParse(qtyText, NumberStyles.Number, CultureInfo.InvariantCulture, out var qty))
+                {
+                    decimal.TryParse(qtyText, NumberStyles.Number, CultureInfo.GetCultureInfo("vi-VN"), out qty);
+                }
+                grouped[serviceCode].Norms.Add(new ResourceNorm(
+                    ParseEnum(Get(idxResType), ResourceType.VatTu),
+                    resCode,
+                    Get(idxResName),
+                    Get(idxUnit),
+                    qty,
+                    Get(idxNote)));
+            }
+        }
+
+        var imported = 0;
+        lock (_gate)
+        {
+            foreach (var (code, (service, norms)) in grouped)
+            {
+                var index = _items.FindIndex(s => string.Equals(s.Code, code, StringComparison.OrdinalIgnoreCase));
+                var record = service with { ResourceNorms = norms };
+                if (index < 0)
+                {
+                    _items.Add(record with { Id = Guid.NewGuid(), UpdatedAt = DateTime.Now });
+                }
+                else
+                {
+                    var existing = _items[index];
+                    var mergedNorms = existing.ResourceNorms
+                        .Concat(norms.Where(n => !existing.ResourceNorms.Any(en => string.Equals(en.ResourceCode, n.ResourceCode, StringComparison.OrdinalIgnoreCase))))
+                        .ToList();
+                    _items[index] = existing with
+                    {
+                        Name = record.Name,
+                        ServiceType = record.ServiceType,
+                        Department = record.Department,
+                        Status = record.Status,
+                        ResourceNorms = mergedNorms,
+                        UpdatedAt = DateTime.Now,
+                    };
+                }
+                imported++;
+            }
+        }
+        if (imported > 0) Raise();
+        return imported;
+    }
+
+    public string ExportToCsv()
+    {
+        lock (_gate)
+        {
+            var sb = new StringBuilder();
+            sb.Append('\uFEFF'); // UTF-8 BOM so Excel renders Vietnamese diacritics.
+            sb.AppendLine(string.Join(',', CsvHeader));
+            foreach (var service in _items.OrderBy(s => s.Code))
+            {
+                if (service.ResourceNorms.Count == 0)
+                {
+                    sb.AppendLine(string.Join(',', new[]
+                    {
+                        AdminCsv.Encode(service.Code),
+                        AdminCsv.Encode(service.Name),
+                        service.ServiceType.ToString(),
+                        service.Department.ToString(),
+                        service.Status.ToString(),
+                        string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty,
+                    }));
+                    continue;
+                }
+                foreach (var norm in service.ResourceNorms)
+                {
+                    sb.AppendLine(string.Join(',', new[]
+                    {
+                        AdminCsv.Encode(service.Code),
+                        AdminCsv.Encode(service.Name),
+                        service.ServiceType.ToString(),
+                        service.Department.ToString(),
+                        service.Status.ToString(),
+                        norm.ResourceType.ToString(),
+                        AdminCsv.Encode(norm.ResourceCode),
+                        AdminCsv.Encode(norm.ResourceName),
+                        AdminCsv.Encode(norm.Unit),
+                        norm.StandardQuantity.ToString(CultureInfo.InvariantCulture),
+                        AdminCsv.Encode(norm.Note),
+                    }));
+                }
+            }
+            return sb.ToString();
+        }
+    }
+
+    private void Raise() => StateChanged?.Invoke();
+
+    private static TEnum ParseEnum<TEnum>(string raw, TEnum fallback) where TEnum : struct, Enum
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return fallback;
+        return Enum.TryParse<TEnum>(raw, ignoreCase: true, out var value) ? value : fallback;
+    }
+
+    private static List<TechnicalServiceRecord> SeedData()
+    {
+        ResourceNorm Norm(ResourceType type, string code, string name, string unit, decimal qty, string note = "")
+            => new(type, code, name, unit, qty, note);
+
+        return new List<TechnicalServiceRecord>
+        {
+            new()
+            {
+                Code = "KT-001",
+                Name = "Tiêm vaccine COVID-19",
+                ServiceType = ServiceType.KyThuat,
+                Department = Department.NoiTiet,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.Thuoc, "VAC-COVID-01", "Vaccine COVID-19 Pfizer", "liều", 1m, "Bảo quản 2-8 độ C"),
+                    Norm(ResourceType.VatTu, "VT-KIM23", "Kim tiêm 23G", "cái", 1m),
+                    Norm(ResourceType.VatTu, "VT-BG-VK", "Băng gạc vô khuẩn", "cái", 2m),
+                    Norm(ResourceType.HoaChat, "HC-CON70", "Cồn 70 độ", "ml", 5m),
+                },
+            },
+            new()
+            {
+                Code = "XN-001",
+                Name = "Xét nghiệm công thức máu",
+                ServiceType = ServiceType.XetNghiem,
+                Department = Department.XetNghiem,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.VatTu, "VT-ONG-EDTA", "Ống xét nghiệm EDTA", "ống", 1m),
+                    Norm(ResourceType.VatTu, "VT-KIM21", "Kim lấy máu 21G", "cái", 1m),
+                    Norm(ResourceType.HoaChat, "HC-CON70", "Cồn 70 độ", "ml", 3m),
+                    Norm(ResourceType.VatTu, "VT-GANG", "Găng tay y tế", "đôi", 1m),
+                },
+            },
+            new()
+            {
+                Code = "XN-002",
+                Name = "Xét nghiệm sinh hóa máu",
+                ServiceType = ServiceType.XetNghiem,
+                Department = Department.XetNghiem,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.VatTu, "VT-ONG-SH", "Ống sinh hóa serum", "ống", 1m),
+                    Norm(ResourceType.HoaChat, "HC-RG-SH", "Hóa chất sinh hóa", "ml", 1.5m),
+                    Norm(ResourceType.VatTu, "VT-GANG", "Găng tay y tế", "đôi", 1m),
+                },
+            },
+            new()
+            {
+                Code = "CDHA-001",
+                Name = "Chụp X-quang ngực thẳng",
+                ServiceType = ServiceType.ChanDoanHinhAnh,
+                Department = Department.ChanDoanHinhAnh,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.VatTu, "VT-PHIM-XQ", "Phim X-quang", "tấm", 1m),
+                    Norm(ResourceType.ThietBi, "TB-MAY-XQ", "Máy chụp X-quang kỹ thuật số", "ca", 1m, "Bảo trì hàng tuần"),
+                },
+            },
+            new()
+            {
+                Code = "CDHA-002",
+                Name = "Siêu âm ổ bụng tổng quát",
+                ServiceType = ServiceType.ChanDoanHinhAnh,
+                Department = Department.ChanDoanHinhAnh,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.VatTu, "VT-GEL-SA", "Gel siêu âm", "ml", 8m),
+                    Norm(ResourceType.ThietBi, "TB-MAY-SA", "Máy siêu âm", "ca", 1m),
+                    Norm(ResourceType.VatTu, "VT-KHAN", "Khăn lau dùng một lần", "cái", 1m),
+                },
+            },
+            new()
+            {
+                Code = "PT-001",
+                Name = "Phẫu thuật nội soi viêm ruột thừa",
+                ServiceType = ServiceType.PhauThuat,
+                Department = Department.NgoaiTongQuat,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.Thuoc, "TH-LIDO", "Lidocaine 2%", "ống", 2m, "Gây tê tại chỗ"),
+                    Norm(ResourceType.Thuoc, "TH-PROCAIN", "Thuốc tê Procain", "ống", 2m),
+                    Norm(ResourceType.VatTu, "VT-BO-HAU-PHAU", "Bộ dụng cụ hậu phẫu", "bộ", 1m),
+                    Norm(ResourceType.VatTu, "VT-N95", "Khẩu trang N95", "cái", 4m),
+                    Norm(ResourceType.VatTu, "VT-BG-VK", "Băng gạc vô khuẩn", "cái", 8m),
+                },
+            },
+            new()
+            {
+                Code = "PT-002",
+                Name = "Phẫu thuật cắt amidan",
+                ServiceType = ServiceType.PhauThuat,
+                Department = Department.NgoaiTongQuat,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.Thuoc, "TH-LIDO", "Lidocaine 2%", "ống", 1m),
+                    Norm(ResourceType.VatTu, "VT-BG-VK", "Băng gạc vô khuẩn", "cái", 6m),
+                    Norm(ResourceType.VatTu, "VT-GANG", "Găng tay y tế", "đôi", 4m),
+                },
+            },
+            new()
+            {
+                Code = "TT-001",
+                Name = "Thủ thuật đặt sonde tiểu",
+                ServiceType = ServiceType.ThuThuat,
+                Department = Department.NoiTiet,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.VatTu, "VT-SONDE-FOLEY", "Sonde Foley 16Fr", "cái", 1m),
+                    Norm(ResourceType.VatTu, "VT-BG-VK", "Băng gạc vô khuẩn", "cái", 3m),
+                    Norm(ResourceType.HoaChat, "HC-CON70", "Cồn 70 độ", "ml", 8m),
+                },
+            },
+            new()
+            {
+                Code = "TT-002",
+                Name = "Thủ thuật đo huyết áp tự động",
+                ServiceType = ServiceType.ThuThuat,
+                Department = Department.NoiTiet,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.ThietBi, "TB-HUYETAP", "Máy đo huyết áp điện tử", "ca", 1m),
+                    Norm(ResourceType.VatTu, "VT-KHAN", "Khăn lau dùng một lần", "cái", 1m),
+                },
+            },
+            new()
+            {
+                Code = "TT-003",
+                Name = "Thủ thuật khám tim mạch cơ bản",
+                ServiceType = ServiceType.ThuThuat,
+                Department = Department.TimMach,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.ThietBi, "TB-LITTMANN", "Ống nghe Littmann", "ca", 1m),
+                    Norm(ResourceType.ThietBi, "TB-HUYETAP", "Máy đo huyết áp điện tử", "ca", 1m),
+                },
+            },
+            new()
+            {
+                Code = "KT-002",
+                Name = "Cấp phát thuốc nội trú",
+                ServiceType = ServiceType.KyThuat,
+                Department = Department.DuocLamSang,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.VatTu, "VT-TUI-THUOC", "Túi đựng thuốc", "cái", 6m),
+                    Norm(ResourceType.VatTu, "VT-NHAN", "Nhãn thuốc", "cái", 6m),
+                },
+            },
+            new()
+            {
+                Code = "KT-003",
+                Name = "Tiêm bắp Vitamin tổng hợp",
+                ServiceType = ServiceType.KyThuat,
+                Department = Department.NoiTiet,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.Thuoc, "TH-VIT-TH", "Vitamin tổng hợp", "ống", 1m),
+                    Norm(ResourceType.VatTu, "VT-KIM23", "Kim tiêm 23G", "cái", 1m),
+                    Norm(ResourceType.HoaChat, "HC-CON70", "Cồn 70 độ", "ml", 4m),
+                },
+            },
+            new()
+            {
+                Code = "KT-004",
+                Name = "Vệ sinh khử khuẩn dụng cụ",
+                ServiceType = ServiceType.KyThuat,
+                Department = Department.KhoVatTu,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.HoaChat, "HC-CK-DC", "Hóa chất khử khuẩn dụng cụ", "ml", 50m),
+                    Norm(ResourceType.VatTu, "VT-GANG", "Găng tay y tế", "đôi", 2m),
+                    Norm(ResourceType.VatTu, "VT-N95", "Khẩu trang N95", "cái", 1m),
+                },
+            },
+            new()
+            {
+                Code = "XN-003",
+                Name = "Xét nghiệm đường huyết mao mạch",
+                ServiceType = ServiceType.XetNghiem,
+                Department = Department.NoiTiet,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.VatTu, "VT-QUE-DUONG", "Que thử đường huyết", "cái", 1m),
+                    Norm(ResourceType.VatTu, "VT-KIM-LANCET", "Kim chích đầu ngón", "cái", 1m),
+                    Norm(ResourceType.HoaChat, "HC-CON70", "Cồn 70 độ", "ml", 1m),
+                },
+            },
+            new()
+            {
+                Code = "TT-004",
+                Name = "Thủ thuật thay băng vết thương",
+                ServiceType = ServiceType.ThuThuat,
+                Department = Department.NgoaiTongQuat,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new[]
+                {
+                    Norm(ResourceType.VatTu, "VT-BG-VK", "Băng gạc vô khuẩn", "cái", 5m),
+                    Norm(ResourceType.HoaChat, "HC-CON70", "Cồn 70 độ", "ml", 6m),
+                    Norm(ResourceType.VatTu, "VT-GANG", "Găng tay y tế", "đôi", 1m),
+                },
+            },
+        };
+    }
+}

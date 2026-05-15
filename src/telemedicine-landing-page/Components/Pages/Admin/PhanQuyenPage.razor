@@ -1,8 +1,66 @@
 @page "/admin/phan-quyen"
 @layout AdminLayout
+@using TelemedicineLandingPage.Components.Admin.PhanQuyen
+@inject IPermissionService PermissionService
+@implements IDisposable
 
 <PageTitle>Phân quyền | QLCM Pro</PageTitle>
 
-<AdminStubCard Eyebrow="Phân quyền"
-               Title="Phân quyền hệ thống"
-               Subtitle="Quản lý vai trò, người dùng và lịch sử thay đổi quyền truy cập." />
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Phân quyền</span>
+            <h1 class="admin-page-title">Quản lý vai trò và tài khoản</h1>
+            <p class="admin-page-subtitle">Cấu hình ma trận quyền theo module, gán vai trò cho tài khoản và xem lại lịch sử thay đổi.</p>
+        </div>
+    </header>
+
+    <AdminTabs Tabs="_tabs" ActiveKey="_active" ActiveKeyChanged="@(value => _active = value)" AriaLabel="Phân quyền" />
+
+    @switch (_active)
+    {
+        case "vai-tro":
+            <RoleMatrix />
+            break;
+        case "tai-khoan":
+            <UserAssignmentList />
+            break;
+        case "lich-su":
+            <ChangeLogList @key="_logKey" />
+            break;
+    }
+</section>
+
+@code {
+    private string _active = "vai-tro";
+    private int _logKey;
+    private IReadOnlyList<AdminTabs.TabItem> _tabs = Array.Empty<AdminTabs.TabItem>();
+
+    protected override void OnInitialized()
+    {
+        PermissionService.StateChanged += OnChanged;
+        BuildTabs();
+    }
+
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        _logKey++;
+        BuildTabs();
+        StateHasChanged();
+    });
+
+    private void BuildTabs()
+    {
+        _tabs = new List<AdminTabs.TabItem>
+        {
+            new("vai-tro", "Vai trò", PermissionService.ListRoles().Count),
+            new("tai-khoan", "Tài khoản", PermissionService.ListUsers().Count),
+            new("lich-su", "Lịch sử thay đổi", PermissionService.GetChangeLog().Count),
+        };
+    }
+
+    public void Dispose()
+    {
+        PermissionService.StateChanged -= OnChanged;
+    }
+}

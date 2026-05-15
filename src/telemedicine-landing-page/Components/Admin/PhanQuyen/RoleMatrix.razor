@@ -1,0 +1,154 @@
+@inject IPermissionService PermissionService
+@inject IToastService Toasts
+
+<article class="admin-panel">
+    <header class="admin-panel-head">
+        <div>
+            <h2 class="admin-panel-title">Ma trận phân quyền theo vai trò</h2>
+            <p class="admin-panel-subtitle">Tích chọn quyền tương ứng với từng module, sau đó lưu thay đổi.</p>
+        </div>
+    </header>
+
+    <div class="admin-form-field" style="max-width:340px;">
+        <label class="admin-form-field-label" for="role-picker">Chọn vai trò</label>
+        <select id="role-picker" class="admin-select" value="@_selectedRoleId" @onchange="OnRoleChanged">
+            @foreach (var role in _roles)
+            {
+                <option value="@role.Id">@role.Name (@role.MemberCount tài khoản)</option>
+            }
+        </select>
+    </div>
+
+    @if (_selectedRole is { } activeRole)
+    {
+        <div class="admin-table-wrapper">
+            <table class="admin-table admin-permission-table">
+                <thead>
+                    <tr>
+                        <th>Module</th>
+                        <th>Xem</th>
+                        <th>Tạo</th>
+                        <th>Cập nhật</th>
+                        <th>Xóa</th>
+                        <th>Phê duyệt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var module in PermissionService.AdminModules)
+                    {
+                        var grant = _draft.GetValueOrDefault(module) ?? new PermissionGrant(module, false, false, false, false, false);
+                        <tr>
+                            <td class="admin-table-cell-strong">@ModuleLabel(module)</td>
+                            <td><input type="checkbox" class="admin-permission-toggle" checked="@grant.CanView" @onchange="(e) => Toggle(module, view: ((bool?)e.Value) ?? false)" /></td>
+                            <td><input type="checkbox" class="admin-permission-toggle" checked="@grant.CanCreate" @onchange="(e) => Toggle(module, create: ((bool?)e.Value) ?? false)" /></td>
+                            <td><input type="checkbox" class="admin-permission-toggle" checked="@grant.CanUpdate" @onchange="(e) => Toggle(module, update: ((bool?)e.Value) ?? false)" /></td>
+                            <td><input type="checkbox" class="admin-permission-toggle" checked="@grant.CanDelete" @onchange="(e) => Toggle(module, delete: ((bool?)e.Value) ?? false)" /></td>
+                            <td><input type="checkbox" class="admin-permission-toggle" checked="@grant.CanApprove" @onchange="(e) => Toggle(module, approve: ((bool?)e.Value) ?? false)" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="admin-form-field admin-form-field-full">
+            <label class="admin-form-field-label" for="role-reason">Lý do thay đổi</label>
+            <textarea id="role-reason" class="admin-textarea" placeholder="VD: Bổ sung quyền phê duyệt phác đồ cho lãnh đạo khoa." @bind="_reason"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="ResetDraft">Hoàn tác</button>
+            <button type="button" class="admin-btn admin-btn-primary" @onclick="SaveAsync">Lưu thay đổi</button>
+        </div>
+    }
+</article>
+
+@code {
+    private IReadOnlyList<RoleRecord> _roles = Array.Empty<RoleRecord>();
+    private RoleRecord? _selectedRole;
+    private Guid _selectedRoleId;
+    private Dictionary<string, PermissionGrant> _draft = new();
+    private string _reason = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _roles = PermissionService.ListRoles();
+        if (_roles.Count > 0)
+        {
+            _selectedRoleId = _roles[0].Id;
+            LoadDraft(_roles[0]);
+        }
+    }
+
+    private void OnRoleChanged(ChangeEventArgs args)
+    {
+        if (Guid.TryParse(args.Value?.ToString(), out var id))
+        {
+            _selectedRoleId = id;
+            var role = PermissionService.GetRole(id);
+            if (role is not null) LoadDraft(role);
+        }
+    }
+
+    private void LoadDraft(RoleRecord role)
+    {
+        _selectedRole = role;
+        _draft = role.Permissions.ToDictionary(p => p.Module, p => p);
+        foreach (var module in PermissionService.AdminModules)
+        {
+            if (!_draft.ContainsKey(module))
+            {
+                _draft[module] = new PermissionGrant(module, false, false, false, false, false);
+            }
+        }
+        _reason = string.Empty;
+    }
+
+    private void Toggle(string module, bool? view = null, bool? create = null, bool? update = null, bool? delete = null, bool? approve = null)
+    {
+        var current = _draft[module];
+        _draft[module] = current with
+        {
+            CanView = view ?? current.CanView,
+            CanCreate = create ?? current.CanCreate,
+            CanUpdate = update ?? current.CanUpdate,
+            CanDelete = delete ?? current.CanDelete,
+            CanApprove = approve ?? current.CanApprove,
+        };
+    }
+
+    private void ResetDraft()
+    {
+        if (_selectedRole is { } role) LoadDraft(role);
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_selectedRole is null) return;
+        if (string.IsNullOrWhiteSpace(_reason))
+        {
+            Toasts.Show("Cần lý do thay đổi", "Vui lòng nhập lý do trước khi lưu.", ToastVariant.Warning);
+            return;
+        }
+        var grants = PermissionService.AdminModules
+            .Select(m => _draft.GetValueOrDefault(m) ?? new PermissionGrant(m, false, false, false, false, false))
+            .ToList();
+        PermissionService.UpdateRolePermissions(_selectedRole.Id, grants, _reason.Trim(), DateTime.Now, "BS. Đặng Thái Sơn");
+        Toasts.Show("Đã cập nhật phân quyền", _selectedRole.Name, ToastVariant.Success);
+        _roles = PermissionService.ListRoles();
+        var refreshed = PermissionService.GetRole(_selectedRole.Id);
+        if (refreshed is not null) LoadDraft(refreshed);
+        await Task.CompletedTask;
+    }
+
+    private static string ModuleLabel(string module) => module switch
+    {
+        "quy-trinh" => "Quy trình",
+        "phan-quyen" => "Phân quyền",
+        "danh-muc" => "Danh mục",
+        "phac-do" => "Phác đồ",
+        "bao-cao" => "Báo cáo",
+        "cai-dat" => "Cài đặt",
+        "lam-sang" => "Lâm sàng",
+        _ => module,
+    };
+}

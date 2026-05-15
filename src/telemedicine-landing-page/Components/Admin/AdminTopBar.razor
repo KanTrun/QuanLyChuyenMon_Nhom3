@@ -1,4 +1,6 @@
 @inject IAdminNavigationState NavState
+@inject INotificationService Notifications
+@inject IThemeBus ThemeBus
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @implements IDisposable
@@ -27,14 +29,14 @@
 
         <div class="admin-topbar-flyout-host">
             <button type="button" class="admin-topbar-icon-button"
-                    aria-label="Thông báo (@NavState.UnreadNotifications chưa đọc)"
+                    aria-label="Thông báo (@Notifications.UnreadCount chưa đọc)"
                     title="Thông báo"
                     @onclick="ToggleNotifications"
                     @onclick:stopPropagation="true">
                 <span aria-hidden="true">@Icon("bell")</span>
-                @if (NavState.UnreadNotifications > 0)
+                @if (Notifications.UnreadCount > 0)
                 {
-                    <span class="admin-topbar-badge" aria-hidden="true">@NavState.UnreadNotifications</span>
+                    <span class="admin-topbar-badge" aria-hidden="true">@Notifications.UnreadCount</span>
                 }
             </button>
             @if (_isNotificationsOpen)
@@ -42,7 +44,7 @@
                 <div class="admin-flyout admin-flyout-notifications" id="admin-flyout-notifications" role="dialog" aria-label="Thông báo gần đây">
                     <div class="admin-flyout-header">
                         <span class="admin-flyout-title">Thông báo gần đây</span>
-                        <span class="admin-flyout-meta">@NavState.UnreadNotifications chưa đọc</span>
+                        <span class="admin-flyout-meta">@Notifications.UnreadCount chưa đọc</span>
                     </div>
                     <ul class="admin-flyout-list">
                         @foreach (var note in NavState.NotificationPreviews)
@@ -54,7 +56,10 @@
                             </li>
                         }
                     </ul>
-                    <a class="admin-flyout-footer-link" href="/admin/cai-dat#thong-bao" @onclick="CloseFlyouts">Xem tất cả thông báo</a>
+                    <div class="admin-flyout-footer-actions">
+                        <button type="button" class="admin-flyout-action" @onclick="OnMarkAllRead">Đánh dấu tất cả đã đọc</button>
+                        <a class="admin-flyout-footer-link" href="/admin/cai-dat#thong-bao" @onclick="CloseFlyouts">Xem tất cả thông báo</a>
+                    </div>
                 </div>
             }
         </div>
@@ -132,6 +137,9 @@
     protected override void OnInitialized()
     {
         Navigation.LocationChanged += OnLocationChanged;
+        Notifications.StateChanged += OnNotificationsChanged;
+        ThemeBus.ToggleRequested += OnThemeToggleRequested;
+        ThemeBus.ExportConsumptionRequested += OnExportConsumptionRequested;
         UpdateBreadcrumb(Navigation.Uri);
     }
 
@@ -164,6 +172,27 @@
         _isNotificationsOpen = false;
         _isUserMenuOpen = false;
         InvokeAsync(StateHasChanged);
+    }
+
+    private void OnNotificationsChanged() => InvokeAsync(StateHasChanged);
+
+    private async void OnThemeToggleRequested()
+    {
+        try
+        {
+            _theme = await JS.InvokeAsync<string>("qlcmShell.toggleTheme");
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
+    }
+
+    private void OnExportConsumptionRequested()
+    {
+        InvokeAsync(() =>
+        {
+            Navigation.NavigateTo("/admin/bao-cao/tieu-thu?xuat=1");
+        });
     }
 
     private void UpdateBreadcrumb(string uri)
@@ -221,6 +250,12 @@
         _isUserMenuOpen = false;
     }
 
+    private void OnMarkAllRead()
+    {
+        Notifications.MarkAllRead();
+        _isNotificationsOpen = false;
+    }
+
     private async Task OnToggleTheme()
     {
         try
@@ -258,5 +293,8 @@
     public void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
+        Notifications.StateChanged -= OnNotificationsChanged;
+        ThemeBus.ToggleRequested -= OnThemeToggleRequested;
+        ThemeBus.ExportConsumptionRequested -= OnExportConsumptionRequested;
     }
 }

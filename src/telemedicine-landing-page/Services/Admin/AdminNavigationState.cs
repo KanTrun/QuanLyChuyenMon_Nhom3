@@ -1,13 +1,15 @@
+using System.Globalization;
 using TelemedicineLandingPage.Models.Admin;
 
 namespace TelemedicineLandingPage.Services.Admin;
 
 /// <summary>
-/// Default scoped implementation of <see cref="IAdminNavigationState"/>. The nav and
-/// palette command collections are seeded once in the constructor; later features
-/// may extend the palette by composing additional providers.
+/// Default scoped implementation of <see cref="IAdminNavigationState"/>. The
+/// navigation tree and palette command catalogue are seeded once in the
+/// constructor; the notification badge and previews are delegated to
+/// <see cref="INotificationService"/>.
 /// </summary>
-public sealed class AdminNavigationState : IAdminNavigationState
+public sealed class AdminNavigationState : IAdminNavigationState, IDisposable
 {
     private static readonly IReadOnlyList<AdminNavItem> SeededNavItems = BuildNavItems();
     private static readonly IReadOnlyDictionary<int, string> SeededHotkeyMap = new Dictionary<int, string>
@@ -21,28 +23,32 @@ public sealed class AdminNavigationState : IAdminNavigationState
         [6] = "/admin/cai-dat",
     };
 
-    private static readonly IReadOnlyList<AdminNotificationStub> SeededNotifications =
-    [
-        new("Quy trình mới chờ phê duyệt", "Quy trình tiêm vaccine COVID-19 đang chờ duyệt.", "2 phút trước"),
-        new("Báo cáo tiêu thụ tuần", "Báo cáo tiêu thụ vật tư tuần 19 đã sẵn sàng.", "12 phút trước"),
-        new("Cập nhật phân quyền", "Tài khoản BS. Lê Quang Huy được cấp quyền Lãnh đạo khoa.", "1 giờ trước"),
-    ];
+    private readonly INotificationService _notifications;
+    private readonly IThemeBus _themeBus;
 
-    public AdminNavigationState()
+    public AdminNavigationState(INotificationService notifications, IThemeBus themeBus)
     {
+        _notifications = notifications;
+        _themeBus = themeBus;
         Commands = BuildCommands(this);
+        _notifications.StateChanged += OnNotificationsChanged;
     }
 
     public bool IsSidebarCollapsed { get; private set; }
     public bool IsPaletteOpen { get; private set; }
     public bool IsChatbotOpen { get; private set; }
 
-    public int UnreadNotifications { get; private set; } = 3;
+    public int UnreadNotifications => _notifications.UnreadCount;
 
     public IReadOnlyList<AdminNavItem> NavItems => SeededNavItems;
     public IReadOnlyList<PaletteCommand> Commands { get; }
     public IReadOnlyDictionary<int, string> HotkeyMap => SeededHotkeyMap;
-    public IReadOnlyList<AdminNotificationStub> NotificationPreviews => SeededNotifications;
+
+    public IReadOnlyList<AdminNotificationStub> NotificationPreviews =>
+        _notifications.ListAll()
+            .Take(4)
+            .Select(n => new AdminNotificationStub(n.Title, n.Body, FormatRelative(n.Timestamp)))
+            .ToList();
 
     public event Action? StateChanged;
 
@@ -92,7 +98,24 @@ public sealed class AdminNavigationState : IAdminNavigationState
         Raise();
     }
 
+    public void Dispose()
+    {
+        _notifications.StateChanged -= OnNotificationsChanged;
+    }
+
+    private void OnNotificationsChanged() => Raise();
+
     private void Raise() => StateChanged?.Invoke();
+
+    private static string FormatRelative(DateTime when)
+    {
+        var delta = DateTime.Now - when;
+        if (delta.TotalSeconds < 90) return "Vừa xong";
+        if (delta.TotalMinutes < 60) return $"{(int)delta.TotalMinutes} phút trước";
+        if (delta.TotalHours < 24) return $"{(int)delta.TotalHours} giờ trước";
+        if (delta.TotalDays < 7) return $"{(int)delta.TotalDays} ngày trước";
+        return when.ToString("dd/MM HH:mm", CultureInfo.GetCultureInfo("vi-VN"));
+    }
 
     private static IReadOnlyList<AdminNavItem> BuildNavItems()
     {
@@ -122,7 +145,6 @@ public sealed class AdminNavigationState : IAdminNavigationState
     {
         var commands = new List<PaletteCommand>();
 
-        // Group: Điều hướng - one entry per leaf nav item.
         foreach (var item in state.NavItems)
         {
             if (item.Children is { Count: > 0 } children)
@@ -150,7 +172,38 @@ public sealed class AdminNavigationState : IAdminNavigationState
             }
         }
 
-        // Group: Hành động nhanh
+        commands.Add(new PaletteCommand(
+            Group: "Hành động nhanh",
+            Label: "Tạo quy trình mới",
+            Description: "Mở biểu mẫu tạo quy trình kỹ thuật",
+            Hotkey: null,
+            NavigateTo: "/admin/quy-trinh/tao",
+            Action: null));
+
+        commands.Add(new PaletteCommand(
+            Group: "Hành động nhanh",
+            Label: "Phê duyệt quy trình chờ",
+            Description: "Mở danh sách quy trình đang chờ duyệt",
+            Hotkey: null,
+            NavigateTo: "/admin/quy-trinh/phe-duyet",
+            Action: null));
+
+        commands.Add(new PaletteCommand(
+            Group: "Hành động nhanh",
+            Label: "Đánh dấu tất cả thông báo đã đọc",
+            Description: "Xóa số đếm thông báo trên thanh công cụ",
+            Hotkey: null,
+            NavigateTo: null,
+            Action: () => { state._notifications.MarkAllRead(); return Task.CompletedTask; }));
+
+        commands.Add(new PaletteCommand(
+            Group: "Hành động nhanh",
+            Label: "Xuất báo cáo tiêu thụ",
+            Description: "Tải báo cáo tiêu thụ vật tư dạng CSV",
+            Hotkey: null,
+            NavigateTo: null,
+            Action: () => { state._themeBus.RequestExportConsumption(); return Task.CompletedTask; }));
+
         commands.Add(new PaletteCommand(
             Group: "Hành động nhanh",
             Label: "Mở trợ lý AI",
@@ -165,11 +218,8 @@ public sealed class AdminNavigationState : IAdminNavigationState
             Description: "Đảo giao diện sáng và tối",
             Hotkey: null,
             NavigateTo: null,
-            // Theme toggle is wired from the top-bar (where IJSRuntime is available);
-            // FEAT-003 will replace this no-op with a real handler.
-            Action: () => Task.CompletedTask));
+            Action: () => { state._themeBus.RequestToggle(); return Task.CompletedTask; }));
 
-        // Group: Cài đặt
         commands.Add(new PaletteCommand(
             Group: "Cài đặt",
             Label: "Mở Cài đặt",

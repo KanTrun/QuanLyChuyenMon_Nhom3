@@ -1,8 +1,376 @@
 @page "/admin/danh-muc"
 @layout AdminLayout
+@inject ICatalogService CatalogService
+@inject IConfirmDialogService Confirm
+@inject IToastService Toasts
+@inject IJSRuntime JS
+@implements IDisposable
 
-<PageTitle>Danh mục kỹ thuật | QLCM Pro</PageTitle>
+<PageTitle>Danh mục kỹ thuật chuyên môn | QLCM Pro</PageTitle>
 
-<AdminStubCard Eyebrow="Danh mục"
-               Title="Danh mục kỹ thuật chuyên môn"
-               Subtitle="Quản lý dịch vụ kỹ thuật, định mức vật tư và thuốc đi kèm." />
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Danh mục</span>
+            <h1 class="admin-page-title">Kỹ thuật chuyên môn</h1>
+            <p class="admin-page-subtitle">Quản lý kỹ thuật chuyên môn, định mức vật tư và xuất nhập dữ liệu CSV.</p>
+        </div>
+        <div class="admin-page-actions">
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _importOpen = true">
+                <span aria-hidden="true">@AdminIconRender("history")</span>
+                Nhập từ CSV
+            </button>
+            <button type="button" class="admin-btn admin-btn-primary" @onclick="ExportCsvAsync">
+                <span aria-hidden="true">@AdminIconRender("package")</span>
+                Xuất CSV
+            </button>
+        </div>
+    </header>
+
+    <div class="admin-filter-bar is-compact">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="dm-search">Tìm kiếm</label>
+            <input id="dm-search" class="admin-input" type="search" placeholder="Tìm theo mã hoặc tên kỹ thuật"
+                   value="@_filter.Search" @oninput="(e) => OnFilterUpdated(e.Value?.ToString(), null, null, null)" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="dm-type">Loại dịch vụ</label>
+            <select id="dm-type" class="admin-select" value="@_serviceTypeKey" @onchange="OnServiceTypeChanged">
+                <option value="">Tất cả</option>
+                @foreach (var st in (ServiceType[])Enum.GetValues(typeof(ServiceType)))
+                {
+                    <option value="@st">@AdminEnumLabels.GetLabel(st)</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="dm-dept">Khoa</label>
+            <select id="dm-dept" class="admin-select" value="@_deptKey" @onchange="OnDeptChanged">
+                <option value="">Tất cả</option>
+                @foreach (var d in (Department[])Enum.GetValues(typeof(Department)))
+                {
+                    <option value="@d">@AdminEnumLabels.GetLabel(d)</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="dm-status">Trạng thái</label>
+            <select id="dm-status" class="admin-select" value="@_statusKey" @onchange="OnStatusChanged">
+                <option value="">Tất cả</option>
+                @foreach (var s in (CatalogStatus[])Enum.GetValues(typeof(CatalogStatus)))
+                {
+                    <option value="@s">@AdminEnumLabels.GetLabel(s)</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Tên kỹ thuật</th>
+                    <th>Loại</th>
+                    <th>Khoa</th>
+                    <th>Định mức</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_items.Count == 0)
+                {
+                    <tr class="admin-table-empty-row"><td colspan="7"><div class="admin-empty"><div class="admin-empty-title">Không tìm thấy kỹ thuật phù hợp</div><div class="admin-empty-body">Hãy điều chỉnh bộ lọc hoặc nhập thêm dữ liệu CSV.</div></div></td></tr>
+                }
+                else
+                {
+                    @foreach (var item in _items)
+                    {
+                        <tr style="cursor:pointer;" @onclick="() => OpenDetail(item)">
+                            <td class="admin-table-cell-strong">@item.Code</td>
+                            <td>@item.Name</td>
+                            <td>@AdminEnumLabels.GetLabel(item.ServiceType)</td>
+                            <td>@AdminEnumLabels.GetLabel(item.Department)</td>
+                            <td>@item.ResourceNorms.Count định mức</td>
+                            <td><AdminBadge Tone="@AdminEnumLabels.GetTone(item.Status)">@AdminEnumLabels.GetLabel(item.Status)</AdminBadge></td>
+                            <td style="text-align:right;" @onclick:stopPropagation="true">
+                                <button type="button" class="admin-icon-btn is-danger" aria-label="Lưu trữ" title="Lưu trữ" @onclick="() => ArchiveAsync(item)">×</button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="@(value => _drawerOpen = value)" SizeClass="admin-drawer-wide"
+             Eyebrow="Định mức"
+             Title="@(_selected?.Name ?? string.Empty)"
+             Subtitle="@(_selected is null ? null : $"Mã {_selected.Code} • {AdminEnumLabels.GetLabel(_selected.Department)}")">
+    <ChildContent>
+        @if (_selected is { } svc)
+        {
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Mã</th><th>Tên tài nguyên</th><th>Loại</th><th>Đơn vị</th><th>Định mức</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (svc.ResourceNorms.Count == 0)
+                        {
+                            <tr class="admin-table-empty-row"><td colspan="6"><div class="admin-empty"><div class="admin-empty-title">Chưa có định mức</div><div class="admin-empty-body">Thêm định mức bằng biểu mẫu bên dưới.</div></div></td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var norm in svc.ResourceNorms)
+                            {
+                                <tr>
+                                    <td class="admin-table-cell-strong">@norm.ResourceCode</td>
+                                    <td>@norm.ResourceName</td>
+                                    <td>@AdminEnumLabels.GetLabel(norm.ResourceType)</td>
+                                    <td>@norm.Unit</td>
+                                    <td>@norm.StandardQuantity.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)</td>
+                                    <td style="text-align:right;">
+                                        <button type="button" class="admin-icon-btn is-danger" aria-label="Xóa định mức" @onclick="() => RemoveNorm(svc, norm.ResourceCode)">×</button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="admin-panel" style="padding:16px;">
+                <h3 class="admin-panel-title">Thêm định mức mới</h3>
+                <div class="admin-form-grid">
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Loại</label>
+                        <select class="admin-select" @bind="_newNorm.ResourceType">
+                            @foreach (var rt in (ResourceType[])Enum.GetValues(typeof(ResourceType)))
+                            {
+                                <option value="@rt">@AdminEnumLabels.GetLabel(rt)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Mã</label>
+                        <input class="admin-input" placeholder="VD: VT-NEW-01" @bind="_newNorm.ResourceCode" />
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Tên tài nguyên</label>
+                        <input class="admin-input" placeholder="VD: Băng gạc vô khuẩn" @bind="_newNorm.ResourceName" />
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Đơn vị</label>
+                        <input class="admin-input" placeholder="cái / ml / liều" @bind="_newNorm.Unit" />
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Định mức</label>
+                        <input class="admin-input" type="number" min="0" step="0.1" @bind="_newNorm.Quantity" />
+                    </div>
+                    <div class="admin-form-field admin-form-field-full">
+                        <label class="admin-form-field-label">Ghi chú</label>
+                        <input class="admin-input" placeholder="VD: Bảo quản 2-8 độ C" @bind="_newNorm.Note" />
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+                    <button type="button" class="admin-btn admin-btn-primary" @onclick="() => AddNorm(svc)">Thêm định mức</button>
+                </div>
+            </div>
+        }
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="() => _drawerOpen = false">Đóng</button>
+    </FooterContent>
+</AdminDrawer>
+
+<AdminModal IsOpen="_importOpen" IsOpenChanged="@(value => _importOpen = value)" Title="Nhập danh mục từ CSV">
+    <ChildContent>
+        <p style="margin:0;">Dán nội dung CSV theo cấu trúc cột chuẩn (xem CSV xuất từ hệ thống). Dòng trùng mã kỹ thuật sẽ được hợp nhất định mức.</p>
+        <textarea class="admin-textarea" rows="10" placeholder="ServiceCode,ServiceName,..." @bind="_importText"></textarea>
+        @if (!string.IsNullOrEmpty(_importError))
+        {
+            <p class="admin-validation-message">@_importError</p>
+        }
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _importOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="ImportCsv">Nhập dữ liệu</button>
+    </FooterContent>
+</AdminModal>
+
+@code {
+    private CatalogFilter _filter = new();
+    private string _serviceTypeKey = string.Empty;
+    private string _deptKey = string.Empty;
+    private string _statusKey = string.Empty;
+
+    private IReadOnlyList<TechnicalServiceRecord> _items = Array.Empty<TechnicalServiceRecord>();
+    private TechnicalServiceRecord? _selected;
+    private bool _drawerOpen;
+
+    private bool _importOpen;
+    private string _importText = string.Empty;
+    private string? _importError;
+
+    private NewNormModel _newNorm = new();
+
+    protected override void OnInitialized()
+    {
+        CatalogService.StateChanged += OnChanged;
+        Recompute();
+    }
+
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        Recompute();
+        if (_selected is { } sel)
+        {
+            _selected = CatalogService.GetById(sel.Id);
+        }
+        StateHasChanged();
+    });
+
+    private void Recompute()
+    {
+        _items = CatalogService.Search(_filter);
+    }
+
+    private void OnFilterUpdated(string? search, ServiceType? type, Department? dept, CatalogStatus? status)
+    {
+        _filter = _filter with
+        {
+            Search = search,
+            ServiceType = type ?? _filter.ServiceType,
+            Department = dept ?? _filter.Department,
+            Status = status ?? _filter.Status,
+        };
+        Recompute();
+    }
+
+    private void OnServiceTypeChanged(ChangeEventArgs args)
+    {
+        _serviceTypeKey = args.Value?.ToString() ?? string.Empty;
+        _filter = _filter with { ServiceType = Enum.TryParse<ServiceType>(_serviceTypeKey, out var st) ? st : (ServiceType?)null };
+        Recompute();
+    }
+
+    private void OnDeptChanged(ChangeEventArgs args)
+    {
+        _deptKey = args.Value?.ToString() ?? string.Empty;
+        _filter = _filter with { Department = Enum.TryParse<Department>(_deptKey, out var d) ? d : (Department?)null };
+        Recompute();
+    }
+
+    private void OnStatusChanged(ChangeEventArgs args)
+    {
+        _statusKey = args.Value?.ToString() ?? string.Empty;
+        _filter = _filter with { Status = Enum.TryParse<CatalogStatus>(_statusKey, out var s) ? s : (CatalogStatus?)null };
+        Recompute();
+    }
+
+    private void OpenDetail(TechnicalServiceRecord item)
+    {
+        _selected = item;
+        _newNorm = new NewNormModel();
+        _drawerOpen = true;
+    }
+
+    private async Task ArchiveAsync(TechnicalServiceRecord item)
+    {
+        var ok = await Confirm.ShowAsync(
+            "Lưu trữ kỹ thuật",
+            $"Bạn có chắc chắn muốn lưu trữ kỹ thuật \"{item.Name}\"?",
+            confirmText: "Lưu trữ",
+            isDanger: true);
+        if (!ok) return;
+        CatalogService.Archive(item.Id);
+        Toasts.Show("Đã lưu trữ kỹ thuật", item.Name, ToastVariant.Success);
+    }
+
+    private void AddNorm(TechnicalServiceRecord svc)
+    {
+        if (string.IsNullOrWhiteSpace(_newNorm.ResourceCode) || string.IsNullOrWhiteSpace(_newNorm.ResourceName))
+        {
+            Toasts.Show("Thiếu thông tin định mức", "Vui lòng nhập mã và tên tài nguyên.", ToastVariant.Warning);
+            return;
+        }
+        CatalogService.AddResourceNorm(svc.Id, new ResourceNorm(
+            _newNorm.ResourceType,
+            _newNorm.ResourceCode.Trim(),
+            _newNorm.ResourceName.Trim(),
+            string.IsNullOrWhiteSpace(_newNorm.Unit) ? "đơn vị" : _newNorm.Unit.Trim(),
+            _newNorm.Quantity,
+            _newNorm.Note ?? string.Empty));
+        Toasts.Show("Đã thêm định mức", _newNorm.ResourceName, ToastVariant.Success);
+        _newNorm = new NewNormModel();
+    }
+
+    private void RemoveNorm(TechnicalServiceRecord svc, string code)
+    {
+        CatalogService.RemoveResourceNorm(svc.Id, code);
+        Toasts.Show("Đã xóa định mức", code, ToastVariant.Info);
+    }
+
+    private void ImportCsv()
+    {
+        try
+        {
+            _importError = null;
+            var imported = CatalogService.ImportFromCsv(_importText);
+            if (imported == 0)
+            {
+                _importError = "Không tìm thấy dòng dữ liệu hợp lệ trong CSV.";
+                return;
+            }
+            Toasts.Show("Đã nhập dữ liệu CSV", $"Đã hợp nhất {imported} kỹ thuật.", ToastVariant.Success);
+            _importOpen = false;
+            _importText = string.Empty;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _importError = ex.Message;
+        }
+        catch (Exception)
+        {
+            _importError = "Không thể đọc CSV. Vui lòng kiểm tra cấu trúc cột.";
+        }
+    }
+
+    private async Task ExportCsvAsync()
+    {
+        try
+        {
+            var csv = CatalogService.ExportToCsv();
+            var filename = $"danh-muc-ky-thuat-{DateTime.Now:yyyyMMdd-HHmm}.csv";
+            await JS.InvokeVoidAsync("qlcmShell.downloadCsv", filename, csv);
+            Toasts.Show("Đã xuất CSV", filename, ToastVariant.Success);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception)
+        {
+            Toasts.Show("Không thể xuất CSV", "Vui lòng thử lại.", ToastVariant.Error);
+        }
+    }
+
+    private RenderFragment AdminIconRender(string name) => builder => AdminIcons.Render(builder, name);
+
+    public void Dispose()
+    {
+        CatalogService.StateChanged -= OnChanged;
+    }
+
+    private sealed class NewNormModel
+    {
+        public ResourceType ResourceType { get; set; } = ResourceType.VatTu;
+        public string ResourceCode { get; set; } = string.Empty;
+        public string ResourceName { get; set; } = string.Empty;
+        public string Unit { get; set; } = "cái";
+        public decimal Quantity { get; set; } = 1m;
+        public string? Note { get; set; }
+    }
+}

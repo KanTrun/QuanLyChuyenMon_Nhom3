@@ -23,8 +23,7 @@ public sealed record PaletteCommand(
     Func<Task>? Action);
 
 /// <summary>
-/// Lightweight notification stub rendered by the top-bar bell.
-/// FEAT-003 will replace this with the real notification service.
+/// Lightweight notification preview shown inside the top-bar bell flyout.
 /// </summary>
 public sealed record AdminNotificationStub(
     string Title,

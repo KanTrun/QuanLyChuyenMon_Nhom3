@@ -1,0 +1,9 @@
+@* Rounded chip used by data tables to render status / role labels with semantic tone. *@
+
+<span class="admin-badge @Tone @ExtraClass" role="status">@ChildContent</span>
+
+@code {
+    [Parameter] public string Tone { get; set; } = "tone-muted";
+    [Parameter] public string? ExtraClass { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

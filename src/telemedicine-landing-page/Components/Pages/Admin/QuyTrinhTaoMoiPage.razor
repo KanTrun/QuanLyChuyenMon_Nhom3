@@ -1,8 +1,312 @@
 @page "/admin/quy-trinh/tao"
 @layout AdminLayout
+@using System.ComponentModel.DataAnnotations
+@inject IProcedureService ProcedureService
+@inject IToastService Toasts
+@inject NavigationManager Navigation
 
 <PageTitle>Tạo quy trình mới | QLCM Pro</PageTitle>
 
-<AdminStubCard Eyebrow="Quy trình"
-               Title="Tạo quy trình mới"
-               Subtitle="Khởi tạo quy trình kỹ thuật và gửi phê duyệt cho lãnh đạo khoa." />
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Quy trình</span>
+            <h1 class="admin-page-title">Tạo quy trình kỹ thuật mới</h1>
+            <p class="admin-page-subtitle">Khai báo thông tin chung, các bước thực hiện và kiểm tra trước khi gửi phê duyệt.</p>
+        </div>
+        <a class="admin-btn admin-btn-ghost" href="/admin/quy-trinh">Hủy và quay lại</a>
+    </header>
+
+    <div class="admin-stepper" role="list">
+        @{ var i = 0; }
+        @foreach (var label in _stepLabels)
+        {
+            i++;
+            var state = i < _step ? "is-done" : (i == _step ? "is-current" : "");
+            <div class="admin-stepper-item @state" role="listitem">
+                <span class="admin-stepper-bullet">@i</span>
+                <span>@label</span>
+            </div>
+        }
+    </div>
+
+    <EditForm Model="_model" OnValidSubmit="OnSubmitAsync">
+        <DataAnnotationsValidator />
+        <div class="admin-validation-summary" role="alert" style="@(_showSummary ? "display:block" : "display:none")">
+            <strong>Vui lòng kiểm tra lại các thông tin sau:</strong>
+            <ValidationSummary />
+        </div>
+
+        @if (_step == 1)
+        {
+            <article class="admin-panel">
+                <h2 class="admin-panel-title">Bước 1: Thông tin chung</h2>
+                <div class="admin-form-grid">
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label" for="qt-code">Mã quy trình</label>
+                        <InputText id="qt-code" class="admin-input" @bind-Value="_model.Code" placeholder="VD: QT-NEW-01" />
+                        <ValidationMessage For="() => _model.Code" class="admin-validation-message" />
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label" for="qt-name">Tên quy trình</label>
+                        <InputText id="qt-name" class="admin-input" @bind-Value="_model.Name" placeholder="VD: Quy trình tiêm vaccine cúm mùa" />
+                        <ValidationMessage For="() => _model.Name" class="admin-validation-message" />
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label" for="qt-dept">Khoa áp dụng</label>
+                        <InputSelect id="qt-dept" class="admin-select" @bind-Value="_model.Department">
+                            @foreach (var dept in (Department[])Enum.GetValues(typeof(Department)))
+                            {
+                                <option value="@dept">@AdminEnumLabels.GetLabel(dept)</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label" for="qt-version">Phiên bản</label>
+                        <InputText id="qt-version" class="admin-input" @bind-Value="_model.Version" />
+                        <ValidationMessage For="() => _model.Version" class="admin-validation-message" />
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label" for="qt-from">Hiệu lực từ</label>
+                        <InputDate id="qt-from" class="admin-input" @bind-Value="_model.EffectiveFrom" />
+                    </div>
+                    <div class="admin-form-field admin-form-field-full">
+                        <label class="admin-form-field-label" for="qt-author">Người soạn thảo</label>
+                        <InputText id="qt-author" class="admin-input" @bind-Value="_model.UpdatedBy" />
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+                    <button type="button" class="admin-btn admin-btn-primary" @onclick="GoToStep2">Tiếp tục</button>
+                </div>
+            </article>
+        }
+        else if (_step == 2)
+        {
+            <article class="admin-panel">
+                <header class="admin-panel-head">
+                    <h2 class="admin-panel-title">Bước 2: Các bước thực hiện</h2>
+                    <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddStep">
+                        <span aria-hidden="true">@AdminIconRender("plus")</span>
+                        Thêm bước
+                    </button>
+                </header>
+                <div class="admin-step-rows">
+                    @for (var idx = 0; idx < _model.Steps.Count; idx++)
+                    {
+                        var local = idx;
+                        var step = _model.Steps[local];
+                        <div class="admin-step-row">
+                            <div class="admin-step-row-bullet">B@(local + 1)</div>
+                            <input class="admin-input" placeholder="Tên bước"
+                                   value="@step.Name"
+                                   @oninput="(e) => UpdateStep(local, name: e.Value?.ToString() ?? string.Empty)" />
+                            <input class="admin-input" placeholder="Vai trò thực hiện"
+                                   value="@step.ActorRole"
+                                   @oninput="(e) => UpdateStep(local, actorRole: e.Value?.ToString() ?? string.Empty)" />
+                            <input class="admin-input" type="number" min="1" max="240" placeholder="Phút"
+                                   value="@step.StandardMinutes"
+                                   @oninput="(e) => UpdateStep(local, minutes: ParseMinutes(e.Value?.ToString()))" />
+                            <input class="admin-input" placeholder="Điều kiện chuyển bước"
+                                   value="@step.Condition"
+                                   @oninput="(e) => UpdateStep(local, condition: e.Value?.ToString() ?? string.Empty)" />
+                            <button type="button" class="admin-icon-btn is-danger" aria-label="Xóa bước" @onclick="() => RemoveStep(local)">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(_stepError))
+                {
+                    <p class="admin-validation-message">@_stepError</p>
+                }
+                <div style="display:flex; justify-content:space-between; gap:8px; margin-top:14px;">
+                    <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _step = 1">Quay lại</button>
+                    <button type="button" class="admin-btn admin-btn-primary" @onclick="GoToStep3">Tiếp tục</button>
+                </div>
+            </article>
+        }
+        else
+        {
+            <article class="admin-panel">
+                <h2 class="admin-panel-title">Bước 3: Xem trước và lưu</h2>
+                <dl class="admin-detail-grid">
+                    <dt>Mã quy trình</dt>
+                    <dd>@_model.Code</dd>
+                    <dt>Tên quy trình</dt>
+                    <dd>@_model.Name</dd>
+                    <dt>Khoa áp dụng</dt>
+                    <dd>@AdminEnumLabels.GetLabel(_model.Department)</dd>
+                    <dt>Phiên bản</dt>
+                    <dd>@_model.Version</dd>
+                    <dt>Hiệu lực từ</dt>
+                    <dd>@_model.EffectiveFrom.ToString("dd/MM/yyyy")</dd>
+                    <dt>Người soạn thảo</dt>
+                    <dd>@_model.UpdatedBy</dd>
+                </dl>
+                <h3 style="margin:0;font-size:1rem;font-weight:700;">Các bước (@_model.Steps.Count)</h3>
+                <ol class="admin-step-list">
+                    @foreach (var step in _model.Steps)
+                    {
+                        <li class="admin-step-card">
+                            <div class="admin-step-card-head">
+                                <span class="admin-step-card-seq">Bước @(_model.Steps.IndexOf(step) + 1)</span>
+                                <span class="admin-table-cell-muted">@step.StandardMinutes phút • @step.ActorRole</span>
+                            </div>
+                            <div class="admin-table-cell-strong">@step.Name</div>
+                            <div class="admin-table-cell-muted">Điều kiện chuyển bước: @step.Condition</div>
+                        </li>
+                    }
+                </ol>
+                <div style="display:flex; justify-content:space-between; gap:8px; margin-top:14px;">
+                    <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _step = 2">Quay lại</button>
+                    <button type="submit" class="admin-btn admin-btn-primary" disabled="@_isSubmitting">
+                        @(_isSubmitting ? "Đang lưu..." : "Lưu và gửi phê duyệt")
+                    </button>
+                </div>
+            </article>
+        }
+    </EditForm>
+</section>
+
+@code {
+    private static readonly string[] _stepLabels =
+    {
+        "Thông tin chung",
+        "Các bước thực hiện",
+        "Xem trước & Lưu",
+    };
+
+    private int _step = 1;
+    private bool _showSummary;
+    private string? _stepError;
+    private bool _isSubmitting;
+    private readonly ProcedureFormModel _model = new()
+    {
+        EffectiveFrom = DateOnly.FromDateTime(DateTime.Today),
+        UpdatedBy = "BS. Nguyễn Văn A",
+        Version = "1.0",
+        Steps = new List<StepFormModel>
+        {
+            new() { Name = "Tiếp nhận và chuẩn bị bệnh nhân", ActorRole = "Điều dưỡng", StandardMinutes = 5, Condition = "Hoàn tất phiếu sàng lọc" },
+            new() { Name = "Thực hiện kỹ thuật", ActorRole = "Bác sĩ", StandardMinutes = 15, Condition = "Theo đúng quy chuẩn" },
+        },
+    };
+
+    private void GoToStep2()
+    {
+        if (!ValidateStep1()) { _showSummary = true; return; }
+        _showSummary = false;
+        _step = 2;
+    }
+
+    private void GoToStep3()
+    {
+        _stepError = null;
+        if (_model.Steps.Count == 0)
+        {
+            _stepError = "Quy trình phải có ít nhất một bước thực hiện.";
+            return;
+        }
+        if (_model.Steps.Any(s => string.IsNullOrWhiteSpace(s.Name) || string.IsNullOrWhiteSpace(s.ActorRole) || s.StandardMinutes <= 0))
+        {
+            _stepError = "Vui lòng điền đủ tên bước, vai trò và thời lượng (phút) cho mọi bước.";
+            return;
+        }
+        _step = 3;
+    }
+
+    private bool ValidateStep1()
+    {
+        return !string.IsNullOrWhiteSpace(_model.Code)
+            && !string.IsNullOrWhiteSpace(_model.Name)
+            && !string.IsNullOrWhiteSpace(_model.Version);
+    }
+
+    private void AddStep()
+    {
+        _model.Steps.Add(new StepFormModel { Name = string.Empty, ActorRole = "Điều dưỡng", StandardMinutes = 5, Condition = string.Empty });
+    }
+
+    private void RemoveStep(int index)
+    {
+        if (index < 0 || index >= _model.Steps.Count) return;
+        _model.Steps.RemoveAt(index);
+    }
+
+    private static int ParseMinutes(string? raw)
+    {
+        return int.TryParse(raw, out var value) && value >= 0 ? value : 0;
+    }
+
+    private void UpdateStep(int index, string? name = null, string? actorRole = null, int? minutes = null, string? condition = null)
+    {
+        if (index < 0 || index >= _model.Steps.Count) return;
+        var current = _model.Steps[index];
+        if (name is not null) current.Name = name;
+        if (actorRole is not null) current.ActorRole = actorRole;
+        if (minutes is not null) current.StandardMinutes = minutes.Value;
+        if (condition is not null) current.Condition = condition;
+    }
+
+    private void OnSubmitAsync()
+    {
+        if (_isSubmitting) return;
+        _isSubmitting = true;
+        try
+        {
+            var record = new ProcedureRecord
+            {
+                Code = _model.Code.Trim(),
+                Name = _model.Name.Trim(),
+                Department = _model.Department,
+                Version = _model.Version.Trim(),
+                Status = ProcedureStatus.DangChoPheDuyet,
+                EffectiveFrom = _model.EffectiveFrom,
+                UpdatedBy = string.IsNullOrWhiteSpace(_model.UpdatedBy) ? "BS. Nguyễn Văn A" : _model.UpdatedBy.Trim(),
+                Steps = _model.Steps
+                    .Select((s, i) => new ProcedureStep(i + 1, s.Name.Trim(), s.ActorRole.Trim(), s.StandardMinutes, string.IsNullOrWhiteSpace(s.Condition) ? "Không có" : s.Condition.Trim()))
+                    .ToList(),
+            };
+            ProcedureService.Create(record);
+            Toasts.Show("Đã tạo quy trình thành công", $"{record.Code} • {record.Name}", ToastVariant.Success);
+            Navigation.NavigateTo("/admin/quy-trinh");
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private RenderFragment AdminIconRender(string name) => builder => AdminIcons.Render(builder, name);
+
+    public sealed class ProcedureFormModel
+    {
+        [Required(ErrorMessage = "Vui lòng nhập mã quy trình.")]
+        [StringLength(40, ErrorMessage = "Mã quy trình tối đa 40 ký tự.")]
+        public string Code { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Vui lòng nhập tên quy trình.")]
+        [StringLength(160, ErrorMessage = "Tên quy trình tối đa 160 ký tự.")]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Vui lòng nhập phiên bản.")]
+        public string Version { get; set; } = "1.0";
+
+        public Department Department { get; set; } = Department.NoiTiet;
+
+        public DateOnly EffectiveFrom { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng nhập tên người soạn thảo.")]
+        public string UpdatedBy { get; set; } = string.Empty;
+
+        public List<StepFormModel> Steps { get; set; } = new();
+    }
+
+    public sealed class StepFormModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string ActorRole { get; set; } = string.Empty;
+        public int StandardMinutes { get; set; } = 5;
+        public string Condition { get; set; } = string.Empty;
+    }
+}

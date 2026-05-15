@@ -1,8 +1,260 @@
 @page "/admin/cai-dat"
 @layout AdminLayout
+@inject IUserPreferencesService Preferences
+@inject IThemeBus ThemeBus
+@inject IToastService Toasts
+@inject NavigationManager Navigation
+@implements IDisposable
 
 <PageTitle>Cài đặt | QLCM Pro</PageTitle>
 
-<AdminStubCard Eyebrow="Cài đặt"
-               Title="Cài đặt tài khoản"
-               Subtitle="Tùy chỉnh hồ sơ, giao diện, thông báo và cấu hình trợ lý AI." />
+<section class="admin-page admin-settings">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Cài đặt</span>
+            <h1 class="admin-page-title">Tùy chọn tài khoản và trợ lý AI</h1>
+            <p class="admin-page-subtitle">Cập nhật hồ sơ, giao diện hiển thị, kênh thông báo và cấu hình trợ lý nội bộ.</p>
+        </div>
+    </header>
+
+    <article class="admin-settings-section" id="ho-so">
+        <h2>Hồ sơ cá nhân</h2>
+        <div class="admin-form-grid">
+            <div class="admin-form-field">
+                <label class="admin-form-field-label" for="cd-name">Họ và tên</label>
+                <input id="cd-name" class="admin-input" @bind="_draft.FullName" />
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label" for="cd-email">Email công vụ</label>
+                <input id="cd-email" class="admin-input" type="email" @bind="_draft.Email" />
+            </div>
+            <div class="admin-form-field admin-form-field-full">
+                <label class="admin-form-field-label" for="cd-dept">Khoa làm việc</label>
+                <select id="cd-dept" class="admin-select" @bind="_draft.Department">
+                    @foreach (var d in (Department[])Enum.GetValues(typeof(Department)))
+                    {
+                        <option value="@d">@AdminEnumLabels.GetLabel(d)</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </article>
+
+    <article class="admin-settings-section" id="giao-dien">
+        <h2>Giao diện</h2>
+        <div class="admin-toggle-row">
+            <div class="admin-toggle-row-text">
+                <span class="admin-toggle-row-title">Chế độ hiển thị</span>
+                <span class="admin-toggle-row-body">Chuyển nhanh giữa giao diện sáng và tối, đồng bộ với thanh công cụ.</span>
+            </div>
+            <div class="admin-radio-group" role="group" aria-label="Chế độ hiển thị">
+                <button type="button" class="admin-radio-pill @(IsTheme("light") ? "is-on" : null)" @onclick='() => SetTheme("light")'>Sáng</button>
+                <button type="button" class="admin-radio-pill @(IsTheme("dark") ? "is-on" : null)" @onclick='() => SetTheme("dark")'>Tối</button>
+            </div>
+        </div>
+        <div class="admin-toggle-row">
+            <div class="admin-toggle-row-text">
+                <span class="admin-toggle-row-title">Mật độ hiển thị</span>
+                <span class="admin-toggle-row-body">Chọn bố cục gọn để xem nhiều dữ liệu hoặc thoáng để dễ thao tác.</span>
+            </div>
+            <div class="admin-radio-group" role="group" aria-label="Mật độ hiển thị">
+                <button type="button" class="admin-radio-pill @(_draft.Density == AdminDensity.Compact ? "is-on" : null)" @onclick="() => SetDensity(AdminDensity.Compact)">Gọn</button>
+                <button type="button" class="admin-radio-pill @(_draft.Density == AdminDensity.Comfortable ? "is-on" : null)" @onclick="() => SetDensity(AdminDensity.Comfortable)">Thoáng</button>
+            </div>
+        </div>
+        <div class="admin-toggle-row">
+            <div class="admin-toggle-row-text">
+                <span class="admin-toggle-row-title">Hiệu ứng chuyển động</span>
+                <span class="admin-toggle-row-body">Bật để có hiệu ứng mượt mà; tắt giúp giảm phân tâm.</span>
+            </div>
+            <button type="button" class="admin-switch @(_draft.AnimationsEnabled ? "is-on" : null)" aria-pressed="@(_draft.AnimationsEnabled ? "true" : "false")" @onclick="() => SetAnimations(!_draft.AnimationsEnabled)">
+                <span class="visually-hidden">Bật hoặc tắt hiệu ứng</span>
+            </button>
+        </div>
+    </article>
+
+    <article class="admin-settings-section" id="thong-bao">
+        <h2>Thông báo</h2>
+        <div class="admin-toggle-row">
+            <div class="admin-toggle-row-text">
+                <span class="admin-toggle-row-title">Trên ứng dụng</span>
+                <span class="admin-toggle-row-body">Hiển thị thông báo trong chuông trên thanh công cụ.</span>
+            </div>
+            <button type="button" class="admin-switch @(_draft.Notifications.InApp ? "is-on" : null)" aria-pressed="@(_draft.Notifications.InApp ? "true" : "false")" @onclick="() => SetChannel(inApp: !_draft.Notifications.InApp)">
+                <span class="visually-hidden">Bật hoặc tắt thông báo trong ứng dụng</span>
+            </button>
+        </div>
+        <div class="admin-toggle-row">
+            <div class="admin-toggle-row-text">
+                <span class="admin-toggle-row-title">Email công vụ</span>
+                <span class="admin-toggle-row-body">Gửi tóm tắt thông báo quan trọng tới hộp thư của bạn.</span>
+            </div>
+            <button type="button" class="admin-switch @(_draft.Notifications.Email ? "is-on" : null)" aria-pressed="@(_draft.Notifications.Email ? "true" : "false")" @onclick="() => SetChannel(email: !_draft.Notifications.Email)">
+                <span class="visually-hidden">Bật hoặc tắt thông báo email</span>
+            </button>
+        </div>
+        <div class="admin-toggle-row">
+            <div class="admin-toggle-row-text">
+                <span class="admin-toggle-row-title">Tin nhắn SMS</span>
+                <span class="admin-toggle-row-body">Chỉ nên bật cho cảnh báo cấp cứu hoặc trực gấp.</span>
+            </div>
+            <button type="button" class="admin-switch @(_draft.Notifications.Sms ? "is-on" : null)" aria-pressed="@(_draft.Notifications.Sms ? "true" : "false")" @onclick="() => SetChannel(sms: !_draft.Notifications.Sms)">
+                <span class="visually-hidden">Bật hoặc tắt thông báo SMS</span>
+            </button>
+        </div>
+    </article>
+
+    <article class="admin-settings-section" id="tro-ly-ai">
+        <h2>Trợ lý AI</h2>
+        <div class="admin-form-grid">
+            <div class="admin-form-field">
+                <label class="admin-form-field-label" for="cd-ai-model">Mô hình</label>
+                <select id="cd-ai-model" class="admin-select" @bind="_draft.AiModel">
+                    <option value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5 (Anthropic)</option>
+                    <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Anthropic)</option>
+                    <option value="gpt-4o-mini">GPT-4o mini (OpenAI)</option>
+                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Google)</option>
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label" for="cd-ai-temp">Mức độ sáng tạo (@_draft.AiTemperature.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))</label>
+                <input id="cd-ai-temp" class="admin-slider" type="range" min="0" max="1" step="0.1"
+                       value="@_draft.AiTemperature.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                       @oninput="OnTemperatureInput" />
+                <span class="admin-form-field-hint">Giá trị thấp hơn cho câu trả lời chuẩn xác hơn; cao hơn cho phép sáng tạo.</span>
+            </div>
+            <div class="admin-form-field admin-form-field-full">
+                <label class="admin-form-field-label" for="cd-ai-prompt">Câu lệnh hệ thống</label>
+                <textarea id="cd-ai-prompt" class="admin-textarea" rows="5" @bind="_draft.AiSystemPrompt"></textarea>
+                <span class="admin-form-field-hint">Trợ lý sẽ luôn tuân theo nội dung này khi trả lời nhân viên y tế.</span>
+            </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="ResetDraft">Hoàn tác</button>
+            <button type="button" class="admin-btn admin-btn-primary" @onclick="SavePreferences">Lưu cấu hình</button>
+        </div>
+    </article>
+
+    <div style="display:flex; justify-content:flex-end;">
+        <button type="button" class="admin-btn admin-btn-danger" @onclick="OnLogout">
+            <span aria-hidden="true">@Icon("logout")</span>
+            Đăng xuất
+        </button>
+    </div>
+</section>
+
+@code {
+    private DraftModel _draft = new();
+
+    protected override void OnInitialized()
+    {
+        Preferences.StateChanged += OnPrefsChanged;
+        LoadDraft();
+    }
+
+    private void OnPrefsChanged() => InvokeAsync(() => { LoadDraft(); StateHasChanged(); });
+
+    private void LoadDraft()
+    {
+        var current = Preferences.Current;
+        _draft = new DraftModel
+        {
+            FullName = current.FullName,
+            Email = current.Email,
+            Department = current.Department,
+            Theme = current.Theme,
+            Density = current.Density,
+            AnimationsEnabled = current.AnimationsEnabled,
+            Notifications = current.Notifications,
+            AiModel = current.AiModel,
+            AiTemperature = current.AiTemperature,
+            AiSystemPrompt = current.AiSystemPrompt,
+        };
+    }
+
+    private bool IsTheme(string value) => string.Equals(_draft.Theme, value, StringComparison.OrdinalIgnoreCase);
+
+    private void SetTheme(string value)
+    {
+        if (string.Equals(_draft.Theme, value, StringComparison.OrdinalIgnoreCase)) return;
+        _draft.Theme = value;
+        ThemeBus.RequestToggle();
+    }
+
+    private void SetDensity(AdminDensity value) => _draft.Density = value;
+
+    private void SetAnimations(bool value) => _draft.AnimationsEnabled = value;
+
+    private void SetChannel(bool? inApp = null, bool? email = null, bool? sms = null)
+    {
+        _draft.Notifications = new NotificationChannelPrefs(
+            inApp ?? _draft.Notifications.InApp,
+            email ?? _draft.Notifications.Email,
+            sms ?? _draft.Notifications.Sms);
+    }
+
+    private void OnTemperatureInput(ChangeEventArgs args)
+    {
+        if (double.TryParse(args.Value?.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var value))
+        {
+            _draft.AiTemperature = Math.Clamp(value, 0d, 1d);
+        }
+    }
+
+    private void ResetDraft()
+    {
+        LoadDraft();
+        Toasts.Show("Đã hoàn tác", "Khôi phục về cấu hình đã lưu gần nhất.", ToastVariant.Info);
+    }
+
+    private void SavePreferences()
+    {
+        if (string.IsNullOrWhiteSpace(_draft.FullName))
+        {
+            Toasts.Show("Thiếu thông tin", "Vui lòng nhập họ tên.", ToastVariant.Warning);
+            return;
+        }
+        var next = new UserPreferences
+        {
+            FullName = _draft.FullName.Trim(),
+            Email = _draft.Email.Trim(),
+            Department = _draft.Department,
+            Theme = _draft.Theme,
+            Density = _draft.Density,
+            AnimationsEnabled = _draft.AnimationsEnabled,
+            Notifications = _draft.Notifications,
+            AiModel = _draft.AiModel,
+            AiTemperature = _draft.AiTemperature,
+            AiSystemPrompt = string.IsNullOrWhiteSpace(_draft.AiSystemPrompt) ? "Bạn là trợ lý nội bộ của bệnh viện QLCM Pro." : _draft.AiSystemPrompt.Trim(),
+        };
+        Preferences.Update(next);
+        Toasts.Show("Đã lưu cấu hình", "Tùy chọn cập nhật áp dụng cho phiên hiện tại.", ToastVariant.Success);
+    }
+
+    private void OnLogout()
+    {
+        Toasts.Show("Đang đăng xuất", "Bạn sẽ được chuyển về trang đăng nhập.", ToastVariant.Info);
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+    private RenderFragment Icon(string name) => builder => AdminIcons.Render(builder, name);
+
+    public void Dispose()
+    {
+        Preferences.StateChanged -= OnPrefsChanged;
+    }
+
+    private sealed class DraftModel
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public Department Department { get; set; } = Department.NoiTiet;
+        public string Theme { get; set; } = "light";
+        public AdminDensity Density { get; set; } = AdminDensity.Comfortable;
+        public bool AnimationsEnabled { get; set; } = true;
+        public NotificationChannelPrefs Notifications { get; set; } = new(true, true, false);
+        public string AiModel { get; set; } = "claude-sonnet-4-5-20250929";
+        public double AiTemperature { get; set; } = 0.4;
+        public string AiSystemPrompt { get; set; } = string.Empty;
+    }
+}

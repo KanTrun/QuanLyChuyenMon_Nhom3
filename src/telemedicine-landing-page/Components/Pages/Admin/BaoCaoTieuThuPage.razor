@@ -1,8 +1,223 @@
 @page "/admin/bao-cao/tieu-thu"
 @layout AdminLayout
+@inject IReportService ReportService
+@inject IToastService Toasts
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@implements IDisposable
 
-<PageTitle>Báo cáo tiêu thụ | QLCM Pro</PageTitle>
+<PageTitle>Báo cáo tiêu thụ vật tư | QLCM Pro</PageTitle>
 
-<AdminStubCard Eyebrow="Báo cáo"
-               Title="Báo cáo tiêu thụ vật tư"
-               Subtitle="So sánh tiêu thụ thực tế với định mức theo từng dịch vụ kỹ thuật." />
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Báo cáo</span>
+            <h1 class="admin-page-title">Báo cáo tiêu thụ vật tư</h1>
+            <p class="admin-page-subtitle">So sánh tiêu thụ thực tế và định mức theo kỹ thuật, theo khoa và theo kỳ.</p>
+        </div>
+        <div class="admin-page-actions">
+            <button type="button" class="admin-btn admin-btn-primary" @onclick="ExportAsync">
+                <span aria-hidden="true">@AdminIconRender("package")</span>
+                Xuất CSV
+            </button>
+        </div>
+    </header>
+
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="bc-from">Từ ngày</label>
+            <input id="bc-from" class="admin-input" type="date" value="@_fromIso" @onchange="OnFromChanged" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="bc-to">Đến ngày</label>
+            <input id="bc-to" class="admin-input" type="date" value="@_toIso" @onchange="OnToChanged" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="bc-dept">Khoa</label>
+            <select id="bc-dept" class="admin-select" value="@_deptKey" @onchange="OnDeptChanged">
+                <option value="">Toàn bệnh viện</option>
+                @foreach (var d in (Department[])Enum.GetValues(typeof(Department)))
+                {
+                    <option value="@d">@AdminEnumLabels.GetLabel(d)</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field"></div>
+        <div class="admin-filter-field" style="align-self:end; justify-self:end;">
+            <span class="admin-table-cell-muted">@_rows.Count dòng</span>
+        </div>
+    </div>
+
+    <article class="admin-panel">
+        <header class="admin-panel-head">
+            <div>
+                <h2 class="admin-panel-title">Top 8 chênh lệch lớn nhất</h2>
+                <p class="admin-panel-subtitle">Theo phần trăm chênh lệch giữa thực tế và định mức.</p>
+            </div>
+        </header>
+        <div class="admin-bars">
+            @foreach (var row in _topVariance)
+            {
+                var width = Math.Min(100m, Math.Abs(row.VariancePercent));
+                var isOver = row.VariancePercent > 0;
+                <div class="admin-bar-row">
+                    <div class="admin-table-cell-muted">@row.ResourceName</div>
+                    <div class="admin-bar-track"><div class="admin-bar-fill @(isOver ? "" : "is-negative")" style="width:@width.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)%"></div></div>
+                    <div class="admin-bar-value">@(isOver ? "+" : string.Empty)@row.VariancePercent.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)%</div>
+                </div>
+            }
+        </div>
+    </article>
+
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Kỹ thuật</th>
+                    <th>Tài nguyên</th>
+                    <th>Đơn vị</th>
+                    <th>Định mức</th>
+                    <th>Thực tế</th>
+                    <th>Chênh lệch</th>
+                    <th>%</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_rows.Count == 0)
+                {
+                    <tr class="admin-table-empty-row"><td colspan="7"><div class="admin-empty"><div class="admin-empty-title">Không có dữ liệu</div><div class="admin-empty-body">Hãy mở rộng khoảng thời gian hoặc chọn khoa khác.</div></div></td></tr>
+                }
+                else
+                {
+                    @foreach (var row in _rows)
+                    {
+                        <tr>
+                            <td>
+                                <div class="admin-table-cell-strong">@row.TechnicalServiceName</div>
+                                <div class="admin-table-cell-muted">@row.TechnicalServiceCode</div>
+                            </td>
+                            <td>
+                                <div class="admin-table-cell-strong">@row.ResourceName</div>
+                                <div class="admin-table-cell-muted">@row.ResourceCode</div>
+                            </td>
+                            <td>@row.Unit</td>
+                            <td>@row.StandardQuantity.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)</td>
+                            <td>@row.ActualQuantity.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)</td>
+                            <td>@row.Variance.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)</td>
+                            <td>
+                                <AdminBadge Tone="@(row.VariancePercent > 0 ? "tone-warning" : "tone-success")">
+                                    @(row.VariancePercent > 0 ? "+" : string.Empty)@row.VariancePercent.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)%
+                                </AdminBadge>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@code {
+    private DateOnly _from = DateOnly.FromDateTime(DateTime.Today.AddDays(-30));
+    private DateOnly _to = DateOnly.FromDateTime(DateTime.Today);
+    private string _fromIso = string.Empty;
+    private string _toIso = string.Empty;
+    private string _deptKey = string.Empty;
+    private Department? _dept;
+    private IReadOnlyList<ConsumptionReportRow> _rows = Array.Empty<ConsumptionReportRow>();
+    private IReadOnlyList<ConsumptionReportRow> _topVariance = Array.Empty<ConsumptionReportRow>();
+
+    protected override void OnInitialized()
+    {
+        _fromIso = _from.ToString("yyyy-MM-dd");
+        _toIso = _to.ToString("yyyy-MM-dd");
+        Navigation.LocationChanged += OnLocationChanged;
+        Recompute();
+        TryAutoExport();
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs args)
+    {
+        InvokeAsync(TryAutoExport);
+    }
+
+    private void TryAutoExport()
+    {
+        var uri = new Uri(Navigation.Uri);
+        if (uri.Query.Contains("xuat=1", StringComparison.OrdinalIgnoreCase))
+        {
+            _ = ExportAsync();
+            // Strip the flag so refreshing the page does not re-export.
+            Navigation.NavigateTo(uri.GetLeftPart(UriPartial.Path), forceLoad: false, replace: true);
+        }
+    }
+
+    private void OnFromChanged(ChangeEventArgs args)
+    {
+        _fromIso = args.Value?.ToString() ?? string.Empty;
+        if (DateOnly.TryParse(_fromIso, out var d)) { _from = d; Recompute(); }
+    }
+
+    private void OnToChanged(ChangeEventArgs args)
+    {
+        _toIso = args.Value?.ToString() ?? string.Empty;
+        if (DateOnly.TryParse(_toIso, out var d)) { _to = d; Recompute(); }
+    }
+
+    private void OnDeptChanged(ChangeEventArgs args)
+    {
+        _deptKey = args.Value?.ToString() ?? string.Empty;
+        _dept = Enum.TryParse<Department>(_deptKey, out var d) ? d : null;
+        Recompute();
+    }
+
+    private void Recompute()
+    {
+        _rows = ReportService.GenerateConsumptionReport(_from, _to, _dept);
+        _topVariance = _rows
+            .OrderByDescending(r => Math.Abs(r.VariancePercent))
+            .Take(8)
+            .ToList();
+    }
+
+    private async Task ExportAsync()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append('\uFEFF');
+        sb.AppendLine("ServiceCode,ServiceName,ResourceCode,ResourceName,Unit,Standard,Actual,Variance,VariancePercent,Period");
+        foreach (var row in _rows)
+        {
+            sb.AppendLine(string.Join(',', new[]
+            {
+                AdminCsv.Encode(row.TechnicalServiceCode),
+                AdminCsv.Encode(row.TechnicalServiceName),
+                AdminCsv.Encode(row.ResourceCode),
+                AdminCsv.Encode(row.ResourceName),
+                AdminCsv.Encode(row.Unit),
+                row.StandardQuantity.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                row.ActualQuantity.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                row.Variance.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                row.VariancePercent.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                AdminCsv.Encode(row.Period),
+            }));
+        }
+        try
+        {
+            var filename = $"bao-cao-tieu-thu-{DateTime.Now:yyyyMMdd-HHmm}.csv";
+            await JS.InvokeVoidAsync("qlcmShell.downloadCsv", filename, sb.ToString());
+            Toasts.Show("Đã xuất báo cáo", filename, ToastVariant.Success);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception)
+        {
+            Toasts.Show("Không thể xuất CSV", "Vui lòng thử lại.", ToastVariant.Error);
+        }
+    }
+
+    private RenderFragment AdminIconRender(string name) => builder => AdminIcons.Render(builder, name);
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}

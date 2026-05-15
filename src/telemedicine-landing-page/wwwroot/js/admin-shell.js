@@ -137,6 +137,27 @@
         return false;
     }
 
+    function downloadCsv(filename, content) {
+        try {
+            var blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename || 'bao-cao.csv';
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            window.setTimeout(function () {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 0);
+            return true;
+        } catch (err) {
+            console && console.warn && console.warn('qlcmShell downloadCsv error:', err);
+            return false;
+        }
+    }
+
     function lockBodyScroll(lock) {
         var html = document.documentElement;
         if (lock) {
@@ -192,6 +213,7 @@
         isFullscreen: isFullscreen,
         focusElement: focusElement,
         lockBodyScroll: lockBodyScroll,
+        downloadCsv: downloadCsv,
         registerOutsideClick: registerOutsideClick,
         unregisterOutsideClick: unregisterOutsideClick,
     };

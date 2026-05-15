@@ -1,0 +1,58 @@
+@typeparam TItem
+@* Generic data table with header/body slots, empty state and a pagination footer.
+   The page is responsible for slicing items - this control just renders. *@
+
+<div class="admin-table-wrapper @ExtraClass">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                @HeaderTemplate
+            </tr>
+        </thead>
+        <tbody>
+            @if (Items.Count == 0)
+            {
+                <tr class="admin-table-empty-row">
+                    <td colspan="@ColumnCount">
+                        <div class="admin-empty">
+                            <div class="admin-empty-title">@EmptyTitle</div>
+                            <div class="admin-empty-body">@EmptyBody</div>
+                        </div>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                foreach (var item in Items)
+                {
+                    @RowTemplate(item)
+                }
+            }
+        </tbody>
+    </table>
+
+    <AdminPagination CurrentPage="CurrentPage"
+                     PageSize="PageSize"
+                     TotalItems="TotalItems"
+                     CurrentPageChanged="OnPageChanged" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<TItem> Items { get; set; } = Array.Empty<TItem>();
+    [Parameter, EditorRequired] public RenderFragment HeaderTemplate { get; set; } = default!;
+    [Parameter, EditorRequired] public RenderFragment<TItem> RowTemplate { get; set; } = default!;
+    [Parameter, EditorRequired] public int ColumnCount { get; set; }
+    [Parameter] public string EmptyTitle { get; set; } = "Không có dữ liệu phù hợp";
+    [Parameter] public string EmptyBody { get; set; } = "Hãy điều chỉnh bộ lọc hoặc tạo mục mới.";
+    [Parameter] public string ExtraClass { get; set; } = string.Empty;
+
+    [Parameter] public int CurrentPage { get; set; } = 1;
+    [Parameter] public int PageSize { get; set; } = 10;
+    [Parameter] public int TotalItems { get; set; }
+    [Parameter] public EventCallback<int> CurrentPageChanged { get; set; }
+
+    private async Task OnPageChanged(int page)
+    {
+        await CurrentPageChanged.InvokeAsync(page);
+    }
+}

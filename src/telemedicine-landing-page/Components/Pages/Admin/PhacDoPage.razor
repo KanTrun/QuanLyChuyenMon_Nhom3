@@ -1,8 +1,337 @@
 @page "/admin/phac-do"
 @layout AdminLayout
+@using System.ComponentModel.DataAnnotations
+@inject IProtocolService ProtocolService
+@inject IToastService Toasts
+@implements IDisposable
 
 <PageTitle>Phác đồ lâm sàng | QLCM Pro</PageTitle>
 
-<AdminStubCard Eyebrow="Phác đồ"
-               Title="Phác đồ lâm sàng"
-               Subtitle="Tra cứu, cập nhật và áp dụng phác đồ điều trị cho người bệnh." />
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Phác đồ</span>
+            <h1 class="admin-page-title">Phác đồ điều trị và chăm sóc</h1>
+            <p class="admin-page-subtitle">Tra cứu, cập nhật và ghi nhận các trường hợp áp dụng phác đồ lâm sàng tại bệnh viện.</p>
+        </div>
+        <div class="admin-page-actions">
+            <button type="button" class="admin-btn admin-btn-primary" @onclick="() => OpenCreate()">
+                <span aria-hidden="true">@AdminIconRender("plus")</span>
+                Tạo phác đồ mới
+            </button>
+        </div>
+    </header>
+
+    <div class="admin-filter-bar is-compact">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="pd-search">Tìm kiếm</label>
+            <input id="pd-search" class="admin-input" type="search" placeholder="Tìm theo tên hoặc mã" value="@_search" @oninput="OnSearchChanged" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="pd-type">Loại phác đồ</label>
+            <select id="pd-type" class="admin-select" value="@_typeKey" @onchange="OnTypeChanged">
+                <option value="">Tất cả</option>
+                @foreach (var t in (ProtocolType[])Enum.GetValues(typeof(ProtocolType)))
+                {
+                    <option value="@t">@AdminEnumLabels.GetLabel(t)</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="pd-spec">Chuyên khoa</label>
+            <select id="pd-spec" class="admin-select" value="@_specKey" @onchange="OnSpecChanged">
+                <option value="">Tất cả</option>
+                @foreach (var d in (Department[])Enum.GetValues(typeof(Department)))
+                {
+                    <option value="@d">@AdminEnumLabels.GetLabel(d)</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    @if (_items.Count == 0)
+    {
+        <div class="admin-table-wrapper">
+            <div class="admin-empty" style="padding:48px 16px;">
+                <div class="admin-empty-title">Không tìm thấy phác đồ phù hợp</div>
+                <div class="admin-empty-body">Hãy thử một từ khóa khác hoặc tạo phác đồ mới.</div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="admin-card-grid">
+            @foreach (var protocol in _items)
+            {
+                <article class="admin-card" @onclick="() => OpenDetail(protocol)" style="cursor:pointer;">
+                    <div class="admin-card-tags">
+                        <AdminBadge Tone="tone-primary">@AdminEnumLabels.GetLabel(protocol.ProtocolType)</AdminBadge>
+                        <AdminBadge Tone="tone-secondary">@AdminEnumLabels.GetLabel(protocol.Specialty)</AdminBadge>
+                        <AdminBadge Tone="@AdminEnumLabels.GetTone(protocol.Status)">@AdminEnumLabels.GetLabel(protocol.Status)</AdminBadge>
+                    </div>
+                    <h2 class="admin-card-title">@protocol.Name</h2>
+                    <p class="admin-card-meta">Mã @protocol.Code • Phiên bản @protocol.Version • Áp dụng @protocol.ApplicationCount lượt.</p>
+                    <div class="admin-card-tags">
+                        @foreach (var icd in protocol.IcdCodes)
+                        {
+                            <AdminBadge Tone="tone-muted">ICD @icd</AdminBadge>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+<AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="@(value => _drawerOpen = value)" SizeClass="admin-drawer-wide"
+             Eyebrow="Phác đồ"
+             Title="@(_selected?.Name ?? string.Empty)"
+             Subtitle="@(_selected is null ? null : $"Mã {_selected.Code} • {AdminEnumLabels.GetLabel(_selected.ProtocolType)}")">
+    <ChildContent>
+        @if (_selected is { } proto)
+        {
+            <dl class="admin-detail-grid">
+                <dt>Chuyên khoa</dt>
+                <dd>@AdminEnumLabels.GetLabel(proto.Specialty)</dd>
+                <dt>Phiên bản</dt>
+                <dd>@proto.Version</dd>
+                <dt>Hiệu lực từ</dt>
+                <dd>@proto.EffectiveFrom.ToString("dd/MM/yyyy")</dd>
+                <dt>Số lượt áp dụng</dt>
+                <dd>@proto.ApplicationCount</dd>
+                <dt>Mã ICD</dt>
+                <dd>@(string.Join(", ", proto.IcdCodes))</dd>
+                <dt>Cập nhật lần cuối</dt>
+                <dd>@proto.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+            </dl>
+            <div>
+                <h3 style="margin:0 0 6px;font-size:1rem;font-weight:700;">Chống chỉ định / lưu ý</h3>
+                <p class="admin-card-meta">@proto.Contraindications</p>
+            </div>
+
+            <div class="admin-panel" style="padding:14px;">
+                <h3 class="admin-panel-title">Ghi nhận áp dụng cho bệnh nhân</h3>
+                <EditForm Model="_application" OnValidSubmit="() => RecordApplication(proto)">
+                    <DataAnnotationsValidator />
+                    <div class="admin-form-grid">
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Tên bệnh nhân</label>
+                            <InputText class="admin-input" @bind-Value="_application.PatientName" placeholder="VD: Trần Hữu Bình" />
+                            <ValidationMessage For="() => _application.PatientName" class="admin-validation-message" />
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Kết quả ghi nhận</label>
+                            <InputText class="admin-input" @bind-Value="_application.Outcome" placeholder="VD: Đáp ứng tốt sau 24 giờ" />
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+                        <button type="submit" class="admin-btn admin-btn-primary">Áp dụng cho bệnh nhân</button>
+                    </div>
+                </EditForm>
+            </div>
+
+            <div>
+                <h3 style="margin:0 0 6px;font-size:1rem;font-weight:700;">Lượt áp dụng gần nhất</h3>
+                @if (_history.Count == 0)
+                {
+                    <p class="admin-card-meta">Chưa có lượt áp dụng nào được ghi nhận trong phiên này.</p>
+                }
+                else
+                {
+                    <ul class="admin-step-list">
+                        @foreach (var entry in _history)
+                        {
+                            <li class="admin-step-card">
+                                <div class="admin-step-card-head">
+                                    <span class="admin-step-card-seq">@entry.AppliedAt.ToString("dd/MM HH:mm")</span>
+                                    <span class="admin-table-cell-muted">@entry.Outcome</span>
+                                </div>
+                                <div class="admin-table-cell-strong">@entry.PatientName</div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="() => _drawerOpen = false">Đóng</button>
+    </FooterContent>
+</AdminDrawer>
+
+<AdminModal IsOpen="_createOpen" IsOpenChanged="@(value => _createOpen = value)" Title="Tạo phác đồ mới">
+    <ChildContent>
+        <EditForm Model="_create" OnValidSubmit="CreateAsync">
+            <DataAnnotationsValidator />
+            <div class="admin-form-grid">
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label">Mã phác đồ</label>
+                    <InputText class="admin-input" @bind-Value="_create.Code" />
+                    <ValidationMessage For="() => _create.Code" class="admin-validation-message" />
+                </div>
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label">Tên phác đồ</label>
+                    <InputText class="admin-input" @bind-Value="_create.Name" />
+                    <ValidationMessage For="() => _create.Name" class="admin-validation-message" />
+                </div>
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label">Loại</label>
+                    <InputSelect class="admin-select" @bind-Value="_create.ProtocolType">
+                        @foreach (var t in (ProtocolType[])Enum.GetValues(typeof(ProtocolType)))
+                        {
+                            <option value="@t">@AdminEnumLabels.GetLabel(t)</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label">Chuyên khoa</label>
+                    <InputSelect class="admin-select" @bind-Value="_create.Specialty">
+                        @foreach (var d in (Department[])Enum.GetValues(typeof(Department)))
+                        {
+                            <option value="@d">@AdminEnumLabels.GetLabel(d)</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="admin-form-field admin-form-field-full">
+                    <label class="admin-form-field-label">Mã ICD (cách nhau bằng dấu phẩy)</label>
+                    <InputText class="admin-input" @bind-Value="_create.IcdCsv" />
+                </div>
+                <div class="admin-form-field admin-form-field-full">
+                    <label class="admin-form-field-label">Chống chỉ định</label>
+                    <InputTextArea class="admin-textarea" @bind-Value="_create.Contraindications" />
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+                <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _createOpen = false">Hủy</button>
+                <button type="submit" class="admin-btn admin-btn-primary">Lưu phác đồ</button>
+            </div>
+        </EditForm>
+    </ChildContent>
+</AdminModal>
+
+@code {
+    private string _search = string.Empty;
+    private string _typeKey = string.Empty;
+    private string _specKey = string.Empty;
+    private IReadOnlyList<ClinicalProtocolRecord> _items = Array.Empty<ClinicalProtocolRecord>();
+
+    private bool _drawerOpen;
+    private ClinicalProtocolRecord? _selected;
+    private IReadOnlyList<ProtocolApplication> _history = Array.Empty<ProtocolApplication>();
+    private readonly ApplicationModel _application = new();
+
+    private bool _createOpen;
+    private CreateModel _create = new();
+
+    protected override void OnInitialized()
+    {
+        ProtocolService.StateChanged += OnChanged;
+        Recompute();
+    }
+
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        Recompute();
+        if (_selected is { } sel)
+        {
+            _selected = ProtocolService.GetById(sel.Id);
+            _history = sel is null ? Array.Empty<ProtocolApplication>() : ProtocolService.GetApplications(sel.Id);
+        }
+        StateHasChanged();
+    });
+
+    private void Recompute()
+    {
+        ProtocolType? typeFilter = Enum.TryParse<ProtocolType>(_typeKey, out var t) ? t : (ProtocolType?)null;
+        Department? specFilter = Enum.TryParse<Department>(_specKey, out var d) ? d : (Department?)null;
+        _items = ProtocolService.Search(_search, typeFilter, specFilter);
+    }
+
+    private void OnSearchChanged(ChangeEventArgs args)
+    {
+        _search = args.Value?.ToString() ?? string.Empty;
+        Recompute();
+    }
+
+    private void OnTypeChanged(ChangeEventArgs args)
+    {
+        _typeKey = args.Value?.ToString() ?? string.Empty;
+        Recompute();
+    }
+
+    private void OnSpecChanged(ChangeEventArgs args)
+    {
+        _specKey = args.Value?.ToString() ?? string.Empty;
+        Recompute();
+    }
+
+    private void OpenDetail(ClinicalProtocolRecord protocol)
+    {
+        _selected = protocol;
+        _history = ProtocolService.GetApplications(protocol.Id);
+        _application.PatientName = string.Empty;
+        _application.Outcome = string.Empty;
+        _drawerOpen = true;
+    }
+
+    private void RecordApplication(ClinicalProtocolRecord protocol)
+    {
+        ProtocolService.RecordPatientApplication(protocol.Id, _application.PatientName.Trim(), _application.Outcome.Trim());
+        Toasts.Show("Đã ghi nhận áp dụng phác đồ", _application.PatientName, ToastVariant.Success);
+        _application.PatientName = string.Empty;
+        _application.Outcome = string.Empty;
+    }
+
+    private void OpenCreate()
+    {
+        _create = new CreateModel();
+        _createOpen = true;
+    }
+
+    private void CreateAsync()
+    {
+        var record = new ClinicalProtocolRecord
+        {
+            Code = _create.Code.Trim(),
+            Name = _create.Name.Trim(),
+            ProtocolType = _create.ProtocolType,
+            Specialty = _create.Specialty,
+            Contraindications = string.IsNullOrWhiteSpace(_create.Contraindications) ? "Không có" : _create.Contraindications.Trim(),
+            IcdCodes = (_create.IcdCsv ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList(),
+            Status = CatalogStatus.HoatDong,
+            Version = "1.0",
+            EffectiveFrom = DateOnly.FromDateTime(DateTime.Today),
+        };
+        ProtocolService.Create(record);
+        Toasts.Show("Đã tạo phác đồ mới", record.Name, ToastVariant.Success);
+        _createOpen = false;
+    }
+
+    private RenderFragment AdminIconRender(string name) => builder => AdminIcons.Render(builder, name);
+
+    public void Dispose()
+    {
+        ProtocolService.StateChanged -= OnChanged;
+    }
+
+    public sealed class ApplicationModel
+    {
+        [Required(ErrorMessage = "Vui lòng nhập tên bệnh nhân.")]
+        public string PatientName { get; set; } = string.Empty;
+        public string Outcome { get; set; } = "Đang theo dõi";
+    }
+
+    public sealed class CreateModel
+    {
+        [Required(ErrorMessage = "Vui lòng nhập mã phác đồ.")]
+        public string Code { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Vui lòng nhập tên phác đồ.")]
+        public string Name { get; set; } = string.Empty;
+        public ProtocolType ProtocolType { get; set; } = ProtocolType.DieuTri;
+        public Department Specialty { get; set; } = Department.NoiTiet;
+        public string IcdCsv { get; set; } = string.Empty;
+        public string Contraindications { get; set; } = string.Empty;
+    }
+}

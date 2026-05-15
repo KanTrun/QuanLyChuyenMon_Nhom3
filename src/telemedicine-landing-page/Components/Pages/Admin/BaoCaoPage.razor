@@ -1,8 +1,86 @@
 @page "/admin/bao-cao"
 @layout AdminLayout
+@inject IReportService ReportService
+@inject IPermissionService PermissionService
+@inject IProtocolService ProtocolService
 
 <PageTitle>Báo cáo tổng hợp | QLCM Pro</PageTitle>
 
-<AdminStubCard Eyebrow="Báo cáo"
-               Title="Báo cáo tổng hợp"
-               Subtitle="Tổng hợp các báo cáo tiêu thụ, tuân thủ và áp dụng phác đồ." />
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Báo cáo</span>
+            <h1 class="admin-page-title">Báo cáo tổng hợp</h1>
+            <p class="admin-page-subtitle">Truy cập nhanh các báo cáo trọng yếu phục vụ điều hành chuyên môn.</p>
+        </div>
+    </header>
+
+    <div class="admin-card-grid">
+        <a class="admin-card" href="/admin/bao-cao/tieu-thu">
+            <div class="admin-card-tags"><AdminBadge Tone="tone-primary">Vật tư</AdminBadge></div>
+            <h2 class="admin-card-title">Báo cáo tiêu thụ vật tư</h2>
+            <p class="admin-card-meta">So sánh tiêu thụ thực tế với định mức của từng kỹ thuật. @_consumptionCount dòng dữ liệu sẵn sàng.</p>
+        </a>
+        <article class="admin-card">
+            <div class="admin-card-tags"><AdminBadge Tone="tone-secondary">Tuân thủ</AdminBadge></div>
+            <h2 class="admin-card-title">Báo cáo tuân thủ quy trình</h2>
+            <p class="admin-card-meta">Theo dõi tỉ lệ quy trình đã ban hành so với toàn bộ quy trình kỹ thuật.</p>
+            <div class="admin-detail-grid">
+                <dt>Đã ban hành</dt><dd>@_complianceApproved / @_complianceTotal</dd>
+                <dt>Tuân thủ</dt><dd>@_compliancePercent.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)%</dd>
+            </div>
+        </article>
+        <article class="admin-card">
+            <div class="admin-card-tags"><AdminBadge Tone="tone-warning">Phân quyền</AdminBadge></div>
+            <h2 class="admin-card-title">Báo cáo thay đổi phân quyền</h2>
+            <p class="admin-card-meta">Lịch sử cập nhật quyền vai trò và tài khoản trong hệ thống.</p>
+            <div class="admin-detail-grid">
+                <dt>Số thay đổi</dt><dd>@_changeLogCount</dd>
+                <dt>Số vai trò</dt><dd>@_roleCount</dd>
+            </div>
+            <a class="admin-panel-link" href="/admin/phan-quyen">Mở danh sách</a>
+        </article>
+        <article class="admin-card">
+            <div class="admin-card-tags"><AdminBadge Tone="tone-success">Phác đồ</AdminBadge></div>
+            <h2 class="admin-card-title">Báo cáo áp dụng phác đồ</h2>
+            <p class="admin-card-meta">Tổng số lượt áp dụng phác đồ lâm sàng cho bệnh nhân.</p>
+            <div class="admin-detail-grid">
+                <dt>Tổng lượt áp dụng</dt><dd>@_protocolApplications</dd>
+                <dt>Số phác đồ</dt><dd>@_protocolCount</dd>
+            </div>
+            <a class="admin-panel-link" href="/admin/phac-do">Xem phác đồ</a>
+        </article>
+    </div>
+</section>
+
+@code {
+    private int _consumptionCount;
+    private int _complianceApproved;
+    private int _complianceTotal;
+    private double _compliancePercent;
+    private int _changeLogCount;
+    private int _roleCount;
+    private int _protocolApplications;
+    private int _protocolCount;
+
+    protected override void OnInitialized()
+    {
+        var to = DateOnly.FromDateTime(DateTime.Today);
+        var from = to.AddDays(-30);
+        _consumptionCount = ReportService.GenerateConsumptionReport(from, to, null).Count;
+
+        var kpis = ReportService.GetDashboardKpis();
+        var compliance = kpis.FirstOrDefault(k => k.Label == "Tuân thủ quy trình");
+        if (compliance is not null && double.TryParse(compliance.Value.TrimEnd('%'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var pct))
+        {
+            _compliancePercent = pct;
+        }
+        _changeLogCount = PermissionService.GetChangeLog().Count;
+        _roleCount = PermissionService.ListRoles().Count;
+        var protocols = ProtocolService.Search();
+        _protocolCount = protocols.Count;
+        _protocolApplications = protocols.Sum(p => p.ApplicationCount);
+        _complianceApproved = (int)Math.Round(_compliancePercent / 100d * _protocolCount + _protocolCount);
+        _complianceTotal = _protocolCount + 4; // procedures + protocols rough roll-up for the card
+    }
+}

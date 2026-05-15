@@ -1,8 +1,136 @@
 @page "/admin/quy-trinh/phe-duyet"
 @layout AdminLayout
+@inject IProcedureService ProcedureService
+@inject IConfirmDialogService Confirm
+@inject IToastService Toasts
+@implements IDisposable
 
 <PageTitle>Phê duyệt quy trình | QLCM Pro</PageTitle>
 
-<AdminStubCard Eyebrow="Quy trình"
-               Title="Phê duyệt quy trình"
-               Subtitle="Xem xét và phê duyệt các quy trình đang chờ ban hành." />
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Quy trình</span>
+            <h1 class="admin-page-title">Phê duyệt quy trình kỹ thuật</h1>
+            <p class="admin-page-subtitle">Duyệt hoặc trả lại các quy trình đang chờ ký số. Tổng số chờ duyệt: @_pending.Count.</p>
+        </div>
+        <a class="admin-btn admin-btn-ghost" href="/admin/quy-trinh">Quay lại danh sách</a>
+    </header>
+
+    @if (_pending.Count == 0)
+    {
+        <div class="admin-table-wrapper">
+            <div class="admin-empty" style="padding:48px 16px;">
+                <div class="admin-empty-title">Không có quy trình nào đang chờ phê duyệt</div>
+                <div class="admin-empty-body">Hãy quay lại sau hoặc kiểm tra danh sách quy trình đã ban hành.</div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Mã</th>
+                        <th>Quy trình</th>
+                        <th>Khoa</th>
+                        <th>Phiên bản</th>
+                        <th>Soạn thảo</th>
+                        <th style="text-align:right;">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var proc in _pending)
+                    {
+                        <tr>
+                            <td class="admin-table-cell-strong">@proc.Code</td>
+                            <td>
+                                <div class="admin-table-cell-strong">@proc.Name</div>
+                                <div class="admin-table-cell-muted">@proc.Steps.Count bước • Cập nhật @proc.UpdatedAt.ToString("dd/MM HH:mm")</div>
+                            </td>
+                            <td>@AdminEnumLabels.GetLabel(proc.Department)</td>
+                            <td>@proc.Version</td>
+                            <td>@proc.UpdatedBy</td>
+                            <td style="text-align:right;">
+                                <div class="admin-row-actions">
+                                    <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => RejectAsync(proc)">
+                                        Từ chối
+                                    </button>
+                                    <button type="button" class="admin-btn admin-btn-primary" @onclick="() => ApproveAsync(proc)">
+                                        Phê duyệt
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<AdminModal IsOpen="_rejectOpen" IsOpenChanged="@(value => _rejectOpen = value)" Title="Trả về soạn thảo">
+    <ChildContent>
+        <p style="margin:0;">Vui lòng nhập lý do trả lại quy trình <strong>@(_rejectTarget?.Name)</strong>.</p>
+        <textarea class="admin-textarea" placeholder="VD: Cần bổ sung bước kiểm tra dị ứng trước tiêm." @bind="_rejectReason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _rejectOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-danger" @onclick="ConfirmRejectAsync" disabled="@string.IsNullOrWhiteSpace(_rejectReason)">Trả về soạn thảo</button>
+    </FooterContent>
+</AdminModal>
+
+@code {
+    private IReadOnlyList<ProcedureRecord> _pending = Array.Empty<ProcedureRecord>();
+    private bool _rejectOpen;
+    private ProcedureRecord? _rejectTarget;
+    private string _rejectReason = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        ProcedureService.StateChanged += OnStateChanged;
+        Recompute();
+    }
+
+    private void OnStateChanged() => InvokeAsync(() => { Recompute(); StateHasChanged(); });
+
+    private void Recompute()
+    {
+        _pending = ProcedureService.Search(new ProcedureFilter(Status: ProcedureStatus.DangChoPheDuyet));
+    }
+
+    private async Task ApproveAsync(ProcedureRecord proc)
+    {
+        var ok = await Confirm.ShowAsync(
+            "Phê duyệt quy trình",
+            $"Phê duyệt và ban hành quy trình \"{proc.Name}\"?",
+            confirmText: "Phê duyệt");
+        if (!ok) return;
+        ProcedureService.Approve(proc.Id, "BS. Đặng Thái Sơn");
+        Toasts.Show("Đã phê duyệt quy trình", proc.Name, ToastVariant.Success);
+    }
+
+    private Task RejectAsync(ProcedureRecord proc)
+    {
+        _rejectTarget = proc;
+        _rejectReason = string.Empty;
+        _rejectOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private void ConfirmRejectAsync()
+    {
+        if (_rejectTarget is null || string.IsNullOrWhiteSpace(_rejectReason)) return;
+        ProcedureService.Reject(_rejectTarget.Id, "BS. Đặng Thái Sơn", _rejectReason.Trim());
+        Toasts.Show("Đã trả về soạn thảo", _rejectTarget.Name, ToastVariant.Info);
+        _rejectOpen = false;
+        _rejectTarget = null;
+        _rejectReason = string.Empty;
+    }
+
+    public void Dispose()
+    {
+        ProcedureService.StateChanged -= OnStateChanged;
+    }
+}
