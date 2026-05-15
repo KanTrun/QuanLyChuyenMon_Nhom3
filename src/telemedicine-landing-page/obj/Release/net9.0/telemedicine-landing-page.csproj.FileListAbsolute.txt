@@ -53,13 +53,10 @@ D:/BenhVien_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/x8
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/rjsmrazor.dswa.cache.json
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/rjsmcshtml.dswa.cache.json
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/scopedcss/bundle/TelemedicineLandingPage.styles.css
-/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/gxodc1khnw-arm048ydme.gz
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/cq5oqmwkfo-puv41a7af3.gz
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/x8yc0i4dko-tzc9j754ip.gz
-/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/o4u6gh8ri8-6dwluj3jn6.gz
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/crnbpr8pfs-ksxqnpcwww.gz
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/susjwig8sl-afcsqqms5y.gz
-/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/9ywmv6kd8b-4kzuo66zg4.gz
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/ub56i21yrk-fbzswao8zz.gz
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/v4y6qbcjj4-mmr8zem7gx.gz
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/p91jz875tl-xoe6si5h0u.gz
@@ -72,5 +69,8 @@ D:/BenhVien_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/x8
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/TelemedicineLandingPage.pdb
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/telemedicine-landing-page.genruntimeconfig.cache
 /projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/ref/TelemedicineLandingPage.dll
-/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/ahi9ywyby3-3anlxv3mw6.gz
-/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/rmpkd2ewu6-xszqmniiz9.gz
+/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/ahi9ywyby3-jqwv8djup2.gz
+/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/rmpkd2ewu6-f1uy0ay7gp.gz
+/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/gxodc1khnw-0n1jre6ygy.gz
+/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/o4u6gh8ri8-607tp29ol6.gz
+/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/Release/net9.0/compressed/9ywmv6kd8b-6yus792ldj.gz

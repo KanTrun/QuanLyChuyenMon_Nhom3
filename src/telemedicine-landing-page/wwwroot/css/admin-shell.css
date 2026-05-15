@@ -1452,75 +1452,37 @@
 }
 
 /* ── Dark theme accents ─────────────────────────── */
-
-[data-theme="dark"] .admin-shell {
-    background: #0F172A;
-    color: #E2E8F0;
-}
-
-[data-theme="dark"] .admin-sidebar {
-    background: #111A2C;
-    border-right-color: rgba(255, 255, 255, 0.06);
-}
+/* Most surfaces inherit dark palette via design tokens
+   ([data-theme="dark"] :root re-targets --color-page,
+   --color-surface, --color-ink, etc. in design-tokens.css).
+   Only translucent / gradient bound styles need explicit
+   re-targeting here. */
 
 [data-theme="dark"] .admin-topbar {
-    background: rgba(17, 26, 44, 0.85);
-    border-bottom-color: rgba(255, 255, 255, 0.06);
-    color: #E2E8F0;
-}
-
-[data-theme="dark"] .admin-nav-link,
-[data-theme="dark"] .admin-nav-summary,
-[data-theme="dark"] .admin-user-name,
-[data-theme="dark"] .admin-breadcrumb-current,
-[data-theme="dark"] .admin-greeting-title {
-    color: #E2E8F0;
+    background: rgba(19, 28, 46, 0.85);
 }
 
 [data-theme="dark"] .admin-nav-link:hover,
 [data-theme="dark"] .admin-nav-summary:hover {
-    background: rgba(91, 155, 213, 0.15);
-    color: #BFDBFE;
-}
-
-[data-theme="dark"] .admin-nav-link.is-active {
-    background: rgba(91, 155, 213, 0.18);
-    color: #BFDBFE;
-    border-left-color: var(--color-primary);
-}
-
-[data-theme="dark"] .admin-panel,
-[data-theme="dark"] .kpi-card,
-[data-theme="dark"] .admin-quick-tile,
-[data-theme="dark"] .admin-stub-card,
-[data-theme="dark"] .admin-flyout,
-[data-theme="dark"] .palette-dialog {
-    background: #1A2538;
-    border-color: rgba(255, 255, 255, 0.06);
-    color: #E2E8F0;
-}
-
-[data-theme="dark"] .admin-search-trigger {
-    background: rgba(255, 255, 255, 0.05);
-    color: #CBD5E1;
-}
-
-[data-theme="dark"] .admin-search-trigger-chip,
-[data-theme="dark"] .palette-result-hotkey,
-[data-theme="dark"] .palette-footer-hint kbd {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #CBD5E1;
-}
-
-[data-theme="dark"] .admin-topbar-icon-button:hover,
-[data-theme="dark"] .admin-search-trigger:hover {
     background: rgba(91, 155, 213, 0.18);
     color: #DBEAFE;
 }
 
-[data-theme="dark"] .palette-input { color: #E2E8F0; }
-[data-theme="dark"] .palette-footer { background: #0F172A; border-top-color: rgba(255, 255, 255, 0.06); }
+[data-theme="dark"] .admin-nav-link.is-active {
+    background: rgba(91, 155, 213, 0.22);
+    color: #DBEAFE;
+    border-left-color: var(--color-primary);
+}
+
+[data-theme="dark"] .admin-topbar-icon-button:hover,
+[data-theme="dark"] .admin-search-trigger:hover {
+    background: rgba(91, 155, 213, 0.22);
+    color: #DBEAFE;
+}
+
+[data-theme="dark"] .admin-sidebar-footer {
+    background: linear-gradient(180deg, transparent, rgba(91, 155, 213, 0.12));
+}
 
 /* ── Reduced motion ─────────────────────────────── */
 
@@ -1982,40 +1944,8 @@
     background: rgba(245, 101, 101, 0.12);
 }
 
-[data-theme="dark"] .chatbot-panel {
-    background: #1A2538;
-    border-color: rgba(255, 255, 255, 0.08);
-}
-
 [data-theme="dark"] .chatbot-header {
     background: linear-gradient(180deg, rgba(91, 155, 213, 0.18), transparent);
-    border-bottom-color: rgba(255, 255, 255, 0.06);
-}
-
-[data-theme="dark"] .chatbot-messages {
-    background: #0F172A;
-}
-
-[data-theme="dark"] .chatbot-bubble.is-assistant {
-    background: #1E2A40;
-    border-color: rgba(255, 255, 255, 0.06);
-    color: #E2E8F0;
-}
-
-[data-theme="dark"] .chatbot-bubble.is-user {
-    background: rgba(91, 155, 213, 0.22);
-    color: #DBEAFE;
-}
-
-[data-theme="dark"] .chatbot-textarea {
-    background: #1E2A40;
-    border-color: rgba(255, 255, 255, 0.08);
-    color: #E2E8F0;
-}
-
-[data-theme="dark"] .chatbot-composer {
-    background: #1A2538;
-    border-top-color: rgba(255, 255, 255, 0.06);
 }
 
 @media (max-width: 640px) {

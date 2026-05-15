@@ -1189,3 +1189,133 @@
         transform: none !important;
     }
 }
+
+/* ── Dark theme: brighten badge text and validation copy
+   so the dark hex colours don't bleed into the navy bg. ── */
+
+[data-theme="dark"] .admin-validation-summary {
+    background: rgba(245, 101, 101, 0.14);
+    border-color: rgba(245, 101, 101, 0.45);
+    color: #FCA5A5;
+}
+
+[data-theme="dark"] .admin-badge.tone-success { background: rgba(72, 187, 120, 0.22); color: #6EE7B7; }
+[data-theme="dark"] .admin-badge.tone-warning { background: rgba(236, 201, 75, 0.26); color: #FDE68A; }
+[data-theme="dark"] .admin-badge.tone-danger  { background: rgba(245, 101, 101, 0.22); color: #FCA5A5; }
+[data-theme="dark"] .admin-badge.tone-secondary {
+    background: rgba(93, 173, 226, 0.22);
+    color: #93C5FD;
+}
+
+[data-theme="dark"] .admin-icon-btn.is-danger:hover {
+    background: rgba(245, 101, 101, 0.22);
+    color: #FCA5A5;
+    border-color: rgba(245, 101, 101, 0.45);
+}
+
+[data-theme="dark"] .admin-tab.is-active {
+    color: #FFFFFF;
+}
+
+[data-theme="dark"] .admin-tab:not(.is-active) .admin-tab-count {
+    background: var(--color-soft);
+    color: var(--color-muted);
+}
+
+[data-theme="dark"] .admin-stepper-item.is-current {
+    background: rgba(91, 155, 213, 0.22);
+    border-color: var(--color-primary);
+    color: #DBEAFE;
+}
+
+[data-theme="dark"] .admin-stepper-item.is-done {
+    background: rgba(72, 187, 120, 0.18);
+    border-color: rgba(72, 187, 120, 0.55);
+    color: #6EE7B7;
+}
+
+[data-theme="dark"] .admin-step-card-seq {
+    background: rgba(91, 155, 213, 0.22);
+    color: #DBEAFE;
+}
+
+[data-theme="dark"] .admin-bar-track {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: var(--color-subtle);
+}
+
+[data-theme="dark"] .admin-input,
+[data-theme="dark"] .admin-select,
+[data-theme="dark"] .admin-textarea {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    border-color: var(--color-border-subtle);
+}
+
+[data-theme="dark"] .admin-json-block {
+    background: #0B1220;
+    color: var(--color-ink);
+    border-color: var(--color-border-subtle);
+}
+
+/* Custom scrollbar (dark-mode friendly) for drawer body and
+   admin content. Light themes use the default browser bar. */
+.admin-drawer-body::-webkit-scrollbar,
+.admin-content::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.admin-drawer-body::-webkit-scrollbar-track,
+.admin-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.admin-drawer-body::-webkit-scrollbar-thumb,
+.admin-content::-webkit-scrollbar-thumb {
+    background: var(--color-border-subtle);
+    border-radius: 999px;
+}
+
+.admin-drawer-body::-webkit-scrollbar-thumb:hover,
+.admin-content::-webkit-scrollbar-thumb:hover {
+    background: var(--color-warm-gray);
+}
+
+.admin-drawer-body,
+.admin-content {
+    scrollbar-color: var(--color-border-subtle) transparent;
+    scrollbar-width: thin;
+}
+
+/* ── Right drawer: scrollable body + hide nested
+   sub-navigation strips that should not appear inside
+   the off-canvas panel. ── */
+
+.admin-drawer {
+    height: 100vh;
+    max-height: 100vh;
+}
+
+.admin-drawer-header,
+.admin-drawer-footer {
+    flex: 0 0 auto;
+}
+
+.admin-drawer-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.admin-drawer-body .admin-tabs,
+.admin-drawer-body .admin-drawer-tabs,
+.admin-drawer-body .admin-subnav {
+    display: none !important;
+}

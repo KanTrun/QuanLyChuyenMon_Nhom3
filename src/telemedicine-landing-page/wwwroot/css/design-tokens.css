@@ -86,3 +86,62 @@
     --gradient-warm: linear-gradient(180deg, #F7FAFC, #FFFFFF);
     --gradient-section: linear-gradient(180deg, rgba(247, 250, 252, 0), rgba(237, 242, 247, 0.5));
 }
+
+/* ═══════════════════════════════════════════════════
+   DARK THEME — token override
+   Re-targets every body / surface / text token so any
+   component built on the token system inherits a high
+   contrast dark palette automatically.
+   ═══════════════════════════════════════════════════ */
+
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    /* Surfaces */
+    --color-page: #0F172A;
+    --color-surface: #1E293B;
+    --color-soft: #334155;
+    --color-ivory: #1E293B;
+    --color-warm-gray: #475569;
+    --color-sidebar-bg: #131C2E;
+    --color-sidebar-hover: #1E2A44;
+    --color-border-subtle: #334155;
+
+    /* Text */
+    --color-ink: #F1F5F9;
+    --color-muted: #CBD5E1;
+    --color-subtle: #94A3B8;
+
+    /* Primary tints used for hover backgrounds and panels */
+    --color-primary-soft: #1E2A44;
+    --color-primary-tint: #1A2236;
+
+    /* Brighten the deep / link primary so it stays readable
+       on dark surfaces (default #4A7BB7 fades into navy). */
+    --color-primary-deep: #93C5FD;
+    --color-primary-light: #BFDBFE;
+
+    /* Soft accents used for hero background blocks */
+    --color-mint: #1E2A2C;
+    --color-sky: #1A2236;
+    --color-blue: #1A2236;
+    --color-coral-soft: #2A1E1E;
+
+    /* Glass */
+    --glass-bg: rgba(30, 41, 59, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.08);
+
+    /* Shadows tuned for dark surfaces */
+    --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.4);
+    --shadow-medium: 0 10px 30px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-strong: 0 20px 40px rgba(0, 0, 0, 0.55);
+    --shadow-accent: 0 8px 20px rgba(91, 155, 213, 0.32);
+    --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+    --shadow-glow: 0 0 20px rgba(91, 155, 213, 0.3);
+    --shadow-card-hover: 0 15px 35px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(91, 155, 213, 0.18);
+
+    /* Gradients on dark backgrounds */
+    --gradient-hero: linear-gradient(160deg, #1E293B 0%, #0F172A 100%);
+    --gradient-warm: linear-gradient(180deg, #0F172A, #1E293B);
+    --gradient-section: linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(30, 41, 59, 0.5));
+}

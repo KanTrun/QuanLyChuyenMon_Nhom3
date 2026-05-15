@@ -84,6 +84,22 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9BcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Chatbot/ChatbotLauncher.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9DaGF0Ym90L0NoYXRib3RMYXVuY2hlci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Chatbot/ChatbotPanel.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9DaGF0Ym90L0NoYXRib3RQYW5lbC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Chatbot/MessageBubble.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9DaGF0Ym90L01lc3NhZ2VCdWJibGUucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Chatbot/TypingIndicator.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9DaGF0Ym90L1R5cGluZ0luZGljYXRvci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Layout/AdminLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9MYXlvdXQvQWRtaW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
