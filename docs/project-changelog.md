@@ -1,5 +1,24 @@
 # Project Changelog
 
+## 2026-05-15
+### Added
+| Item | Description |
+|---|---|
+| QLCM Pro admin shell | Bố trí lại Blazor app `net9.0` với sidebar điều hướng, top bar, breadcrumb, lệnh nhanh và dashboard riêng cho `/admin` (không che sidebar khi mở palette) |
+| Soft-blue theme refresh | Cập nhật `design-tokens.css` sang dải xanh dịu (`#5B9BD5`), giữ nguyên cảm giác editorial của trang công khai và bổ sung `meta theme-color` |
+| Modules đầy đủ | Hoàn thiện các trang `Tổng quan`, `Quy trình kỹ thuật`, `Phân quyền`, `Danh mục`, `Phác đồ`, `Báo cáo`, `Lâm sàng`, `Cài đặt` (in-memory + seed data có dấu) |
+| AI chatbot | Tích hợp Anthropic Claude (`claude-sonnet-4-5-20250929`) qua `/v1/messages` SSE streaming, có chế độ demo khi chưa cấu hình `ApiKey` |
+| Phím tắt | Hỗ trợ `Ctrl + K` mở bảng lệnh, `Alt + 0..6` chuyển nhanh module, `Ctrl + /` bật trợ lý AI, `Esc` đóng modal |
+| Accessibility & motion | Tôn trọng `prefers-reduced-motion`, đường viền focus 2px theo `--color-primary`, aria-label tiếng Việt cho mọi nút biểu tượng |
+| Vietnamese diacritics audit | Rà soát toàn bộ chuỗi hiển thị, mọi văn bản người dùng nhìn thấy đều có dấu đầy đủ (chỉ giữ chuỗi không dấu trong từ khóa khớp đầu vào của demo client) |
+| Docs | Cập nhật `README.md`, `docs/development-roadmap.md` và changelog phản ánh trạng thái mới |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 45 tests |
+
 ## 2026-05-14
 ### Added
 | Item | Description |

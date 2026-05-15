@@ -20,9 +20,9 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Vì workspac
 |---|---|---|---|
 | 01 | Domain foundation and RBAC | Planned | Schema/domain model, permission model, audit baseline |
 | 02 | Procedure versioning and mapping | Planned | CRUD quy trình, version, steps, screen mapping |
-| 03 | Permission configuration and change history | Planned | UI/API cấu hình quyền, effectiveAt, notification |
-| 04 | Technical catalog and inventory checks | Planned | Định mức tài nguyên, adapter kho/dược/thiết bị, báo cáo |
-| 05 | Clinical protocols and patient application | Planned | Phác đồ, rule ICD, chống chỉ định, lịch sử bệnh nhân |
+| 03 | Permission configuration and change history | Implemented (in-memory demo) | UI/API cấu hình quyền, effectiveAt, notification. Persistence layer pending production rollout. |
+| 04 | Technical catalog and inventory checks | Implemented (in-memory demo) | Định mức tài nguyên, adapter kho/dược/thiết bị, báo cáo. Persistence layer pending production rollout. |
+| 05 | Clinical protocols and patient application | Implemented (in-memory demo) | Phác đồ, rule ICD, chống chỉ định, lịch sử bệnh nhân. Persistence layer pending production rollout. |
 | 06 | Notification, reporting, testing, rollout | Planned | Báo cáo, test, migration, tài liệu vận hành |
 
 ## Progress
