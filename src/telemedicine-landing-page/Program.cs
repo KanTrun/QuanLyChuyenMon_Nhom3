@@ -4,7 +4,7 @@ using TelemedicineLandingPage.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRazorComponents();
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddSingleton<ILandingPageContentService, LandingPageContentService>();
 builder.Services.AddOptions<LandingPageLinksOptions>()
     .Bind(builder.Configuration.GetSection(LandingPageLinksOptions.SectionName))
@@ -27,7 +27,7 @@ if (!app.Environment.IsDevelopment())
 app.UseAntiforgery();
 
 app.MapStaticAssets();
-app.MapRazorComponents<App>();
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 app.Run();
 

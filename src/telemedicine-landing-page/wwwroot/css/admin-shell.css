@@ -1,0 +1,9 @@
+/* ═══════════════════════════════════════════════════
+   QLCM Pro Admin Shell — placeholder stylesheet.
+   Subsequent features will populate sidebar, top bar,
+   command palette, and module page styles.
+   ═══════════════════════════════════════════════════ */
+
+:root {
+    --admin-shell-loaded: 1;
+}
