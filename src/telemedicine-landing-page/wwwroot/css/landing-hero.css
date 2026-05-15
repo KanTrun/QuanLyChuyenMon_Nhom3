@@ -16,8 +16,8 @@
     flex-direction: column;
 }
 
-html:has(.landing-page--hero-only),
-body:has(.landing-page--hero-only) {
+html:has(> body > main.landing-page--hero-only),
+body:has(> main.landing-page--hero-only) {
     height: 100%;
     overflow: hidden;
 }
@@ -405,8 +405,8 @@ body:has(.landing-page--hero-only) {
 /* ── Hero-only landing responsive tweaks ── */
 @media (max-width: 960px) {
     .landing-page--hero-only,
-    html:has(.landing-page--hero-only),
-    body:has(.landing-page--hero-only) {
+    html:has(> body > main.landing-page--hero-only),
+    body:has(> main.landing-page--hero-only) {
         height: auto;
         overflow: auto;
     }

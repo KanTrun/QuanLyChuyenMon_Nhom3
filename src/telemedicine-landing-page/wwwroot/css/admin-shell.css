@@ -36,9 +36,10 @@
 }
 
 .admin-content {
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     padding: 24px clamp(20px, 3vw, 32px) 48px;
-    overflow: auto;
+    overflow-y: auto;
     scroll-behavior: smooth;
 }
 
@@ -1961,4 +1962,16 @@
         bottom: 88px;
         max-height: calc(100vh - 100px);
     }
+}
+
+/* ── Hide visual hotkey hints (handlers still active) ── */
+.admin-search-trigger-chip { display: none !important; }
+.admin-nav-hotkey { display: none !important; }
+.palette-result-hotkey { display: none !important; }
+.palette-footer-hint { display: none !important; }
+
+/* ── Defensive: never let landing-page scroll lock leak into admin shell ── */
+body:has(.admin-shell) {
+    overflow: auto !important;
+    height: auto !important;
 }
