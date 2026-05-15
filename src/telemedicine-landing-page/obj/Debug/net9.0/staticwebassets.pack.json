@@ -1,6 +1,14 @@
 {
   "Files": [
     {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-page.css",
+      "PackagePath": "staticwebassets\\css\\admin-page.css"
+    },
+    {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-shell.css",
+      "PackagePath": "staticwebassets\\css\\admin-shell.css"
+    },
+    {
       "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css",
       "PackagePath": "staticwebassets\\css\\animations.css"
     },
@@ -35,6 +43,10 @@
     {
       "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\favicon.png",
       "PackagePath": "staticwebassets\\favicon.png"
+    },
+    {
+      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\admin-shell.js",
+      "PackagePath": "staticwebassets\\js\\admin-shell.js"
     },
     {
       "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js",

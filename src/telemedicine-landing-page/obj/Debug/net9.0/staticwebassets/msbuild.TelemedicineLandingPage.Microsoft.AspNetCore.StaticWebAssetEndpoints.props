@@ -1,88 +1,112 @@
 ﻿<Project>
   <ItemGroup>
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/admin-page.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin-page.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-47IjXDJEXytBU07z54wTdXX2w9qWstz\u002BPAXfVJRfcGk="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"29393"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u002247IjXDJEXytBU07z54wTdXX2w9qWstz\u002BPAXfVJRfcGk=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/admin-page.joviy8ccq4.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin-page.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"joviy8ccq4"},{"Name":"integrity","Value":"sha256-47IjXDJEXytBU07z54wTdXX2w9qWstz\u002BPAXfVJRfcGk="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/admin-page.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"29393"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u002247IjXDJEXytBU07z54wTdXX2w9qWstz\u002BPAXfVJRfcGk=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/admin-shell.3zheudgww1.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin-shell.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"3zheudgww1"},{"Name":"integrity","Value":"sha256-gXt9BiuUtxXznzW7Qt0bLStw/c3S0SZbUUB\u002B56yDPJA="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/admin-shell.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"49116"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022gXt9BiuUtxXznzW7Qt0bLStw/c3S0SZbUUB\u002B56yDPJA=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/admin-shell.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin-shell.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-gXt9BiuUtxXznzW7Qt0bLStw/c3S0SZbUUB\u002B56yDPJA="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"49116"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022gXt9BiuUtxXznzW7Qt0bLStw/c3S0SZbUUB\u002B56yDPJA=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/animations.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\animations.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-v4xla1V\u002B/BTQ4T/14Ir5l60g\u002BQS0YDoskxLXd1No/mU="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"8225"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022v4xla1V\u002B/BTQ4T/14Ir5l60g\u002BQS0YDoskxLXd1No/mU=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:01:01 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-QzKO79qptSNmUk82nT\u002BrIcN\u002B8gVU8JwMwZ0HGYWX688="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"8581"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022QzKO79qptSNmUk82nT\u002BrIcN\u002B8gVU8JwMwZ0HGYWX688=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
-    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/animations.puv41a7af3.css">
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/animations.r2escwrd6j.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\animations.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"puv41a7af3"},{"Name":"integrity","Value":"sha256-v4xla1V\u002B/BTQ4T/14Ir5l60g\u002BQS0YDoskxLXd1No/mU="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/animations.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"8225"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022v4xla1V\u002B/BTQ4T/14Ir5l60g\u002BQS0YDoskxLXd1No/mU=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:01:01 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"r2escwrd6j"},{"Name":"integrity","Value":"sha256-QzKO79qptSNmUk82nT\u002BrIcN\u002B8gVU8JwMwZ0HGYWX688="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/animations.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"8581"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022QzKO79qptSNmUk82nT\u002BrIcN\u002B8gVU8JwMwZ0HGYWX688=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/base-layout.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\base-layout.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-95a99510A9LDmLvsCcYctgS\u002B6Y38buIHw2abukoz804="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"5842"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u002295a99510A9LDmLvsCcYctgS\u002B6Y38buIHw2abukoz804=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:47:39 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"6118"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
-    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/base-layout.tzc9j754ip.css">
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/base-layout.k9fwvp5rep.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\base-layout.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"tzc9j754ip"},{"Name":"integrity","Value":"sha256-95a99510A9LDmLvsCcYctgS\u002B6Y38buIHw2abukoz804="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/base-layout.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"5842"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u002295a99510A9LDmLvsCcYctgS\u002B6Y38buIHw2abukoz804=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:47:39 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"k9fwvp5rep"},{"Name":"integrity","Value":"sha256-uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/base-layout.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"6118"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/design-tokens.37ga60yp5m.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\design-tokens.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"37ga60yp5m"},{"Name":"integrity","Value":"sha256-gWntNWz1cUeVGH5ih3kuDlFabiQyYMhAbfJqNcjI/ts="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/design-tokens.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"3655"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022gWntNWz1cUeVGH5ih3kuDlFabiQyYMhAbfJqNcjI/ts=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/design-tokens.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\design-tokens.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"3279"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:46:45 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-gWntNWz1cUeVGH5ih3kuDlFabiQyYMhAbfJqNcjI/ts="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"3655"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022gWntNWz1cUeVGH5ih3kuDlFabiQyYMhAbfJqNcjI/ts=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
-    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/design-tokens.wjl3radht7.css">
-      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\design-tokens.css'))</AssetFile>
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/landing-directory-tracking.8gtm283y14.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-directory-tracking.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"wjl3radht7"},{"Name":"integrity","Value":"sha256-JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/design-tokens.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"3279"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:46:45 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"8gtm283y14"},{"Name":"integrity","Value":"sha256-aK\u002BUR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT\u002BMg="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/landing-directory-tracking.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"3356"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022aK\u002BUR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT\u002BMg=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/landing-directory-tracking.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-directory-tracking.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx\u002B2jRFU/A="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"3266"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx\u002B2jRFU/A=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:50:34 GMT"}]]]></ResponseHeaders>
-    </StaticWebAssetEndpoint>
-    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/landing-directory-tracking.ksxqnpcwww.css">
-      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-directory-tracking.css'))</AssetFile>
-      <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"ksxqnpcwww"},{"Name":"integrity","Value":"sha256-bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx\u002B2jRFU/A="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/landing-directory-tracking.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"3266"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx\u002B2jRFU/A=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:50:34 GMT"}]]]></ResponseHeaders>
-    </StaticWebAssetEndpoint>
-    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/landing-download-responsive.afcsqqms5y.css">
-      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-download-responsive.css'))</AssetFile>
-      <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"afcsqqms5y"},{"Name":"integrity","Value":"sha256-5o\u002Bqw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/landing-download-responsive.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"3036"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00225o\u002Bqw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:51:31 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-aK\u002BUR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT\u002BMg="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"3356"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022aK\u002BUR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT\u002BMg=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/landing-download-responsive.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-download-responsive.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-5o\u002Bqw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"3036"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00225o\u002Bqw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:51:31 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"3127"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
-    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/landing-hero.4kzuo66zg4.css">
-      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-hero.css'))</AssetFile>
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/landing-download-responsive.j7mctsrhvg.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-download-responsive.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"4kzuo66zg4"},{"Name":"integrity","Value":"sha256-fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc\u002Bx0wAZ2w="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/landing-hero.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"7580"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc\u002Bx0wAZ2w=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:48:26 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"j7mctsrhvg"},{"Name":"integrity","Value":"sha256-bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/landing-download-responsive.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"3127"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/landing-hero.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-hero.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc\u002Bx0wAZ2w="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"7580"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc\u002Bx0wAZ2w=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:48:26 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-Bzr5UZFUAed7jOQlLIG88nmPK6HMAthrKjiWXS\u002BDdcQ="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"7894"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022Bzr5UZFUAed7jOQlLIG88nmPK6HMAthrKjiWXS\u002BDdcQ=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/landing-hero.va41e069jp.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-hero.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"va41e069jp"},{"Name":"integrity","Value":"sha256-Bzr5UZFUAed7jOQlLIG88nmPK6HMAthrKjiWXS\u002BDdcQ="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/landing-hero.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"7894"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022Bzr5UZFUAed7jOQlLIG88nmPK6HMAthrKjiWXS\u002BDdcQ=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/landing-sections.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-sections.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"4360"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:49:39 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-6xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"4513"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00226xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
-    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/landing-sections.fbzswao8zz.css">
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/landing-sections.xhdrbwwwre.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-sections.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"fbzswao8zz"},{"Name":"integrity","Value":"sha256-y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/landing-sections.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"4360"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:49:39 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"xhdrbwwwre"},{"Name":"integrity","Value":"sha256-6xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/landing-sections.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"4513"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00226xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/login.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\login.css'))</AssetFile>
@@ -108,17 +132,29 @@
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-4mWsDy3aHl36ZbGt8zByK7Pvd4kRUoNgTYzRnwmPHwg="}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=3600, must-revalidate"},{"Name":"Content-Length","Value":"1148"},{"Name":"Content-Type","Value":"image/png"},{"Name":"ETag","Value":"\u00224mWsDy3aHl36ZbGt8zByK7Pvd4kRUoNgTYzRnwmPHwg=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 04:33:20 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/js/admin-shell.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\admin-shell.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"10123"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/js/admin-shell.qa5y03ce7p.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\admin-shell.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"qa5y03ce7p"},{"Name":"integrity","Value":"sha256-roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8="},{"Name":"label","Value":"_content/TelemedicineLandingPage/js/admin-shell.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"10123"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/js/animations.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\animations.js'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-4UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"3043"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u00224UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:09:59 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"3132"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
-    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/js/animations.xoe6si5h0u.js">
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/js/animations.ypaky3owwl.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\animations.js'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"xoe6si5h0u"},{"Name":"integrity","Value":"sha256-4UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg="},{"Name":"label","Value":"_content/TelemedicineLandingPage/js/animations.js"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"3043"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u00224UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg=\u0022"},{"Name":"Last-Modified","Value":"Thu, 14 May 2026 07:09:59 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"ypaky3owwl"},{"Name":"integrity","Value":"sha256-RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw="},{"Name":"label","Value":"_content/TelemedicineLandingPage/js/animations.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"3132"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw=\u0022"},{"Name":"Last-Modified","Value":"Fri, 15 May 2026 15:39:58 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
   </ItemGroup>
 </Project>

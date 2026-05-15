@@ -962,32 +962,36 @@
     ]
   },
   "packageFolders": {
-    "/root/.nuget/packages/": {}
+    "C:\\Users\\HP\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/projects/sandbox/QuanLyChuyenMon_Nhom3/tests/telemedicine-landing-page.tests/telemedicine-landing-page.tests.csproj",
+      "projectUniqueName": "D:\\BenhVien_Nhom3\\tests\\telemedicine-landing-page.tests\\telemedicine-landing-page.tests.csproj",
       "projectName": "telemedicine-landing-page.tests",
-      "projectPath": "/projects/sandbox/QuanLyChuyenMon_Nhom3/tests/telemedicine-landing-page.tests/telemedicine-landing-page.tests.csproj",
-      "packagesPath": "/root/.nuget/packages/",
-      "outputPath": "/projects/sandbox/QuanLyChuyenMon_Nhom3/tests/telemedicine-landing-page.tests/obj/",
+      "projectPath": "D:\\BenhVien_Nhom3\\tests\\telemedicine-landing-page.tests\\telemedicine-landing-page.tests.csproj",
+      "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
+      "outputPath": "D:\\BenhVien_Nhom3\\tests\\telemedicine-landing-page.tests\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/root/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\HP\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 22.2.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
           "projectReferences": {
-            "/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/telemedicine-landing-page.csproj": {
-              "projectPath": "/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/telemedicine-landing-page.csproj"
+            "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\telemedicine-landing-page.csproj": {
+              "projectPath": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\telemedicine-landing-page.csproj"
             }
           }
         }
@@ -1002,7 +1006,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.300"
+      "SdkAnalysisLevel": "9.0.200"
     },
     "frameworks": {
       "net9.0": {
@@ -1041,7 +1045,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/opt/dotnet/sdk/9.0.314/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

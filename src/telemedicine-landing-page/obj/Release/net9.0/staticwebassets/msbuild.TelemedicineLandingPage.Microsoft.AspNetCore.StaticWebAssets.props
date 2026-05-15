@@ -1,5 +1,59 @@
 ﻿<Project>
   <ItemGroup>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin-page.css'))">
+      <SourceType>Package</SourceType>
+      <SourceId>TelemedicineLandingPage</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/TelemedicineLandingPage</BasePath>
+      <RelativePath>css/admin-page.css</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <Fingerprint>joviy8ccq4</Fingerprint>
+      <Integrity>47IjXDJEXytBU07z54wTdXX2w9qWstz+PAXfVJRfcGk=</Integrity>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin-page.css'))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin-shell.css'))">
+      <SourceType>Package</SourceType>
+      <SourceId>TelemedicineLandingPage</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/TelemedicineLandingPage</BasePath>
+      <RelativePath>css/admin-shell.css</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <Fingerprint>3zheudgww1</Fingerprint>
+      <Integrity>gXt9BiuUtxXznzW7Qt0bLStw/c3S0SZbUUB+56yDPJA=</Integrity>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin-shell.css'))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\animations.css'))">
+      <SourceType>Package</SourceType>
+      <SourceId>TelemedicineLandingPage</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/TelemedicineLandingPage</BasePath>
+      <RelativePath>css/animations.css</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <Fingerprint>r2escwrd6j</Fingerprint>
+      <Integrity>QzKO79qptSNmUk82nT+rIcN+8gVU8JwMwZ0HGYWX688=</Integrity>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\animations.css'))</OriginalItemSpec>
+    </StaticWebAsset>
     <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\base-layout.css'))">
       <SourceType>Package</SourceType>
       <SourceId>TelemedicineLandingPage</SourceId>
@@ -12,8 +66,8 @@
       <RelatedAsset></RelatedAsset>
       <AssetTraitName></AssetTraitName>
       <AssetTraitValue></AssetTraitValue>
-      <Fingerprint>4x78475g5v</Fingerprint>
-      <Integrity>6NWIw+QiCpLPPmzXvtFS4qldLGHHf48DoG5XA0qEB5U=</Integrity>
+      <Fingerprint>k9fwvp5rep</Fingerprint>
+      <Integrity>uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4=</Integrity>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\base-layout.css'))</OriginalItemSpec>
@@ -30,8 +84,8 @@
       <RelatedAsset></RelatedAsset>
       <AssetTraitName></AssetTraitName>
       <AssetTraitValue></AssetTraitValue>
-      <Fingerprint>ofhq1t4i7j</Fingerprint>
-      <Integrity>xM/Q+EeFzzpbp46haG+IWsTTQYg5tcjW+cvi5h2g3vo=</Integrity>
+      <Fingerprint>37ga60yp5m</Fingerprint>
+      <Integrity>gWntNWz1cUeVGH5ih3kuDlFabiQyYMhAbfJqNcjI/ts=</Integrity>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\design-tokens.css'))</OriginalItemSpec>
@@ -48,8 +102,8 @@
       <RelatedAsset></RelatedAsset>
       <AssetTraitName></AssetTraitName>
       <AssetTraitValue></AssetTraitValue>
-      <Fingerprint>c4gg9mqx0s</Fingerprint>
-      <Integrity>ZKmVa/kw+YzCyyFnIRiEjwWHrkqzxDKQiq6I7y1UkBo=</Integrity>
+      <Fingerprint>8gtm283y14</Fingerprint>
+      <Integrity>aK+UR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT+Mg=</Integrity>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-directory-tracking.css'))</OriginalItemSpec>
@@ -66,8 +120,8 @@
       <RelatedAsset></RelatedAsset>
       <AssetTraitName></AssetTraitName>
       <AssetTraitValue></AssetTraitValue>
-      <Fingerprint>3e0ybz3jwd</Fingerprint>
-      <Integrity>e30G9bJXhvNuBWS+54MEjOfiVXy+dVLQWNmuurrIwKM=</Integrity>
+      <Fingerprint>j7mctsrhvg</Fingerprint>
+      <Integrity>bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4=</Integrity>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-download-responsive.css'))</OriginalItemSpec>
@@ -84,8 +138,8 @@
       <RelatedAsset></RelatedAsset>
       <AssetTraitName></AssetTraitName>
       <AssetTraitValue></AssetTraitValue>
-      <Fingerprint>vsdh90xpff</Fingerprint>
-      <Integrity>4aZ8OKBrcuuaoEkzd/mz133pzE98J3ARBXivhN9j09o=</Integrity>
+      <Fingerprint>va41e069jp</Fingerprint>
+      <Integrity>Bzr5UZFUAed7jOQlLIG88nmPK6HMAthrKjiWXS+DdcQ=</Integrity>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-hero.css'))</OriginalItemSpec>
@@ -102,11 +156,29 @@
       <RelatedAsset></RelatedAsset>
       <AssetTraitName></AssetTraitName>
       <AssetTraitValue></AssetTraitValue>
-      <Fingerprint>dn7qdblr0l</Fingerprint>
-      <Integrity>xw0qysQyXkDrXLFqTN69dPcTjq8V1E9LJCoSOvF7CeU=</Integrity>
+      <Fingerprint>xhdrbwwwre</Fingerprint>
+      <Integrity>6xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk=</Integrity>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\landing-sections.css'))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\login.css'))">
+      <SourceType>Package</SourceType>
+      <SourceId>TelemedicineLandingPage</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/TelemedicineLandingPage</BasePath>
+      <RelativePath>css/login.css</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <Fingerprint>mmr8zem7gx</Fingerprint>
+      <Integrity>3ljPUOiVvLsco8JdJhYg70PWuqY8lmPKWaLY2F2Cf0E=</Integrity>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\login.css'))</OriginalItemSpec>
     </StaticWebAsset>
     <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\favicon.png'))">
       <SourceType>Package</SourceType>
@@ -125,6 +197,42 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\favicon.png'))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\admin-shell.js'))">
+      <SourceType>Package</SourceType>
+      <SourceId>TelemedicineLandingPage</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/TelemedicineLandingPage</BasePath>
+      <RelativePath>js/admin-shell.js</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <Fingerprint>qa5y03ce7p</Fingerprint>
+      <Integrity>roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8=</Integrity>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\admin-shell.js'))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\animations.js'))">
+      <SourceType>Package</SourceType>
+      <SourceId>TelemedicineLandingPage</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/TelemedicineLandingPage</BasePath>
+      <RelativePath>js/animations.js</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <Fingerprint>ypaky3owwl</Fingerprint>
+      <Integrity>RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw=</Integrity>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\animations.js'))</OriginalItemSpec>
     </StaticWebAsset>
   </ItemGroup>
 </Project>
