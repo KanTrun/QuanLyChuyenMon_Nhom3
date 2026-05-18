@@ -1,0 +1,74 @@
+@page "/phac-do-pro"
+@layout PersonaLayout
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@implements IDisposable
+
+<PageTitle>Phác đồ lâm sàng | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Phác đồ</span>
+            <h1 class="admin-page-title">Phác đồ lâm sàng chuyên môn</h1>
+            <p class="admin-page-subtitle">Tra cứu và quản lý phác đồ điều trị theo chuyên khoa.</p>
+        </div>
+    </header>
+
+    <AdminDataTable TItem="ClinicalProtocol"
+                    Items="_pagedItems"
+                    ColumnCount="4"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_total"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }">
+        <HeaderTemplate>
+            <th>Mã</th>
+            <th>Tên phác đồ</th>
+            <th>Loại</th>
+            <th>Khoa sở hữu</th>
+        </HeaderTemplate>
+        <RowTemplate Context="protocol">
+            <tr>
+                <td>@protocol.ProtocolCode</td>
+                <td>@protocol.Name</td>
+                <td>
+                    <AdminBadge Tone="tone-primary">
+                        @(protocol.ProtocolType == "treatment" ? "Điều trị" : "Chẩn đoán")
+                    </AdminBadge>
+                </td>
+                <td>@GetDeptName(protocol.OwnerDepartmentId)</td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
+</section>
+
+@code {
+    private int _page = 1;
+    private const int _pageSize = 10;
+    private int _total;
+    private IReadOnlyList<ClinicalProtocol> _pagedItems = Array.Empty<ClinicalProtocol>();
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+        Paginate();
+    }
+
+    private void OnChanged() => InvokeAsync(() => { Paginate(); StateHasChanged(); });
+
+    private void Paginate()
+    {
+        var all = Store.ClinicalProtocols.OrderBy(p => p.ProtocolCode).ToList();
+        _total = all.Count;
+        _pagedItems = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private string GetDeptName(Guid? deptId)
+        => deptId.HasValue
+            ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—"
+            : "—";
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+}

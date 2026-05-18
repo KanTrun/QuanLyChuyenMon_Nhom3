@@ -1,0 +1,121 @@
+@page "/admin/he-thong/man-hinh"
+@layout AdminLayout
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@inject IToastService Toast
+@implements IDisposable
+
+<PageTitle>Màn hình & Tính năng | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Hệ thống</span>
+            <h1 class="admin-page-title">Danh mục màn hình và tính năng</h1>
+            <p class="admin-page-subtitle">Quản lý danh sách màn hình, tính năng để ánh xạ quyền truy cập.</p>
+        </div>
+        <button class="admin-btn admin-btn-primary" @onclick="OpenCreateScreen">Thêm màn hình</button>
+    </header>
+
+    <AdminDataTable TItem="ScreenCatalog"
+                    Items="_pagedScreens"
+                    ColumnCount="5"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_totalScreens"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }">
+        <HeaderTemplate>
+            <th>Mã</th>
+            <th>Tên màn hình</th>
+            <th>Route</th>
+            <th>Module</th>
+            <th>Số tính năng</th>
+        </HeaderTemplate>
+        <RowTemplate Context="screen">
+            <tr>
+                <td>@screen.ScreenCode</td>
+                <td>@screen.Name</td>
+                <td>@screen.Route</td>
+                <td>
+                    <AdminBadge Tone="tone-primary">@screen.ModuleCode</AdminBadge>
+                </td>
+                <td>@Store.Features.Count(f => f.ScreenId == screen.ScreenId)</td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
+
+    <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" Title="Thêm màn hình">
+        <ChildContent>
+            <div class="admin-form-group">
+                <label class="admin-label">Mã màn hình</label>
+                <input class="admin-input" @bind="_screenCode" placeholder="VD: SCR_PHARMACY" />
+            </div>
+            <div class="admin-form-group">
+                <label class="admin-label">Tên màn hình</label>
+                <input class="admin-input" @bind="_screenName" placeholder="VD: Quản lý dược" />
+            </div>
+            <div class="admin-form-group">
+                <label class="admin-label">Route</label>
+                <input class="admin-input" @bind="_screenRoute" placeholder="VD: /admin/duoc" />
+            </div>
+            <div class="admin-form-group">
+                <label class="admin-label">Module</label>
+                <input class="admin-input" @bind="_moduleCode" placeholder="VD: PHARM" />
+            </div>
+        </ChildContent>
+        <FooterContent>
+            <button class="admin-btn admin-btn-primary" @onclick="SaveScreen">Lưu</button>
+            <button class="admin-btn admin-btn-ghost" @onclick="() => _drawerOpen = false">Hủy</button>
+        </FooterContent>
+    </AdminDrawer>
+</section>
+
+@code {
+    private int _page = 1;
+    private const int _pageSize = 10;
+    private int _totalScreens;
+    private IReadOnlyList<ScreenCatalog> _pagedScreens = Array.Empty<ScreenCatalog>();
+    private bool _drawerOpen;
+    private string _screenCode = "", _screenName = "", _screenRoute = "", _moduleCode = "";
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+        Paginate();
+    }
+
+    private void OnChanged() => InvokeAsync(() => { Paginate(); StateHasChanged(); });
+
+    private void Paginate()
+    {
+        var all = Store.Screens.OrderBy(s => s.ScreenCode).ToList();
+        _totalScreens = all.Count;
+        _pagedScreens = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void OpenCreateScreen()
+    {
+        _screenCode = _screenName = _screenRoute = _moduleCode = "";
+        _drawerOpen = true;
+    }
+
+    private void SaveScreen()
+    {
+        try
+        {
+            Store.AddScreen(new ScreenCatalog
+            {
+                ScreenCode = _screenCode,
+                Name = _screenName,
+                Route = _screenRoute,
+                ModuleCode = _moduleCode
+            });
+            _drawerOpen = false;
+            Toast.Show("Đã thêm màn hình thành công.", "success");
+        }
+        catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
+    }
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+}

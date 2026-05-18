@@ -1,0 +1,147 @@
+@page "/admin/to-chuc/nguoi-dung"
+@layout AdminLayout
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@inject IToastService Toast
+@implements IDisposable
+
+<PageTitle>Người dùng | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Tổ chức</span>
+            <h1 class="admin-page-title">Quản lý người dùng</h1>
+            <p class="admin-page-subtitle">Tạo, chỉnh sửa và vô hiệu hóa tài khoản người dùng.</p>
+        </div>
+        <button class="admin-btn admin-btn-primary" @onclick="OpenCreate">Thêm người dùng</button>
+    </header>
+
+    <AdminDataTable TItem="AppUser"
+                    Items="_pagedItems"
+                    ColumnCount="5"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_total"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }">
+        <HeaderTemplate>
+            <th>Họ tên</th>
+            <th>Tên đăng nhập</th>
+            <th>Email</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </HeaderTemplate>
+        <RowTemplate Context="user">
+            <tr>
+                <td>@user.FullName</td>
+                <td>@user.Username</td>
+                <td>@user.Email</td>
+                <td>
+                    <AdminBadge Tone="@(user.Status == "active" ? "tone-success" : "tone-muted")">
+                        @(user.Status == "active" ? "Hoạt động" : "Vô hiệu")
+                    </AdminBadge>
+                </td>
+                <td>
+                    @if (user.Status == "active")
+                    {
+                        <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => Deactivate(user)">
+                            Vô hiệu hóa
+                        </button>
+                    }
+                </td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
+
+    <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" Title="Thêm người dùng">
+        <ChildContent>
+            <div class="admin-form-group">
+                <label class="admin-label">Họ tên</label>
+                <input class="admin-input" @bind="_fullName" />
+            </div>
+            <div class="admin-form-group">
+                <label class="admin-label">Tên đăng nhập</label>
+                <input class="admin-input" @bind="_username" />
+            </div>
+            <div class="admin-form-group">
+                <label class="admin-label">Email</label>
+                <input class="admin-input" type="email" @bind="_email" />
+            </div>
+            <div class="admin-form-group">
+                <label class="admin-label">Khoa/phòng chính</label>
+                <select class="admin-select" @bind="_deptId">
+                    <option value="">— Chọn —</option>
+                    @foreach (var d in Store.Departments.Where(d => d.Status == "active"))
+                    {
+                        <option value="@d.DepartmentId">@d.Name</option>
+                    }
+                </select>
+            </div>
+        </ChildContent>
+        <FooterContent>
+            <button class="admin-btn admin-btn-primary" @onclick="SaveUser">Lưu</button>
+            <button class="admin-btn admin-btn-ghost" @onclick="() => _drawerOpen = false">Hủy</button>
+        </FooterContent>
+    </AdminDrawer>
+</section>
+
+@code {
+    private int _page = 1;
+    private const int _pageSize = 10;
+    private int _total;
+    private IReadOnlyList<AppUser> _pagedItems = Array.Empty<AppUser>();
+    private bool _drawerOpen;
+    private string _fullName = "", _username = "", _email = "", _deptId = "";
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+        Paginate();
+    }
+
+    private void OnChanged() => InvokeAsync(() => { Paginate(); StateHasChanged(); });
+
+    private void Paginate()
+    {
+        var all = Store.Users.OrderBy(u => u.FullName).ToList();
+        _total = all.Count;
+        _pagedItems = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void OpenCreate()
+    {
+        _fullName = _username = _email = _deptId = "";
+        _drawerOpen = true;
+    }
+
+    private void SaveUser()
+    {
+        try
+        {
+            Guid? dept = string.IsNullOrEmpty(_deptId) ? null : Guid.Parse(_deptId);
+            Store.AddUser(new AppUser
+            {
+                Username = _username,
+                FullName = _fullName,
+                Email = _email,
+                PrimaryDepartmentId = dept
+            });
+            _drawerOpen = false;
+            Toast.Show("Đã thêm người dùng thành công.", "success");
+        }
+        catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
+    }
+
+    private void Deactivate(AppUser user)
+    {
+        try
+        {
+            Store.UpdateUser(user with { Status = "inactive" });
+            Toast.Show($"Đã vô hiệu hóa tài khoản {user.FullName}.", "success");
+        }
+        catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
+    }
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+}

@@ -27,6 +27,18 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void UpdatePermissionChangeRequest(PermissionChangeRequest updated)
+    {
+        lock (_lock)
+        {
+            var idx = _permChangeRequests.FindIndex(r => r.PermissionChangeRequestId == updated.PermissionChangeRequestId);
+            if (idx < 0)
+                throw MedDomainException.Constraint("FK_permission_change_request", 547, "Yêu cầu thay đổi quyền không tồn tại.");
+            _permChangeRequests[idx] = updated;
+            RaiseStateChanged();
+        }
+    }
+
     public void AddPermissionChangeItem(PermissionChangeItem item)
     {
         lock (_lock)

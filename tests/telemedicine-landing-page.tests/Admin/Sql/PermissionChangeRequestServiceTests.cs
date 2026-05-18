@@ -1,0 +1,225 @@
+using TelemedicineLandingPage.Models.Admin.Sql;
+using TelemedicineLandingPage.Services.Admin.Sql;
+
+namespace TelemedicineLandingPage.Tests.Admin.Sql;
+
+public sealed class PermissionChangeRequestServiceTests
+{
+    private readonly MedDataStore _store = new();
+    private readonly PermissionChangeRequestService _svc;
+
+    public PermissionChangeRequestServiceTests()
+    {
+        var audit = new AuditTrailService(_store);
+        _svc = new PermissionChangeRequestService(_store, audit);
+    }
+
+    // === 1. CreateDraft: tạo yêu cầu thành công ===
+    [Fact]
+    public void CreateDraft_ValidInput_ReturnsRequest()
+    {
+        var req = _svc.CreateDraft(
+            MedDataStoreSeed.UserAnId, "role",
+            MedDataStoreSeed.RoleSysAdminId, null, null,
+            "Cần thêm quyền quản trị", DateTime.UtcNow.AddDays(1));
+
+        Assert.NotNull(req);
+        Assert.Equal("draft", req.ChangeStatus);
+        Assert.Equal("role", req.TargetType);
+        Assert.Equal(MedDataStoreSeed.RoleSysAdminId, req.TargetRoleId);
+    }
+
+    // === 2. CreateDraft: phải chọn đúng 1 đối tượng ===
+    [Fact]
+    public void CreateDraft_MultipleTargets_Throws50010()
+    {
+        var ex = Assert.Throws<MedDomainException>(() =>
+            _svc.CreateDraft(
+                MedDataStoreSeed.UserAnId, "role",
+                MedDataStoreSeed.RoleSysAdminId, Guid.NewGuid(), null,
+                "Lý do", DateTime.UtcNow));
+
+        Assert.Equal(50010, ex.SqlErrorNumber);
+    }
+
+    // === 3. CreateDraft: lý do không được trống ===
+    [Fact]
+    public void CreateDraft_EmptyReason_Throws50011()
+    {
+        var ex = Assert.Throws<MedDomainException>(() =>
+            _svc.CreateDraft(
+                MedDataStoreSeed.UserAnId, "role",
+                MedDataStoreSeed.RoleSysAdminId, null, null,
+                "", DateTime.UtcNow));
+
+        Assert.Equal(50011, ex.SqlErrorNumber);
+    }
+
+    // === 4. SubmitForApproval: chuyển draft → pending_approval ===
+    [Fact]
+    public void SubmitForApproval_WithItems_Succeeds()
+    {
+        var req = CreateDraftWithItem();
+
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+
+        var updated = _store.PermissionChangeRequests
+            .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
+        Assert.Equal("pending_approval", updated.ChangeStatus);
+    }
+
+    // === 5. SubmitForApproval: không có mục → lỗi 50013 ===
+    [Fact]
+    public void SubmitForApproval_NoItems_Throws50013()
+    {
+        var req = _svc.CreateDraft(
+            MedDataStoreSeed.UserAnId, "role",
+            MedDataStoreSeed.RoleSysAdminId, null, null,
+            "Lý do", DateTime.UtcNow);
+
+        var ex = Assert.Throws<MedDomainException>(() =>
+            _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId));
+
+        Assert.Equal(50013, ex.SqlErrorNumber);
+    }
+
+    // === 6. SubmitForApproval: không phải draft → lỗi 50012 ===
+    [Fact]
+    public void SubmitForApproval_NotDraft_Throws50012()
+    {
+        var req = CreateDraftWithItem();
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+
+        var ex = Assert.Throws<MedDomainException>(() =>
+            _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId));
+
+        Assert.Equal(50012, ex.SqlErrorNumber);
+    }
+
+    // === 7. Approve: chuyển pending_approval → applied ===
+    [Fact]
+    public void Approve_PendingRequest_Succeeds()
+    {
+        var req = CreateDraftWithItem();
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+
+        _svc.Approve(req.PermissionChangeRequestId, MedDataStoreSeed.UserBinhId);
+
+        var updated = _store.PermissionChangeRequests
+            .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
+        Assert.Equal("applied", updated.ChangeStatus);
+        Assert.Equal(MedDataStoreSeed.UserBinhId, updated.ApprovedBy);
+    }
+
+    // === 8. Approve: scheduled mode ===
+    [Fact]
+    public void Approve_Scheduled_SetsScheduledStatus()
+    {
+        var req = CreateDraftWithItem();
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+
+        _svc.Approve(req.PermissionChangeRequestId, MedDataStoreSeed.UserBinhId, schedule: true);
+
+        var updated = _store.PermissionChangeRequests
+            .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
+        Assert.Equal("scheduled", updated.ChangeStatus);
+    }
+
+    // === 9. Reject: chuyển pending_approval → rejected ===
+    [Fact]
+    public void Reject_PendingRequest_Succeeds()
+    {
+        var req = CreateDraftWithItem();
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+
+        _svc.Reject(req.PermissionChangeRequestId, MedDataStoreSeed.UserBinhId, "Không phù hợp");
+
+        var updated = _store.PermissionChangeRequests
+            .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
+        Assert.Equal("rejected", updated.ChangeStatus);
+    }
+
+    // === 10. Cancel: hủy draft thành công ===
+    [Fact]
+    public void Cancel_DraftRequest_Succeeds()
+    {
+        var req = _svc.CreateDraft(
+            MedDataStoreSeed.UserAnId, "user",
+            null, null, MedDataStoreSeed.UserBinhId,
+            "Thử nghiệm", DateTime.UtcNow);
+
+        _svc.Cancel(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+
+        var updated = _store.PermissionChangeRequests
+            .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
+        Assert.Equal("cancelled", updated.ChangeStatus);
+    }
+
+    // === 11. Cancel: không thể hủy yêu cầu đã applied ===
+    [Fact]
+    public void Cancel_AppliedRequest_Throws50016()
+    {
+        var req = CreateDraftWithItem();
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+        _svc.Approve(req.PermissionChangeRequestId, MedDataStoreSeed.UserBinhId);
+
+        var ex = Assert.Throws<MedDomainException>(() =>
+            _svc.Cancel(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId));
+
+        Assert.Equal(50016, ex.SqlErrorNumber);
+    }
+
+    // === 12. AddItem: chỉ thêm khi draft ===
+    [Fact]
+    public void AddItem_NotDraft_Throws50017()
+    {
+        var req = CreateDraftWithItem();
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+
+        var ex = Assert.Throws<MedDomainException>(() =>
+            _svc.AddItem(req.PermissionChangeRequestId, new PermissionChangeItem
+            {
+                PermissionChangeRequestId = req.PermissionChangeRequestId,
+                PermissionId = MedDataStoreSeed.PermViewDashId,
+                OperationCode = "grant",
+                EffectCode = "allow",
+                DepartmentScopeType = "all"
+            }));
+
+        Assert.Equal(50017, ex.SqlErrorNumber);
+    }
+
+    // === 13. Audit trail: submit tạo bản ghi kiểm toán ===
+    [Fact]
+    public void SubmitForApproval_CreatesAuditLog()
+    {
+        var req = CreateDraftWithItem();
+        var countBefore = _store.AuditLogs.Count;
+
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+
+        Assert.True(_store.AuditLogs.Count > countBefore);
+        var log = _store.AuditLogs.Last();
+        Assert.Equal("submit", log.ActionCode);
+        Assert.Equal("permission_change_request", log.TargetType);
+    }
+
+    private PermissionChangeRequest CreateDraftWithItem()
+    {
+        var req = _svc.CreateDraft(
+            MedDataStoreSeed.UserAnId, "role",
+            MedDataStoreSeed.RoleSysAdminId, null, null,
+            "Cần cấp thêm quyền", DateTime.UtcNow.AddDays(1));
+
+        _svc.AddItem(req.PermissionChangeRequestId, new PermissionChangeItem
+        {
+            PermissionChangeRequestId = req.PermissionChangeRequestId,
+            PermissionId = MedDataStoreSeed.PermViewDashId,
+            OperationCode = "grant",
+            EffectCode = "allow",
+            DepartmentScopeType = "all"
+        });
+
+        return req;
+    }
+}

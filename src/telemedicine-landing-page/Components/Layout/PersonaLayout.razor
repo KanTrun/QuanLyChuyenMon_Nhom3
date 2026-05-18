@@ -1,0 +1,116 @@
+@inherits LayoutComponentBase
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject ICurrentUserContext UserContext
+@inject NavigationManager Navigation
+@inject IMedDataStore Store
+@implements IDisposable
+
+<div class="admin-shell persona-shell">
+    <aside class="admin-sidebar persona-sidebar" aria-label="Điều hướng persona">
+        <div class="admin-sidebar-brand">
+            <div class="admin-sidebar-brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3 4 7v6c0 4.5 3.4 7.5 8 8 4.6-.5 8-3.5 8-8V7l-8-4Z" />
+                    <path d="M9 12h6M12 9v6" />
+                </svg>
+            </div>
+            <div class="admin-sidebar-brand-text">
+                <span class="admin-sidebar-brand-name">QLCM Pro</span>
+                <span class="admin-sidebar-brand-caption">@_currentUserName</span>
+            </div>
+        </div>
+
+        <nav class="admin-sidebar-nav" aria-label="Cổng nghiệp vụ">
+            @foreach (var link in _navLinks)
+            {
+                <NavLink class="admin-nav-link" ActiveClass="is-active" Match="NavLinkMatch.Prefix" href="@link.Url">
+                    <span class="admin-nav-icon" aria-hidden="true">●</span>
+                    <span class="admin-nav-label">@link.Label</span>
+                </NavLink>
+            }
+        </nav>
+
+        <div class="admin-sidebar-footer">
+            <a class="admin-nav-link" href="/admin">
+                <span class="admin-nav-icon" aria-hidden="true">←</span>
+                <span class="admin-nav-label">Quay lại quản trị</span>
+            </a>
+            <span class="admin-sidebar-version" aria-label="Phiên bản v2.0">v2.0</span>
+        </div>
+    </aside>
+
+    <div class="admin-main-column">
+        <header class="admin-topbar" role="banner">
+            <div class="admin-topbar-left">
+                <nav class="admin-breadcrumb" aria-label="Đường dẫn">
+                    <span class="admin-breadcrumb-current">@_currentUserName</span>
+                </nav>
+            </div>
+            <div class="admin-topbar-right">
+                <select class="admin-select" style="width:auto;font-size:0.85rem;" @bind="_selectedUserId" @bind:after="OnUserSwitch">
+                    @foreach (var user in Store.Users.Where(u => u.Status == "active"))
+                    {
+                        <option value="@user.UserId">@user.FullName</option>
+                    }
+                </select>
+            </div>
+        </header>
+
+        <main class="admin-content" id="main-content">
+            @Body
+        </main>
+    </div>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    Đã xảy ra lỗi không mong muốn.
+    <a href="." class="reload">Tải lại</a>
+    <span class="dismiss">x</span>
+</div>
+
+@code {
+    private string _currentUserName = "";
+    private string _selectedUserId = "";
+
+    private record NavLink(string Label, string Url);
+
+    private static readonly NavLink[] _navLinks =
+    [
+        new("Phê duyệt", "/phe-duyet"),
+        new("Quy trình", "/quy-trinh-pro"),
+        new("Tài nguyên", "/tai-nguyen"),
+        new("Điều phối", "/dieu-phoi"),
+        new("Phác đồ", "/phac-do-pro"),
+        new("Lâm sàng", "/lam-sang"),
+        new("Thông báo", "/thong-bao"),
+    ];
+
+    protected override void OnInitialized()
+    {
+        UserContext.StateChanged += OnUserChanged;
+        RefreshUser();
+    }
+
+    private void OnUserChanged() => InvokeAsync(() => { RefreshUser(); StateHasChanged(); });
+
+    private void RefreshUser()
+    {
+        var user = UserContext.CurrentUser;
+        _currentUserName = user?.FullName ?? "Chưa đăng nhập";
+        _selectedUserId = user?.UserId.ToString() ?? "";
+    }
+
+    private void OnUserSwitch()
+    {
+        if (Guid.TryParse(_selectedUserId, out var uid))
+        {
+            UserContext.SetCurrentUser(uid);
+        }
+    }
+
+    public void Dispose()
+    {
+        UserContext.StateChanged -= OnUserChanged;
+    }
+}

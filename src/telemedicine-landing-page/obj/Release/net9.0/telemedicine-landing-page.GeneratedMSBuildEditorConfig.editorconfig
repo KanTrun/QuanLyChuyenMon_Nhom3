@@ -108,8 +108,16 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTWFpbkxheW91dC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Layout/PersonaLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcUGVyc29uYUxheW91dC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Admin/AdminDashboard.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxBZG1pbkRhc2hib2FyZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Admin/AuditLogPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxBdWRpdExvZ1BhZ2UucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Admin/BaoCaoPage.razor]
@@ -126,6 +134,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Admin/DanhMucPage.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxEYW5oTXVjUGFnZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Admin/HeThong/ScreenFeaturesPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxIZVRob25nXFNjcmVlbkZlYXR1cmVzUGFnZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Admin/LamSangPage.razor]
@@ -152,6 +164,26 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxRdXlUcmluaFRhb01vaVBhZ2UucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Admin/ToChuc/DepartmentsPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxUb0NodWNcRGVwYXJ0bWVudHNQYWdlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Admin/ToChuc/GroupsPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxUb0NodWNcR3JvdXBzUGFnZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Admin/ToChuc/RolesPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxUb0NodWNcUm9sZXNQYWdlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Admin/ToChuc/UsersPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxUb0NodWNcVXNlcnNQYWdlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Clinical/ClinicalPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDbGluaWNhbFxDbGluaWNhbFBhZ2UucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Error.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xFcnJvci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
@@ -164,8 +196,32 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMb2dpbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Notification/NotificationPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xOb3RpZmljYXRpb25cTm90aWZpY2F0aW9uUGFnZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Order/OrderPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xPcmRlclxPcmRlclBhZ2UucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/PermissionApprover/InboxPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQZXJtaXNzaW9uQXBwcm92ZXJcSW5ib3hQYWdlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Procedure/ProListPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQcm9jZWR1cmVcUHJvTGlzdFBhZ2UucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Protocol/ProtocolPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQcm90b2NvbFxQcm90b2NvbFBhZ2UucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Register.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWdpc3Rlci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Pages/Resource/ResourcePage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZXNvdXJjZVxSZXNvdXJjZVBhZ2UucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/Components/Routes.razor]

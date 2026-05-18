@@ -16,7 +16,10 @@ builder.Services.AddSingleton<ILandingPageContentService, LandingPageContentServ
 builder.Services.AddSingleton<IMedDataStore, MedDataStore>();
 builder.Services.AddSingleton<EffectivePermissionResolver>();
 builder.Services.AddSingleton<AuditTrailService>();
+builder.Services.AddSingleton<PermissionChangeRequestService>();
+builder.Services.AddSingleton<ProcedureLifecycleService>();
 builder.Services.AddScoped<ICurrentUserContext, CurrentUserContext>();
+builder.Services.AddScoped<NavGate>();
 builder.Services.AddSingleton<IProcedureService, ProcedureService>();
 builder.Services.AddSingleton<IPermissionService, PermissionService>();
 builder.Services.AddSingleton<ICatalogService, CatalogService>();

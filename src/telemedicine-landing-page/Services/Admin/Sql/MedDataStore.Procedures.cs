@@ -26,6 +26,18 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void UpdateProcedureVersion(ProcedureVersion updated)
+    {
+        lock (_lock)
+        {
+            var idx = _procedureVersions.FindIndex(v => v.ProcedureVersionId == updated.ProcedureVersionId);
+            if (idx < 0)
+                throw MedDomainException.Constraint("FK_procedure_version", 547, "Phiên bản quy trình không tồn tại.");
+            _procedureVersions[idx] = updated;
+            RaiseStateChanged();
+        }
+    }
+
     public void AddProcedureStep(ProcedureStep step)
     {
         lock (_lock)

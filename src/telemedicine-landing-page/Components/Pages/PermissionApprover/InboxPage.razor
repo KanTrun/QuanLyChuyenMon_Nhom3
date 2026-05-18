@@ -1,0 +1,100 @@
+@page "/phe-duyet"
+@layout PersonaLayout
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject PermissionChangeRequestService RequestService
+@inject ICurrentUserContext UserContext
+@inject IMedDataStore Store
+@inject IToastService Toast
+@implements IDisposable
+
+<PageTitle>Hộp phê duyệt | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Phê duyệt quyền</span>
+            <h1 class="admin-page-title">Hộp yêu cầu chờ phê duyệt</h1>
+            <p class="admin-page-subtitle">Xem xét và phê duyệt hoặc từ chối các yêu cầu thay đổi quyền.</p>
+        </div>
+    </header>
+
+    <AdminDataTable TItem="PermissionChangeRequest"
+                    Items="_pending"
+                    ColumnCount="5"
+                    CurrentPage="1"
+                    PageSize="50"
+                    TotalItems="_pending.Count"
+                    EmptyTitle="Không có yêu cầu"
+                    EmptyBody="Hiện tại không có yêu cầu nào đang chờ phê duyệt.">
+        <HeaderTemplate>
+            <th>Người yêu cầu</th>
+            <th>Loại đối tượng</th>
+            <th>Lý do</th>
+            <th>Ngày yêu cầu</th>
+            <th>Thao tác</th>
+        </HeaderTemplate>
+        <RowTemplate Context="req">
+            <tr>
+                <td>@GetUserName(req.RequestedBy)</td>
+                <td>
+                    <AdminBadge Tone="tone-secondary">@req.TargetType</AdminBadge>
+                </td>
+                <td>@req.Reason</td>
+                <td>@req.RequestedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                <td style="display:flex;gap:0.5rem;">
+                    <button class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => Approve(req.PermissionChangeRequestId)">
+                        Phê duyệt
+                    </button>
+                    <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => Reject(req.PermissionChangeRequestId)">
+                        Từ chối
+                    </button>
+                </td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
+</section>
+
+@code {
+    private IReadOnlyList<PermissionChangeRequest> _pending = Array.Empty<PermissionChangeRequest>();
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+        Refresh();
+    }
+
+    private void OnChanged() => InvokeAsync(() => { Refresh(); StateHasChanged(); });
+
+    private void Refresh()
+    {
+        _pending = RequestService.GetByStatus("pending_approval");
+    }
+
+    private string GetUserName(Guid userId)
+        => Store.Users.FirstOrDefault(u => u.UserId == userId)?.FullName ?? "Không xác định";
+
+    private void Approve(Guid requestId)
+    {
+        try
+        {
+            var actor = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            RequestService.Approve(requestId, actor);
+            Toast.Show("Đã phê duyệt yêu cầu thành công.", "success");
+        }
+        catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
+    }
+
+    private void Reject(Guid requestId)
+    {
+        try
+        {
+            var actor = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            RequestService.Reject(requestId, actor, "Từ chối bởi người phê duyệt");
+            Toast.Show("Đã từ chối yêu cầu.", "warning");
+        }
+        catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
+    }
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+}

@@ -1,5 +1,7 @@
+@using TelemedicineLandingPage.Services.Admin.Sql
 @inject IAdminNavigationState NavState
 @inject NavigationManager Navigation
+@inject NavGate Gate
 @implements IDisposable
 
 <aside class="admin-sidebar" aria-label="Điều hướng quản trị">
@@ -17,7 +19,7 @@
     </div>
 
     <nav class="admin-sidebar-nav" aria-label="Mục chính">
-        @foreach (var item in NavState.NavItems)
+        @foreach (var item in Gate.Filter(NavState.NavItems))
         {
             if (item.Children is { Count: > 0 } children)
             {

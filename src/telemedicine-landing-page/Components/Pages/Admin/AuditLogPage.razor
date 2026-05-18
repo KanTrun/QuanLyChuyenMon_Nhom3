@@ -1,0 +1,133 @@
+@page "/admin/nhat-ky"
+@layout AdminLayout
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@inject AuditTrailService AuditService
+@implements IDisposable
+
+<PageTitle>Nhật ký kiểm toán | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Hệ thống</span>
+            <h1 class="admin-page-title">Nhật ký kiểm toán</h1>
+            <p class="admin-page-subtitle">Lịch sử thao tác bất biến — chỉ đọc, không thể xóa hoặc sửa.</p>
+        </div>
+    </header>
+
+    <div class="admin-panel" style="margin-bottom:1rem;">
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+            <select class="admin-select" style="width:auto;" @bind="_filterAction" @bind:after="ApplyFilter">
+                <option value="">Tất cả hành động</option>
+                @foreach (var ac in _actionCodes)
+                {
+                    <option value="@ac">@ac</option>
+                }
+            </select>
+            <select class="admin-select" style="width:auto;" @bind="_filterActor" @bind:after="ApplyFilter">
+                <option value="">Tất cả người dùng</option>
+                @foreach (var user in Store.Users)
+                {
+                    <option value="@user.UserId">@user.FullName</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <AdminDataTable TItem="AuditLog"
+                    Items="_pagedItems"
+                    ColumnCount="6"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_total"
+                    CurrentPageChanged="OnPageChanged"
+                    EmptyTitle="Không có bản ghi"
+                    EmptyBody="Chưa có hoạt động nào được ghi nhận.">
+        <HeaderTemplate>
+            <th>#</th>
+            <th>Thời gian</th>
+            <th>Người thực hiện</th>
+            <th>Hành động</th>
+            <th>Đối tượng</th>
+            <th>Mã đối tượng</th>
+        </HeaderTemplate>
+        <RowTemplate Context="log">
+            <tr>
+                <td>@log.AuditLogSeq</td>
+                <td>@log.OccurredAt.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td>@GetActorName(log.ActorUserId)</td>
+                <td>
+                    <AdminBadge Tone="@GetActionTone(log.ActionCode)">@log.ActionCode</AdminBadge>
+                </td>
+                <td>@log.TargetType</td>
+                <td>@(log.TargetId ?? "—")</td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
+</section>
+
+@code {
+    private int _page = 1;
+    private const int _pageSize = 15;
+    private int _total;
+    private IReadOnlyList<AuditLog> _pagedItems = Array.Empty<AuditLog>();
+    private string _filterAction = "";
+    private string _filterActor = "";
+    private List<AuditLog> _filtered = new();
+
+    private static readonly string[] _actionCodes =
+    [
+        "create", "update", "delete", "archive", "approve", "reject",
+        "submit", "publish", "revoke", "login", "logout"
+    ];
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+        ApplyFilter();
+    }
+
+    private void OnChanged() => InvokeAsync(() => { ApplyFilter(); StateHasChanged(); });
+
+    private void OnPageChanged(int p) { _page = p; Paginate(); }
+
+    private void ApplyFilter()
+    {
+        IEnumerable<AuditLog> query = AuditService.GetAll();
+
+        if (!string.IsNullOrEmpty(_filterAction))
+            query = query.Where(l => l.ActionCode == _filterAction);
+
+        if (!string.IsNullOrEmpty(_filterActor) && Guid.TryParse(_filterActor, out var actorId))
+            query = query.Where(l => l.ActorUserId == actorId);
+
+        _filtered = query.OrderByDescending(l => l.AuditLogSeq).ToList();
+        _page = 1;
+        Paginate();
+    }
+
+    private void Paginate()
+    {
+        _total = _filtered.Count;
+        _pagedItems = _filtered.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private string GetActorName(Guid? userId)
+    {
+        if (userId is null) return "Hệ thống";
+        return Store.Users.FirstOrDefault(u => u.UserId == userId.Value)?.FullName ?? "Không xác định";
+    }
+
+    private static string GetActionTone(string action) => action switch
+    {
+        "create" => "tone-success",
+        "delete" or "archive" => "tone-danger",
+        "approve" or "publish" => "tone-primary",
+        "reject" or "revoke" => "tone-warning",
+        _ => "tone-muted"
+    };
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+}

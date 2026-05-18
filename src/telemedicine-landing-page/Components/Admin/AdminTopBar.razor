@@ -1,8 +1,12 @@
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Models.Admin.Sql
 @inject IAdminNavigationState NavState
 @inject INotificationService Notifications
 @inject IThemeBus ThemeBus
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject ICurrentUserContext UserContext
+@inject IMedDataStore DataStore
 @implements IDisposable
 
 <header class="admin-topbar" role="banner">
@@ -84,13 +88,27 @@
                     aria-expanded="@(_isUserMenuOpen ? "true" : "false")"
                     @onclick="ToggleUserMenu"
                     @onclick:stopPropagation="true">
-                <span class="admin-user-avatar" aria-hidden="true">NA</span>
-                <span class="admin-user-name">BS. Nguyễn Văn A</span>
+                <span class="admin-user-avatar" aria-hidden="true">@_userInitials</span>
+                <span class="admin-user-name">@_currentUserName</span>
                 <span class="admin-user-caret" aria-hidden="true">@Icon("chevron-down")</span>
             </button>
             @if (_isUserMenuOpen)
             {
                 <div class="admin-flyout admin-flyout-user" id="admin-flyout-user" role="menu">
+                    <div class="admin-flyout-header">
+                        <span class="admin-flyout-title">Chuyển người dùng</span>
+                    </div>
+                    <ul class="admin-flyout-list" style="max-height:200px;overflow-y:auto;">
+                        @foreach (var user in DataStore.Users.Where(u => u.Status == "active"))
+                        {
+                            <li class="admin-flyout-item @(user.UserId == UserContext.CurrentUser?.UserId ? "is-active" : "")"
+                                @onclick="() => SwitchUser(user.UserId)" style="cursor:pointer;">
+                                <span class="admin-flyout-item-title">@user.FullName</span>
+                                <span class="admin-flyout-item-body">@user.Username</span>
+                            </li>
+                        }
+                    </ul>
+                    <div class="admin-flyout-divider" role="separator"></div>
                     <a class="admin-flyout-menu-item" href="/admin/cai-dat" role="menuitem" @onclick="CloseFlyouts">
                         <span class="admin-flyout-menu-icon" aria-hidden="true">@Icon("user")</span>
                         Hồ sơ
@@ -118,6 +136,8 @@
     private bool _initialThemeRead;
     private string _breadcrumbParent = "Tổng quan";
     private string _breadcrumbCurrent = "Bảng điều khiển";
+    private string _currentUserName = "Đang tải...";
+    private string _userInitials = "..";
 
     private static readonly Dictionary<string, (string Parent, string Current)> BreadcrumbMap = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -140,7 +160,9 @@
         Notifications.StateChanged += OnNotificationsChanged;
         ThemeBus.ToggleRequested += OnThemeToggleRequested;
         ThemeBus.ExportConsumptionRequested += OnExportConsumptionRequested;
+        UserContext.StateChanged += OnUserChanged;
         UpdateBreadcrumb(Navigation.Uri);
+        RefreshUserDisplay();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -290,11 +312,42 @@
 
     private RenderFragment Icon(string name) => builder => AdminIcons.Render(builder, name);
 
+    private void SwitchUser(Guid userId)
+    {
+        UserContext.SetCurrentUser(userId);
+        CloseFlyouts();
+    }
+
+    private void OnUserChanged() => InvokeAsync(() =>
+    {
+        RefreshUserDisplay();
+        StateHasChanged();
+    });
+
+    private void RefreshUserDisplay()
+    {
+        var user = UserContext.CurrentUser;
+        if (user is not null)
+        {
+            _currentUserName = user.FullName;
+            var parts = user.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            _userInitials = parts.Length >= 2
+                ? $"{parts[0][0]}{parts[^1][0]}"
+                : user.FullName[..Math.Min(2, user.FullName.Length)];
+        }
+        else
+        {
+            _currentUserName = "Chưa đăng nhập";
+            _userInitials = "??";
+        }
+    }
+
     public void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
         Notifications.StateChanged -= OnNotificationsChanged;
         ThemeBus.ToggleRequested -= OnThemeToggleRequested;
         ThemeBus.ExportConsumptionRequested -= OnExportConsumptionRequested;
+        UserContext.StateChanged -= OnUserChanged;
     }
 }

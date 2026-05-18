@@ -1,0 +1,69 @@
+@page "/tai-nguyen"
+@layout PersonaLayout
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@implements IDisposable
+
+<PageTitle>Tài nguyên | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Tài nguyên</span>
+            <h1 class="admin-page-title">Danh mục tài nguyên và định mức</h1>
+            <p class="admin-page-subtitle">Quản lý vật tư, thiết bị và định mức tiêu thụ cho từng kỹ thuật.</p>
+        </div>
+    </header>
+
+    <AdminDataTable TItem="ResourceCatalogItem"
+                    Items="_pagedItems"
+                    ColumnCount="4"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_total"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }">
+        <HeaderTemplate>
+            <th>Mã</th>
+            <th>Tên tài nguyên</th>
+            <th>Loại</th>
+            <th>Đơn vị</th>
+        </HeaderTemplate>
+        <RowTemplate Context="item">
+            <tr>
+                <td>@item.ResourceCode</td>
+                <td>@item.Name</td>
+                <td>
+                    <AdminBadge Tone="@(item.ResourceType == "consumable" ? "tone-warning" : "tone-primary")">
+                        @(item.ResourceType == "consumable" ? "Vật tư tiêu hao" : "Thiết bị")
+                    </AdminBadge>
+                </td>
+                <td>@item.DefaultUnitCode</td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
+</section>
+
+@code {
+    private int _page = 1;
+    private const int _pageSize = 10;
+    private int _total;
+    private IReadOnlyList<ResourceCatalogItem> _pagedItems = Array.Empty<ResourceCatalogItem>();
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+        Paginate();
+    }
+
+    private void OnChanged() => InvokeAsync(() => { Paginate(); StateHasChanged(); });
+
+    private void Paginate()
+    {
+        var all = Store.ResourceCatalog.OrderBy(r => r.ResourceCode).ToList();
+        _total = all.Count;
+        _pagedItems = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+}

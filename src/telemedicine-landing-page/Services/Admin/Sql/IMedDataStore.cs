@@ -74,10 +74,12 @@ public interface IMedDataStore
     void AppendAudit(AuditLog log);
 
     void AddPermissionChangeRequest(PermissionChangeRequest req);
+    void UpdatePermissionChangeRequest(PermissionChangeRequest updated);
     void AddPermissionChangeItem(PermissionChangeItem item);
 
     void AddProcedure(ProfessionalProcedure proc);
     void AddProcedureVersion(ProcedureVersion ver);
+    void UpdateProcedureVersion(ProcedureVersion updated);
     void AddProcedureStep(ProcedureStep step);
     void AddProcedureAttachment(ProcedureAttachment att);
     void AddProcedureScreenMapping(ProcedureScreenMapping mapping);
