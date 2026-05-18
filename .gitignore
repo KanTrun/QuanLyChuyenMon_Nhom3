@@ -93,3 +93,36 @@ external/
 
 # Git worktrees (local development only)
 worktrees/
+
+# =========================================================================
+# .NET and Visual Studio Core Ignore Patterns
+# =========================================================================
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / JetBrains
+.idea/
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Test results & Coverage
+[Tt]est[Rr]esult*/
+*.trx
+*.coverlet.info
