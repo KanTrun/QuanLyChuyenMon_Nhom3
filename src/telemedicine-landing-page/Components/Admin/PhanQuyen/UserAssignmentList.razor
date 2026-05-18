@@ -2,6 +2,7 @@
 @using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Models.Admin.Sql
 @inject MedDbContext Db
+@inject IToastService Toast
 
 <article class="admin-panel">
     <header class="admin-panel-head">
@@ -20,6 +21,7 @@
                     <th>Email</th>
                     <th>Khoa/phòng</th>
                     <th>Vai trò</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -45,6 +47,9 @@
                                 }
                             </div>
                         </td>
+                        <td style="text-align:right;">
+                            <button type="button" class="admin-btn admin-btn-ghost" style="font-size:0.8rem;padding:4px 10px;" @onclick="() => OpenAssignRole(user)">Gán vai trò</button>
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -52,25 +57,58 @@
     </div>
 </article>
 
+@if (_assignModalOpen && _assigningUser is not null)
+{
+    <AdminModal IsOpen="_assignModalOpen" IsOpenChanged="@(v => _assignModalOpen = v)" Title="@($"Gán vai trò cho {_assigningUser.FullName}")">
+        <ChildContent>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Chọn vai trò</label>
+                <select class="admin-select" @bind="_selectedRoleId">
+                    <option value="">-- Chọn vai trò --</option>
+                    @foreach (var role in _allRoles)
+                    {
+                        <option value="@role.RoleId">@role.Name (@role.Code)</option>
+                    }
+                </select>
+            </div>
+            @if (!string.IsNullOrEmpty(_assignError))
+            {
+                <div class="login-error" style="margin-top:12px;">⚠️ @_assignError</div>
+            }
+        </ChildContent>
+        <FooterContent>
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _assignModalOpen = false">Hủy</button>
+            <button type="button" class="admin-btn admin-btn-primary" @onclick="ConfirmAssignRole">Gán vai trò</button>
+        </FooterContent>
+    </AdminModal>
+}
+
 @code {
     private List<UserView> _users = new();
+    private List<Role> _allRoles = new();
+    private bool _assignModalOpen;
+    private UserView? _assigningUser;
+    private string _selectedRoleId = "";
+    private string? _assignError;
 
     protected override void OnInitialized()
+    {
+        _allRoles = Db.Roles.Where(r => r.Status == "active").OrderBy(r => r.Name).ToList();
+        LoadUsers();
+    }
+
+    private void LoadUsers()
     {
         var activeUsers = Db.Users
             .Where(u => u.Status == "active")
             .OrderBy(u => u.FullName)
             .ToList();
 
-        // Lấy tất cả user_roles còn hiệu lực
         var activeUserRoles = Db.UserRoles
             .Where(ur => ur.EffectiveTo == null)
             .ToList();
 
-        // Lấy tất cả roles
         var allRoles = Db.Roles.ToDictionary(r => r.RoleId, r => r.Name);
-
-        // Lấy tất cả departments
         var allDepts = Db.Departments.ToDictionary(d => d.DepartmentId, d => d.Name);
 
         _users = activeUsers.Select(u =>
@@ -90,6 +128,7 @@
 
             return new UserView
             {
+                UserId = u.UserId,
                 Username = u.Username,
                 FullName = u.FullName,
                 Email = u.Email,
@@ -99,8 +138,50 @@
         }).ToList();
     }
 
+    private void OpenAssignRole(UserView user)
+    {
+        _assigningUser = user;
+        _selectedRoleId = "";
+        _assignError = null;
+        _assignModalOpen = true;
+    }
+
+    private void ConfirmAssignRole()
+    {
+        _assignError = null;
+
+        if (!Guid.TryParse(_selectedRoleId, out var roleId))
+        {
+            _assignError = "Vui lòng chọn vai trò.";
+            return;
+        }
+
+        if (_assigningUser is null) return;
+
+        // Kiểm tra đã gán chưa
+        var existing = Db.UserRoles.FirstOrDefault(ur =>
+            ur.UserId == _assigningUser.UserId && ur.RoleId == roleId && ur.EffectiveTo == null);
+        if (existing is not null)
+        {
+            _assignError = "Tài khoản đã có vai trò này.";
+            return;
+        }
+
+        // Gán vai trò
+        Db.UserRoles.Add(new UserRole
+        {
+            UserId = _assigningUser.UserId,
+            RoleId = roleId
+        });
+        Db.SaveChanges();
+
+        _assignModalOpen = false;
+        LoadUsers();
+    }
+
     private sealed class UserView
     {
+        public Guid UserId { get; init; }
         public string Username { get; init; } = "";
         public string FullName { get; init; } = "";
         public string? Email { get; init; }
