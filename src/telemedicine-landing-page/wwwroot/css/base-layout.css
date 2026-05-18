@@ -49,6 +49,13 @@ h3 {
     color: var(--color-primary-deep);
 }
 
+/* Dark mode: ensure headings have high contrast */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3 {
+    color: #f1f5f9;
+}
+
 h1 {
     max-width: 22ch;
     font-size: clamp(2.2rem, 5vw, 3.8rem);
@@ -199,6 +206,24 @@ p {
 .button-secondary:hover {
     border-color: var(--color-primary-light);
     box-shadow: 0 8px 16px rgba(49, 130, 206, 0.1);
+}
+
+/* Dark mode button overrides */
+[data-theme="dark"] .button-primary {
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(13, 148, 136, 0.3);
+}
+
+[data-theme="dark"] .button-secondary {
+    background: transparent;
+    color: #f1f5f9;
+    border-color: #64748b;
+}
+
+[data-theme="dark"] .button-secondary:hover {
+    border-color: #94a3b8;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .button-accent {

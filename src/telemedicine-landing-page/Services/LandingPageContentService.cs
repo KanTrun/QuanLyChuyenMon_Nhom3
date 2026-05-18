@@ -6,9 +6,9 @@ public sealed class LandingPageContentService : ILandingPageContentService
 {
     private static readonly IReadOnlyList<LandingStat> Stats =
     [
-        new("12 phút", "thời gian kết nối trung bình"),
-        new("38+", "chuyên khoa sẵn sàng"),
-        new("24/7", "tiếp nhận yêu cầu hỗ trợ")
+        new("50+", "quy trình kỹ thuật"),
+        new("Phiên bản hóa", "kiểm soát thay đổi"),
+        new("24/7", "giám sát nghiệp vụ")
     ];
 
     private static readonly IReadOnlyList<TrustSignal> TrustSignals =

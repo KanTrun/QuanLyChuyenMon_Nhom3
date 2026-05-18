@@ -1,7 +1,7 @@
 <header class="site-shell site-header" id="site-header" aria-label="Điều hướng chính">
-    <a class="brand-mark" href="/" aria-label="Trang chủ Bệnh viện số">
+    <a class="brand-mark" href="/" aria-label="Trang chủ QLCM Pro">
         <span class="brand-symbol" aria-hidden="true"></span>
-        <span>Bệnh viện số</span>
+        <span>QLCM Pro</span>
     </a>
     <div class="site-header-cta">
         <a class="header-nav-link" href="/login">Đăng nhập</a>
@@ -17,45 +17,91 @@
     </div>
     <div class="site-shell hero-content">
         <div class="hero-copy">
-            <p class="eyebrow">Nền tảng y tế từ xa thế hệ mới</p>
-            <h1 id="hero-title">Sức khỏe của bạn, được chăm sóc mọi lúc mọi nơi.</h1>
+            <p class="eyebrow">Hệ thống quản lý chuyên môn bệnh viện</p>
+            <h1 id="hero-title">Quản lý quy trình chuyên môn thông minh, chính xác.</h1>
             <p class="hero-lede">
-                Tiếp cận các chuyên gia y tế hàng đầu qua các phiên khám video bảo mật cao. Quản lý hồ sơ sức khỏe và theo dõi chỉ số sống một cách dễ dàng với giao diện thân thiện, hiện đại.
+                Hệ thống số hóa toàn bộ quy trình kỹ thuật, phân quyền chi tiết, kiểm soát nghiệp vụ và theo dõi định mức vật tư cho bệnh viện hiện đại.
             </p>
             <div class="hero-actions" aria-label="Hành động chính">
-                <a class="button button-primary" href="/login">Đăng nhập</a>
-                <a class="button button-secondary" href="/register">Đăng ký tài khoản</a>
+                <a class="button button-primary" href="/login">Đăng nhập hệ thống</a>
+                <a class="button button-secondary" href="#features">Tìm hiểu thêm</a>
             </div>
 
             <div class="hero-trust">
-                <div class="hero-trust-avatars" aria-hidden="true">
-                    <span class="hero-trust-avatar hero-trust-avatar--primary"></span>
-                    <span class="hero-trust-avatar hero-trust-avatar--secondary"></span>
-                    <span class="hero-trust-avatar hero-trust-avatar--accent"></span>
-                </div>
-                <span>Được tin dùng bởi hơn <strong>10,000+</strong> bệnh nhân</span>
+                <span>Quản lý chuyên môn toàn diện cho bệnh viện</span>
             </div>
         </div>
 
-        <div class="hero-device" aria-label="Màn hình xem trước ứng dụng khám từ xa">
-            <div class="device-topbar">
-                <span>Phòng khám trực tuyến</span>
-                <strong>09:40 AM</strong>
-            </div>
-            <div class="video-preview">
-                <div class="doctor-frame portrait-sky">
-                    <div class="doctor-frame-caption">ThS. BS Trần Minh An</div>
-                </div>
-                <div class="patient-frame portrait-mint"></div>
-                <div class="call-status">Đang kết nối...</div>
-            </div>
-            <div class="metric-strip">
-                @foreach (var stat in Stats)
-                {
-                    <span><strong>@stat.Value</strong>@stat.Label</span>
-                }
-            </div>
+        <div class="hero-illustration" aria-label="Minh họa hệ thống quản lý quy trình chuyên môn">
+            <!-- SVG Illustration: Clipboard + Workflow Nodes + Shield -->
+            <svg class="hero-svg" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <!-- Background circle -->
+                <circle cx="200" cy="200" r="180" fill="url(#hero-bg-gradient)" opacity="0.15"/>
+
+                <!-- Connecting lines (workflow) -->
+                <path d="M130 160 L200 120 L270 160" stroke="#0d9488" stroke-width="2" stroke-dasharray="6 4" opacity="0.6"/>
+                <path d="M130 160 L130 240" stroke="#0d9488" stroke-width="2" stroke-dasharray="6 4" opacity="0.6"/>
+                <path d="M270 160 L270 240" stroke="#0d9488" stroke-width="2" stroke-dasharray="6 4" opacity="0.6"/>
+                <path d="M130 240 L200 280 L270 240" stroke="#0d9488" stroke-width="2" stroke-dasharray="6 4" opacity="0.6"/>
+
+                <!-- Clipboard (center-left) -->
+                <rect x="80" y="130" width="100" height="130" rx="12" fill="white" stroke="#1a365d" stroke-width="2"/>
+                <rect x="105" y="120" width="50" height="16" rx="8" fill="#1a365d"/>
+                <!-- Checkmarks on clipboard -->
+                <rect x="95" y="155" width="70" height="8" rx="4" fill="#e2e8f0"/>
+                <path d="M92 159 L96 163 L102 155" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="95" y="175" width="70" height="8" rx="4" fill="#e2e8f0"/>
+                <path d="M92 179 L96 183 L102 175" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="95" y="195" width="70" height="8" rx="4" fill="#e2e8f0"/>
+                <path d="M92 199 L96 203 L102 195" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="95" y="215" width="50" height="8" rx="4" fill="#e2e8f0"/>
+                <path d="M92 219 L96 223 L102 215" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+                <!-- Workflow nodes (right side) -->
+                <circle cx="270" cy="140" r="22" fill="white" stroke="#1a365d" stroke-width="2"/>
+                <text x="270" y="145" text-anchor="middle" font-size="14" font-weight="700" fill="#1a365d">1</text>
+
+                <circle cx="310" cy="200" r="22" fill="white" stroke="#0d9488" stroke-width="2"/>
+                <text x="310" y="205" text-anchor="middle" font-size="14" font-weight="700" fill="#0d9488">2</text>
+
+                <circle cx="270" cy="260" r="22" fill="white" stroke="#1a365d" stroke-width="2"/>
+                <text x="270" y="265" text-anchor="middle" font-size="14" font-weight="700" fill="#1a365d">3</text>
+
+                <!-- Connecting arrows between nodes -->
+                <path d="M288 152 L298 188" stroke="#1a365d" stroke-width="2" stroke-linecap="round"/>
+                <path d="M298 212 L288 248" stroke="#1a365d" stroke-width="2" stroke-linecap="round"/>
+
+                <!-- Shield (bottom center) -->
+                <path d="M200 290 L200 290 C200 290 170 280 170 255 L170 235 L200 225 L230 235 L230 255 C230 280 200 290 200 290Z" fill="white" stroke="#0d9488" stroke-width="2.5"/>
+                <!-- Shield checkmark -->
+                <path d="M190 255 L197 262 L212 247" stroke="#0d9488" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+                <!-- Decorative dots -->
+                <circle cx="340" cy="140" r="4" fill="#0d9488" opacity="0.4"/>
+                <circle cx="350" cy="170" r="3" fill="#1a365d" opacity="0.3"/>
+                <circle cx="60" cy="200" r="4" fill="#0d9488" opacity="0.4"/>
+                <circle cx="50" cy="170" r="3" fill="#1a365d" opacity="0.3"/>
+
+                <!-- Gradient definitions -->
+                <defs>
+                    <linearGradient id="hero-bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#1a365d" stop-opacity="0.3"/>
+                        <stop offset="100%" stop-color="#0d9488" stop-opacity="0.3"/>
+                    </linearGradient>
+                </defs>
+            </svg>
         </div>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="site-shell hero-stats-strip">
+        @foreach (var stat in Stats)
+        {
+            <div class="hero-stat-card">
+                <strong>@stat.Value</strong>
+                <span>@stat.Label</span>
+            </div>
+        }
     </div>
 </section>
 
