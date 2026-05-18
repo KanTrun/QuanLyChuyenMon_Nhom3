@@ -290,6 +290,52 @@ public sealed class CatalogService : ICatalogService
 
     private static List<TechnicalServiceRecord> SeedData()
     {
-        return new List<TechnicalServiceRecord>();
+        return new List<TechnicalServiceRecord>
+        {
+            // 1. Xét nghiệm công thức máu (lab)
+            new TechnicalServiceRecord
+            {
+                Code = "XN-001",
+                Name = "Xét nghiệm công thức máu",
+                ServiceType = ServiceType.XetNghiem,
+                Department = Department.XetNghiem,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new List<ResourceNorm>
+                {
+                    new(ResourceType.VatTu, "VT-XN-001", "Ống nghiệm EDTA 2ml", "Ống", 1m, "Ống chống đông EDTA K2"),
+                    new(ResourceType.HoaChat, "HC-XN-001", "Dung dịch ly giải hồng cầu", "ml", 0.5m, "Dùng cho máy phân tích huyết học"),
+                    new(ResourceType.VatTu, "VT-XN-002", "Kim lấy máu 21G", "Cái", 1m, "Kim lấy máu tĩnh mạch"),
+                },
+            },
+            // 2. Chụp X-quang ngực (imaging)
+            new TechnicalServiceRecord
+            {
+                Code = "CDHA-001",
+                Name = "Chụp X-quang ngực",
+                ServiceType = ServiceType.ChanDoanHinhAnh,
+                Department = Department.ChanDoanHinhAnh,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new List<ResourceNorm>
+                {
+                    new(ResourceType.VatTu, "VT-XQ-001", "Phim X-quang 35x43cm", "Tấm", 1m, "Phim kỹ thuật số CR/DR"),
+                    new(ResourceType.VatTu, "VT-XQ-002", "Áo chì bảo hộ", "Lần sử dụng", 1m, "Bảo hộ bệnh nhân vùng không chụp"),
+                },
+            },
+            // 3. Siêu âm bụng tổng quát (imaging)
+            new TechnicalServiceRecord
+            {
+                Code = "CDHA-002",
+                Name = "Siêu âm bụng tổng quát",
+                ServiceType = ServiceType.ChanDoanHinhAnh,
+                Department = Department.ChanDoanHinhAnh,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new List<ResourceNorm>
+                {
+                    new(ResourceType.VatTu, "VT-SA-001", "Gel siêu âm", "ml", 10m, "Gel dẫn âm không gây dị ứng"),
+                    new(ResourceType.VatTu, "VT-SA-002", "Giấy in nhiệt siêu âm", "Tờ", 2m, "Giấy in kết quả hình ảnh"),
+                    new(ResourceType.VatTu, "VT-SA-003", "Khăn giấy lau gel", "Tờ", 3m, "Khăn giấy dùng một lần"),
+                },
+            },
+        };
     }
 }

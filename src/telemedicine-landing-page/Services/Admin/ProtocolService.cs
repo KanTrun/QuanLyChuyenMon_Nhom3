@@ -117,6 +117,53 @@ public sealed class ProtocolService : IProtocolService
 
     private static List<ClinicalProtocolRecord> SeedData()
     {
-        return new List<ClinicalProtocolRecord>();
+        return new List<ClinicalProtocolRecord>
+        {
+            // 1. Phác đồ điều trị tăng huyết áp
+            new ClinicalProtocolRecord
+            {
+                Code = "PD-TIM-001",
+                Name = "Phác đồ điều trị tăng huyết áp",
+                ProtocolType = ProtocolType.DieuTri,
+                Specialty = Department.TimMach,
+                IcdCodes = new[] { "I10", "I11", "I12", "I13", "I15" },
+                Contraindications = "Hạ huyết áp nặng, sốc tim, hẹp động mạch thận hai bên",
+                Status = CatalogStatus.HoatDong,
+                Version = "2.1",
+                EffectiveFrom = new DateOnly(2024, 1, 1),
+                EffectiveTo = null,
+                ApplicationCount = 0,
+            },
+            // 2. Phác đồ điều trị đái tháo đường type 2
+            new ClinicalProtocolRecord
+            {
+                Code = "PD-NOT-001",
+                Name = "Phác đồ điều trị đái tháo đường type 2",
+                ProtocolType = ProtocolType.DieuTri,
+                Specialty = Department.NoiTiet,
+                IcdCodes = new[] { "E11" },
+                Contraindications = "Nhiễm toan ceton, suy thận nặng (eGFR < 15ml/phút)",
+                Status = CatalogStatus.HoatDong,
+                Version = "1.5",
+                EffectiveFrom = new DateOnly(2024, 3, 15),
+                EffectiveTo = null,
+                ApplicationCount = 0,
+            },
+            // 3. Phác đồ xử trí sốt xuất huyết
+            new ClinicalProtocolRecord
+            {
+                Code = "PD-NHI-001",
+                Name = "Phác đồ xử trí sốt xuất huyết",
+                ProtocolType = ProtocolType.DieuTri,
+                Specialty = Department.NhiKhoa,
+                IcdCodes = new[] { "A91" },
+                Contraindications = "Không có chống chỉ định tuyệt đối, thận trọng khi có bệnh lý đông máu",
+                Status = CatalogStatus.HoatDong,
+                Version = "3.0",
+                EffectiveFrom = new DateOnly(2024, 6, 1),
+                EffectiveTo = null,
+                ApplicationCount = 0,
+            },
+        };
     }
 }
