@@ -4,6 +4,7 @@ using TelemedicineLandingPage.Models;
 using TelemedicineLandingPage.Models.Chatbot;
 using TelemedicineLandingPage.Services;
 using TelemedicineLandingPage.Services.Admin;
+using TelemedicineLandingPage.Services.Admin.Sql;
 using TelemedicineLandingPage.Services.Chatbot;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,10 @@ builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddSingleton<ILandingPageContentService, LandingPageContentService>();
 
 // QLCM Pro admin shell — domain services seeded in-memory (no database for the demo).
+builder.Services.AddSingleton<IMedDataStore, MedDataStore>();
+builder.Services.AddSingleton<EffectivePermissionResolver>();
+builder.Services.AddSingleton<AuditTrailService>();
+builder.Services.AddScoped<ICurrentUserContext, CurrentUserContext>();
 builder.Services.AddSingleton<IProcedureService, ProcedureService>();
 builder.Services.AddSingleton<IPermissionService, PermissionService>();
 builder.Services.AddSingleton<ICatalogService, CatalogService>();

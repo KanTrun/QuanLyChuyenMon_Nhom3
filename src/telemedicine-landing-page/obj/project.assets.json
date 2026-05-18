@@ -8,24 +8,28 @@
     "net9.0": []
   },
   "packageFolders": {
-    "/root/.nuget/packages/": {}
+    "C:\\Users\\HP\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/telemedicine-landing-page.csproj",
+      "projectUniqueName": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\telemedicine-landing-page.csproj",
       "projectName": "TelemedicineLandingPage",
-      "projectPath": "/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/telemedicine-landing-page.csproj",
-      "packagesPath": "/root/.nuget/packages/",
-      "outputPath": "/projects/sandbox/QuanLyChuyenMon_Nhom3/src/telemedicine-landing-page/obj/",
+      "projectPath": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\telemedicine-landing-page.csproj",
+      "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
+      "outputPath": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/root/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\HP\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 22.2.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -44,7 +48,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.300"
+      "SdkAnalysisLevel": "9.0.200"
     },
     "frameworks": {
       "net9.0": {
@@ -68,7 +72,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/opt/dotnet/sdk/9.0.314/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
