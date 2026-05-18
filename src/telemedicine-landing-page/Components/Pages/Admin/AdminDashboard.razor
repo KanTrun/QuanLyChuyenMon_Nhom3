@@ -193,34 +193,75 @@
     private string FormatAuditAction(Models.Admin.Sql.AuditLog log)
     {
         var actor = log.ActorUsername ?? "Hệ thống";
+
+        // Try to extract details from JSON
+        string details = ExtractDetails(log);
+
         var action = log.ActionCode switch
         {
             "login" => "đã đăng nhập",
             "logout" => "đã đăng xuất",
-            "create" => "đã tạo mới",
-            "update" => "đã cập nhật",
-            "delete" => "đã xóa",
-            "assign_role" => "đã gán vai trò",
-            "remove_role" => "đã hủy vai trò",
-            "approve" => "đã phê duyệt",
-            "reject" => "đã từ chối",
-            "submit" => "đã gửi duyệt",
-            "publish" => "đã ban hành",
-            "archive" => "đã lưu trữ",
-            _ => log.ActionCode
+            "create" => $"đã tạo mới {FormatTarget(log.TargetType)}{details}",
+            "update" => $"đã cập nhật {FormatTarget(log.TargetType)}{details}",
+            "delete" => $"đã xóa {FormatTarget(log.TargetType)}{details}",
+            "assign_role" => $"đã gán vai trò{details}",
+            "remove_role" => $"đã hủy vai trò{details}",
+            "approve" => $"đã phê duyệt {FormatTarget(log.TargetType)}{details}",
+            "reject" => $"đã từ chối {FormatTarget(log.TargetType)}{details}",
+            "submit" => $"đã gửi duyệt {FormatTarget(log.TargetType)}{details}",
+            "publish" => $"đã ban hành {FormatTarget(log.TargetType)}{details}",
+            "archive" => $"đã lưu trữ {FormatTarget(log.TargetType)}{details}",
+            _ => $"{log.ActionCode} {FormatTarget(log.TargetType)}{details}"
         };
-        var target = log.TargetType switch
+
+        return $"{actor} {action}".Trim();
+    }
+
+    private static string FormatTarget(string targetType) => targetType switch
+    {
+        "session" => "",
+        "user" => "tài khoản",
+        "user_role" => "",
+        "procedure" => "quy trình",
+        "procedure_version" => "phiên bản quy trình",
+        "department" => "khoa/phòng",
+        "role_permission" => "quyền vai trò",
+        _ => targetType
+    };
+
+    private static string ExtractDetails(Models.Admin.Sql.AuditLog log)
+    {
+        var json = log.AfterJson ?? log.BeforeJson;
+        if (string.IsNullOrEmpty(json)) return "";
+
+        try
         {
-            "session" => "",
-            "user" => "tài khoản",
-            "user_role" => "phân quyền",
-            "procedure" => "quy trình",
-            "procedure_version" => "phiên bản quy trình",
-            "department" => "khoa/phòng",
-            "role_permission" => "quyền vai trò",
-            _ => log.TargetType
-        };
-        return $"{actor} {action} {target}".Trim();
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            // For role assignment/removal: {"role":"...", "user":"..."}
+            if (root.TryGetProperty("role", out var roleProp) && root.TryGetProperty("user", out var userProp))
+            {
+                var roleName = roleProp.GetString();
+                var userName = userProp.GetString();
+                return $" \"{roleName}\" cho {userName}";
+            }
+
+            // For user creation: {"username":"..."}
+            if (root.TryGetProperty("username", out var unameProp))
+            {
+                return $" {unameProp.GetString()}";
+            }
+
+            // For profile update: {"field":"..."}
+            if (root.TryGetProperty("field", out var fieldProp))
+            {
+                return $" ({fieldProp.GetString()})";
+            }
+        }
+        catch { }
+
+        return "";
     }
 
     private RenderFragment Icon(string name) => builder => AdminIcons.Render(builder, name);

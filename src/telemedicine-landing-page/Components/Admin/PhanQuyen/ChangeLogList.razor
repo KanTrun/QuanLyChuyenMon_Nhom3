@@ -26,6 +26,7 @@
                     <tr>
                         <th>Hành động</th>
                         <th>Đối tượng</th>
+                        <th>Mô tả</th>
                         <th>Người thực hiện</th>
                         <th>Thời điểm</th>
                         <th>Chi tiết</th>
@@ -39,10 +40,11 @@
                             <td>
                                 <AdminBadge Tone="tone-secondary">@FormatTargetType(log.TargetType)</AdminBadge>
                             </td>
+                            <td>@ExtractDescription(log)</td>
                             <td class="admin-table-cell-muted">@(log.ActorUsername ?? "Hệ thống")</td>
                             <td class="admin-table-cell-muted">@log.OccurredAt.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>
-                                @if (!string.IsNullOrEmpty(log.AfterJson))
+                                @if (!string.IsNullOrEmpty(log.AfterJson) || !string.IsNullOrEmpty(log.BeforeJson))
                                 {
                                     <details>
                                         <summary style="cursor:pointer; color:var(--color-primary-deep); font-weight:600;">Xem JSON</summary>
@@ -54,10 +56,13 @@
                                                     <pre class="admin-json-block">@log.BeforeJson</pre>
                                                 </div>
                                             }
-                                            <div>
-                                                <div class="admin-form-field-hint">Sau</div>
-                                                <pre class="admin-json-block">@log.AfterJson</pre>
-                                            </div>
+                                            @if (!string.IsNullOrEmpty(log.AfterJson))
+                                            {
+                                                <div>
+                                                    <div class="admin-form-field-hint">Sau</div>
+                                                    <pre class="admin-json-block">@log.AfterJson</pre>
+                                                </div>
+                                            }
                                         </div>
                                     </details>
                                 }
@@ -114,4 +119,40 @@
         "role_permission" => "Quyền vai trò",
         _ => targetType
     };
+
+    private static string ExtractDescription(AuditLog log)
+    {
+        var json = log.AfterJson ?? log.BeforeJson;
+        if (string.IsNullOrEmpty(json)) return "—";
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            // For role assignment/removal: {"role":"...", "user":"..."}
+            if (root.TryGetProperty("role", out var roleProp) && root.TryGetProperty("user", out var userProp))
+            {
+                var roleName = roleProp.GetString();
+                var userName = userProp.GetString();
+                var verb = log.ActionCode == "remove_role" ? "Hủy" : "Gán";
+                return $"{verb} vai trò \"{roleName}\" cho {userName}";
+            }
+
+            // For user creation: {"username":"..."}
+            if (root.TryGetProperty("username", out var unameProp))
+            {
+                return $"Tài khoản: {unameProp.GetString()}";
+            }
+
+            // For profile update: {"field":"..."}
+            if (root.TryGetProperty("field", out var fieldProp))
+            {
+                return $"Trường: {fieldProp.GetString()}";
+            }
+        }
+        catch { }
+
+        return "—";
+    }
 }

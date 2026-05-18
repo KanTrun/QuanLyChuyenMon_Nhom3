@@ -215,7 +215,7 @@
             ActionCode = "assign_role",
             TargetType = "user_role",
             TargetId = _assigningUser.UserId.ToString(),
-            AfterJson = $"{{\"role\":\"{roleName}\",\"user\":\"{_assigningUser.Username}\"}}"
+            AfterJson = $"{{\"role\":\"{roleName}\",\"user\":\"{_assigningUser.FullName}\"}}"
         });
         Db.SaveChanges();
 
@@ -254,7 +254,7 @@
             ActionCode = "remove_role",
             TargetType = "user_role",
             TargetId = userId.ToString(),
-            BeforeJson = $"{{\"role\":\"{roleName}\",\"user\":\"{username}\"}}"
+            BeforeJson = $"{{\"role\":\"{roleName}\",\"user\":\"{fullName}\"}}"
         });
         Db.SaveChanges();
 
