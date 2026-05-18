@@ -1,0 +1,191 @@
+@page "/admin/ho-so"
+@layout AdminLayout
+@using TelemedicineLandingPage.Data
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject ICurrentUserContext UserContext
+@inject MedDbContext Db
+@inject IToastService Toast
+
+<PageTitle>Hồ sơ cá nhân | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Hồ sơ</span>
+            <h1 class="admin-page-title">Hồ sơ cá nhân</h1>
+            <p class="admin-page-subtitle">Xem và cập nhật thông tin tài khoản của bạn.</p>
+        </div>
+    </header>
+
+    @if (_user is null)
+    {
+        <article class="admin-panel">
+            <p>Đang tải thông tin người dùng...</p>
+        </article>
+    }
+    else
+    {
+        <article class="admin-panel">
+            <h2>Thông tin tài khoản</h2>
+            <div class="admin-form-grid">
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label">Tên đăng nhập</label>
+                    <input class="admin-input" value="@_user.Username" readonly disabled />
+                </div>
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label">Vai trò</label>
+                    <input class="admin-input" value="@_roleName" readonly disabled />
+                </div>
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label">Khoa/phòng</label>
+                    <input class="admin-input" value="@_departmentName" readonly disabled />
+                </div>
+            </div>
+        </article>
+
+        <article class="admin-panel">
+            <h2>Cập nhật hồ sơ</h2>
+            <div class="admin-form-grid">
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label" for="profile-fullname">Họ và tên</label>
+                    <input id="profile-fullname" class="admin-input" @bind="_fullName" />
+                </div>
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label" for="profile-email">Email</label>
+                    <input id="profile-email" class="admin-input" type="email" @bind="_email" />
+                </div>
+            </div>
+        </article>
+
+        <article class="admin-panel">
+            <h2>Đổi mật khẩu</h2>
+            <div class="admin-form-grid">
+                @if (_hasPassword)
+                {
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label" for="profile-old-pw">Mật khẩu hiện tại</label>
+                        <input id="profile-old-pw" class="admin-input" type="password" @bind="_oldPassword" />
+                    </div>
+                }
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label" for="profile-new-pw">Mật khẩu mới</label>
+                    <input id="profile-new-pw" class="admin-input" type="password" @bind="_newPassword" />
+                </div>
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label" for="profile-confirm-pw">Xác nhận mật khẩu mới</label>
+                    <input id="profile-confirm-pw" class="admin-input" type="password" @bind="_confirmPassword" />
+                </div>
+            </div>
+        </article>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+            <button type="button" class="admin-btn admin-btn-primary" @onclick="SaveProfile">Lưu thay đổi</button>
+        </div>
+    }
+</section>
+
+@code {
+    private AppUser? _user;
+    private string _fullName = string.Empty;
+    private string _email = string.Empty;
+    private string _roleName = "Không có";
+    private string _departmentName = "Không có";
+    private bool _hasPassword;
+
+    private string _oldPassword = string.Empty;
+    private string _newPassword = string.Empty;
+    private string _confirmPassword = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        LoadUserData();
+    }
+
+    private void LoadUserData()
+    {
+        _user = UserContext.CurrentUser;
+        if (_user is null) return;
+
+        _fullName = _user.FullName;
+        _email = _user.Email ?? string.Empty;
+        _hasPassword = !string.IsNullOrEmpty(_user.PasswordHash);
+
+        // Lấy vai trò
+        var roleIds = Db.UserRoles
+            .Where(ur => ur.UserId == _user.UserId && (ur.EffectiveTo == null || ur.EffectiveTo > DateTime.UtcNow))
+            .Select(ur => ur.RoleId)
+            .ToList();
+        var roleNames = Db.Roles
+            .Where(r => roleIds.Contains(r.RoleId))
+            .Select(r => r.Name)
+            .ToList();
+        _roleName = roleNames.Count > 0 ? string.Join(", ", roleNames) : "Không có";
+
+        // Lấy khoa/phòng
+        if (_user.PrimaryDepartmentId is not null)
+        {
+            var dept = Db.Departments.FirstOrDefault(d => d.DepartmentId == _user.PrimaryDepartmentId);
+            _departmentName = dept?.Name ?? "Không có";
+        }
+        else
+        {
+            _departmentName = "Không có";
+        }
+    }
+
+    private void SaveProfile()
+    {
+        if (_user is null) return;
+
+        // Kiểm tra mật khẩu mới
+        var changingPassword = !string.IsNullOrEmpty(_newPassword) || !string.IsNullOrEmpty(_confirmPassword);
+        if (changingPassword)
+        {
+            if (_newPassword != _confirmPassword)
+            {
+                Toast.Show("Lỗi", "Mật khẩu mới không khớp", ToastVariant.Error);
+                return;
+            }
+
+            if (_hasPassword)
+            {
+                var oldHash = CurrentUserContext.HashPassword(_oldPassword);
+                if (oldHash != _user.PasswordHash)
+                {
+                    Toast.Show("Lỗi", "Mật khẩu hiện tại không đúng", ToastVariant.Error);
+                    return;
+                }
+            }
+        }
+
+        // Cập nhật thông tin trong database
+        var dbUser = Db.Users.FirstOrDefault(u => u.UserId == _user.UserId);
+        if (dbUser is null) return;
+
+        // Vì AppUser là record (init-only), cần dùng ExecuteUpdate hoặc raw SQL
+        // Sử dụng cách thay thế entry
+        var entry = Db.Entry(dbUser);
+        entry.Property(u => u.FullName).CurrentValue = _fullName.Trim();
+        entry.Property(u => u.Email).CurrentValue = string.IsNullOrWhiteSpace(_email) ? null : _email.Trim();
+        entry.Property(u => u.UpdatedAt).CurrentValue = DateTime.UtcNow;
+
+        if (changingPassword)
+        {
+            var newHash = CurrentUserContext.HashPassword(_newPassword);
+            entry.Property(u => u.PasswordHash).CurrentValue = newHash;
+        }
+
+        Db.SaveChanges();
+
+        // Cập nhật lại context
+        UserContext.SetCurrentUser(_user.UserId);
+        LoadUserData();
+
+        // Reset password fields
+        _oldPassword = string.Empty;
+        _newPassword = string.Empty;
+        _confirmPassword = string.Empty;
+
+        Toast.Show("Thành công", "Cập nhật hồ sơ thành công", ToastVariant.Success);
+    }
+}
