@@ -90,9 +90,7 @@
                             <span class="admin-activity-dot tone-primary" aria-hidden="true"></span>
                             <div class="admin-activity-body">
                                 <div class="admin-activity-headline">
-                                    <span class="admin-activity-actor">@(log.ActorUsername ?? "Hệ thống")</span>
-                                    <span class="admin-activity-action">@log.ActionCode</span>
-                                    <span class="admin-activity-subject">@(log.TargetType)@(log.TargetId is not null ? $" #{log.TargetId[..Math.Min(8, log.TargetId.Length)]}" : "")</span>
+                                    <span class="admin-activity-headline-text">@FormatAuditAction(log)</span>
                                 </div>
                                 <span class="admin-activity-time">@log.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
                             </div>
@@ -190,6 +188,39 @@
             .OrderByDescending(a => a.OccurredAt)
             .Take(8)
             .ToList();
+    }
+
+    private string FormatAuditAction(Models.Admin.Sql.AuditLog log)
+    {
+        var actor = log.ActorUsername ?? "Hệ thống";
+        var action = log.ActionCode switch
+        {
+            "login" => "đã đăng nhập",
+            "logout" => "đã đăng xuất",
+            "create" => "đã tạo mới",
+            "update" => "đã cập nhật",
+            "delete" => "đã xóa",
+            "assign_role" => "đã gán vai trò",
+            "remove_role" => "đã hủy vai trò",
+            "approve" => "đã phê duyệt",
+            "reject" => "đã từ chối",
+            "submit" => "đã gửi duyệt",
+            "publish" => "đã ban hành",
+            "archive" => "đã lưu trữ",
+            _ => log.ActionCode
+        };
+        var target = log.TargetType switch
+        {
+            "session" => "",
+            "user" => "tài khoản",
+            "user_role" => "phân quyền",
+            "procedure" => "quy trình",
+            "procedure_version" => "phiên bản quy trình",
+            "department" => "khoa/phòng",
+            "role_permission" => "quyền vai trò",
+            _ => log.TargetType
+        };
+        return $"{actor} {action} {target}".Trim();
     }
 
     private RenderFragment Icon(string name) => builder => AdminIcons.Render(builder, name);

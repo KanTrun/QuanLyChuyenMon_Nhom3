@@ -35,9 +35,9 @@
                     @foreach (var log in _logs)
                     {
                         <tr>
-                            <td class="admin-table-cell-strong">@log.ActionCode</td>
+                            <td class="admin-table-cell-strong">@FormatActionCode(log.ActionCode)</td>
                             <td>
-                                <AdminBadge Tone="tone-secondary">@log.TargetType</AdminBadge>
+                                <AdminBadge Tone="tone-secondary">@FormatTargetType(log.TargetType)</AdminBadge>
                             </td>
                             <td class="admin-table-cell-muted">@(log.ActorUsername ?? "Hệ thống")</td>
                             <td class="admin-table-cell-muted">@log.OccurredAt.ToString("dd/MM/yyyy HH:mm")</td>
@@ -85,4 +85,33 @@
             .Take(50)
             .ToList();
     }
+
+    private static string FormatActionCode(string actionCode) => actionCode switch
+    {
+        "login" => "Đăng nhập",
+        "logout" => "Đăng xuất",
+        "create" => "Tạo mới",
+        "update" => "Cập nhật",
+        "delete" => "Xóa",
+        "assign_role" => "Gán vai trò",
+        "remove_role" => "Hủy vai trò",
+        "approve" => "Phê duyệt",
+        "reject" => "Từ chối",
+        "submit" => "Gửi duyệt",
+        "publish" => "Ban hành",
+        "archive" => "Lưu trữ",
+        _ => actionCode
+    };
+
+    private static string FormatTargetType(string targetType) => targetType switch
+    {
+        "session" => "Phiên đăng nhập",
+        "user" => "Tài khoản",
+        "user_role" => "Phân quyền",
+        "procedure" => "Quy trình",
+        "procedure_version" => "Phiên bản quy trình",
+        "department" => "Khoa/Phòng",
+        "role_permission" => "Quyền vai trò",
+        _ => targetType
+    };
 }
