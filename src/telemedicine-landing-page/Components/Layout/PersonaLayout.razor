@@ -3,6 +3,7 @@
 @using TelemedicineLandingPage.Models.Admin.Sql
 @inject ICurrentUserContext UserContext
 @inject NavigationManager Navigation
+@inject LoadingService Loading
 @implements IDisposable
 
 @if (UserContext.CurrentUser is null)
@@ -67,6 +68,8 @@ else
             @Body
         </main>
     </div>
+
+    <AdminLoadingOverlay IsVisible="Loading.IsLoading" Message="Loading.Message" />
 </div>
 }
 
@@ -95,6 +98,7 @@ else
     protected override void OnInitialized()
     {
         UserContext.StateChanged += OnUserChanged;
+        Loading.StateChanged += OnLoadingChanged;
 
         // Bảo vệ: nếu chưa đăng nhập → chuyển hướng đến /login
         if (UserContext.CurrentUser is null)
@@ -107,6 +111,8 @@ else
     }
 
     private void OnUserChanged() => InvokeAsync(() => { RefreshUser(); StateHasChanged(); });
+
+    private void OnLoadingChanged() => InvokeAsync(StateHasChanged);
 
     private void RefreshUser()
     {
@@ -123,5 +129,6 @@ else
     public void Dispose()
     {
         UserContext.StateChanged -= OnUserChanged;
+        Loading.StateChanged -= OnLoadingChanged;
     }
 }

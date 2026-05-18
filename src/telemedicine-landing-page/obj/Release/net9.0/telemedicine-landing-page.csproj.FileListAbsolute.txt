@@ -91,7 +91,6 @@ D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Release\net9.0\telemedicine-landing-page.sourcelink.json
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Release\net9.0\scopedcss\bundle\TelemedicineLandingPage.styles.css
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Release\net9.0\compressed\rmpkd2ewu6-rlirzv3b7p.gz
-D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Release\net9.0\compressed\gxodc1khnw-i1q8vhddwk.gz
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Release\net9.0\compressed\cq5oqmwkfo-r2escwrd6j.gz
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Release\net9.0\compressed\o4u6gh8ri8-b1dndedpo1.gz
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Release\net9.0\compressed\crnbpr8pfs-8gtm283y14.gz
@@ -239,3 +238,4 @@ D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Release\net9.0\compressed\9ywmv6kd8b-1lwe1pn3k9.gz
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Release\net9.0\compressed\v4y6qbcjj4-dle9gqtxn6.gz
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Release\net9.0\compressed\x8yc0i4dko-pgjlnvukcu.gz
+D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Release\net9.0\compressed\gxodc1khnw-7vb8m4qvqx.gz

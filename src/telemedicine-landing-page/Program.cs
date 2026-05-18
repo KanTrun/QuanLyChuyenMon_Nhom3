@@ -34,6 +34,7 @@ builder.Services.AddSingleton<IUserPreferencesService, UserPreferencesService>()
 builder.Services.AddSingleton<IReportService, ReportService>();
 
 // Per-circuit shell state.
+builder.Services.AddScoped<LoadingService>();
 builder.Services.AddScoped<IAdminNavigationState, AdminNavigationState>();
 builder.Services.AddScoped<IThemeBus, ThemeBus>();
 builder.Services.AddScoped<IToastService, ToastService>();

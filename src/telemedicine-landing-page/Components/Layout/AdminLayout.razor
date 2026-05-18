@@ -5,6 +5,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject ICurrentUserContext UserContext
+@inject LoadingService Loading
 
 @if (UserContext.CurrentUser is null)
 {
@@ -37,6 +38,8 @@ else
             <ChatbotPanel />
         </div>
     </div>
+
+    <AdminLoadingOverlay IsVisible="Loading.IsLoading" Message="Loading.Message" />
 </div>
 }
 
@@ -54,6 +57,7 @@ else
     protected override void OnInitialized()
     {
         NavState.StateChanged += OnStateChanged;
+        Loading.StateChanged += OnLoadingChanged;
 
         // Bảo vệ trang admin: nếu chưa đăng nhập → chuyển hướng đến /login
         if (UserContext.CurrentUser is null)
@@ -124,6 +128,11 @@ else
         InvokeAsync(StateHasChanged);
     }
 
+    private void OnLoadingChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
     private void OnSidebarOverlayClick()
     {
         // On mobile, tapping the dimmed area collapses the sidebar back off-canvas.
@@ -136,6 +145,7 @@ else
     public async ValueTask DisposeAsync()
     {
         NavState.StateChanged -= OnStateChanged;
+        Loading.StateChanged -= OnLoadingChanged;
 
         if (_hotkeyHandle >= 0)
         {
