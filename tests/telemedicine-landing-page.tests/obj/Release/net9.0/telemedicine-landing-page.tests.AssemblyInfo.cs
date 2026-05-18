@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("telemedicine-landing-page.tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1c1073612f44e4afb27347be45fca79201253486")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a0c67f1b7f292aec89d1a6d694164464b62776c3")]
 [assembly: System.Reflection.AssemblyProductAttribute("telemedicine-landing-page.tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("telemedicine-landing-page.tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

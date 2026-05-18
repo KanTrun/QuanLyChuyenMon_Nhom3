@@ -38,9 +38,17 @@ public sealed class CurrentUserContext : ICurrentUserContext
         var user = _db.Users.FirstOrDefault(u => u.Username == username && u.Status == "active");
         if (user is null) return null;
 
-        // Kiểm tra mật khẩu
+        // Nếu chưa đặt mật khẩu (NULL hoặc rỗng) → cho đăng nhập luôn
+        if (string.IsNullOrEmpty(user.PasswordHash))
+        {
+            CurrentUser = user;
+            StateChanged?.Invoke();
+            return user;
+        }
+
+        // Kiểm tra mật khẩu (SHA256)
         var inputHash = HashPassword(password);
-        if (user.PasswordHash is null || user.PasswordHash != inputHash)
+        if (user.PasswordHash != inputHash)
             return null;
 
         CurrentUser = user;
@@ -54,8 +62,8 @@ public sealed class CurrentUserContext : ICurrentUserContext
         var user = _db.Users.FirstOrDefault(u => u.Username == username && u.Status == "active");
         if (user is null) return null;
 
-        // Nếu chưa có password_hash thì cho đăng nhập (lần đầu setup)
-        if (user.PasswordHash is not null) return null;
+        // Chỉ cho phép nếu chưa có password_hash
+        if (!string.IsNullOrEmpty(user.PasswordHash)) return null;
 
         CurrentUser = user;
         StateChanged?.Invoke();
