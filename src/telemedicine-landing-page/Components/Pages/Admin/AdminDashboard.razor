@@ -1,8 +1,7 @@
 @page "/admin"
 @layout AdminLayout
-@inject IReportService Reports
-@inject INotificationService Notifications
-@inject IUserPreferencesService Preferences
+@inject IMedDataStore DataStore
+@inject ICurrentUserContext UserContext
 @implements IDisposable
 
 <PageTitle>Tổng quan | QLCM Pro</PageTitle>
@@ -11,74 +10,61 @@
     <header class="admin-greeting">
         <div>
             <span class="admin-greeting-eyebrow">Bảng điều khiển</span>
-            <h1 class="admin-greeting-title">@_greeting, @_displayName</h1>
-            <p class="admin-greeting-subtitle">Hôm nay là @_dateLine. Hiện có @Notifications.UnreadCount thông báo chưa đọc cần xử lý.</p>
+            <h1 class="admin-greeting-title">Xin chào, @_displayName</h1>
+            <p class="admin-greeting-subtitle">Hôm nay là @_dateLine.</p>
         </div>
         <div class="admin-greeting-actions">
             <a class="admin-btn admin-btn-primary" href="/admin/quy-trinh/tao">
                 <span aria-hidden="true">@Icon("plus")</span>
                 Tạo quy trình mới
             </a>
-            <a class="admin-btn admin-btn-ghost" href="/admin/bao-cao">
-                <span aria-hidden="true">@Icon("chart")</span>
-                Xem báo cáo
-            </a>
         </div>
     </header>
 
     <div class="kpi-grid" role="list">
-        @foreach (var kpi in _kpiViews)
-        {
-            <article class="kpi-card" role="listitem">
-                <div class="kpi-card-head">
-                    <span class="kpi-icon @kpi.Tone" aria-hidden="true">@Icon(kpi.Icon)</span>
-                    <span class="kpi-label">@kpi.Label</span>
-                </div>
-                <div class="kpi-value">@kpi.Value</div>
-                <div class="kpi-sparkline" aria-hidden="true">
-                    <svg viewBox="0 0 120 32" preserveAspectRatio="none">
-                        <path d="@kpi.SparklinePath" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                </div>
-                <div class="kpi-trend @(kpi.IsPositive ? "is-up" : "is-down")">
-                    <span aria-hidden="true">@Icon(kpi.IsPositive ? "trend-up" : "trend-down")</span>
-                    <span>@kpi.TrendLabel</span>
-                </div>
-            </article>
-        }
+        <article class="kpi-card" role="listitem">
+            <div class="kpi-card-head">
+                <span class="kpi-icon tone-primary" aria-hidden="true">@Icon("clipboard")</span>
+                <span class="kpi-label">Số quy trình</span>
+            </div>
+            <div class="kpi-value">@_procedureCount</div>
+        </article>
+
+        <article class="kpi-card" role="listitem">
+            <div class="kpi-card-head">
+                <span class="kpi-icon tone-success" aria-hidden="true">@Icon("check")</span>
+                <span class="kpi-label">Số phiên bản đang hiệu lực</span>
+            </div>
+            <div class="kpi-value">@_publishedVersionCount</div>
+        </article>
+
+        <article class="kpi-card" role="listitem">
+            <div class="kpi-card-head">
+                <span class="kpi-icon tone-secondary" aria-hidden="true">@Icon("team")</span>
+                <span class="kpi-label">Số người dùng</span>
+            </div>
+            <div class="kpi-value">@_activeUserCount</div>
+        </article>
+
+        <article class="kpi-card" role="listitem">
+            <div class="kpi-card-head">
+                <span class="kpi-icon tone-warning" aria-hidden="true">@Icon("building")</span>
+                <span class="kpi-label">Số khoa/phòng</span>
+            </div>
+            <div class="kpi-value">@_activeDepartmentCount</div>
+        </article>
     </div>
 
     <div class="admin-dashboard-grid">
         <section class="admin-panel admin-panel-trend">
             <header class="admin-panel-head">
                 <div>
-                    <h2 class="admin-panel-title">Xu hướng hoạt động trong 7 ngày qua</h2>
-                    <p class="admin-panel-subtitle">Số lượt thao tác trên các phân hệ chính.</p>
+                    <h2 class="admin-panel-title">Thống kê</h2>
+                    <p class="admin-panel-subtitle">Dữ liệu tổng hợp từ hệ thống.</p>
                 </div>
-                <span class="admin-panel-pill">7 ngày</span>
             </header>
-            <div class="admin-trend-chart">
-                <svg viewBox="0 0 360 160" role="img" aria-label="Biểu đồ xu hướng 7 ngày">
-                    <defs>
-                        <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="var(--color-primary)" stop-opacity="0.28" />
-                            <stop offset="100%" stop-color="var(--color-primary)" stop-opacity="0" />
-                        </linearGradient>
-                    </defs>
-                    <g class="admin-trend-grid" stroke="var(--color-border-subtle)" stroke-width="1">
-                        <line x1="32" y1="20" x2="352" y2="20" />
-                        <line x1="32" y1="60" x2="352" y2="60" />
-                        <line x1="32" y1="100" x2="352" y2="100" />
-                        <line x1="32" y1="140" x2="352" y2="140" />
-                    </g>
-                    <path d="@_trendArea" fill="url(#trendFill)" />
-                    <path d="@_trendLine" fill="none" stroke="var(--color-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                    @foreach (var point in _trendPoints)
-                    {
-                        <circle cx="@point.X.ToString(_inv)" cy="@point.Y.ToString(_inv)" r="3.5" fill="var(--color-surface)" stroke="var(--color-primary)" stroke-width="2" />
-                    }
-                    @((MarkupString)_trendLabelsMarkup)
-                </svg>
+            <div class="admin-trend-chart" style="display:flex;align-items:center;justify-content:center;min-height:160px;">
+                <p style="color:var(--color-muted);font-size:0.95rem;">Chưa có dữ liệu thống kê</p>
             </div>
         </section>
 
@@ -86,26 +72,34 @@
             <header class="admin-panel-head">
                 <div>
                     <h2 class="admin-panel-title">Hoạt động gần đây</h2>
-                    <p class="admin-panel-subtitle">Cập nhật từ các phân hệ trong vòng 24 giờ.</p>
+                    <p class="admin-panel-subtitle">Nhật ký kiểm toán từ hệ thống.</p>
                 </div>
-                <a class="admin-panel-link" href="/admin/bao-cao">Xem tất cả</a>
             </header>
-            <ol class="admin-activity-list">
-                @foreach (var entry in _activity)
-                {
-                    <li class="admin-activity-item">
-                        <span class="admin-activity-dot @entry.Tone" aria-hidden="true"></span>
-                        <div class="admin-activity-body">
-                            <div class="admin-activity-headline">
-                                <span class="admin-activity-actor">@entry.Actor</span>
-                                <span class="admin-activity-action">@entry.Action</span>
-                                <span class="admin-activity-subject">@entry.Subject</span>
+            @if (_recentAuditLogs.Count == 0)
+            {
+                <div style="padding:1.5rem;text-align:center;color:var(--color-muted);">
+                    <p>Chưa có hoạt động nào</p>
+                </div>
+            }
+            else
+            {
+                <ol class="admin-activity-list">
+                    @foreach (var log in _recentAuditLogs)
+                    {
+                        <li class="admin-activity-item">
+                            <span class="admin-activity-dot tone-primary" aria-hidden="true"></span>
+                            <div class="admin-activity-body">
+                                <div class="admin-activity-headline">
+                                    <span class="admin-activity-actor">@(log.ActorUsername ?? "Hệ thống")</span>
+                                    <span class="admin-activity-action">@log.ActionCode</span>
+                                    <span class="admin-activity-subject">@(log.TargetType)@(log.TargetId is not null ? $" #{log.TargetId[..Math.Min(8, log.TargetId.Length)]}" : "")</span>
+                                </div>
+                                <span class="admin-activity-time">@log.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
                             </div>
-                            <span class="admin-activity-time">@entry.Timestamp</span>
-                        </div>
-                    </li>
-                }
-            </ol>
+                        </li>
+                    }
+                </ol>
+            }
         </section>
     </div>
 
@@ -132,19 +126,17 @@
 </section>
 
 @code {
-    private static readonly System.Globalization.CultureInfo _inv = System.Globalization.CultureInfo.InvariantCulture;
     private static readonly string[] _viDays = { "Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy" };
 
-    private string _greeting = string.Empty;
-    private string _displayName = "BS. Nguyễn Văn A";
+    private string _displayName = "Đang tải...";
     private string _dateLine = string.Empty;
-    private string _trendLine = string.Empty;
-    private string _trendArea = string.Empty;
-    private string _trendLabelsMarkup = string.Empty;
-    private (double X, double Y)[] _trendPoints = Array.Empty<(double, double)>();
 
-    private List<KpiViewModel> _kpiViews = new();
-    private List<ActivityViewModel> _activity = new();
+    private int _procedureCount;
+    private int _publishedVersionCount;
+    private int _activeUserCount;
+    private int _activeDepartmentCount;
+
+    private IReadOnlyList<Models.Admin.Sql.AuditLog> _recentAuditLogs = Array.Empty<Models.Admin.Sql.AuditLog>();
 
     private readonly List<QuickTileViewModel> _quickTiles =
     [
@@ -157,175 +149,56 @@
     protected override void OnInitialized()
     {
         var now = DateTime.Now;
-        _greeting = now.Hour < 11 ? "Chào buổi sáng" : (now.Hour < 17 ? "Chào buổi chiều" : "Chào buổi tối");
-        _dateLine = $"{_viDays[(int)now.DayOfWeek]}, {now:dd/MM/yyyy}";
-        _displayName = Preferences.Current.FullName;
+        _dateLine = $"{_viDays[(int)now.DayOfWeek]}, ngày {now:dd/MM/yyyy}";
 
-        Notifications.StateChanged += OnDataChanged;
-        Preferences.StateChanged += OnDataChanged;
+        UserContext.StateChanged += OnUserChanged;
+        DataStore.StateChanged += OnDataChanged;
 
-        Refresh();
+        RefreshUserDisplay();
+        RefreshCounts();
     }
 
-    private void OnDataChanged() => InvokeAsync(() =>
+    private void OnUserChanged() => InvokeAsync(() =>
     {
-        _displayName = Preferences.Current.FullName;
-        Refresh();
+        RefreshUserDisplay();
         StateHasChanged();
     });
 
-    private void Refresh()
+    private void OnDataChanged() => InvokeAsync(() =>
     {
-        BuildKpis();
-        BuildActivity();
-        BuildTrendChart();
+        RefreshCounts();
+        StateHasChanged();
+    });
+
+    private void RefreshUserDisplay()
+    {
+        var user = UserContext.CurrentUser;
+        _displayName = user is not null ? user.FullName : "Chưa đăng nhập";
     }
 
-    private void BuildKpis()
+    private void RefreshCounts()
     {
-        var list = new List<KpiViewModel>();
-        foreach (var kpi in Reports.GetDashboardKpis())
-        {
-            var trendLabel = kpi.TrendDirection switch
-            {
-                TrendDirection.Up => $"+{kpi.TrendPercent.ToString("0.#", _inv)}% so với tuần trước",
-                TrendDirection.Down => $"{kpi.TrendPercent.ToString("0.#", _inv)}% so với tuần trước",
-                _ => "Ổn định so với tuần trước",
-            };
-            list.Add(new KpiViewModel(
-                kpi.Label,
-                kpi.Value,
-                trendLabel,
-                kpi.TrendDirection != TrendDirection.Down,
-                kpi.Tone,
-                kpi.Icon,
-                BuildSparkline(kpi.Sparkline)));
-        }
-        _kpiViews = list;
-    }
+        _procedureCount = DataStore.Procedures.Count;
+        _publishedVersionCount = DataStore.ProcedureVersions
+            .Count(v => v.StatusCode is "published" or "active");
+        _activeUserCount = DataStore.Users
+            .Count(u => u.Status == "active");
+        _activeDepartmentCount = DataStore.Departments
+            .Count(d => d.Status == "active");
 
-    private void BuildActivity()
-    {
-        var list = new List<ActivityViewModel>();
-        foreach (var entry in Reports.GetActivityFeed(8))
-        {
-            list.Add(new ActivityViewModel(
-                entry.Timestamp.ToString("dd/MM HH:mm"),
-                entry.Actor,
-                entry.Action,
-                entry.Subject,
-                entry.Severity switch
-                {
-                    ActivitySeverity.Critical => "tone-danger",
-                    ActivitySeverity.Warning => "tone-warning",
-                    _ => "tone-primary",
-                }));
-        }
-        _activity = list;
-    }
-
-    private void BuildTrendChart()
-    {
-        var trend = Reports.GetActivityTrend(7);
-        var values = trend.Select(t => t.Count).ToArray();
-        var labels = trend.Select(t => t.Day.DayOfWeek switch
-        {
-            DayOfWeek.Sunday => "CN",
-            DayOfWeek.Monday => "T2",
-            DayOfWeek.Tuesday => "T3",
-            DayOfWeek.Wednesday => "T4",
-            DayOfWeek.Thursday => "T5",
-            DayOfWeek.Friday => "T6",
-            _ => "T7",
-        }).ToArray();
-
-        if (values.Length == 0)
-        {
-            _trendPoints = Array.Empty<(double, double)>();
-            _trendLine = string.Empty;
-            _trendArea = string.Empty;
-            _trendLabelsMarkup = string.Empty;
-            return;
-        }
-
-        const double left = 32d;
-        const double right = 352d;
-        const double top = 18d;
-        const double bottom = 142d;
-
-        var min = values.Min();
-        var max = values.Max();
-        var range = Math.Max(1, max - min);
-        var step = values.Length == 1 ? 0d : (right - left) / (values.Length - 1);
-
-        var points = new (double X, double Y)[values.Length];
-        for (var i = 0; i < values.Length; i++)
-        {
-            var x = left + step * i;
-            var y = bottom - (values[i] - min) / (double)range * (bottom - top);
-            points[i] = (x, y);
-        }
-        _trendPoints = points;
-
-        var line = new System.Text.StringBuilder();
-        for (var i = 0; i < points.Length; i++)
-        {
-            line.Append(i == 0 ? "M " : " L ");
-            line.Append(points[i].X.ToString(_inv));
-            line.Append(' ');
-            line.Append(points[i].Y.ToString(_inv));
-        }
-        _trendLine = line.ToString();
-
-        var area = new System.Text.StringBuilder();
-        area.Append(_trendLine);
-        area.Append(" L ").Append(points[^1].X.ToString(_inv)).Append(' ').Append(bottom.ToString(_inv));
-        area.Append(" L ").Append(points[0].X.ToString(_inv)).Append(' ').Append(bottom.ToString(_inv));
-        area.Append(" Z");
-        _trendArea = area.ToString();
-
-        var labelsMarkup = new System.Text.StringBuilder();
-        labelsMarkup.Append("<g class=\"admin-trend-axis\" font-size=\"11\" fill=\"var(--color-muted)\" text-anchor=\"middle\">");
-        for (var i = 0; i < labels.Length; i++)
-        {
-            labelsMarkup.Append("<text x=\"").Append(points[i].X.ToString(_inv)).Append("\" y=\"155\">")
-                  .Append(System.Net.WebUtility.HtmlEncode(labels[i]))
-                  .Append("</text>");
-        }
-        labelsMarkup.Append("</g>");
-        _trendLabelsMarkup = labelsMarkup.ToString();
-    }
-
-    private static string BuildSparkline(IReadOnlyList<int> values)
-    {
-        if (values.Count == 0) return string.Empty;
-        var min = values.Min();
-        var max = values.Max();
-        var range = Math.Max(1, max - min);
-        var step = values.Count == 1 ? 0d : 120d / (values.Count - 1);
-
-        var sb = new System.Text.StringBuilder();
-        for (var i = 0; i < values.Count; i++)
-        {
-            var x = step * i;
-            var y = 28d - (values[i] - min) / (double)range * 22d;
-            sb.Append(i == 0 ? "M " : " L ");
-            sb.Append(x.ToString(_inv));
-            sb.Append(' ');
-            sb.Append(y.ToString(_inv));
-        }
-        return sb.ToString();
+        _recentAuditLogs = DataStore.AuditLogs
+            .OrderByDescending(a => a.OccurredAt)
+            .Take(8)
+            .ToList();
     }
 
     private RenderFragment Icon(string name) => builder => AdminIcons.Render(builder, name);
 
     public void Dispose()
     {
-        Notifications.StateChanged -= OnDataChanged;
-        Preferences.StateChanged -= OnDataChanged;
+        UserContext.StateChanged -= OnUserChanged;
+        DataStore.StateChanged -= OnDataChanged;
     }
 
-    private sealed record KpiViewModel(string Label, string Value, string TrendLabel, bool IsPositive, string Tone, string Icon, string SparklinePath);
-    private sealed record ActivityViewModel(string Timestamp, string Actor, string Action, string Subject, string Tone);
     private sealed record QuickTileViewModel(string Title, string Subtitle, string Url, string Icon, string Tone);
 }
