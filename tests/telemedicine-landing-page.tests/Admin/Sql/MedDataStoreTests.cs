@@ -1,3 +1,4 @@
+using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Admin.Sql;
 using TelemedicineLandingPage.Services.Admin.Sql;
 
@@ -255,11 +256,11 @@ public sealed class MedDataStoreTests
     [Fact]
     public void PermissionResolver_DenyWinsOnTie()
     {
-        var store = CreateStore();
-        var resolver = new EffectivePermissionResolver(store);
+        using var db = TestDbHelper.CreateSeededContext();
+        var resolver = new EffectivePermissionResolver(db);
 
         // Thêm user override deny cho admin user trên PERM_CREATE_ORDER
-        store.AddUserPermissionOverride(new UserPermissionOverride
+        db.UserPermissionOverrides.Add(new UserPermissionOverride
         {
             UserId = MedDataStoreSeed.AdminUserId,
             PermissionId = MedDataStoreSeed.PermCreateOrderId,
@@ -267,6 +268,7 @@ public sealed class MedDataStoreTests
             Priority = 100,
             Reason = "Kiểm thử deny-wins"
         });
+        db.SaveChanges();
 
         var result = resolver.HasPermission(MedDataStoreSeed.AdminUserId, "PERM_CREATE_ORDER");
         // user_override (rank 3) deny phải thắng role (rank 1) allow
@@ -277,12 +279,12 @@ public sealed class MedDataStoreTests
     [Fact]
     public void PermissionResolver_HigherSourceRankWins()
     {
-        var store = CreateStore();
-        var resolver = new EffectivePermissionResolver(store);
+        using var db = TestDbHelper.CreateSeededContext();
+        var resolver = new EffectivePermissionResolver(db);
 
         // Admin user có PERM_VIEW_DASHBOARD từ role (allow, rank 1)
         // Thêm user override allow với priority thấp hơn → vẫn thắng vì rank cao hơn
-        store.AddUserPermissionOverride(new UserPermissionOverride
+        db.UserPermissionOverrides.Add(new UserPermissionOverride
         {
             UserId = MedDataStoreSeed.AdminUserId,
             PermissionId = MedDataStoreSeed.PermViewDashId,
@@ -290,6 +292,7 @@ public sealed class MedDataStoreTests
             Priority = 1, // priority thấp nhưng source_rank = 3
             Reason = "Kiểm thử source_rank"
         });
+        db.SaveChanges();
 
         var resolved = resolver.Resolve(MedDataStoreSeed.AdminUserId);
         var dashPerm = resolved.First(r => r.PermissionCode == "PERM_VIEW_DASHBOARD");
@@ -301,8 +304,8 @@ public sealed class MedDataStoreTests
     [Fact]
     public void AuditTrailService_InvalidActionCode_Throws()
     {
-        var store = CreateStore();
-        var auditService = new AuditTrailService(store);
+        using var db = TestDbHelper.CreateSeededContext();
+        var auditService = new AuditTrailService(db);
 
         var ex = Assert.Throws<ArgumentException>(() =>
             auditService.Append(new AuditLog
@@ -318,9 +321,9 @@ public sealed class MedDataStoreTests
     [Fact]
     public void AuditTrailService_ValidActionCode_Succeeds()
     {
-        var store = CreateStore();
-        var auditService = new AuditTrailService(store);
-        var countBefore = store.AuditLogs.Count;
+        using var db = TestDbHelper.CreateSeededContext();
+        var auditService = new AuditTrailService(db);
+        var countBefore = db.AuditLogs.Count();
 
         auditService.Append(new AuditLog
         {
@@ -331,7 +334,7 @@ public sealed class MedDataStoreTests
             TargetId = "QT-TEST"
         });
 
-        Assert.Equal(countBefore + 1, store.AuditLogs.Count);
+        Assert.Equal(countBefore + 1, db.AuditLogs.Count());
     }
 
     // === 15. Seed data: đủ 8 departments (1 root + 7 con) ===

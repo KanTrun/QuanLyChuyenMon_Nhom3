@@ -1,3 +1,4 @@
+using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Admin.Sql;
 
 namespace TelemedicineLandingPage.Services.Admin.Sql;
@@ -8,23 +9,23 @@ namespace TelemedicineLandingPage.Services.Admin.Sql;
 /// </summary>
 public sealed class ProcedureLifecycleService
 {
-    private readonly IMedDataStore _store;
+    private readonly MedDbContext _db;
     private readonly AuditTrailService _audit;
 
-    public ProcedureLifecycleService(IMedDataStore store, AuditTrailService audit)
+    public ProcedureLifecycleService(MedDbContext db, AuditTrailService audit)
     {
-        _store = store;
+        _db = db;
         _audit = audit;
     }
 
     /// <summary>Tạo phiên bản mới cho quy trình (trạng thái draft).</summary>
     public ProcedureVersion CreateDraft(Guid procedureId, string title, Guid createdBy)
     {
-        var proc = _store.Procedures.FirstOrDefault(p => p.ProcedureId == procedureId)
+        var proc = _db.Procedures.FirstOrDefault(p => p.ProcedureId == procedureId)
             ?? throw MedDomainException.Constraint("FK_procedure", 547,
                 "Quy trình không tồn tại.");
 
-        var existingVersions = _store.ProcedureVersions
+        var existingVersions = _db.ProcedureVersions
             .Where(v => v.ProcedureId == procedureId)
             .ToList();
 
@@ -43,7 +44,8 @@ public sealed class ProcedureLifecycleService
             CreatedBy = createdBy
         };
 
-        _store.AddProcedureVersion(version);
+        _db.ProcedureVersions.Add(version);
+        _db.SaveChanges();
         return version;
     }
 
@@ -55,18 +57,20 @@ public sealed class ProcedureLifecycleService
             throw MedDomainException.Constraint("CK_procedure_version_submit", 50020,
                 "Chỉ có thể gửi phiên bản ở trạng thái bản nháp.");
 
-        var steps = _store.ProcedureSteps
+        var steps = _db.ProcedureSteps
             .Where(s => s.ProcedureVersionId == versionId).ToList();
         if (steps.Count == 0)
             throw MedDomainException.Constraint("CK_procedure_version_steps_required", 50021,
                 "Phiên bản phải có ít nhất một bước quy trình.");
 
-        _store.UpdateProcedureVersion(ver with
+        var updated = ver with
         {
             StatusCode = "pending_approval",
             SubmittedBy = submittedBy,
             SubmittedAt = DateTime.UtcNow
-        });
+        };
+        _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(updated);
+        _db.SaveChanges();
 
         _audit.Append(new AuditLog
         {
@@ -87,20 +91,21 @@ public sealed class ProcedureLifecycleService
                 "Chỉ có thể xuất bản phiên bản đang chờ phê duyệt.");
 
         // Hủy kích hoạt phiên bản published hiện tại (one-active guard)
-        var currentPublished = _store.ProcedureVersions
+        var currentPublished = _db.ProcedureVersions
             .Where(v => v.ProcedureId == ver.ProcedureId && v.StatusCode == "published")
             .ToList();
 
         foreach (var old in currentPublished)
         {
-            _store.UpdateProcedureVersion(old with
+            var superseded = old with
             {
                 StatusCode = "superseded",
                 EffectiveTo = DateTime.UtcNow
-            });
+            };
+            _db.ProcedureVersions.Entry(old).CurrentValues.SetValues(superseded);
         }
 
-        _store.UpdateProcedureVersion(ver with
+        var published = ver with
         {
             StatusCode = "published",
             ApprovedBy = approvedBy,
@@ -108,7 +113,9 @@ public sealed class ProcedureLifecycleService
             PublishedBy = approvedBy,
             PublishedAt = DateTime.UtcNow,
             EffectiveFrom = DateTime.UtcNow
-        });
+        };
+        _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(published);
+        _db.SaveChanges();
 
         _audit.Append(new AuditLog
         {
@@ -128,11 +135,13 @@ public sealed class ProcedureLifecycleService
             throw MedDomainException.Constraint("CK_procedure_version_reject", 50023,
                 "Chỉ có thể từ chối phiên bản đang chờ phê duyệt.");
 
-        _store.UpdateProcedureVersion(ver with
+        var rejected = ver with
         {
             StatusCode = "rejected",
             ChangeReason = reason
-        });
+        };
+        _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(rejected);
+        _db.SaveChanges();
 
         _audit.Append(new AuditLog
         {
@@ -153,12 +162,14 @@ public sealed class ProcedureLifecycleService
             throw MedDomainException.Constraint("CK_procedure_version_withdraw", 50024,
                 "Chỉ có thể thu hồi phiên bản đã xuất bản.");
 
-        _store.UpdateProcedureVersion(ver with
+        var withdrawn = ver with
         {
             StatusCode = "withdrawn",
             EffectiveTo = DateTime.UtcNow,
             ChangeReason = reason
-        });
+        };
+        _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(withdrawn);
+        _db.SaveChanges();
 
         _audit.Append(new AuditLog
         {
@@ -173,14 +184,14 @@ public sealed class ProcedureLifecycleService
     /// <summary>Lấy phiên bản đang hoạt động của quy trình.</summary>
     public ProcedureVersion? GetActiveVersion(Guid procedureId)
     {
-        return _store.ProcedureVersions
+        return _db.ProcedureVersions
             .FirstOrDefault(v => v.ProcedureId == procedureId && v.StatusCode == "published");
     }
 
     /// <summary>Lấy tất cả phiên bản của quy trình.</summary>
     public IReadOnlyList<ProcedureVersion> GetVersions(Guid procedureId)
     {
-        return _store.ProcedureVersions
+        return _db.ProcedureVersions
             .Where(v => v.ProcedureId == procedureId)
             .OrderByDescending(v => v.VersionNo)
             .ToList();
@@ -188,7 +199,7 @@ public sealed class ProcedureLifecycleService
 
     private ProcedureVersion GetVersionOrThrow(Guid versionId)
     {
-        return _store.ProcedureVersions
+        return _db.ProcedureVersions
                    .FirstOrDefault(v => v.ProcedureVersionId == versionId)
                ?? throw MedDomainException.Constraint("FK_procedure_version", 547,
                    "Phiên bản quy trình không tồn tại.");

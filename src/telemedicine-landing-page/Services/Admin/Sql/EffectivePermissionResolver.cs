@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Admin.Sql;
 
 namespace TelemedicineLandingPage.Services.Admin.Sql;
@@ -11,11 +13,11 @@ namespace TelemedicineLandingPage.Services.Admin.Sql;
 /// </summary>
 public sealed class EffectivePermissionResolver
 {
-    private readonly IMedDataStore _store;
+    private readonly MedDbContext _db;
 
-    public EffectivePermissionResolver(IMedDataStore store)
+    public EffectivePermissionResolver(MedDbContext db)
     {
-        _store = store;
+        _db = db;
     }
 
     /// <summary>Kết quả giải quyết quyền cho một permission cụ thể.</summary>
@@ -37,49 +39,63 @@ public sealed class EffectivePermissionResolver
         var candidates = new List<ResolvedPermission>();
 
         // 1. Quyền từ vai trò (source_rank = 1)
-        var activeRoles = _store.UserRoles
-            .Where(ur => ur.UserId == userId && IsEffective(ur.EffectiveFrom, ur.EffectiveTo, now))
+        var activeRoles = _db.UserRoles
+            .Where(ur => ur.UserId == userId && ur.EffectiveFrom <= now && (ur.EffectiveTo == null || ur.EffectiveTo > now))
             .Select(ur => ur.RoleId)
             .ToHashSet();
 
-        foreach (var rp in _store.RolePermissions)
-        {
-            if (!activeRoles.Contains(rp.RoleId)) continue;
-            if (!IsEffective(rp.EffectiveFrom, rp.EffectiveTo, now)) continue;
-            var perm = _store.Permissions.FirstOrDefault(p => p.PermissionId == rp.PermissionId);
-            if (perm is null || perm.Status != "active") continue;
+        var rolePermissions = _db.RolePermissions
+            .Where(rp => activeRoles.Contains(rp.RoleId) && rp.EffectiveFrom <= now && (rp.EffectiveTo == null || rp.EffectiveTo > now))
+            .ToList();
 
+        var permissionIds = rolePermissions.Select(rp => rp.PermissionId).ToHashSet();
+
+        // 2. Quyền từ nhóm (source_rank = 2)
+        var activeGroups = _db.UserGroupMembers
+            .Where(gm => gm.UserId == userId && gm.EffectiveFrom <= now && (gm.EffectiveTo == null || gm.EffectiveTo > now))
+            .Select(gm => gm.GroupId)
+            .ToHashSet();
+
+        var groupPermissions = _db.GroupPermissions
+            .Where(gp => activeGroups.Contains(gp.GroupId) && gp.EffectiveFrom <= now && (gp.EffectiveTo == null || gp.EffectiveTo > now))
+            .ToList();
+
+        foreach (var gp in groupPermissions)
+            permissionIds.Add(gp.PermissionId);
+
+        // 3. Ghi đè cấp người dùng (source_rank = 3)
+        var userOverrides = _db.UserPermissionOverrides
+            .Where(upo => upo.UserId == userId && upo.EffectiveFrom <= now && (upo.EffectiveTo == null || upo.EffectiveTo > now))
+            .ToList();
+
+        foreach (var upo in userOverrides)
+            permissionIds.Add(upo.PermissionId);
+
+        // Tải tất cả permissions liên quan
+        var permissions = _db.Permissions
+            .Where(p => permissionIds.Contains(p.PermissionId) && p.Status == "active")
+            .ToDictionary(p => p.PermissionId);
+
+        // Xây dựng danh sách ứng viên
+        foreach (var rp in rolePermissions)
+        {
+            if (!permissions.TryGetValue(rp.PermissionId, out var perm)) continue;
             candidates.Add(new ResolvedPermission(
                 rp.PermissionId, perm.PermissionCode, rp.EffectCode,
                 rp.Priority, 1, "role", rp.DepartmentId));
         }
 
-        // 2. Quyền từ nhóm (source_rank = 2)
-        var activeGroups = _store.UserGroupMembers
-            .Where(gm => gm.UserId == userId && IsEffective(gm.EffectiveFrom, gm.EffectiveTo, now))
-            .Select(gm => gm.GroupId)
-            .ToHashSet();
-
-        foreach (var gp in _store.GroupPermissions)
+        foreach (var gp in groupPermissions)
         {
-            if (!activeGroups.Contains(gp.GroupId)) continue;
-            if (!IsEffective(gp.EffectiveFrom, gp.EffectiveTo, now)) continue;
-            var perm = _store.Permissions.FirstOrDefault(p => p.PermissionId == gp.PermissionId);
-            if (perm is null || perm.Status != "active") continue;
-
+            if (!permissions.TryGetValue(gp.PermissionId, out var perm)) continue;
             candidates.Add(new ResolvedPermission(
                 gp.PermissionId, perm.PermissionCode, gp.EffectCode,
                 gp.Priority, 2, "group", gp.DepartmentId));
         }
 
-        // 3. Ghi đè cấp người dùng (source_rank = 3)
-        foreach (var upo in _store.UserPermissionOverrides)
+        foreach (var upo in userOverrides)
         {
-            if (upo.UserId != userId) continue;
-            if (!IsEffective(upo.EffectiveFrom, upo.EffectiveTo, now)) continue;
-            var perm = _store.Permissions.FirstOrDefault(p => p.PermissionId == upo.PermissionId);
-            if (perm is null || perm.Status != "active") continue;
-
+            if (!permissions.TryGetValue(upo.PermissionId, out var perm)) continue;
             candidates.Add(new ResolvedPermission(
                 upo.PermissionId, perm.PermissionCode, upo.EffectCode,
                 upo.Priority, 3, "user_override", upo.DepartmentId));
@@ -106,9 +122,6 @@ public sealed class EffectivePermissionResolver
             .ThenBy(c => c.EffectCode == "deny" ? 0 : 1)
             .First();
     }
-
-    private static bool IsEffective(DateTime from, DateTime? to, DateTime now)
-        => from <= now && (to is null || to.Value > now);
 
     /// <summary>
     /// Kiểm tra nhanh người dùng có quyền cụ thể hay không.

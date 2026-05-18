@@ -1,9 +1,19 @@
 @inherits LayoutComponentBase
 @implements IAsyncDisposable
+@using TelemedicineLandingPage.Services.Admin.Sql
 @inject IAdminNavigationState NavState
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject ICurrentUserContext UserContext
 
+@if (UserContext.CurrentUser is null)
+{
+    <div class="admin-auth-redirect" style="display:flex;align-items:center;justify-content:center;height:100vh;">
+        <p>Đang chuyển hướng đến trang đăng nhập...</p>
+    </div>
+}
+else
+{
 <div class="admin-shell" data-collapsed="@(NavState.IsSidebarCollapsed ? "true" : "false")">
     @if (NavState.IsSidebarCollapsed)
     {
@@ -28,6 +38,7 @@
         </div>
     </div>
 </div>
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     Đã xảy ra lỗi không mong muốn.
@@ -43,6 +54,12 @@
     protected override void OnInitialized()
     {
         NavState.StateChanged += OnStateChanged;
+
+        // Bảo vệ trang admin: nếu chưa đăng nhập → chuyển hướng đến /login
+        if (UserContext.CurrentUser is null)
+        {
+            Navigation.NavigateTo("/login", forceLoad: false);
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

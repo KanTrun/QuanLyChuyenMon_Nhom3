@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using TelemedicineLandingPage.Components;
+using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models;
 using TelemedicineLandingPage.Models.Chatbot;
 using TelemedicineLandingPage.Services;
@@ -12,12 +14,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddSingleton<ILandingPageContentService, LandingPageContentService>();
 
-// QLCM Pro admin shell — domain services seeded in-memory (no database for the demo).
-builder.Services.AddSingleton<IMedDataStore, MedDataStore>();
-builder.Services.AddSingleton<EffectivePermissionResolver>();
-builder.Services.AddSingleton<AuditTrailService>();
-builder.Services.AddSingleton<PermissionChangeRequestService>();
-builder.Services.AddSingleton<ProcedureLifecycleService>();
+// QLCM Pro admin shell — kết nối SQL Server thật.
+builder.Services.AddDbContext<MedDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("MedDb")));
+builder.Services.AddScoped<IMedDataStore, MedDbDataStore>();
+builder.Services.AddScoped<EffectivePermissionResolver>();
+builder.Services.AddScoped<AuditTrailService>();
+builder.Services.AddScoped<PermissionChangeRequestService>();
+builder.Services.AddScoped<ProcedureLifecycleService>();
 builder.Services.AddScoped<ICurrentUserContext, CurrentUserContext>();
 builder.Services.AddScoped<NavGate>();
 builder.Services.AddSingleton<IProcedureService, ProcedureService>();

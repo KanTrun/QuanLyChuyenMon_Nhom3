@@ -1,35 +1,40 @@
+using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Admin.Sql;
 using TelemedicineLandingPage.Services.Admin.Sql;
 
 namespace TelemedicineLandingPage.Tests.Admin.Sql;
 
-public sealed class PermissionChangeRequestServiceTests
+public sealed class PermissionChangeRequestServiceTests : IDisposable
 {
-    private readonly MedDataStore _store = new();
+    private readonly MedDbContext _db;
     private readonly PermissionChangeRequestService _svc;
     private readonly Guid _testApproverId;
 
     public PermissionChangeRequestServiceTests()
     {
-        var audit = new AuditTrailService(_store);
-        _svc = new PermissionChangeRequestService(_store, audit);
+        _db = TestDbHelper.CreateSeededContext();
+        var audit = new AuditTrailService(_db);
+        _svc = new PermissionChangeRequestService(_db, audit);
 
         // Tạo người dùng phê duyệt cục bộ (không phụ thuộc seed)
         _testApproverId = Guid.NewGuid();
-        _store.AddUser(new AppUser
+        _db.Users.Add(new AppUser
         {
             UserId = _testApproverId,
             Username = "test_approver",
             FullName = "Người phê duyệt kiểm thử",
             PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
         });
-        _store.AddUserRole(new UserRole
+        _db.UserRoles.Add(new UserRole
         {
             UserId = _testApproverId,
             RoleId = MedDataStoreSeed.RoleDeptAdminId,
             DepartmentId = MedDataStoreSeed.DeptNoiId
         });
+        _db.SaveChanges();
     }
+
+    public void Dispose() => _db.Dispose();
 
     // === 1. CreateDraft: tạo yêu cầu thành công ===
     [Fact]
@@ -80,7 +85,7 @@ public sealed class PermissionChangeRequestServiceTests
 
         _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
 
-        var updated = _store.PermissionChangeRequests
+        var updated = _db.PermissionChangeRequests
             .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
         Assert.Equal("pending_approval", updated.ChangeStatus);
     }
@@ -122,7 +127,7 @@ public sealed class PermissionChangeRequestServiceTests
 
         _svc.Approve(req.PermissionChangeRequestId, _testApproverId);
 
-        var updated = _store.PermissionChangeRequests
+        var updated = _db.PermissionChangeRequests
             .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
         Assert.Equal("applied", updated.ChangeStatus);
         Assert.Equal(_testApproverId, updated.ApprovedBy);
@@ -137,7 +142,7 @@ public sealed class PermissionChangeRequestServiceTests
 
         _svc.Approve(req.PermissionChangeRequestId, _testApproverId, schedule: true);
 
-        var updated = _store.PermissionChangeRequests
+        var updated = _db.PermissionChangeRequests
             .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
         Assert.Equal("scheduled", updated.ChangeStatus);
     }
@@ -151,7 +156,7 @@ public sealed class PermissionChangeRequestServiceTests
 
         _svc.Reject(req.PermissionChangeRequestId, _testApproverId, "Không phù hợp");
 
-        var updated = _store.PermissionChangeRequests
+        var updated = _db.PermissionChangeRequests
             .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
         Assert.Equal("rejected", updated.ChangeStatus);
     }
@@ -167,7 +172,7 @@ public sealed class PermissionChangeRequestServiceTests
 
         _svc.Cancel(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
 
-        var updated = _store.PermissionChangeRequests
+        var updated = _db.PermissionChangeRequests
             .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
         Assert.Equal("cancelled", updated.ChangeStatus);
     }
@@ -211,12 +216,12 @@ public sealed class PermissionChangeRequestServiceTests
     public void SubmitForApproval_CreatesAuditLog()
     {
         var req = CreateDraftWithItem();
-        var countBefore = _store.AuditLogs.Count;
+        var countBefore = _db.AuditLogs.Count();
 
         _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
 
-        Assert.True(_store.AuditLogs.Count > countBefore);
-        var log = _store.AuditLogs.Last();
+        Assert.True(_db.AuditLogs.Count() > countBefore);
+        var log = _db.AuditLogs.OrderByDescending(a => a.OccurredAt).First();
         Assert.Equal("submit", log.ActionCode);
         Assert.Equal("permission_change_request", log.TargetType);
     }

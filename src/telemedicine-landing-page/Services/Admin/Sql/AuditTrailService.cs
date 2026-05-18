@@ -1,3 +1,4 @@
+using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Admin.Sql;
 
 namespace TelemedicineLandingPage.Services.Admin.Sql;
@@ -9,7 +10,7 @@ namespace TelemedicineLandingPage.Services.Admin.Sql;
 /// </summary>
 public sealed class AuditTrailService
 {
-    private readonly IMedDataStore _store;
+    private readonly MedDbContext _db;
 
     /// <summary>Danh sách mã hành động hợp lệ.</summary>
     private static readonly HashSet<string> ValidActionCodes = new(StringComparer.OrdinalIgnoreCase)
@@ -22,9 +23,9 @@ public sealed class AuditTrailService
         "apply_protocol", "skip_protocol"
     };
 
-    public AuditTrailService(IMedDataStore store)
+    public AuditTrailService(MedDbContext db)
     {
-        _store = store;
+        _db = db;
     }
 
     /// <summary>
@@ -40,24 +41,25 @@ public sealed class AuditTrailService
                 $"Mã hành động '{log.ActionCode}' không hợp lệ. Các mã cho phép: {string.Join(", ", ValidActionCodes.Order())}.",
                 nameof(log));
 
-        _store.AppendAudit(log);
+        _db.AuditLogs.Add(log);
+        _db.SaveChanges();
     }
 
     /// <summary>Lấy toàn bộ nhật ký kiểm toán (chỉ đọc).</summary>
-    public IReadOnlyList<AuditLog> GetAll() => _store.AuditLogs;
+    public IReadOnlyList<AuditLog> GetAll() => _db.AuditLogs.OrderByDescending(a => a.OccurredAt).ToList();
 
     /// <summary>Lấy nhật ký theo mã hành động.</summary>
     public IReadOnlyList<AuditLog> GetByAction(string actionCode)
-        => _store.AuditLogs.Where(a => a.ActionCode == actionCode).ToList();
+        => _db.AuditLogs.Where(a => a.ActionCode == actionCode).ToList();
 
     /// <summary>Lấy nhật ký theo người thực hiện.</summary>
     public IReadOnlyList<AuditLog> GetByActor(Guid actorUserId)
-        => _store.AuditLogs.Where(a => a.ActorUserId == actorUserId).ToList();
+        => _db.AuditLogs.Where(a => a.ActorUserId == actorUserId).ToList();
 
     /// <summary>Lấy nhật ký theo đối tượng bị tác động.</summary>
     public IReadOnlyList<AuditLog> GetByTarget(string targetType, string? targetId = null)
     {
-        var query = _store.AuditLogs.Where(a => a.TargetType == targetType);
+        var query = _db.AuditLogs.Where(a => a.TargetType == targetType);
         if (targetId is not null)
             query = query.Where(a => a.TargetId == targetId);
         return query.ToList();

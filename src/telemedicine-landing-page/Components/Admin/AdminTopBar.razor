@@ -6,7 +6,6 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject ICurrentUserContext UserContext
-@inject IMedDataStore DataStore
 @implements IDisposable
 
 <header class="admin-topbar" role="banner">
@@ -96,19 +95,8 @@
             {
                 <div class="admin-flyout admin-flyout-user" id="admin-flyout-user" role="menu">
                     <div class="admin-flyout-header">
-                        <span class="admin-flyout-title">Chuyển người dùng</span>
+                        <span class="admin-flyout-title">@_currentUserName</span>
                     </div>
-                    <ul class="admin-flyout-list" style="max-height:200px;overflow-y:auto;">
-                        @foreach (var user in DataStore.Users.Where(u => u.Status == "active"))
-                        {
-                            <li class="admin-flyout-item @(user.UserId == UserContext.CurrentUser?.UserId ? "is-active" : "")"
-                                @onclick="() => SwitchUser(user.UserId)" style="cursor:pointer;">
-                                <span class="admin-flyout-item-title">@user.FullName</span>
-                                <span class="admin-flyout-item-body">@user.Username</span>
-                            </li>
-                        }
-                    </ul>
-                    <div class="admin-flyout-divider" role="separator"></div>
                     <a class="admin-flyout-menu-item" href="/admin/cai-dat" role="menuitem" @onclick="CloseFlyouts">
                         <span class="admin-flyout-menu-icon" aria-hidden="true">@Icon("user")</span>
                         Hồ sơ
@@ -118,10 +106,10 @@
                         Tùy chọn
                     </a>
                     <div class="admin-flyout-divider" role="separator"></div>
-                    <a class="admin-flyout-menu-item admin-flyout-menu-danger" href="/login" role="menuitem" @onclick="CloseFlyouts">
+                    <button type="button" class="admin-flyout-menu-item admin-flyout-menu-danger" role="menuitem" @onclick="HandleLogout">
                         <span class="admin-flyout-menu-icon" aria-hidden="true">@Icon("logout")</span>
                         Đăng xuất
-                    </a>
+                    </button>
                 </div>
             }
         </div>
@@ -312,10 +300,11 @@
 
     private RenderFragment Icon(string name) => builder => AdminIcons.Render(builder, name);
 
-    private void SwitchUser(Guid userId)
+    private void HandleLogout()
     {
-        UserContext.SetCurrentUser(userId);
+        UserContext.SignOut();
         CloseFlyouts();
+        Navigation.NavigateTo("/login", forceLoad: false);
     }
 
     private void OnUserChanged() => InvokeAsync(() =>

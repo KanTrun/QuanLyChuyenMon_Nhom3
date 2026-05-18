@@ -17,6 +17,9 @@ public interface ICurrentUserContext
     /// <summary>Đặt người dùng hiện tại theo UserId.</summary>
     void SetCurrentUser(Guid userId);
 
+    /// <summary>Đăng nhập bằng username. Trả về null nếu không tìm thấy.</summary>
+    AppUser? LoginByUsername(string username);
+
     /// <summary>Đăng xuất người dùng hiện tại.</summary>
     void SignOut();
 

@@ -3,9 +3,16 @@
 @using TelemedicineLandingPage.Models.Admin.Sql
 @inject ICurrentUserContext UserContext
 @inject NavigationManager Navigation
-@inject IMedDataStore Store
 @implements IDisposable
 
+@if (UserContext.CurrentUser is null)
+{
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;">
+        <p>Đang chuyển hướng đến trang đăng nhập...</p>
+    </div>
+}
+else
+{
 <div class="admin-shell persona-shell">
     <aside class="admin-sidebar persona-sidebar" aria-label="Điều hướng persona">
         <div class="admin-sidebar-brand">
@@ -36,6 +43,10 @@
                 <span class="admin-nav-icon" aria-hidden="true">←</span>
                 <span class="admin-nav-label">Quay lại quản trị</span>
             </a>
+            <button type="button" class="admin-nav-link" @onclick="HandleLogout" style="border:none;background:none;cursor:pointer;width:100%;text-align:left;">
+                <span class="admin-nav-icon" aria-hidden="true">⏻</span>
+                <span class="admin-nav-label">Đăng xuất</span>
+            </button>
             <span class="admin-sidebar-version" aria-label="Phiên bản v2.0">v2.0</span>
         </div>
     </aside>
@@ -48,12 +59,7 @@
                 </nav>
             </div>
             <div class="admin-topbar-right">
-                <select class="admin-select" style="width:auto;font-size:0.85rem;" @bind="_selectedUserId" @bind:after="OnUserSwitch">
-                    @foreach (var user in Store.Users.Where(u => u.Status == "active"))
-                    {
-                        <option value="@user.UserId">@user.FullName</option>
-                    }
-                </select>
+                <span style="font-size:0.85rem;color:var(--text-muted,#888);">@_currentUserName</span>
             </div>
         </header>
 
@@ -62,6 +68,7 @@
         </main>
     </div>
 </div>
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     Đã xảy ra lỗi không mong muốn.
@@ -71,7 +78,6 @@
 
 @code {
     private string _currentUserName = "";
-    private string _selectedUserId = "";
 
     private record NavLink(string Label, string Url);
 
@@ -89,6 +95,14 @@
     protected override void OnInitialized()
     {
         UserContext.StateChanged += OnUserChanged;
+
+        // Bảo vệ: nếu chưa đăng nhập → chuyển hướng đến /login
+        if (UserContext.CurrentUser is null)
+        {
+            Navigation.NavigateTo("/login", forceLoad: false);
+            return;
+        }
+
         RefreshUser();
     }
 
@@ -98,15 +112,12 @@
     {
         var user = UserContext.CurrentUser;
         _currentUserName = user?.FullName ?? "Chưa đăng nhập";
-        _selectedUserId = user?.UserId.ToString() ?? "";
     }
 
-    private void OnUserSwitch()
+    private void HandleLogout()
     {
-        if (Guid.TryParse(_selectedUserId, out var uid))
-        {
-            UserContext.SetCurrentUser(uid);
-        }
+        UserContext.SignOut();
+        Navigation.NavigateTo("/login", forceLoad: false);
     }
 
     public void Dispose()
