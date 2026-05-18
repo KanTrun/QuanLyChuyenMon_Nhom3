@@ -1,14 +1,17 @@
-@inject IPermissionService PermissionService
+@using Microsoft.EntityFrameworkCore
+@using TelemedicineLandingPage.Data
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject MedDbContext Db
 
 <article class="admin-panel">
     <header class="admin-panel-head">
         <div>
             <h2 class="admin-panel-title">Lịch sử thay đổi phân quyền</h2>
-            <p class="admin-panel-subtitle">Tổng @_log.Count thay đổi đã ghi nhận.</p>
+            <p class="admin-panel-subtitle">Tổng @_logs.Count thay đổi đã ghi nhận.</p>
         </div>
     </header>
 
-    @if (_log.Count == 0)
+    @if (_logs.Count == 0)
     {
         <div class="admin-empty" style="padding:24px;">
             <div class="admin-empty-title">Chưa có thay đổi nào</div>
@@ -21,37 +24,47 @@
             <table class="admin-table">
                 <thead>
                     <tr>
+                        <th>Hành động</th>
                         <th>Đối tượng</th>
-                        <th>Loại</th>
                         <th>Người thực hiện</th>
                         <th>Thời điểm</th>
-                        <th>Lý do</th>
                         <th>Chi tiết</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var entry in _log)
+                    @foreach (var log in _logs)
                     {
                         <tr>
-                            <td class="admin-table-cell-strong">@entry.TargetLabel</td>
-                            <td><AdminBadge Tone="tone-secondary">@AdminEnumLabels.GetLabel(entry.TargetType)</AdminBadge></td>
-                            <td>@entry.ChangedBy</td>
-                            <td class="admin-table-cell-muted">@entry.AppliedAt.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td class="admin-table-cell-muted">@entry.Reason</td>
+                            <td class="admin-table-cell-strong">@log.ActionCode</td>
                             <td>
-                                <details>
-                                    <summary style="cursor:pointer; color:var(--color-primary-deep); font-weight:600;">Xem JSON</summary>
-                                    <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
-                                        <div>
-                                            <div class="admin-form-field-hint">Trước</div>
-                                            <pre class="admin-json-block">@entry.BeforeJson</pre>
+                                <AdminBadge Tone="tone-secondary">@log.TargetType</AdminBadge>
+                            </td>
+                            <td class="admin-table-cell-muted">@(log.ActorUsername ?? "Hệ thống")</td>
+                            <td class="admin-table-cell-muted">@log.OccurredAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(log.AfterJson))
+                                {
+                                    <details>
+                                        <summary style="cursor:pointer; color:var(--color-primary-deep); font-weight:600;">Xem JSON</summary>
+                                        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                                            @if (!string.IsNullOrEmpty(log.BeforeJson))
+                                            {
+                                                <div>
+                                                    <div class="admin-form-field-hint">Trước</div>
+                                                    <pre class="admin-json-block">@log.BeforeJson</pre>
+                                                </div>
+                                            }
+                                            <div>
+                                                <div class="admin-form-field-hint">Sau</div>
+                                                <pre class="admin-json-block">@log.AfterJson</pre>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <div class="admin-form-field-hint">Sau</div>
-                                            <pre class="admin-json-block">@entry.AfterJson</pre>
-                                        </div>
-                                    </div>
-                                </details>
+                                    </details>
+                                }
+                                else
+                                {
+                                    <span class="admin-table-cell-muted">—</span>
+                                }
                             </td>
                         </tr>
                     }
@@ -62,10 +75,14 @@
 </article>
 
 @code {
-    private IReadOnlyList<PermissionChangeLog> _log = Array.Empty<PermissionChangeLog>();
+    private List<AuditLog> _logs = new();
 
-    protected override void OnParametersSet()
+    protected override void OnInitialized()
     {
-        _log = PermissionService.GetChangeLog();
+        _logs = Db.AuditLogs
+            .Where(a => a.TargetType == "role_permission" || a.TargetType == "user_role")
+            .OrderByDescending(a => a.OccurredAt)
+            .Take(50)
+            .ToList();
     }
 }

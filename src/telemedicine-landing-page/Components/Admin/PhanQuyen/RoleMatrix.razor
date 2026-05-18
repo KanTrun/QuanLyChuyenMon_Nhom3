@@ -1,154 +1,187 @@
-@inject IPermissionService PermissionService
-@inject IToastService Toasts
+@using Microsoft.EntityFrameworkCore
+@using TelemedicineLandingPage.Data
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject MedDbContext Db
 
 <article class="admin-panel">
     <header class="admin-panel-head">
         <div>
+            <h2 class="admin-panel-title">Danh sách vai trò</h2>
+            <p class="admin-panel-subtitle">Tổng @_roles.Count vai trò trong hệ thống.</p>
+        </div>
+    </header>
+
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Tên</th>
+                    <th>Mô tả</th>
+                    <th>Hệ thống</th>
+                    <th>Thành viên</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var role in _roles)
+                {
+                    <tr>
+                        <td class="admin-table-cell-muted">@role.Code</td>
+                        <td class="admin-table-cell-strong">@role.Name</td>
+                        <td class="admin-table-cell-muted">@(role.Description ?? "—")</td>
+                        <td>
+                            @if (role.IsSystem)
+                            {
+                                <AdminBadge Tone="tone-info">Hệ thống</AdminBadge>
+                            }
+                            else
+                            {
+                                <span class="admin-table-cell-muted">Không</span>
+                            }
+                        </td>
+                        <td>@GetMemberCount(role.RoleId) tài khoản</td>
+                        <td>
+                            @if (role.Status == "active")
+                            {
+                                <AdminBadge Tone="tone-success">Hoạt động</AdminBadge>
+                            }
+                            else
+                            {
+                                <AdminBadge Tone="tone-secondary">@role.Status</AdminBadge>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</article>
+
+<article class="admin-panel" style="margin-top:24px;">
+    <header class="admin-panel-head">
+        <div>
             <h2 class="admin-panel-title">Ma trận phân quyền theo vai trò</h2>
-            <p class="admin-panel-subtitle">Tích chọn quyền tương ứng với từng module, sau đó lưu thay đổi.</p>
+            <p class="admin-panel-subtitle">Chọn vai trò để xem quyền đã gán.</p>
         </div>
     </header>
 
     <div class="admin-form-field" style="max-width:340px;">
         <label class="admin-form-field-label" for="role-picker">Chọn vai trò</label>
         <select id="role-picker" class="admin-select" value="@_selectedRoleId" @onchange="OnRoleChanged">
+            <option value="">-- Chọn vai trò --</option>
             @foreach (var role in _roles)
             {
-                <option value="@role.Id">@role.Name (@role.MemberCount tài khoản)</option>
+                <option value="@role.RoleId">@role.Name (@GetMemberCount(role.RoleId) tài khoản)</option>
             }
         </select>
     </div>
 
-    @if (_selectedRole is { } activeRole)
+    @if (_selectedRole is not null)
     {
         <div class="admin-table-wrapper">
             <table class="admin-table admin-permission-table">
                 <thead>
                     <tr>
-                        <th>Module</th>
-                        <th>Xem</th>
-                        <th>Tạo</th>
-                        <th>Cập nhật</th>
-                        <th>Xóa</th>
-                        <th>Phê duyệt</th>
+                        <th>Màn hình</th>
+                        <th>Quyền</th>
+                        <th>Hiệu lực</th>
+                        <th>Phạm vi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var module in PermissionService.AdminModules)
+                    @if (_rolePermissions.Count == 0)
                     {
-                        var grant = _draft.GetValueOrDefault(module) ?? new PermissionGrant(module, false, false, false, false, false);
                         <tr>
-                            <td class="admin-table-cell-strong">@ModuleLabel(module)</td>
-                            <td><input type="checkbox" class="admin-permission-toggle" checked="@grant.CanView" @onchange="(e) => Toggle(module, view: ((bool?)e.Value) ?? false)" /></td>
-                            <td><input type="checkbox" class="admin-permission-toggle" checked="@grant.CanCreate" @onchange="(e) => Toggle(module, create: ((bool?)e.Value) ?? false)" /></td>
-                            <td><input type="checkbox" class="admin-permission-toggle" checked="@grant.CanUpdate" @onchange="(e) => Toggle(module, update: ((bool?)e.Value) ?? false)" /></td>
-                            <td><input type="checkbox" class="admin-permission-toggle" checked="@grant.CanDelete" @onchange="(e) => Toggle(module, delete: ((bool?)e.Value) ?? false)" /></td>
-                            <td><input type="checkbox" class="admin-permission-toggle" checked="@grant.CanApprove" @onchange="(e) => Toggle(module, approve: ((bool?)e.Value) ?? false)" /></td>
+                            <td colspan="4" class="admin-table-cell-muted" style="text-align:center; padding:24px;">
+                                Chưa có quyền nào được gán cho vai trò này.
+                            </td>
                         </tr>
+                    }
+                    else
+                    {
+                        @foreach (var rp in _rolePermissions)
+                        {
+                            <tr>
+                                <td class="admin-table-cell-strong">@rp.ScreenName</td>
+                                <td>@rp.PermissionCode</td>
+                                <td>
+                                    @if (rp.EffectCode == "allow")
+                                    {
+                                        <AdminBadge Tone="tone-success">Cho phép</AdminBadge>
+                                    }
+                                    else
+                                    {
+                                        <AdminBadge Tone="tone-danger">Từ chối</AdminBadge>
+                                    }
+                                </td>
+                                <td class="admin-table-cell-muted">@rp.ScopeType</td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>
-        </div>
-
-        <div class="admin-form-field admin-form-field-full">
-            <label class="admin-form-field-label" for="role-reason">Lý do thay đổi</label>
-            <textarea id="role-reason" class="admin-textarea" placeholder="VD: Bổ sung quyền phê duyệt phác đồ cho lãnh đạo khoa." @bind="_reason"></textarea>
-        </div>
-
-        <div style="display:flex; justify-content:flex-end; gap:8px;">
-            <button type="button" class="admin-btn admin-btn-ghost" @onclick="ResetDraft">Hoàn tác</button>
-            <button type="button" class="admin-btn admin-btn-primary" @onclick="SaveAsync">Lưu thay đổi</button>
         </div>
     }
 </article>
 
 @code {
-    private IReadOnlyList<RoleRecord> _roles = Array.Empty<RoleRecord>();
-    private RoleRecord? _selectedRole;
-    private Guid _selectedRoleId;
-    private Dictionary<string, PermissionGrant> _draft = new();
-    private string _reason = string.Empty;
+    private List<Role> _roles = new();
+    private Dictionary<Guid, int> _memberCounts = new();
+    private Role? _selectedRole;
+    private Guid? _selectedRoleId;
+    private List<RolePermissionView> _rolePermissions = new();
 
     protected override void OnInitialized()
     {
-        _roles = PermissionService.ListRoles();
-        if (_roles.Count > 0)
-        {
-            _selectedRoleId = _roles[0].Id;
-            LoadDraft(_roles[0]);
-        }
+        _roles = Db.Roles.OrderBy(r => r.Name).ToList();
+
+        // Đếm thành viên cho mỗi vai trò (chỉ tính user_role còn hiệu lực)
+        _memberCounts = Db.UserRoles
+            .Where(ur => ur.EffectiveTo == null)
+            .GroupBy(ur => ur.RoleId)
+            .ToDictionary(g => g.Key, g => g.Count());
     }
+
+    private int GetMemberCount(Guid roleId)
+        => _memberCounts.GetValueOrDefault(roleId, 0);
 
     private void OnRoleChanged(ChangeEventArgs args)
     {
         if (Guid.TryParse(args.Value?.ToString(), out var id))
         {
             _selectedRoleId = id;
-            var role = PermissionService.GetRole(id);
-            if (role is not null) LoadDraft(role);
+            _selectedRole = _roles.FirstOrDefault(r => r.RoleId == id);
+            LoadRolePermissions(id);
+        }
+        else
+        {
+            _selectedRoleId = null;
+            _selectedRole = null;
+            _rolePermissions.Clear();
         }
     }
 
-    private void LoadDraft(RoleRecord role)
+    private void LoadRolePermissions(Guid roleId)
     {
-        _selectedRole = role;
-        _draft = role.Permissions.ToDictionary(p => p.Module, p => p);
-        foreach (var module in PermissionService.AdminModules)
-        {
-            if (!_draft.ContainsKey(module))
-            {
-                _draft[module] = new PermissionGrant(module, false, false, false, false, false);
-            }
-        }
-        _reason = string.Empty;
+        _rolePermissions = (from rp in Db.RolePermissions
+                            join p in Db.Permissions on rp.PermissionId equals p.PermissionId
+                            join s in Db.Screens on p.ScreenId equals s.ScreenId
+                            where rp.RoleId == roleId && rp.EffectiveTo == null
+                            select new RolePermissionView
+                            {
+                                ScreenName = s.Name,
+                                PermissionCode = p.PermissionCode,
+                                EffectCode = rp.EffectCode,
+                                ScopeType = rp.DepartmentScopeType
+                            }).ToList();
     }
 
-    private void Toggle(string module, bool? view = null, bool? create = null, bool? update = null, bool? delete = null, bool? approve = null)
+    private sealed class RolePermissionView
     {
-        var current = _draft[module];
-        _draft[module] = current with
-        {
-            CanView = view ?? current.CanView,
-            CanCreate = create ?? current.CanCreate,
-            CanUpdate = update ?? current.CanUpdate,
-            CanDelete = delete ?? current.CanDelete,
-            CanApprove = approve ?? current.CanApprove,
-        };
+        public string ScreenName { get; init; } = "";
+        public string PermissionCode { get; init; } = "";
+        public string EffectCode { get; init; } = "allow";
+        public string ScopeType { get; init; } = "global";
     }
-
-    private void ResetDraft()
-    {
-        if (_selectedRole is { } role) LoadDraft(role);
-    }
-
-    private async Task SaveAsync()
-    {
-        if (_selectedRole is null) return;
-        if (string.IsNullOrWhiteSpace(_reason))
-        {
-            Toasts.Show("Cần lý do thay đổi", "Vui lòng nhập lý do trước khi lưu.", ToastVariant.Warning);
-            return;
-        }
-        var grants = PermissionService.AdminModules
-            .Select(m => _draft.GetValueOrDefault(m) ?? new PermissionGrant(m, false, false, false, false, false))
-            .ToList();
-        PermissionService.UpdateRolePermissions(_selectedRole.Id, grants, _reason.Trim(), DateTime.Now, "BS. Đặng Thái Sơn");
-        Toasts.Show("Đã cập nhật phân quyền", _selectedRole.Name, ToastVariant.Success);
-        _roles = PermissionService.ListRoles();
-        var refreshed = PermissionService.GetRole(_selectedRole.Id);
-        if (refreshed is not null) LoadDraft(refreshed);
-        await Task.CompletedTask;
-    }
-
-    private static string ModuleLabel(string module) => module switch
-    {
-        "quy-trinh" => "Quy trình",
-        "phan-quyen" => "Phân quyền",
-        "danh-muc" => "Danh mục",
-        "phac-do" => "Phác đồ",
-        "bao-cao" => "Báo cáo",
-        "cai-dat" => "Cài đặt",
-        "lam-sang" => "Lâm sàng",
-        _ => module,
-    };
 }

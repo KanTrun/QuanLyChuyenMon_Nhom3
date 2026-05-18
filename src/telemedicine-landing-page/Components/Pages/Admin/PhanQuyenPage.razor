@@ -1,8 +1,10 @@
 @page "/admin/phan-quyen"
 @layout AdminLayout
+@using Microsoft.EntityFrameworkCore
+@using TelemedicineLandingPage.Data
+@using TelemedicineLandingPage.Models.Admin.Sql
 @using TelemedicineLandingPage.Components.Admin.PhanQuyen
-@inject IPermissionService PermissionService
-@implements IDisposable
+@inject MedDbContext Db
 
 <PageTitle>Phân quyền | QLCM Pro</PageTitle>
 
@@ -38,29 +40,20 @@
 
     protected override void OnInitialized()
     {
-        PermissionService.StateChanged += OnChanged;
         BuildTabs();
     }
-
-    private void OnChanged() => InvokeAsync(() =>
-    {
-        _logKey++;
-        BuildTabs();
-        StateHasChanged();
-    });
 
     private void BuildTabs()
     {
+        var roleCount = Db.Roles.Count(r => r.Status == "active");
+        var userCount = Db.Users.Count(u => u.Status == "active");
+        var logCount = Db.AuditLogs.Count(a => a.TargetType == "role_permission" || a.TargetType == "user_role");
+
         _tabs = new List<AdminTabs.TabItem>
         {
-            new("vai-tro", "Vai trò", PermissionService.ListRoles().Count),
-            new("tai-khoan", "Tài khoản", PermissionService.ListUsers().Count),
-            new("lich-su", "Lịch sử thay đổi", PermissionService.GetChangeLog().Count),
+            new("vai-tro", "Vai trò", roleCount),
+            new("tai-khoan", "Tài khoản", userCount),
+            new("lich-su", "Lịch sử thay đổi", logCount),
         };
-    }
-
-    public void Dispose()
-    {
-        PermissionService.StateChanged -= OnChanged;
     }
 }
