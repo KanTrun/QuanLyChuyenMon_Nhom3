@@ -1,7 +1,0 @@
-D:\BenhVien_Nhom3\artifacts\publish\telemedicine-landing-page\TelemedicineLandingPage.exe
-D:\BenhVien_Nhom3\artifacts\publish\telemedicine-landing-page\appsettings.Development.json
-D:\BenhVien_Nhom3\artifacts\publish\telemedicine-landing-page\appsettings.json
-D:\BenhVien_Nhom3\artifacts\publish\telemedicine-landing-page\TelemedicineLandingPage.dll
-D:\BenhVien_Nhom3\artifacts\publish\telemedicine-landing-page\TelemedicineLandingPage.deps.json
-D:\BenhVien_Nhom3\artifacts\publish\telemedicine-landing-page\TelemedicineLandingPage.runtimeconfig.json
-D:\BenhVien_Nhom3\artifacts\publish\telemedicine-landing-page\TelemedicineLandingPage.pdb
