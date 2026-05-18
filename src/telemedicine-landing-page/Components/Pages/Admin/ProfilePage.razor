@@ -2,6 +2,7 @@
 @layout AdminLayout
 @using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin.Sql
 @inject ICurrentUserContext UserContext
 @inject MedDbContext Db
 @inject IToastService Toast
@@ -175,6 +176,19 @@
             entry.Property(u => u.PasswordHash).CurrentValue = newHash;
         }
 
+        Db.SaveChanges();
+
+        // Ghi audit log cập nhật hồ sơ
+        Db.AuditLogs.Add(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = _user.UserId,
+            ActorUsername = _user.Username,
+            ActionCode = "update",
+            TargetType = "user",
+            TargetId = _user.UserId.ToString(),
+            AfterJson = $"{{\"fullName\":\"{_fullName.Trim()}\",\"email\":\"{_email.Trim()}\"}}"
+        });
         Db.SaveChanges();
 
         // Cập nhật lại context

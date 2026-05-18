@@ -195,6 +195,19 @@
             Db.Users.Add(newUser);
             Db.SaveChanges();
 
+            // Ghi audit log đăng ký
+            Db.AuditLogs.Add(new AuditLog
+            {
+                CorrelationId = Guid.NewGuid(),
+                ActorUserId = newUser.UserId,
+                ActorUsername = newUser.Username,
+                ActionCode = "create",
+                TargetType = "user",
+                TargetId = newUser.UserId.ToString(),
+                AfterJson = $"{{\"username\":\"{newUser.Username}\",\"fullName\":\"{newUser.FullName}\"}}"
+            });
+            Db.SaveChanges();
+
             _successMessage = $"Đăng ký thành công! Tên đăng nhập của bạn là: {username}";
 
             // Redirect sang trang đăng nhập sau 2 giây

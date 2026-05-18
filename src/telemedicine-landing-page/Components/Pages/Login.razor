@@ -1,7 +1,10 @@
 @page "/login"
+@using TelemedicineLandingPage.Data
+@using TelemedicineLandingPage.Models.Admin.Sql
 @using TelemedicineLandingPage.Services.Admin.Sql
 @inject ICurrentUserContext UserContext
 @inject NavigationManager Navigation
+@inject MedDbContext Db
 
 <PageTitle>Đăng nhập | QLCM Pro</PageTitle>
 
@@ -147,6 +150,18 @@
                 _errorMessage = "Tên đăng nhập hoặc mật khẩu không đúng.";
                 return;
             }
+
+            // Ghi audit log đăng nhập
+            Db.AuditLogs.Add(new AuditLog
+            {
+                CorrelationId = Guid.NewGuid(),
+                ActorUserId = user.UserId,
+                ActorUsername = user.Username,
+                ActionCode = "login",
+                TargetType = "session",
+                TargetId = user.UserId.ToString()
+            });
+            Db.SaveChanges();
 
             // Đăng nhập thành công
             Navigation.NavigateTo("/admin", forceLoad: false);

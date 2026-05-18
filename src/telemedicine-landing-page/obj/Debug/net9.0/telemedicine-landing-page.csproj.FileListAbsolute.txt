@@ -200,5 +200,5 @@ D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\telemedi.00E0C8C4.Up2Date
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\x8yc0i4dko-pgjlnvukcu.gz
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\9ywmv6kd8b-1lwe1pn3k9.gz
-D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\v4y6qbcjj4-dle9gqtxn6.gz
 D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\gxodc1khnw-7vb8m4qvqx.gz
+D:\BenhVienQuanLy_Nhom3\QuanLyChuyenMon_Nhom3\src\telemedicine-landing-page\obj\Debug\net9.0\compressed\v4y6qbcjj4-j8rni6dusf.gz

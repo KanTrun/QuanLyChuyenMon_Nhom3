@@ -1,8 +1,11 @@
 @using Microsoft.EntityFrameworkCore
 @using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin.Sql
 @inject MedDbContext Db
 @inject IToastService Toast
+@inject ICurrentUserContext UserContext
+@inject IConfirmDialogService Confirm
 
 <article class="admin-panel">
     <header class="admin-panel-head">
@@ -34,11 +37,17 @@
                         <td>@(user.DepartmentName ?? "—")</td>
                         <td>
                             <div class="admin-card-tags">
-                                @if (user.RoleNames.Count > 0)
+                                @if (user.Roles.Count > 0)
                                 {
-                                    @foreach (var roleName in user.RoleNames)
+                                    @foreach (var role in user.Roles)
                                     {
-                                        <AdminBadge Tone="tone-secondary">@roleName</AdminBadge>
+                                        <span style="display:inline-flex;align-items:center;gap:2px;">
+                                            <AdminBadge Tone="tone-secondary">@role.Name</AdminBadge>
+                                            <button type="button"
+                                                    class="admin-btn-icon-xs"
+                                                    title="Hủy vai trò @role.Name"
+                                                    @onclick="() => RemoveRole(user.UserId, user.Username, user.FullName, role.RoleId, role.Name)">×</button>
+                                        </span>
                                     }
                                 }
                                 else
@@ -83,6 +92,30 @@
     </AdminModal>
 }
 
+<style>
+    .admin-btn-icon-xs {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border: none;
+        background: transparent;
+        color: var(--color-text-muted, #94a3b8);
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1;
+        border-radius: 50%;
+        cursor: pointer;
+        padding: 0;
+        transition: background 0.15s, color 0.15s;
+    }
+    .admin-btn-icon-xs:hover {
+        background: var(--color-danger-subtle, #fee2e2);
+        color: var(--color-danger, #dc2626);
+    }
+</style>
+
 @code {
     private List<UserView> _users = new();
     private List<Role> _allRoles = new();
@@ -113,13 +146,9 @@
 
         _users = activeUsers.Select(u =>
         {
-            var roleIds = activeUserRoles
+            var userRoles = activeUserRoles
                 .Where(ur => ur.UserId == u.UserId)
-                .Select(ur => ur.RoleId)
-                .ToList();
-
-            var roleNames = roleIds
-                .Select(rid => allRoles.GetValueOrDefault(rid, "(Không rõ)"))
+                .Select(ur => new RoleInfo { RoleId = ur.RoleId, Name = allRoles.GetValueOrDefault(ur.RoleId, "(Không rõ)") })
                 .ToList();
 
             string? deptName = u.PrimaryDepartmentId.HasValue
@@ -133,7 +162,7 @@
                 FullName = u.FullName,
                 Email = u.Email,
                 DepartmentName = deptName,
-                RoleNames = roleNames
+                Roles = userRoles
             };
         }).ToList();
     }
@@ -174,10 +203,69 @@
             RoleId = roleId
         });
         Db.SaveChanges();
+
+        // Ghi audit log
+        var roleName = _allRoles.FirstOrDefault(r => r.RoleId == roleId)?.Name ?? "";
+        var currentUser = UserContext.CurrentUser;
+        Db.AuditLogs.Add(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = currentUser?.UserId,
+            ActorUsername = currentUser?.Username,
+            ActionCode = "assign_role",
+            TargetType = "user_role",
+            TargetId = _assigningUser.UserId.ToString(),
+            AfterJson = $"{{\"role\":\"{roleName}\",\"user\":\"{_assigningUser.Username}\"}}"
+        });
+        Db.SaveChanges();
+
         Toast.Show("Thành công", "Đã gán vai trò thành công", ToastVariant.Success);
 
         _assignModalOpen = false;
         LoadUsers();
+    }
+
+    private async Task RemoveRole(Guid userId, string username, string fullName, Guid roleId, string roleName)
+    {
+        var confirmed = await Confirm.ShowAsync(
+            "Hủy vai trò",
+            $"Bạn có chắc muốn hủy vai trò {roleName} cho {fullName}?",
+            "Xác nhận hủy");
+
+        if (!confirmed) return;
+
+        // Soft-delete: đặt effective_to = now
+        var userRole = Db.UserRoles.FirstOrDefault(ur =>
+            ur.UserId == userId && ur.RoleId == roleId && ur.EffectiveTo == null);
+
+        if (userRole is null) return;
+
+        var entry = Db.Entry(userRole);
+        entry.Property(ur => ur.EffectiveTo).CurrentValue = DateTime.UtcNow;
+        Db.SaveChanges();
+
+        // Ghi audit log
+        var currentUser = UserContext.CurrentUser;
+        Db.AuditLogs.Add(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = currentUser?.UserId,
+            ActorUsername = currentUser?.Username,
+            ActionCode = "remove_role",
+            TargetType = "user_role",
+            TargetId = userId.ToString(),
+            BeforeJson = $"{{\"role\":\"{roleName}\",\"user\":\"{username}\"}}"
+        });
+        Db.SaveChanges();
+
+        Toast.Show("Thành công", "Đã hủy vai trò thành công", ToastVariant.Success);
+        LoadUsers();
+    }
+
+    private sealed class RoleInfo
+    {
+        public Guid RoleId { get; init; }
+        public string Name { get; init; } = "";
     }
 
     private sealed class UserView
@@ -187,6 +275,6 @@
         public string FullName { get; init; } = "";
         public string? Email { get; init; }
         public string? DepartmentName { get; init; }
-        public List<string> RoleNames { get; init; } = new();
+        public List<RoleInfo> Roles { get; init; } = new();
     }
 }
