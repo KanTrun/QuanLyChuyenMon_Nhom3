@@ -69,7 +69,7 @@
                 <button type="submit" class="login-submit" disabled="@_isLoading">
                     @if (_isLoading)
                     {
-                        <span>Đang xử lý...</span>
+                        <span class="login-spinner"></span><span>Đang xử lý...</span>
                     }
                     else
                     {
@@ -113,13 +113,14 @@
         }
     }
 
-    private void HandleLogin()
+    private async Task HandleLogin()
     {
         _errorMessage = null;
         _isLoading = true;
 
         try
         {
+            await Task.Delay(300);
             if (string.IsNullOrWhiteSpace(_username))
             {
                 _errorMessage = "Vui lòng nhập tên đăng nhập.";

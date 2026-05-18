@@ -93,7 +93,7 @@
                 }
 
                 <button type="submit" class="login-submit" disabled="@_isLoading">
-                    @if (_isLoading) { <span>Đang xử lý...</span> }
+                    @if (_isLoading) { <span class="login-spinner"></span><span>Đang xử lý...</span> }
                     else { <span>Đăng ký tài khoản</span> }
                 </button>
             </form>
@@ -128,7 +128,7 @@
     private string? _successMessage;
     private bool _isLoading;
 
-    private void HandleRegister()
+    private async Task HandleRegister()
     {
         _errorMessage = null;
         _successMessage = null;
@@ -136,6 +136,7 @@
 
         try
         {
+            await Task.Delay(300);
             // Kiểm tra dữ liệu
             if (string.IsNullOrWhiteSpace(_firstName) || string.IsNullOrWhiteSpace(_lastName))
             {

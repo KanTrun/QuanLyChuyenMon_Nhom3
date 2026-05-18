@@ -12,17 +12,17 @@
       <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"rlirzv3b7p"},{"Name":"integrity","Value":"sha256-EZo8u5bIcsPQ5jk8IkSMgkoaZ\u002BQYdNxcTmi4Gh5vtpA="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/admin-page.css"}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"33039"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022EZo8u5bIcsPQ5jk8IkSMgkoaZ\u002BQYdNxcTmi4Gh5vtpA=\u0022"},{"Name":"Last-Modified","Value":"Mon, 18 May 2026 07:48:28 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/admin-shell.7vb8m4qvqx.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin-shell.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"7vb8m4qvqx"},{"Name":"integrity","Value":"sha256-7UuM13Ty4DSCfhFy\u002BoNd9PwskmqS0YqGSPFCo8BCOoc="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/admin-shell.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"49913"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00227UuM13Ty4DSCfhFy\u002BoNd9PwskmqS0YqGSPFCo8BCOoc=\u0022"},{"Name":"Last-Modified","Value":"Mon, 18 May 2026 17:52:27 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/admin-shell.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin-shell.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"47860"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0=\u0022"},{"Name":"Last-Modified","Value":"Mon, 18 May 2026 07:48:28 GMT"}]]]></ResponseHeaders>
-    </StaticWebAssetEndpoint>
-    <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/admin-shell.i1q8vhddwk.css">
-      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin-shell.css'))</AssetFile>
-      <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"i1q8vhddwk"},{"Name":"integrity","Value":"sha256-KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0="},{"Name":"label","Value":"_content/TelemedicineLandingPage/css/admin-shell.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"47860"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0=\u0022"},{"Name":"Last-Modified","Value":"Mon, 18 May 2026 07:48:28 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-7UuM13Ty4DSCfhFy\u002BoNd9PwskmqS0YqGSPFCo8BCOoc="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"49913"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00227UuM13Ty4DSCfhFy\u002BoNd9PwskmqS0YqGSPFCo8BCOoc=\u0022"},{"Name":"Last-Modified","Value":"Mon, 18 May 2026 17:52:27 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/TelemedicineLandingPage/css/animations.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\animations.css'))</AssetFile>
