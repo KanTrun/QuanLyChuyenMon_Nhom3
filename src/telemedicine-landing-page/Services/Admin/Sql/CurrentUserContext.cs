@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Admin.Sql;
 
@@ -5,7 +7,7 @@ namespace TelemedicineLandingPage.Services.Admin.Sql;
 
 /// <summary>
 /// Triển khai ngữ cảnh người dùng hiện tại (scoped per-circuit).
-/// Không tự động đăng nhập — người dùng phải đăng nhập qua /login.
+/// Đăng nhập bằng username + password (SHA256 hash).
 /// </summary>
 public sealed class CurrentUserContext : ICurrentUserContext
 {
@@ -20,7 +22,6 @@ public sealed class CurrentUserContext : ICurrentUserContext
     {
         _db = db;
         _resolver = resolver;
-        // Không tự động đăng nhập — người dùng phải xác thực qua /login
     }
 
     public void SetCurrentUser(Guid userId)
@@ -31,15 +32,31 @@ public sealed class CurrentUserContext : ICurrentUserContext
         StateChanged?.Invoke();
     }
 
-    /// <summary>Đăng nhập bằng username (không kiểm tra mật khẩu — xem ghi chú bên dưới).</summary>
-    /// <remarks>
-    /// TODO: Thêm kiểm tra mật khẩu khi bảng users có cột password_hash.
-    /// Hiện tại SQL script không có cột password nên chỉ kiểm tra username + status.
-    /// </remarks>
-    public AppUser? LoginByUsername(string username)
+    /// <summary>Đăng nhập bằng username + password. Trả về null nếu thất bại.</summary>
+    public AppUser? LoginByUsername(string username, string password)
     {
         var user = _db.Users.FirstOrDefault(u => u.Username == username && u.Status == "active");
         if (user is null) return null;
+
+        // Kiểm tra mật khẩu
+        var inputHash = HashPassword(password);
+        if (user.PasswordHash is null || user.PasswordHash != inputHash)
+            return null;
+
+        CurrentUser = user;
+        StateChanged?.Invoke();
+        return user;
+    }
+
+    /// <summary>Đăng nhập chỉ bằng username (dùng cho lần đầu khi chưa đặt mật khẩu).</summary>
+    public AppUser? LoginByUsernameOnly(string username)
+    {
+        var user = _db.Users.FirstOrDefault(u => u.Username == username && u.Status == "active");
+        if (user is null) return null;
+
+        // Nếu chưa có password_hash thì cho đăng nhập (lần đầu setup)
+        if (user.PasswordHash is not null) return null;
+
         CurrentUser = user;
         StateChanged?.Invoke();
         return user;
@@ -61,5 +78,12 @@ public sealed class CurrentUserContext : ICurrentUserContext
     {
         if (CurrentUser is null) return Array.Empty<EffectivePermissionResolver.ResolvedPermission>();
         return _resolver.Resolve(CurrentUser.UserId);
+    }
+
+    /// <summary>Mã hóa mật khẩu bằng SHA256.</summary>
+    public static string HashPassword(string password)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 }

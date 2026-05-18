@@ -51,13 +51,12 @@
             <form class="login-form" @onsubmit="HandleLogin" @onsubmit:preventDefault>
                 <div class="form-group">
                     <label for="login-username">Tên đăng nhập</label>
-                    <input type="text" id="login-username" @bind="_username" placeholder="admin" autocomplete="username" required />
+                    <input type="text" id="login-username" @bind="_username" placeholder="Nhập tên đăng nhập" autocomplete="username" required />
                 </div>
 
                 <div class="form-group">
                     <label for="login-password">Mật khẩu</label>
-                    <!-- TODO: Kiểm tra mật khẩu khi database có cột password_hash -->
-                    <input type="password" id="login-password" @bind="_password" placeholder="Nhập mật khẩu (bỏ qua)" autocomplete="current-password" />
+                    <input type="password" id="login-password" @bind="_password" placeholder="Nhập mật khẩu" autocomplete="current-password" required />
                 </div>
 
                 @if (!string.IsNullOrEmpty(_errorMessage))
@@ -80,7 +79,7 @@
             </form>
 
             <p class="login-footer" style="margin-top:1.5rem;font-size:0.85rem;color:var(--text-muted,#888);">
-                Hệ thống hiện chỉ kiểm tra tên đăng nhập (chưa có mật khẩu trong database).
+                Liên hệ quản trị viên nếu quên mật khẩu.
             </p>
         </div>
     </div>
@@ -114,14 +113,28 @@
                 return;
             }
 
-            var user = UserContext.LoginByUsername(_username.Trim());
-            if (user is null)
+            if (string.IsNullOrWhiteSpace(_password))
             {
-                _errorMessage = "Tên đăng nhập hoặc mật khẩu không đúng";
+                _errorMessage = "Vui lòng nhập mật khẩu.";
                 return;
             }
 
-            // Đăng nhập thành công — chuyển hướng vào trang admin
+            // Thử đăng nhập với mật khẩu
+            var user = UserContext.LoginByUsername(_username.Trim(), _password);
+
+            // Nếu thất bại, thử đăng nhập không mật khẩu (tài khoản chưa đặt password)
+            if (user is null)
+            {
+                user = UserContext.LoginByUsernameOnly(_username.Trim());
+            }
+
+            if (user is null)
+            {
+                _errorMessage = "Tên đăng nhập hoặc mật khẩu không đúng.";
+                return;
+            }
+
+            // Đăng nhập thành công
             Navigation.NavigateTo("/admin", forceLoad: false);
         }
         finally

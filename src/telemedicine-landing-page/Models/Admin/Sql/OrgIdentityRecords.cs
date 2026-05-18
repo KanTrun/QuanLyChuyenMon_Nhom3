@@ -78,6 +78,9 @@ public sealed record AppUser
 
     [Column("deleted_at")]
     public DateTime? DeletedAt { get; init; }
+
+    [Column("password_hash")]
+    public string? PasswordHash { get; init; }
 }
 
 /// <summary>Vai trò trong hệ thống.</summary>

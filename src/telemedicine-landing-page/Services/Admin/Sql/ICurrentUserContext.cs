@@ -4,7 +4,7 @@ namespace TelemedicineLandingPage.Services.Admin.Sql;
 
 /// <summary>
 /// Ngữ cảnh người dùng hiện tại (scoped per-circuit).
-/// Cung cấp thông tin xác thực và kiểm tra quyền.
+/// Cung cấp xác thực và kiểm tra quyền.
 /// </summary>
 public interface ICurrentUserContext
 {
@@ -17,8 +17,11 @@ public interface ICurrentUserContext
     /// <summary>Đặt người dùng hiện tại theo UserId.</summary>
     void SetCurrentUser(Guid userId);
 
-    /// <summary>Đăng nhập bằng username. Trả về null nếu không tìm thấy.</summary>
-    AppUser? LoginByUsername(string username);
+    /// <summary>Đăng nhập bằng username + password. Trả về null nếu thất bại.</summary>
+    AppUser? LoginByUsername(string username, string password);
+
+    /// <summary>Đăng nhập chỉ bằng username (tài khoản chưa đặt mật khẩu).</summary>
+    AppUser? LoginByUsernameOnly(string username);
 
     /// <summary>Đăng xuất người dùng hiện tại.</summary>
     void SignOut();
