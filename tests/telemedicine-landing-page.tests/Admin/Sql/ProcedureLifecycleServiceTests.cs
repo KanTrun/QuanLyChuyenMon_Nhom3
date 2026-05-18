@@ -7,38 +7,49 @@ public sealed class ProcedureLifecycleServiceTests
 {
     private readonly MedDataStore _store = new();
     private readonly ProcedureLifecycleService _svc;
+    private readonly Guid _testProcId;
 
     public ProcedureLifecycleServiceTests()
     {
         var audit = new AuditTrailService(_store);
         _svc = new ProcedureLifecycleService(_store, audit);
+
+        // Tạo quy trình kiểm thử cục bộ (không phụ thuộc seed)
+        _testProcId = Guid.NewGuid();
+        _store.AddProcedure(new ProfessionalProcedure
+        {
+            ProcedureId = _testProcId,
+            ProcedureCode = "QT-TEST-001",
+            Name = "Quy trình kiểm thử",
+            ProcedureType = "clinical",
+            OwnerDepartmentId = MedDataStoreSeed.DeptNoiId,
+            Description = "Quy trình dùng cho kiểm thử đơn vị",
+            CreatedBy = MedDataStoreSeed.AdminUserId
+        });
     }
 
     // === 1. CreateDraft: tạo phiên bản mới thành công ===
     [Fact]
     public void CreateDraft_ValidProcedure_ReturnsVersion()
     {
-        var procId = _store.Procedures.First().ProcedureId;
-
-        var ver = _svc.CreateDraft(procId, "Phiên bản kiểm thử", MedDataStoreSeed.UserAnId);
+        var ver = _svc.CreateDraft(_testProcId, "Phiên bản kiểm thử", MedDataStoreSeed.AdminUserId);
 
         Assert.NotNull(ver);
         Assert.Equal("draft", ver.StatusCode);
-        Assert.Equal(procId, ver.ProcedureId);
+        Assert.Equal(_testProcId, ver.ProcedureId);
     }
 
     // === 2. CreateDraft: tự động tăng VersionNo ===
     [Fact]
     public void CreateDraft_IncrementsVersionNo()
     {
-        var procId = _store.Procedures.First().ProcedureId;
-        var existingMax = _store.ProcedureVersions
-            .Where(v => v.ProcedureId == procId)
-            .Max(v => v.VersionNo);
+        // Tạo phiên bản đầu tiên
+        _svc.CreateDraft(_testProcId, "Phiên bản 1", MedDataStoreSeed.AdminUserId);
 
-        var ver = _svc.CreateDraft(procId, "Phiên bản mới", MedDataStoreSeed.UserBinhId);
+        // Tạo phiên bản thứ hai
+        var ver = _svc.CreateDraft(_testProcId, "Phiên bản 2", MedDataStoreSeed.AdminUserId);
 
-        Assert.Equal(existingMax + 1, ver.VersionNo);
+        Assert.Equal(2, ver.VersionNo);
     }
 
     // === 3. CreateDraft: quy trình không tồn tại → lỗi ===
@@ -46,7 +57,7 @@ public sealed class ProcedureLifecycleServiceTests
     public void CreateDraft_InvalidProcedure_Throws()
     {
         var ex = Assert.Throws<MedDomainException>(() =>
-            _svc.CreateDraft(Guid.NewGuid(), "Không tồn tại", MedDataStoreSeed.UserAnId));
+            _svc.CreateDraft(Guid.NewGuid(), "Không tồn tại", MedDataStoreSeed.AdminUserId));
 
         Assert.Equal(547, ex.SqlErrorNumber);
     }
@@ -57,7 +68,7 @@ public sealed class ProcedureLifecycleServiceTests
     {
         var ver = CreateDraftWithSteps();
 
-        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.UserBinhId);
+        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
 
         var updated = _store.ProcedureVersions
             .First(v => v.ProcedureVersionId == ver.ProcedureVersionId);
@@ -70,11 +81,10 @@ public sealed class ProcedureLifecycleServiceTests
     [Fact]
     public void Submit_NoSteps_Throws50021()
     {
-        var procId = _store.Procedures.First().ProcedureId;
-        var ver = _svc.CreateDraft(procId, "Không có bước", MedDataStoreSeed.UserAnId);
+        var ver = _svc.CreateDraft(_testProcId, "Không có bước", MedDataStoreSeed.AdminUserId);
 
         var ex = Assert.Throws<MedDomainException>(() =>
-            _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.UserAnId));
+            _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId));
 
         Assert.Equal(50021, ex.SqlErrorNumber);
     }
@@ -84,10 +94,10 @@ public sealed class ProcedureLifecycleServiceTests
     public void Submit_NotDraft_Throws50020()
     {
         var ver = CreateDraftWithSteps();
-        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.UserBinhId);
+        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
 
         var ex = Assert.Throws<MedDomainException>(() =>
-            _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.UserBinhId));
+            _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId));
 
         Assert.Equal(50020, ex.SqlErrorNumber);
     }
@@ -97,9 +107,9 @@ public sealed class ProcedureLifecycleServiceTests
     public void Publish_PendingVersion_Succeeds()
     {
         var ver = CreateDraftWithSteps();
-        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.UserBinhId);
+        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
 
-        _svc.Publish(ver.ProcedureVersionId, MedDataStoreSeed.UserAnId);
+        _svc.Publish(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
 
         var updated = _store.ProcedureVersions
             .First(v => v.ProcedureVersionId == ver.ProcedureVersionId);
@@ -111,26 +121,24 @@ public sealed class ProcedureLifecycleServiceTests
     [Fact]
     public void Publish_SupersedesOldPublished()
     {
-        var procId = _store.Procedures.First().ProcedureId;
+        // Publish phiên bản đầu tiên
+        var ver1 = CreateDraftWithSteps();
+        _svc.Submit(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
 
-        // Tìm phiên bản published hiện tại (nếu có)
-        var oldPublished = _store.ProcedureVersions
-            .FirstOrDefault(v => v.ProcedureId == procId && v.StatusCode == "published");
+        // Publish phiên bản thứ hai
+        var ver2 = CreateDraftWithSteps();
+        _svc.Submit(ver2.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver2.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
 
-        var ver = CreateDraftWithSteps(procId);
-        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.UserBinhId);
-        _svc.Publish(ver.ProcedureVersionId, MedDataStoreSeed.UserAnId);
-
-        if (oldPublished is not null)
-        {
-            var superseded = _store.ProcedureVersions
-                .First(v => v.ProcedureVersionId == oldPublished.ProcedureVersionId);
-            Assert.Equal("superseded", superseded.StatusCode);
-        }
+        // Phiên bản đầu phải bị superseded
+        var superseded = _store.ProcedureVersions
+            .First(v => v.ProcedureVersionId == ver1.ProcedureVersionId);
+        Assert.Equal("superseded", superseded.StatusCode);
 
         // Chỉ có 1 bản published cho quy trình này
         var publishedCount = _store.ProcedureVersions
-            .Count(v => v.ProcedureId == procId && v.StatusCode == "published");
+            .Count(v => v.ProcedureId == _testProcId && v.StatusCode == "published");
         Assert.Equal(1, publishedCount);
     }
 
@@ -139,9 +147,9 @@ public sealed class ProcedureLifecycleServiceTests
     public void Reject_PendingVersion_Succeeds()
     {
         var ver = CreateDraftWithSteps();
-        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.UserBinhId);
+        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
 
-        _svc.Reject(ver.ProcedureVersionId, MedDataStoreSeed.UserAnId, "Chưa đủ chi tiết");
+        _svc.Reject(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId, "Chưa đủ chi tiết");
 
         var updated = _store.ProcedureVersions
             .First(v => v.ProcedureVersionId == ver.ProcedureVersionId);
@@ -153,10 +161,10 @@ public sealed class ProcedureLifecycleServiceTests
     public void Withdraw_PublishedVersion_Succeeds()
     {
         var ver = CreateDraftWithSteps();
-        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.UserBinhId);
-        _svc.Publish(ver.ProcedureVersionId, MedDataStoreSeed.UserAnId);
+        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
 
-        _svc.Withdraw(ver.ProcedureVersionId, MedDataStoreSeed.UserAnId, "Phát hiện lỗi nghiêm trọng");
+        _svc.Withdraw(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId, "Phát hiện lỗi nghiêm trọng");
 
         var updated = _store.ProcedureVersions
             .First(v => v.ProcedureVersionId == ver.ProcedureVersionId);
@@ -171,7 +179,7 @@ public sealed class ProcedureLifecycleServiceTests
         var ver = CreateDraftWithSteps();
 
         var ex = Assert.Throws<MedDomainException>(() =>
-            _svc.Withdraw(ver.ProcedureVersionId, MedDataStoreSeed.UserAnId, "Lý do"));
+            _svc.Withdraw(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId, "Lý do"));
 
         Assert.Equal(50024, ex.SqlErrorNumber);
     }
@@ -180,12 +188,11 @@ public sealed class ProcedureLifecycleServiceTests
     [Fact]
     public void GetActiveVersion_ReturnsPublished()
     {
-        var procId = _store.Procedures.First().ProcedureId;
-        var ver = CreateDraftWithSteps(procId);
-        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.UserBinhId);
-        _svc.Publish(ver.ProcedureVersionId, MedDataStoreSeed.UserAnId);
+        var ver = CreateDraftWithSteps();
+        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
 
-        var active = _svc.GetActiveVersion(procId);
+        var active = _svc.GetActiveVersion(_testProcId);
 
         Assert.NotNull(active);
         Assert.Equal(ver.ProcedureVersionId, active!.ProcedureVersionId);
@@ -196,10 +203,10 @@ public sealed class ProcedureLifecycleServiceTests
     public void Publish_CreatesAuditLog()
     {
         var ver = CreateDraftWithSteps();
-        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.UserBinhId);
+        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
         var countBefore = _store.AuditLogs.Count;
 
-        _svc.Publish(ver.ProcedureVersionId, MedDataStoreSeed.UserAnId);
+        _svc.Publish(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
 
         Assert.True(_store.AuditLogs.Count > countBefore);
         var log = _store.AuditLogs.Last();
@@ -209,8 +216,8 @@ public sealed class ProcedureLifecycleServiceTests
 
     private ProcedureVersion CreateDraftWithSteps(Guid? procedureId = null)
     {
-        var procId = procedureId ?? _store.Procedures.First().ProcedureId;
-        var ver = _svc.CreateDraft(procId, "Phiên bản kiểm thử", MedDataStoreSeed.UserBinhId);
+        var procId = procedureId ?? _testProcId;
+        var ver = _svc.CreateDraft(procId, "Phiên bản kiểm thử", MedDataStoreSeed.AdminUserId);
 
         _store.AddProcedureStep(new ProcedureStep
         {

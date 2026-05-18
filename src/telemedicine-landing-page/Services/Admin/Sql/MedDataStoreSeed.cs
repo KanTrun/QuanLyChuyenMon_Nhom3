@@ -3,12 +3,13 @@ using TelemedicineLandingPage.Models.Admin.Sql;
 namespace TelemedicineLandingPage.Services.Admin.Sql;
 
 /// <summary>
-/// Dữ liệu mẫu thực tế cho hệ thống QLCM (Quản Lý Chuyên Môn).
-/// Được gọi từ constructor của MedDataStore để khởi tạo dữ liệu demo.
+/// Dữ liệu cấu trúc hệ thống cho QLCM (Quản Lý Chuyên Môn).
+/// Chỉ chứa dữ liệu tổ chức: khoa/phòng, vai trò, màn hình, quyền hạn.
+/// Không chứa dữ liệu mẫu cá nhân (bệnh nhân, quy trình, phác đồ, thông báo).
 /// </summary>
 public static class MedDataStoreSeed
 {
-    /// <summary>Khởi tạo toàn bộ dữ liệu mẫu vào kho dữ liệu.</summary>
+    /// <summary>Khởi tạo dữ liệu cấu trúc hệ thống vào kho dữ liệu.</summary>
     public static void Apply(MedDataStore store)
     {
         SeedDepartments(store);
@@ -17,13 +18,11 @@ public static class MedDataStoreSeed
         SeedScreensAndFeatures(store);
         SeedPermissions(store);
         SeedRolePermissions(store);
-        SeedProcedures(store);
-        SeedTechnicalServices(store);
-        SeedClinicalProtocols(store);
-        SeedNotifications(store);
     }
 
     // === IDs cố định để tham chiếu chéo ===
+
+    // Khoa/Phòng
     public static readonly Guid RootDeptId = Guid.Parse("a0000000-0000-0000-0000-000000000001");
     public static readonly Guid DeptNoiId = Guid.Parse("a0000000-0000-0000-0000-000000000010");
     public static readonly Guid DeptNgoaiId = Guid.Parse("a0000000-0000-0000-0000-000000000020");
@@ -33,31 +32,24 @@ public static class MedDataStoreSeed
     public static readonly Guid DeptCdhaId = Guid.Parse("a0000000-0000-0000-0000-000000000060");
     public static readonly Guid DeptHcId = Guid.Parse("a0000000-0000-0000-0000-000000000070");
 
+    // Vai trò
     public static readonly Guid RoleSysAdminId = Guid.Parse("b0000000-0000-0000-0000-000000000001");
     public static readonly Guid RoleDeptAdminId = Guid.Parse("b0000000-0000-0000-0000-000000000002");
     public static readonly Guid RoleClinicalId = Guid.Parse("b0000000-0000-0000-0000-000000000003");
     public static readonly Guid RoleReportId = Guid.Parse("b0000000-0000-0000-0000-000000000004");
     public static readonly Guid RoleNurseId = Guid.Parse("b0000000-0000-0000-0000-000000000005");
 
-    public static readonly Guid UserAnId = Guid.Parse("c0000000-0000-0000-0000-000000000001");
-    public static readonly Guid UserBinhId = Guid.Parse("c0000000-0000-0000-0000-000000000002");
-    public static readonly Guid UserCuongId = Guid.Parse("c0000000-0000-0000-0000-000000000003");
-    public static readonly Guid UserDungId = Guid.Parse("c0000000-0000-0000-0000-000000000004");
-    public static readonly Guid UserEmId = Guid.Parse("c0000000-0000-0000-0000-000000000005");
-    public static readonly Guid UserPhucId = Guid.Parse("c0000000-0000-0000-0000-000000000006");
-    public static readonly Guid UserGiangId = Guid.Parse("c0000000-0000-0000-0000-000000000007");
-    public static readonly Guid UserHanhId = Guid.Parse("c0000000-0000-0000-0000-000000000008");
-    public static readonly Guid UserKhanhId = Guid.Parse("c0000000-0000-0000-0000-000000000009");
-    public static readonly Guid UserLinhId = Guid.Parse("c0000000-0000-0000-0000-000000000010");
-    public static readonly Guid UserMinhId = Guid.Parse("c0000000-0000-0000-0000-000000000011");
-    public static readonly Guid UserNgocId = Guid.Parse("c0000000-0000-0000-0000-000000000012");
+    // Người dùng quản trị
+    public static readonly Guid AdminUserId = Guid.Parse("c0000000-0000-0000-0000-000000000001");
 
+    // Màn hình
     public static readonly Guid ScreenDashId = Guid.Parse("d0000000-0000-0000-0000-000000000001");
     public static readonly Guid ScreenProcId = Guid.Parse("d0000000-0000-0000-0000-000000000002");
     public static readonly Guid ScreenPermId = Guid.Parse("d0000000-0000-0000-0000-000000000003");
     public static readonly Guid ScreenReportId = Guid.Parse("d0000000-0000-0000-0000-000000000004");
     public static readonly Guid ScreenOrderId = Guid.Parse("d0000000-0000-0000-0000-000000000005");
 
+    // Quyền hạn
     public static readonly Guid PermViewDashId = Guid.Parse("e0000000-0000-0000-0000-000000000001");
     public static readonly Guid PermManageProcId = Guid.Parse("e0000000-0000-0000-0000-000000000002");
     public static readonly Guid PermApproveProcId = Guid.Parse("e0000000-0000-0000-0000-000000000003");
@@ -71,7 +63,7 @@ public static class MedDataStoreSeed
         {
             DepartmentId = RootDeptId,
             Code = "BV-ROOT",
-            Name = "Bệnh viện Đa khoa Trung ương",
+            Name = "Bệnh viện Đa khoa",
             ParentDepartmentId = null
         });
         store.AddDepartment(new Department
@@ -136,32 +128,17 @@ public static class MedDataStoreSeed
 
     private static void SeedUsers(MedDataStore store)
     {
-        store.AddUser(new AppUser { UserId = UserAnId, Username = "nguyenvanan", FullName = "Nguyễn Văn An", Email = "an.nguyen@bv.vn", PrimaryDepartmentId = RootDeptId });
-        store.AddUser(new AppUser { UserId = UserBinhId, Username = "tranthibinh", FullName = "Trần Thị Bình", Email = "binh.tran@bv.vn", PrimaryDepartmentId = DeptNoiId });
-        store.AddUser(new AppUser { UserId = UserCuongId, Username = "levancuong", FullName = "Lê Văn Cường", Email = "cuong.le@bv.vn", PrimaryDepartmentId = DeptNgoaiId });
-        store.AddUser(new AppUser { UserId = UserDungId, Username = "phamthidung", FullName = "Phạm Thị Dung", Email = "dung.pham@bv.vn", PrimaryDepartmentId = DeptSanId });
-        store.AddUser(new AppUser { UserId = UserEmId, Username = "hoangvanem", FullName = "Hoàng Văn Em", Email = "em.hoang@bv.vn", PrimaryDepartmentId = DeptNhiId });
-        store.AddUser(new AppUser { UserId = UserPhucId, Username = "ngothiphuc", FullName = "Ngô Thị Phúc", Email = "phuc.ngo@bv.vn", PrimaryDepartmentId = DeptXetNghiemId });
-        store.AddUser(new AppUser { UserId = UserGiangId, Username = "dovangiang", FullName = "Đỗ Văn Giang", Email = "giang.do@bv.vn", PrimaryDepartmentId = DeptCdhaId });
-        store.AddUser(new AppUser { UserId = UserHanhId, Username = "vuthihanh", FullName = "Vũ Thị Hạnh", Email = "hanh.vu@bv.vn", PrimaryDepartmentId = DeptHcId });
-        store.AddUser(new AppUser { UserId = UserKhanhId, Username = "dangvankhanh", FullName = "Đặng Văn Khánh", Email = "khanh.dang@bv.vn", PrimaryDepartmentId = DeptNoiId });
-        store.AddUser(new AppUser { UserId = UserLinhId, Username = "buithilinh", FullName = "Bùi Thị Linh", Email = "linh.bui@bv.vn", PrimaryDepartmentId = DeptNgoaiId });
-        store.AddUser(new AppUser { UserId = UserMinhId, Username = "trinhvanminh", FullName = "Trịnh Văn Minh", Email = "minh.trinh@bv.vn", PrimaryDepartmentId = DeptNhiId });
-        store.AddUser(new AppUser { UserId = UserNgocId, Username = "luuthingoc", FullName = "Lưu Thị Ngọc", Email = "ngoc.luu@bv.vn", PrimaryDepartmentId = DeptXetNghiemId });
+        store.AddUser(new AppUser
+        {
+            UserId = AdminUserId,
+            Username = "admin",
+            FullName = "Quản trị viên hệ thống",
+            Email = "admin@bv.vn",
+            PrimaryDepartmentId = RootDeptId
+        });
 
-        // Gán vai trò cho người dùng
-        store.AddUserRole(new UserRole { UserId = UserAnId, RoleId = RoleSysAdminId });
-        store.AddUserRole(new UserRole { UserId = UserBinhId, RoleId = RoleDeptAdminId, DepartmentId = DeptNoiId });
-        store.AddUserRole(new UserRole { UserId = UserCuongId, RoleId = RoleClinicalId, DepartmentId = DeptNgoaiId });
-        store.AddUserRole(new UserRole { UserId = UserDungId, RoleId = RoleClinicalId, DepartmentId = DeptSanId });
-        store.AddUserRole(new UserRole { UserId = UserEmId, RoleId = RoleClinicalId, DepartmentId = DeptNhiId });
-        store.AddUserRole(new UserRole { UserId = UserPhucId, RoleId = RoleClinicalId, DepartmentId = DeptXetNghiemId });
-        store.AddUserRole(new UserRole { UserId = UserGiangId, RoleId = RoleClinicalId, DepartmentId = DeptCdhaId });
-        store.AddUserRole(new UserRole { UserId = UserHanhId, RoleId = RoleDeptAdminId, DepartmentId = DeptHcId });
-        store.AddUserRole(new UserRole { UserId = UserKhanhId, RoleId = RoleNurseId, DepartmentId = DeptNoiId });
-        store.AddUserRole(new UserRole { UserId = UserLinhId, RoleId = RoleNurseId, DepartmentId = DeptNgoaiId });
-        store.AddUserRole(new UserRole { UserId = UserMinhId, RoleId = RoleReportId });
-        store.AddUserRole(new UserRole { UserId = UserNgocId, RoleId = RoleClinicalId, DepartmentId = DeptXetNghiemId });
+        // Gán vai trò SYSTEM_ADMIN cho tài khoản quản trị
+        store.AddUserRole(new UserRole { UserId = AdminUserId, RoleId = RoleSysAdminId });
     }
 
     private static void SeedScreensAndFeatures(MedDataStore store)
@@ -216,230 +193,5 @@ public static class MedDataStoreSeed
         // NURSE: xem dashboard + tạo chỉ định
         store.AddRolePermission(new RolePermission { RoleId = RoleNurseId, PermissionId = PermViewDashId, Priority = 100 });
         store.AddRolePermission(new RolePermission { RoleId = RoleNurseId, PermissionId = PermCreateOrderId, Priority = 50 });
-    }
-
-    private static void SeedProcedures(MedDataStore store)
-    {
-        var procId1 = Guid.NewGuid();
-        var procId2 = Guid.NewGuid();
-        var verId1 = Guid.NewGuid();
-        var verId2 = Guid.NewGuid();
-
-        store.AddProcedure(new ProfessionalProcedure
-        {
-            ProcedureId = procId1,
-            ProcedureCode = "QT-NOI-001",
-            Name = "Quy trình khám bệnh nội khoa",
-            ProcedureType = "clinical",
-            OwnerDepartmentId = DeptNoiId,
-            Description = "Quy trình khám và điều trị bệnh nhân nội khoa tổng quát",
-            CreatedBy = UserBinhId
-        });
-        store.AddProcedure(new ProfessionalProcedure
-        {
-            ProcedureId = procId2,
-            ProcedureCode = "QT-XN-001",
-            Name = "Quy trình xét nghiệm máu",
-            ProcedureType = "technical",
-            OwnerDepartmentId = DeptXetNghiemId,
-            Description = "Quy trình lấy mẫu và phân tích xét nghiệm huyết học",
-            CreatedBy = UserPhucId
-        });
-
-        store.AddProcedureVersion(new ProcedureVersion
-        {
-            ProcedureVersionId = verId1,
-            ProcedureId = procId1,
-            VersionNo = 1,
-            VersionLabel = "v1.0",
-            StatusCode = "published",
-            DepartmentId = DeptNoiId,
-            Title = "Quy trình khám nội khoa phiên bản 1.0",
-            EffectiveFrom = DateTime.UtcNow.AddMonths(-6),
-            CreatedBy = UserBinhId,
-            PublishedBy = UserAnId,
-            PublishedAt = DateTime.UtcNow.AddMonths(-6)
-        });
-        store.AddProcedureVersion(new ProcedureVersion
-        {
-            ProcedureVersionId = verId2,
-            ProcedureId = procId2,
-            VersionNo = 1,
-            VersionLabel = "v1.0",
-            StatusCode = "draft",
-            DepartmentId = DeptXetNghiemId,
-            Title = "Quy trình xét nghiệm máu phiên bản 1.0",
-            CreatedBy = UserPhucId
-        });
-
-        store.AddProcedureStep(new ProcedureStep { ProcedureVersionId = verId1, StepNo = 1, Name = "Tiếp nhận bệnh nhân", Description = "Kiểm tra thông tin và hồ sơ bệnh án", StandardDurationMinutes = 5 });
-        store.AddProcedureStep(new ProcedureStep { ProcedureVersionId = verId1, StepNo = 2, Name = "Khám lâm sàng", Description = "Thăm khám và ghi nhận triệu chứng", StandardDurationMinutes = 15 });
-        store.AddProcedureStep(new ProcedureStep { ProcedureVersionId = verId1, StepNo = 3, Name = "Chỉ định cận lâm sàng", Description = "Yêu cầu xét nghiệm hoặc chẩn đoán hình ảnh nếu cần", StandardDurationMinutes = 5 });
-        store.AddProcedureStep(new ProcedureStep { ProcedureVersionId = verId1, StepNo = 4, Name = "Kê đơn và tư vấn", Description = "Kê đơn thuốc và hướng dẫn điều trị", StandardDurationMinutes = 10 });
-
-        store.AddProcedureStep(new ProcedureStep { ProcedureVersionId = verId2, StepNo = 1, Name = "Tiếp nhận phiếu chỉ định", Description = "Kiểm tra phiếu yêu cầu xét nghiệm", StandardDurationMinutes = 2 });
-        store.AddProcedureStep(new ProcedureStep { ProcedureVersionId = verId2, StepNo = 2, Name = "Lấy mẫu máu", Description = "Thực hiện lấy mẫu theo quy chuẩn", StandardDurationMinutes = 5 });
-        store.AddProcedureStep(new ProcedureStep { ProcedureVersionId = verId2, StepNo = 3, Name = "Phân tích mẫu", Description = "Chạy máy phân tích huyết học", StandardDurationMinutes = 30 });
-        store.AddProcedureStep(new ProcedureStep { ProcedureVersionId = verId2, StepNo = 4, Name = "Trả kết quả", Description = "Xác nhận và trả kết quả cho bác sĩ chỉ định", StandardDurationMinutes = 5 });
-    }
-
-    private static void SeedTechnicalServices(MedDataStore store)
-    {
-        var svcId = Guid.NewGuid();
-        var resId = Guid.NewGuid();
-        var orderId = Guid.NewGuid();
-
-        store.AddTechnicalService(new TechnicalService
-        {
-            TechnicalServiceId = svcId,
-            ServiceCode = "DV-XN-CTM",
-            Name = "Xét nghiệm công thức máu",
-            ServiceType = "laboratory",
-            DepartmentId = DeptXetNghiemId,
-            Description = "Xét nghiệm huyết học cơ bản: hồng cầu, bạch cầu, tiểu cầu",
-            CreatedBy = UserPhucId
-        });
-
-        store.AddResourceCatalogItem(new ResourceCatalogItem
-        {
-            ResourceId = resId,
-            ResourceType = "consumable",
-            ResourceCode = "VT-ONG-EDTA",
-            Name = "Ống nghiệm EDTA",
-            DefaultUnitCode = "ống"
-        });
-
-        store.AddTechnicalResourceNorm(new TechnicalResourceNorm
-        {
-            TechnicalServiceId = svcId,
-            ResourceId = resId,
-            StandardQuantity = 2,
-            UnitCode = "ống",
-            Note = "Mỗi lần xét nghiệm cần 2 ống EDTA"
-        });
-
-        // Phiếu chỉ định mẫu
-        var patientId = Guid.NewGuid();
-        store.AddPatientRef(new PatientRef
-        {
-            PatientRefId = patientId,
-            ExternalPatientId = "BN-2024-001234",
-            PatientCode = "BN001234",
-            DisplayName = "Nguyễn Thị Mai",
-            BirthDate = new DateOnly(1985, 3, 15),
-            GenderCode = "F"
-        });
-
-        var encounterId = Guid.NewGuid();
-        store.AddEncounterRef(new EncounterRef
-        {
-            EncounterRefId = encounterId,
-            PatientRefId = patientId,
-            ExternalEncounterId = "LK-2024-005678",
-            EncounterType = "outpatient",
-            DepartmentId = DeptNoiId,
-            StartedAt = DateTime.UtcNow.AddHours(-2)
-        });
-
-        store.AddTechnicalOrder(new TechnicalOrder
-        {
-            TechnicalOrderId = orderId,
-            TechnicalServiceId = svcId,
-            PatientRefId = patientId,
-            EncounterRefId = encounterId,
-            OrderingDepartmentId = DeptNoiId,
-            OrderedBy = UserBinhId,
-            OrderStatus = "completed",
-            CompletedAt = DateTime.UtcNow.AddHours(-1)
-        });
-
-        store.AddActualResourceUsage(new ActualResourceUsage
-        {
-            TechnicalOrderId = orderId,
-            ResourceId = resId,
-            ActualQuantity = 2,
-            UnitCode = "ống",
-            IsFinal = true,
-            CapturedBy = UserPhucId
-        });
-    }
-
-    private static void SeedClinicalProtocols(MedDataStore store)
-    {
-        var protocolId = Guid.NewGuid();
-        var protocolVerId = Guid.NewGuid();
-
-        store.AddClinicalProtocol(new ClinicalProtocol
-        {
-            ClinicalProtocolId = protocolId,
-            ProtocolCode = "PD-NOI-THA",
-            Name = "Phác đồ điều trị tăng huyết áp",
-            ProtocolType = "treatment",
-            OwnerDepartmentId = DeptNoiId,
-            Description = "Phác đồ điều trị tăng huyết áp nguyên phát theo hướng dẫn Bộ Y tế",
-            CreatedBy = UserBinhId
-        });
-
-        store.AddClinicalProtocolVersion(new ClinicalProtocolVersion
-        {
-            ClinicalProtocolVersionId = protocolVerId,
-            ClinicalProtocolId = protocolId,
-            VersionNo = 1,
-            StatusCode = "published",
-            Title = "Phác đồ THA v1.0 - Theo hướng dẫn 2023",
-            Summary = "Điều trị bậc thang từ thay đổi lối sống đến phối hợp thuốc",
-            EffectiveFrom = DateTime.UtcNow.AddMonths(-3),
-            CreatedBy = UserBinhId,
-            ApprovedBy = UserAnId,
-            ApprovedAt = DateTime.UtcNow.AddMonths(-3),
-            PublishedBy = UserAnId,
-            PublishedAt = DateTime.UtcNow.AddMonths(-3)
-        });
-
-        store.AddProtocolApplicabilityRule(new ProtocolApplicabilityRule
-        {
-            ClinicalProtocolVersionId = protocolVerId,
-            RuleType = "diagnosis",
-            RuleJson = """{"icd10_codes":["I10","I11","I12","I13","I15"]}""",
-            Priority = 100
-        });
-    }
-
-    private static void SeedNotifications(MedDataStore store)
-    {
-        store.AddNotificationPreference(new NotificationPreference
-        {
-            UserId = UserAnId,
-            NotificationType = "procedure_approval",
-            ChannelCode = "in_app",
-            IsEnabled = true
-        });
-        store.AddNotificationPreference(new NotificationPreference
-        {
-            UserId = UserBinhId,
-            NotificationType = "procedure_approval",
-            ChannelCode = "email",
-            IsEnabled = true
-        });
-
-        var notifId = Guid.NewGuid();
-        store.AddNotification(new MedNotification
-        {
-            NotificationId = notifId,
-            RecipientUserId = UserAnId,
-            NotificationType = "procedure_approval",
-            Title = "Quy trình mới chờ phê duyệt",
-            Body = "Quy trình 'Xét nghiệm máu' cần được phê duyệt bởi quản trị viên.",
-            Severity = "info",
-            SourceType = "procedure",
-            SourceId = "QT-XN-001"
-        });
-
-        store.AddNotificationDeliveryAttempt(new NotificationDeliveryAttempt
-        {
-            NotificationId = notifId,
-            ChannelCode = "in_app",
-            DeliveryStatus = "delivered"
-        });
     }
 }

@@ -27,7 +27,6 @@ public sealed class MedDataStoreTests
     public void AddDepartment_WithParent_CreatesAncestorEdges()
     {
         var store = CreateStore();
-        // Sử dụng khoa gốc đã seed
         var rootId = MedDataStoreSeed.RootDeptId;
         var noId = MedDataStoreSeed.DeptNoiId;
 
@@ -116,7 +115,7 @@ public sealed class MedDataStoreTests
         var log1 = new AuditLog
         {
             CorrelationId = Guid.NewGuid(),
-            ActorUserId = MedDataStoreSeed.UserAnId,
+            ActorUserId = MedDataStoreSeed.AdminUserId,
             ActionCode = "create",
             TargetType = "department",
             TargetId = "TEST"
@@ -127,7 +126,7 @@ public sealed class MedDataStoreTests
         var log2 = new AuditLog
         {
             CorrelationId = Guid.NewGuid(),
-            ActorUserId = MedDataStoreSeed.UserBinhId,
+            ActorUserId = MedDataStoreSeed.AdminUserId,
             ActionCode = "update",
             TargetType = "procedure",
             TargetId = "QT-001"
@@ -259,17 +258,17 @@ public sealed class MedDataStoreTests
         var store = CreateStore();
         var resolver = new EffectivePermissionResolver(store);
 
-        // Thêm user override deny cho SYSTEM_ADMIN user trên PERM_CREATE_ORDER
+        // Thêm user override deny cho admin user trên PERM_CREATE_ORDER
         store.AddUserPermissionOverride(new UserPermissionOverride
         {
-            UserId = MedDataStoreSeed.UserAnId,
+            UserId = MedDataStoreSeed.AdminUserId,
             PermissionId = MedDataStoreSeed.PermCreateOrderId,
             EffectCode = "deny",
             Priority = 100,
             Reason = "Kiểm thử deny-wins"
         });
 
-        var result = resolver.HasPermission(MedDataStoreSeed.UserAnId, "PERM_CREATE_ORDER");
+        var result = resolver.HasPermission(MedDataStoreSeed.AdminUserId, "PERM_CREATE_ORDER");
         // user_override (rank 3) deny phải thắng role (rank 1) allow
         Assert.False(result);
     }
@@ -281,18 +280,18 @@ public sealed class MedDataStoreTests
         var store = CreateStore();
         var resolver = new EffectivePermissionResolver(store);
 
-        // SYSTEM_ADMIN user (An) có PERM_VIEW_DASHBOARD từ role (allow, rank 1)
+        // Admin user có PERM_VIEW_DASHBOARD từ role (allow, rank 1)
         // Thêm user override allow với priority thấp hơn → vẫn thắng vì rank cao hơn
         store.AddUserPermissionOverride(new UserPermissionOverride
         {
-            UserId = MedDataStoreSeed.UserAnId,
+            UserId = MedDataStoreSeed.AdminUserId,
             PermissionId = MedDataStoreSeed.PermViewDashId,
             EffectCode = "allow",
             Priority = 1, // priority thấp nhưng source_rank = 3
             Reason = "Kiểm thử source_rank"
         });
 
-        var resolved = resolver.Resolve(MedDataStoreSeed.UserAnId);
+        var resolved = resolver.Resolve(MedDataStoreSeed.AdminUserId);
         var dashPerm = resolved.First(r => r.PermissionCode == "PERM_VIEW_DASHBOARD");
         Assert.Equal(3, dashPerm.SourceRank);
         Assert.Equal("allow", dashPerm.EffectCode);
@@ -326,7 +325,7 @@ public sealed class MedDataStoreTests
         auditService.Append(new AuditLog
         {
             CorrelationId = Guid.NewGuid(),
-            ActorUserId = MedDataStoreSeed.UserAnId,
+            ActorUserId = MedDataStoreSeed.AdminUserId,
             ActionCode = "create",
             TargetType = "procedure",
             TargetId = "QT-TEST"
@@ -343,11 +342,13 @@ public sealed class MedDataStoreTests
         Assert.Equal(8, store.Departments.Count);
     }
 
-    // === 16. Seed data: đủ 12 users ===
+    // === 16. Seed data: có 1 admin user ===
     [Fact]
-    public void Seed_Creates12Users()
+    public void Seed_Creates1AdminUser()
     {
         var store = CreateStore();
-        Assert.True(store.Users.Count >= 12);
+        Assert.Single(store.Users);
+        Assert.Equal("admin", store.Users[0].Username);
+        Assert.Equal("Quản trị viên hệ thống", store.Users[0].FullName);
     }
 }

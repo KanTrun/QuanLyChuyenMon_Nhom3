@@ -7,11 +7,28 @@ public sealed class PermissionChangeRequestServiceTests
 {
     private readonly MedDataStore _store = new();
     private readonly PermissionChangeRequestService _svc;
+    private readonly Guid _testApproverId;
 
     public PermissionChangeRequestServiceTests()
     {
         var audit = new AuditTrailService(_store);
         _svc = new PermissionChangeRequestService(_store, audit);
+
+        // Tạo người dùng phê duyệt cục bộ (không phụ thuộc seed)
+        _testApproverId = Guid.NewGuid();
+        _store.AddUser(new AppUser
+        {
+            UserId = _testApproverId,
+            Username = "test_approver",
+            FullName = "Người phê duyệt kiểm thử",
+            PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
+        });
+        _store.AddUserRole(new UserRole
+        {
+            UserId = _testApproverId,
+            RoleId = MedDataStoreSeed.RoleDeptAdminId,
+            DepartmentId = MedDataStoreSeed.DeptNoiId
+        });
     }
 
     // === 1. CreateDraft: tạo yêu cầu thành công ===
@@ -19,7 +36,7 @@ public sealed class PermissionChangeRequestServiceTests
     public void CreateDraft_ValidInput_ReturnsRequest()
     {
         var req = _svc.CreateDraft(
-            MedDataStoreSeed.UserAnId, "role",
+            MedDataStoreSeed.AdminUserId, "role",
             MedDataStoreSeed.RoleSysAdminId, null, null,
             "Cần thêm quyền quản trị", DateTime.UtcNow.AddDays(1));
 
@@ -35,7 +52,7 @@ public sealed class PermissionChangeRequestServiceTests
     {
         var ex = Assert.Throws<MedDomainException>(() =>
             _svc.CreateDraft(
-                MedDataStoreSeed.UserAnId, "role",
+                MedDataStoreSeed.AdminUserId, "role",
                 MedDataStoreSeed.RoleSysAdminId, Guid.NewGuid(), null,
                 "Lý do", DateTime.UtcNow));
 
@@ -48,7 +65,7 @@ public sealed class PermissionChangeRequestServiceTests
     {
         var ex = Assert.Throws<MedDomainException>(() =>
             _svc.CreateDraft(
-                MedDataStoreSeed.UserAnId, "role",
+                MedDataStoreSeed.AdminUserId, "role",
                 MedDataStoreSeed.RoleSysAdminId, null, null,
                 "", DateTime.UtcNow));
 
@@ -61,7 +78,7 @@ public sealed class PermissionChangeRequestServiceTests
     {
         var req = CreateDraftWithItem();
 
-        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
 
         var updated = _store.PermissionChangeRequests
             .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
@@ -73,12 +90,12 @@ public sealed class PermissionChangeRequestServiceTests
     public void SubmitForApproval_NoItems_Throws50013()
     {
         var req = _svc.CreateDraft(
-            MedDataStoreSeed.UserAnId, "role",
+            MedDataStoreSeed.AdminUserId, "role",
             MedDataStoreSeed.RoleSysAdminId, null, null,
             "Lý do", DateTime.UtcNow);
 
         var ex = Assert.Throws<MedDomainException>(() =>
-            _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId));
+            _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId));
 
         Assert.Equal(50013, ex.SqlErrorNumber);
     }
@@ -88,10 +105,10 @@ public sealed class PermissionChangeRequestServiceTests
     public void SubmitForApproval_NotDraft_Throws50012()
     {
         var req = CreateDraftWithItem();
-        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
 
         var ex = Assert.Throws<MedDomainException>(() =>
-            _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId));
+            _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId));
 
         Assert.Equal(50012, ex.SqlErrorNumber);
     }
@@ -101,14 +118,14 @@ public sealed class PermissionChangeRequestServiceTests
     public void Approve_PendingRequest_Succeeds()
     {
         var req = CreateDraftWithItem();
-        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
 
-        _svc.Approve(req.PermissionChangeRequestId, MedDataStoreSeed.UserBinhId);
+        _svc.Approve(req.PermissionChangeRequestId, _testApproverId);
 
         var updated = _store.PermissionChangeRequests
             .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
         Assert.Equal("applied", updated.ChangeStatus);
-        Assert.Equal(MedDataStoreSeed.UserBinhId, updated.ApprovedBy);
+        Assert.Equal(_testApproverId, updated.ApprovedBy);
     }
 
     // === 8. Approve: scheduled mode ===
@@ -116,9 +133,9 @@ public sealed class PermissionChangeRequestServiceTests
     public void Approve_Scheduled_SetsScheduledStatus()
     {
         var req = CreateDraftWithItem();
-        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
 
-        _svc.Approve(req.PermissionChangeRequestId, MedDataStoreSeed.UserBinhId, schedule: true);
+        _svc.Approve(req.PermissionChangeRequestId, _testApproverId, schedule: true);
 
         var updated = _store.PermissionChangeRequests
             .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
@@ -130,9 +147,9 @@ public sealed class PermissionChangeRequestServiceTests
     public void Reject_PendingRequest_Succeeds()
     {
         var req = CreateDraftWithItem();
-        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
 
-        _svc.Reject(req.PermissionChangeRequestId, MedDataStoreSeed.UserBinhId, "Không phù hợp");
+        _svc.Reject(req.PermissionChangeRequestId, _testApproverId, "Không phù hợp");
 
         var updated = _store.PermissionChangeRequests
             .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
@@ -144,11 +161,11 @@ public sealed class PermissionChangeRequestServiceTests
     public void Cancel_DraftRequest_Succeeds()
     {
         var req = _svc.CreateDraft(
-            MedDataStoreSeed.UserAnId, "user",
-            null, null, MedDataStoreSeed.UserBinhId,
+            MedDataStoreSeed.AdminUserId, "user",
+            null, null, _testApproverId,
             "Thử nghiệm", DateTime.UtcNow);
 
-        _svc.Cancel(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+        _svc.Cancel(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
 
         var updated = _store.PermissionChangeRequests
             .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
@@ -160,11 +177,11 @@ public sealed class PermissionChangeRequestServiceTests
     public void Cancel_AppliedRequest_Throws50016()
     {
         var req = CreateDraftWithItem();
-        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
-        _svc.Approve(req.PermissionChangeRequestId, MedDataStoreSeed.UserBinhId);
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
+        _svc.Approve(req.PermissionChangeRequestId, _testApproverId);
 
         var ex = Assert.Throws<MedDomainException>(() =>
-            _svc.Cancel(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId));
+            _svc.Cancel(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId));
 
         Assert.Equal(50016, ex.SqlErrorNumber);
     }
@@ -174,7 +191,7 @@ public sealed class PermissionChangeRequestServiceTests
     public void AddItem_NotDraft_Throws50017()
     {
         var req = CreateDraftWithItem();
-        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
 
         var ex = Assert.Throws<MedDomainException>(() =>
             _svc.AddItem(req.PermissionChangeRequestId, new PermissionChangeItem
@@ -196,7 +213,7 @@ public sealed class PermissionChangeRequestServiceTests
         var req = CreateDraftWithItem();
         var countBefore = _store.AuditLogs.Count;
 
-        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.UserAnId);
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
 
         Assert.True(_store.AuditLogs.Count > countBefore);
         var log = _store.AuditLogs.Last();
@@ -207,7 +224,7 @@ public sealed class PermissionChangeRequestServiceTests
     private PermissionChangeRequest CreateDraftWithItem()
     {
         var req = _svc.CreateDraft(
-            MedDataStoreSeed.UserAnId, "role",
+            MedDataStoreSeed.AdminUserId, "role",
             MedDataStoreSeed.RoleSysAdminId, null, null,
             "Cần cấp thêm quyền", DateTime.UtcNow.AddDays(1));
 
