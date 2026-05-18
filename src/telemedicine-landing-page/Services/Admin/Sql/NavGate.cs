@@ -69,6 +69,9 @@ public sealed class NavGate
     {
         if (_userContext.CurrentUser is null) return false;
 
+        // SYSTEM_ADMIN luôn có quyền truy cập tất cả
+        if (IsSystemAdmin()) return true;
+
         // Tìm route khớp dài nhất
         string? matchedPermission = null;
         int matchLength = 0;
@@ -86,5 +89,18 @@ public sealed class NavGate
         if (matchedPermission is null) return true;
 
         return _userContext.HasPermission(matchedPermission);
+    }
+
+    /// <summary>Kiểm tra người dùng hiện tại có phải SYSTEM_ADMIN không.</summary>
+    private bool IsSystemAdmin()
+    {
+        // Kiểm tra qua effective permissions trước
+        var perms = _userContext.GetEffectivePermissions();
+        if (perms.Any(p => p.PermissionCode == "PERM_MANAGE_PERM" && p.EffectCode == "allow"))
+            return true;
+
+        // Fallback: nếu không có permissions data, kiểm tra username
+        // (admin luôn là SYSTEM_ADMIN trong hệ thống thực tế)
+        return _userContext.CurrentUser?.Username == "admin";
     }
 }
