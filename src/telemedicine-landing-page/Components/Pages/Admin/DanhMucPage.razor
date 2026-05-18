@@ -85,7 +85,7 @@
                 }
                 else
                 {
-                    @foreach (var item in _items)
+                    @foreach (var item in _pagedItems)
                     {
                         <tr style="cursor:pointer;" @onclick="() => OpenDetail(item)">
                             <td class="admin-table-cell-strong">@item.Code</td>
@@ -103,6 +103,9 @@
             </tbody>
         </table>
     </div>
+
+    <AdminPagination CurrentPage="_currentPage" PageSize="_pageSize" TotalItems="_items.Count"
+                     CurrentPageChanged="OnPageChanged" />
 </section>
 
 <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="@(value => _drawerOpen = value)" SizeClass="admin-drawer-wide"
@@ -210,6 +213,10 @@
     private string _statusKey = string.Empty;
 
     private IReadOnlyList<TechnicalServiceRecord> _items = Array.Empty<TechnicalServiceRecord>();
+    private IReadOnlyList<TechnicalServiceRecord> _pagedItems = Array.Empty<TechnicalServiceRecord>();
+    private int _currentPage = 1;
+    private const int _pageSize = 10;
+
     private TechnicalServiceRecord? _selected;
     private bool _drawerOpen;
 
@@ -238,6 +245,14 @@
     private void Recompute()
     {
         _items = CatalogService.Search(_filter);
+        _currentPage = Math.Clamp(_currentPage, 1, Math.Max(1, (int)Math.Ceiling(_items.Count / (double)_pageSize)));
+        _pagedItems = _items.Skip((_currentPage - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void OnPageChanged(int page)
+    {
+        _currentPage = page;
+        _pagedItems = _items.Skip((_currentPage - 1) * _pageSize).Take(_pageSize).ToList();
     }
 
     private void OnFilterUpdated(string? search, ServiceType? type, Department? dept, CatalogStatus? status)
