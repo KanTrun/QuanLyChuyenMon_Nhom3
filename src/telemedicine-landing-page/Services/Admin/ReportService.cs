@@ -27,25 +27,11 @@ public sealed class ReportService : IReportService
     public IReadOnlyList<ConsumptionReportRow> GenerateConsumptionReport(DateOnly from, DateOnly to, Department? department)
     {
         var period = $"{from:dd/MM/yyyy} - {to:dd/MM/yyyy}";
-        // Stable seeded random so report values are reproducible across reloads.
-        var seed = unchecked(from.GetHashCode() * 397) ^ to.GetHashCode() ^ (department?.GetHashCode() ?? 0);
-        var random = new Random(seed);
-
         var rows = new List<ConsumptionReportRow>();
         foreach (var service in _catalogService.Search(new CatalogFilter(Department: department)))
         {
             foreach (var norm in service.ResourceNorms)
             {
-                // Generate a believable "actual" within +/-30% of the standard, snapped to 2 decimals.
-                var jitter = 1d + (random.NextDouble() - 0.5) * 0.6;
-                var actualRaw = (double)norm.StandardQuantity * jitter;
-                var actual = Math.Round((decimal)actualRaw, 2, MidpointRounding.AwayFromZero);
-                if (actual < 0) actual = 0;
-                var variance = actual - norm.StandardQuantity;
-                decimal variancePercent = norm.StandardQuantity == 0
-                    ? 0m
-                    : Math.Round(variance / norm.StandardQuantity * 100m, 2, MidpointRounding.AwayFromZero);
-
                 rows.Add(new ConsumptionReportRow(
                     service.Code,
                     service.Name,
@@ -53,9 +39,9 @@ public sealed class ReportService : IReportService
                     norm.ResourceName,
                     norm.Unit,
                     norm.StandardQuantity,
-                    actual,
-                    variance,
-                    variancePercent,
+                    0m,
+                    0m - norm.StandardQuantity,
+                    norm.StandardQuantity == 0 ? 0m : -100m,
                     period));
             }
         }
@@ -74,42 +60,44 @@ public sealed class ReportService : IReportService
                 procedures.Count(p => p.Status == ProcedureStatus.DaBanHanh) * 100d / procedures.Count,
                 1,
                 MidpointRounding.AwayFromZero);
-        var onlineCount = Math.Max(1, users.Count(u => u.IsActive && u.LastLogin is { } last && (DateTime.Now - last).TotalHours < 8));
+        var onlineCount = users.Count == 0
+            ? 0
+            : Math.Max(0, users.Count(u => u.IsActive && u.LastLogin is { } last && (DateTime.Now - last).TotalHours < 8));
 
         return new List<DashboardKpi>
         {
             new(
                 Label: "Phác đồ lâm sàng",
                 Value: protocols.Count.ToString(),
-                TrendPercent: 8.5,
+                TrendPercent: 0,
                 TrendDirection: TrendDirection.Up,
                 Tone: "tone-primary",
                 Icon: "stethoscope",
-                Sparkline: new[] { 18, 19, 19, 20, 21, 22, protocols.Count }),
+                Sparkline: new[] { 0, 0, 0, 0, 0, 0, protocols.Count }),
             new(
                 Label: "Thông báo chưa đọc",
                 Value: unread.ToString(),
-                TrendPercent: unread > 3 ? 12 : -8,
-                TrendDirection: unread > 3 ? TrendDirection.Up : TrendDirection.Down,
+                TrendPercent: 0,
+                TrendDirection: TrendDirection.Down,
                 Tone: "tone-warning",
                 Icon: "bell",
-                Sparkline: new[] { 1, 2, 1, 3, 2, 3, unread }),
+                Sparkline: new[] { 0, 0, 0, 0, 0, 0, unread }),
             new(
                 Label: "Nhân viên trực tuyến",
                 Value: onlineCount.ToString(),
-                TrendPercent: 6,
+                TrendPercent: 0,
                 TrendDirection: TrendDirection.Up,
                 Tone: "tone-success",
                 Icon: "team",
-                Sparkline: new[] { 12, 13, 14, 15, 16, 17, onlineCount }),
+                Sparkline: new[] { 0, 0, 0, 0, 0, 0, onlineCount }),
             new(
                 Label: "Tuân thủ quy trình",
                 Value: $"{compliance.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}%",
-                TrendPercent: 1.2,
+                TrendPercent: 0,
                 TrendDirection: TrendDirection.Up,
                 Tone: "tone-secondary",
                 Icon: "check",
-                Sparkline: new[] { 92, 93, 94, 94, 95, 96, (int)Math.Round(compliance) }),
+                Sparkline: new[] { 0, 0, 0, 0, 0, 0, (int)Math.Round(compliance) }),
         };
     }
 
@@ -117,7 +105,6 @@ public sealed class ReportService : IReportService
     {
         if (take <= 0) take = 6;
         var entries = new List<ActivityEntry>();
-        var now = DateTime.Now;
 
         foreach (var procedure in _procedureService.Search(new ProcedureFilter()).Take(3))
         {
@@ -139,7 +126,7 @@ public sealed class ReportService : IReportService
         {
             entries.Add(new ActivityEntry(
                 protocol.UpdatedAt,
-                "ThS. Trần Phương Linh",
+                "Hệ thống",
                 "cập nhật phác đồ",
                 protocol.Name,
                 ActivitySeverity.Info));
@@ -155,12 +142,6 @@ public sealed class ReportService : IReportService
                 ActivitySeverity.Info));
         }
 
-        if (entries.Count < take)
-        {
-            entries.Add(new ActivityEntry(now.AddHours(-2), "Hệ thống", "đồng bộ báo cáo", "Báo cáo tiêu thụ tuần 19", ActivitySeverity.Info));
-            entries.Add(new ActivityEntry(now.AddHours(-3), "ĐD. Mai Thị Lan", "ghi nhận áp dụng phác đồ", "Phác đồ chăm sóc hậu phẫu cho BN nhi", ActivitySeverity.Warning));
-        }
-
         return entries
             .OrderByDescending(e => e.Timestamp)
             .Take(take)
@@ -171,24 +152,11 @@ public sealed class ReportService : IReportService
     {
         if (days <= 0) days = 7;
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var rng = new Random(days * 13 + today.DayNumber);
         var result = new List<(DateOnly Day, int Count)>(days);
         for (var i = days - 1; i >= 0; i--)
         {
             var day = today.AddDays(-i);
-            // Realistic shape: lower at the weekend, higher mid-week.
-            var basis = day.DayOfWeek switch
-            {
-                DayOfWeek.Sunday => 24,
-                DayOfWeek.Saturday => 30,
-                DayOfWeek.Monday => 52,
-                DayOfWeek.Tuesday => 58,
-                DayOfWeek.Wednesday => 64,
-                DayOfWeek.Thursday => 60,
-                _ => 56,
-            };
-            var jitter = rng.Next(-6, 7);
-            result.Add((day, Math.Max(0, basis + jitter)));
+            result.Add((day, 0));
         }
         return result;
     }
