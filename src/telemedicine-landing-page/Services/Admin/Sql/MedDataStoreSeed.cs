@@ -3,13 +3,13 @@ using TelemedicineLandingPage.Models.Admin.Sql;
 namespace TelemedicineLandingPage.Services.Admin.Sql;
 
 /// <summary>
-/// Dữ liệu cấu trúc hệ thống cho QLCM (Quản Lý Chuyên Môn).
-/// Chỉ chứa dữ liệu tổ chức: khoa/phòng, vai trò, màn hình, quyền hạn.
-/// Không chứa dữ liệu mẫu cá nhân (bệnh nhân, quy trình, phác đồ, thông báo).
+/// Dữ liệu mẫu toàn diện cho hệ thống Quản Lý Chuyên Môn bệnh viện.
+/// Bao gồm: tổ chức, người dùng, quyền hạn, quy trình, dịch vụ kỹ thuật,
+/// phác đồ, bệnh nhân, chỉ định và thông báo.
 /// </summary>
 public static class MedDataStoreSeed
 {
-    /// <summary>Khởi tạo dữ liệu cấu trúc hệ thống vào kho dữ liệu.</summary>
+    /// <summary>Khởi tạo toàn bộ dữ liệu mẫu vào kho dữ liệu.</summary>
     public static void Apply(MedDataStore store)
     {
         SeedDepartments(store);
@@ -18,11 +18,19 @@ public static class MedDataStoreSeed
         SeedScreensAndFeatures(store);
         SeedPermissions(store);
         SeedRolePermissions(store);
+        SeedProcedures(store);
+        SeedTechnicalServices(store);
+        SeedClinicalProtocol(store);
+        SeedPatientAndEncounter(store);
+        SeedTechnicalOrder(store);
+        SeedNotifications(store);
     }
 
-    // === IDs cố định để tham chiếu chéo ===
+    // ═══════════════════════════════════════════════════════════════
+    // IDs CỐ ĐỊNH ĐỂ THAM CHIẾU CHÉO
+    // ═══════════════════════════════════════════════════════════════
 
-    // Khoa/Phòng
+    // --- Khoa/Phòng ---
     public static readonly Guid RootDeptId = Guid.Parse("a0000000-0000-0000-0000-000000000001");
     public static readonly Guid DeptNoiId = Guid.Parse("a0000000-0000-0000-0000-000000000010");
     public static readonly Guid DeptNgoaiId = Guid.Parse("a0000000-0000-0000-0000-000000000020");
@@ -32,30 +40,65 @@ public static class MedDataStoreSeed
     public static readonly Guid DeptCdhaId = Guid.Parse("a0000000-0000-0000-0000-000000000060");
     public static readonly Guid DeptHcId = Guid.Parse("a0000000-0000-0000-0000-000000000070");
 
-    // Vai trò
+    // --- Vai trò ---
     public static readonly Guid RoleSysAdminId = Guid.Parse("b0000000-0000-0000-0000-000000000001");
     public static readonly Guid RoleDeptAdminId = Guid.Parse("b0000000-0000-0000-0000-000000000002");
     public static readonly Guid RoleClinicalId = Guid.Parse("b0000000-0000-0000-0000-000000000003");
     public static readonly Guid RoleReportId = Guid.Parse("b0000000-0000-0000-0000-000000000004");
     public static readonly Guid RoleNurseId = Guid.Parse("b0000000-0000-0000-0000-000000000005");
 
-    // Người dùng quản trị
+    // --- Người dùng (10 tài khoản) ---
     public static readonly Guid AdminUserId = Guid.Parse("c0000000-0000-0000-0000-000000000001");
+    public static readonly Guid TruongKhoaNoiId = Guid.Parse("c0000000-0000-0000-0000-000000000002");
+    public static readonly Guid TruongKhoaNgoaiId = Guid.Parse("c0000000-0000-0000-0000-000000000003");
+    public static readonly Guid BacSiNoiId = Guid.Parse("c0000000-0000-0000-0000-000000000004");
+    public static readonly Guid BacSiXnId = Guid.Parse("c0000000-0000-0000-0000-000000000005");
+    public static readonly Guid DieuDuongNoiId = Guid.Parse("c0000000-0000-0000-0000-000000000006");
+    public static readonly Guid DieuDuongNgoaiId = Guid.Parse("c0000000-0000-0000-0000-000000000007");
+    public static readonly Guid LeTanId = Guid.Parse("c0000000-0000-0000-0000-000000000008");
+    public static readonly Guid BaoCaoId = Guid.Parse("c0000000-0000-0000-0000-000000000009");
+    public static readonly Guid KyThuatVienId = Guid.Parse("c0000000-0000-0000-0000-00000000000a");
 
-    // Màn hình
+    // --- Màn hình ---
     public static readonly Guid ScreenDashId = Guid.Parse("d0000000-0000-0000-0000-000000000001");
     public static readonly Guid ScreenProcId = Guid.Parse("d0000000-0000-0000-0000-000000000002");
     public static readonly Guid ScreenPermId = Guid.Parse("d0000000-0000-0000-0000-000000000003");
     public static readonly Guid ScreenReportId = Guid.Parse("d0000000-0000-0000-0000-000000000004");
     public static readonly Guid ScreenOrderId = Guid.Parse("d0000000-0000-0000-0000-000000000005");
 
-    // Quyền hạn
+    // --- Quyền hạn ---
     public static readonly Guid PermViewDashId = Guid.Parse("e0000000-0000-0000-0000-000000000001");
     public static readonly Guid PermManageProcId = Guid.Parse("e0000000-0000-0000-0000-000000000002");
     public static readonly Guid PermApproveProcId = Guid.Parse("e0000000-0000-0000-0000-000000000003");
     public static readonly Guid PermManagePermId = Guid.Parse("e0000000-0000-0000-0000-000000000004");
     public static readonly Guid PermViewReportId = Guid.Parse("e0000000-0000-0000-0000-000000000005");
     public static readonly Guid PermCreateOrderId = Guid.Parse("e0000000-0000-0000-0000-000000000006");
+
+    // --- Quy trình ---
+    public static readonly Guid ProcNoiId = Guid.Parse("f0000000-0000-0000-0000-000000000001");
+    public static readonly Guid ProcXnId = Guid.Parse("f0000000-0000-0000-0000-000000000002");
+    public static readonly Guid ProcNoiVersionId = Guid.Parse("f1000000-0000-0000-0000-000000000001");
+    public static readonly Guid ProcXnVersionId = Guid.Parse("f1000000-0000-0000-0000-000000000002");
+
+    // --- Dịch vụ kỹ thuật & Nguồn lực ---
+    public static readonly Guid SvcXnCtmId = Guid.Parse("f2000000-0000-0000-0000-000000000001");
+    public static readonly Guid ResOngEdtaId = Guid.Parse("f3000000-0000-0000-0000-000000000001");
+    public static readonly Guid ResKimLayMauId = Guid.Parse("f3000000-0000-0000-0000-000000000002");
+
+    // --- Phác đồ lâm sàng ---
+    public static readonly Guid ProtocolThaId = Guid.Parse("f4000000-0000-0000-0000-000000000001");
+    public static readonly Guid ProtocolThaVersionId = Guid.Parse("f4100000-0000-0000-0000-000000000001");
+
+    // --- Bệnh nhân & Lượt khám ---
+    public static readonly Guid PatientMauId = Guid.Parse("f5000000-0000-0000-0000-000000000001");
+    public static readonly Guid EncounterMauId = Guid.Parse("f5100000-0000-0000-0000-000000000001");
+
+    // --- Chỉ định kỹ thuật ---
+    public static readonly Guid OrderCtmId = Guid.Parse("f6000000-0000-0000-0000-000000000001");
+
+    // ═══════════════════════════════════════════════════════════════
+    // SEED METHODS
+    // ═══════════════════════════════════════════════════════════════
 
     private static void SeedDepartments(MedDataStore store)
     {
@@ -128,6 +171,7 @@ public static class MedDataStoreSeed
 
     private static void SeedUsers(MedDataStore store)
     {
+        // 1. Quản trị viên hệ thống
         store.AddUser(new AppUser
         {
             UserId = AdminUserId,
@@ -136,9 +180,106 @@ public static class MedDataStoreSeed
             Email = "admin@bv.vn",
             PrimaryDepartmentId = RootDeptId
         });
-
-        // Gán vai trò SYSTEM_ADMIN cho tài khoản quản trị
         store.AddUserRole(new UserRole { UserId = AdminUserId, RoleId = RoleSysAdminId });
+
+        // 2. Trưởng khoa Nội
+        store.AddUser(new AppUser
+        {
+            UserId = TruongKhoaNoiId,
+            Username = "truongkhoa.noi",
+            FullName = "Trưởng khoa Nội",
+            Email = "truongkhoa.noi@bv.vn",
+            PrimaryDepartmentId = DeptNoiId
+        });
+        store.AddUserRole(new UserRole { UserId = TruongKhoaNoiId, RoleId = RoleDeptAdminId, DepartmentId = DeptNoiId });
+
+        // 3. Trưởng khoa Ngoại
+        store.AddUser(new AppUser
+        {
+            UserId = TruongKhoaNgoaiId,
+            Username = "truongkhoa.ngoai",
+            FullName = "Trưởng khoa Ngoại",
+            Email = "truongkhoa.ngoai@bv.vn",
+            PrimaryDepartmentId = DeptNgoaiId
+        });
+        store.AddUserRole(new UserRole { UserId = TruongKhoaNgoaiId, RoleId = RoleDeptAdminId, DepartmentId = DeptNgoaiId });
+
+        // 4. Bác sĩ Nội khoa
+        store.AddUser(new AppUser
+        {
+            UserId = BacSiNoiId,
+            Username = "bacsi.noi",
+            FullName = "Bác sĩ Nội khoa",
+            Email = "bacsi.noi@bv.vn",
+            PrimaryDepartmentId = DeptNoiId
+        });
+        store.AddUserRole(new UserRole { UserId = BacSiNoiId, RoleId = RoleClinicalId, DepartmentId = DeptNoiId });
+
+        // 5. Bác sĩ Xét nghiệm
+        store.AddUser(new AppUser
+        {
+            UserId = BacSiXnId,
+            Username = "bacsi.xn",
+            FullName = "Bác sĩ Xét nghiệm",
+            Email = "bacsi.xn@bv.vn",
+            PrimaryDepartmentId = DeptXetNghiemId
+        });
+        store.AddUserRole(new UserRole { UserId = BacSiXnId, RoleId = RoleClinicalId, DepartmentId = DeptXetNghiemId });
+
+        // 6. Điều dưỡng Nội
+        store.AddUser(new AppUser
+        {
+            UserId = DieuDuongNoiId,
+            Username = "dieuduong.noi",
+            FullName = "Điều dưỡng Nội",
+            Email = "dieuduong.noi@bv.vn",
+            PrimaryDepartmentId = DeptNoiId
+        });
+        store.AddUserRole(new UserRole { UserId = DieuDuongNoiId, RoleId = RoleNurseId, DepartmentId = DeptNoiId });
+
+        // 7. Điều dưỡng Ngoại
+        store.AddUser(new AppUser
+        {
+            UserId = DieuDuongNgoaiId,
+            Username = "dieuduong.ngoai",
+            FullName = "Điều dưỡng Ngoại",
+            Email = "dieuduong.ngoai@bv.vn",
+            PrimaryDepartmentId = DeptNgoaiId
+        });
+        store.AddUserRole(new UserRole { UserId = DieuDuongNgoaiId, RoleId = RoleNurseId, DepartmentId = DeptNgoaiId });
+
+        // 8. Lễ tân
+        store.AddUser(new AppUser
+        {
+            UserId = LeTanId,
+            Username = "letan",
+            FullName = "Lễ tân",
+            Email = "letan@bv.vn",
+            PrimaryDepartmentId = DeptHcId
+        });
+        store.AddUserRole(new UserRole { UserId = LeTanId, RoleId = RoleNurseId, DepartmentId = DeptHcId });
+
+        // 9. Nhân viên báo cáo
+        store.AddUser(new AppUser
+        {
+            UserId = BaoCaoId,
+            Username = "baocao",
+            FullName = "Nhân viên báo cáo",
+            Email = "baocao@bv.vn",
+            PrimaryDepartmentId = RootDeptId
+        });
+        store.AddUserRole(new UserRole { UserId = BaoCaoId, RoleId = RoleReportId });
+
+        // 10. Kỹ thuật viên CĐHA
+        store.AddUser(new AppUser
+        {
+            UserId = KyThuatVienId,
+            Username = "kythuatvien",
+            FullName = "Kỹ thuật viên CĐHA",
+            Email = "kythuatvien@bv.vn",
+            PrimaryDepartmentId = DeptCdhaId
+        });
+        store.AddUserRole(new UserRole { UserId = KyThuatVienId, RoleId = RoleClinicalId, DepartmentId = DeptCdhaId });
     }
 
     private static void SeedScreensAndFeatures(MedDataStore store)
@@ -193,5 +334,325 @@ public static class MedDataStoreSeed
         // NURSE: xem dashboard + tạo chỉ định
         store.AddRolePermission(new RolePermission { RoleId = RoleNurseId, PermissionId = PermViewDashId, Priority = 100 });
         store.AddRolePermission(new RolePermission { RoleId = RoleNurseId, PermissionId = PermCreateOrderId, Priority = 50 });
+    }
+
+    private static void SeedProcedures(MedDataStore store)
+    {
+        // === QT-NOI-001: Quy trình khám bệnh nội khoa (published) ===
+        store.AddProcedure(new ProfessionalProcedure
+        {
+            ProcedureId = ProcNoiId,
+            ProcedureCode = "QT-NOI-001",
+            Name = "Quy trình khám bệnh nội khoa",
+            ProcedureType = "clinical",
+            OwnerDepartmentId = DeptNoiId,
+            Description = "Quy trình chuẩn khám bệnh tại Khoa Nội",
+            CreatedBy = TruongKhoaNoiId
+        });
+
+        store.AddProcedureVersion(new ProcedureVersion
+        {
+            ProcedureVersionId = ProcNoiVersionId,
+            ProcedureId = ProcNoiId,
+            VersionNo = 1,
+            VersionLabel = "v1.0",
+            StatusCode = "published",
+            DepartmentId = DeptNoiId,
+            Title = "Quy trình khám bệnh nội khoa - Phiên bản 1",
+            Summary = "{\"note\":\"Phiên bản đầu tiên được phê duyệt\"}",
+            CreatedBy = TruongKhoaNoiId,
+            SubmittedBy = TruongKhoaNoiId,
+            ApprovedBy = AdminUserId,
+            PublishedBy = AdminUserId,
+            PublishedAt = DateTime.UtcNow.AddDays(-7),
+            EffectiveFrom = DateTime.UtcNow.AddDays(-7)
+        });
+
+        // 4 bước cho quy trình nội khoa
+        store.AddProcedureStep(new ProcedureStep
+        {
+            ProcedureVersionId = ProcNoiVersionId,
+            StepNo = 1,
+            StepCode = "TIEP-NHAN",
+            Name = "Tiếp nhận bệnh nhân",
+            Description = "Đăng ký, đo sinh hiệu, phân loại ưu tiên",
+            ActorRoleId = RoleNurseId,
+            StandardDurationMinutes = 10
+        });
+        store.AddProcedureStep(new ProcedureStep
+        {
+            ProcedureVersionId = ProcNoiVersionId,
+            StepNo = 2,
+            StepCode = "KHAM-BENH",
+            Name = "Khám lâm sàng",
+            Description = "Hỏi bệnh sử, khám thực thể, đánh giá triệu chứng",
+            ActorRoleId = RoleClinicalId,
+            StandardDurationMinutes = 20
+        });
+        store.AddProcedureStep(new ProcedureStep
+        {
+            ProcedureVersionId = ProcNoiVersionId,
+            StepNo = 3,
+            StepCode = "CHI-DINH",
+            Name = "Chỉ định cận lâm sàng",
+            Description = "Yêu cầu xét nghiệm, chẩn đoán hình ảnh nếu cần",
+            ActorRoleId = RoleClinicalId,
+            StandardDurationMinutes = 5
+        });
+        store.AddProcedureStep(new ProcedureStep
+        {
+            ProcedureVersionId = ProcNoiVersionId,
+            StepNo = 4,
+            StepCode = "KET-LUAN",
+            Name = "Kết luận và kê đơn",
+            Description = "Chẩn đoán, kê đơn thuốc, hẹn tái khám",
+            ActorRoleId = RoleClinicalId,
+            StandardDurationMinutes = 10
+        });
+
+        // === QT-XN-001: Quy trình xét nghiệm công thức máu (draft) ===
+        store.AddProcedure(new ProfessionalProcedure
+        {
+            ProcedureId = ProcXnId,
+            ProcedureCode = "QT-XN-001",
+            Name = "Quy trình xét nghiệm công thức máu",
+            ProcedureType = "laboratory",
+            OwnerDepartmentId = DeptXetNghiemId,
+            Description = "Quy trình chuẩn xét nghiệm công thức máu toàn phần",
+            CreatedBy = BacSiXnId
+        });
+
+        store.AddProcedureVersion(new ProcedureVersion
+        {
+            ProcedureVersionId = ProcXnVersionId,
+            ProcedureId = ProcXnId,
+            VersionNo = 1,
+            VersionLabel = "v1.0-draft",
+            StatusCode = "draft",
+            DepartmentId = DeptXetNghiemId,
+            Title = "Quy trình xét nghiệm công thức máu - Bản nháp",
+            Summary = "{\"note\":\"Đang soạn thảo, chưa gửi phê duyệt\"}",
+            CreatedBy = BacSiXnId
+        });
+
+        // 4 bước cho quy trình xét nghiệm
+        store.AddProcedureStep(new ProcedureStep
+        {
+            ProcedureVersionId = ProcXnVersionId,
+            StepNo = 1,
+            StepCode = "NHAN-MAU",
+            Name = "Nhận mẫu bệnh phẩm",
+            Description = "Kiểm tra thông tin bệnh nhân, nhận và đánh mã mẫu",
+            ActorRoleId = RoleNurseId,
+            StandardDurationMinutes = 5
+        });
+        store.AddProcedureStep(new ProcedureStep
+        {
+            ProcedureVersionId = ProcXnVersionId,
+            StepNo = 2,
+            StepCode = "CHAY-MAY",
+            Name = "Chạy máy phân tích",
+            Description = "Đưa mẫu vào máy phân tích huyết học tự động",
+            ActorRoleId = RoleClinicalId,
+            StandardDurationMinutes = 15
+        });
+        store.AddProcedureStep(new ProcedureStep
+        {
+            ProcedureVersionId = ProcXnVersionId,
+            StepNo = 3,
+            StepCode = "KIEM-TRA",
+            Name = "Kiểm tra kết quả",
+            Description = "Đối chiếu kết quả với giá trị tham chiếu, kiểm tra bất thường",
+            ActorRoleId = RoleClinicalId,
+            StandardDurationMinutes = 10
+        });
+        store.AddProcedureStep(new ProcedureStep
+        {
+            ProcedureVersionId = ProcXnVersionId,
+            StepNo = 4,
+            StepCode = "TRA-KET-QUA",
+            Name = "Trả kết quả",
+            Description = "Ký duyệt và trả kết quả cho khoa lâm sàng",
+            ActorRoleId = RoleClinicalId,
+            StandardDurationMinutes = 5
+        });
+    }
+
+    private static void SeedTechnicalServices(MedDataStore store)
+    {
+        // Dịch vụ kỹ thuật: Xét nghiệm công thức máu
+        store.AddTechnicalService(new TechnicalService
+        {
+            TechnicalServiceId = SvcXnCtmId,
+            ServiceCode = "DV-XN-CTM",
+            Name = "Xét nghiệm công thức máu",
+            ServiceType = "laboratory",
+            DepartmentId = DeptXetNghiemId,
+            Description = "Xét nghiệm công thức máu toàn phần (CBC)",
+            CreatedBy = BacSiXnId
+        });
+
+        // Nguồn lực: Ống nghiệm EDTA
+        store.AddResourceCatalogItem(new ResourceCatalogItem
+        {
+            ResourceId = ResOngEdtaId,
+            ResourceType = "consumable",
+            ResourceCode = "VT-ONG-EDTA",
+            Name = "Ống nghiệm EDTA",
+            DefaultUnitCode = "ống"
+        });
+
+        // Nguồn lực: Kim lấy máu
+        store.AddResourceCatalogItem(new ResourceCatalogItem
+        {
+            ResourceId = ResKimLayMauId,
+            ResourceType = "consumable",
+            ResourceCode = "VT-KIM-LAY-MAU",
+            Name = "Kim lấy máu",
+            DefaultUnitCode = "cái"
+        });
+
+        // Định mức: 2 ống EDTA cho mỗi lần xét nghiệm CTM
+        store.AddTechnicalResourceNorm(new TechnicalResourceNorm
+        {
+            TechnicalServiceId = SvcXnCtmId,
+            ResourceId = ResOngEdtaId,
+            StandardQuantity = 2,
+            UnitCode = "ống",
+            IsRequired = true,
+            Note = "Mỗi lần xét nghiệm cần 2 ống EDTA"
+        });
+
+        // Định mức: 1 kim lấy máu cho mỗi lần xét nghiệm CTM
+        store.AddTechnicalResourceNorm(new TechnicalResourceNorm
+        {
+            TechnicalServiceId = SvcXnCtmId,
+            ResourceId = ResKimLayMauId,
+            StandardQuantity = 1,
+            UnitCode = "cái",
+            IsRequired = true,
+            Note = "Mỗi lần lấy máu cần 1 kim"
+        });
+    }
+
+    private static void SeedClinicalProtocol(MedDataStore store)
+    {
+        // Phác đồ điều trị tăng huyết áp
+        store.AddClinicalProtocol(new ClinicalProtocol
+        {
+            ClinicalProtocolId = ProtocolThaId,
+            ProtocolCode = "PD-NOI-THA",
+            Name = "Phác đồ điều trị tăng huyết áp",
+            ProtocolType = "treatment",
+            OwnerDepartmentId = DeptNoiId,
+            Description = "Phác đồ chuẩn điều trị tăng huyết áp theo khuyến cáo",
+            CreatedBy = TruongKhoaNoiId
+        });
+
+        store.AddClinicalProtocolVersion(new ClinicalProtocolVersion
+        {
+            ClinicalProtocolVersionId = ProtocolThaVersionId,
+            ClinicalProtocolId = ProtocolThaId,
+            VersionNo = 1,
+            StatusCode = "published",
+            Title = "Phác đồ điều trị tăng huyết áp - Phiên bản 1",
+            Summary = "Áp dụng cho bệnh nhân tăng huyết áp nguyên phát",
+            CreatedBy = TruongKhoaNoiId,
+            ApprovedBy = AdminUserId,
+            PublishedBy = AdminUserId,
+            ApprovedAt = DateTime.UtcNow.AddDays(-10),
+            PublishedAt = DateTime.UtcNow.AddDays(-10),
+            EffectiveFrom = DateTime.UtcNow.AddDays(-10)
+        });
+
+        // Quy tắc áp dụng: mã ICD I10-I15 (tăng huyết áp)
+        store.AddProtocolApplicabilityRule(new ProtocolApplicabilityRule
+        {
+            ClinicalProtocolVersionId = ProtocolThaVersionId,
+            RuleType = "icd_range",
+            RuleJson = "{\"icdFrom\":\"I10\",\"icdTo\":\"I15\",\"description\":\"Tăng huyết áp nguyên phát và thứ phát\"}",
+            Priority = 100,
+            IsActive = true
+        });
+    }
+
+    private static void SeedPatientAndEncounter(MedDataStore store)
+    {
+        // Bệnh nhân mẫu
+        store.AddPatientRef(new PatientRef
+        {
+            PatientRefId = PatientMauId,
+            ExternalPatientId = "BN-2024-001",
+            PatientCode = "BN-2024-001",
+            DisplayName = "Bệnh nhân mẫu",
+            BirthDate = new DateOnly(1975, 3, 15),
+            GenderCode = "male"
+        });
+
+        // Lượt khám ngoại trú tại Khoa Nội
+        store.AddEncounterRef(new EncounterRef
+        {
+            EncounterRefId = EncounterMauId,
+            PatientRefId = PatientMauId,
+            ExternalEncounterId = "LK-2024-001",
+            EncounterType = "outpatient",
+            DepartmentId = DeptNoiId,
+            StartedAt = DateTime.UtcNow.AddHours(-2)
+        });
+    }
+
+    private static void SeedTechnicalOrder(MedDataStore store)
+    {
+        // Chỉ định xét nghiệm CTM - đã hoàn thành
+        store.AddTechnicalOrder(new TechnicalOrder
+        {
+            TechnicalOrderId = OrderCtmId,
+            TechnicalServiceId = SvcXnCtmId,
+            PatientRefId = PatientMauId,
+            EncounterRefId = EncounterMauId,
+            OrderingDepartmentId = DeptNoiId,
+            OrderedBy = BacSiNoiId,
+            OrderStatus = "completed",
+            OrderedAt = DateTime.UtcNow.AddHours(-1),
+            CompletedAt = DateTime.UtcNow.AddMinutes(-30)
+        });
+
+        // Sử dụng nguồn lực thực tế: 2 ống EDTA (IsFinal = true)
+        store.AddActualResourceUsage(new ActualResourceUsage
+        {
+            TechnicalOrderId = OrderCtmId,
+            ResourceId = ResOngEdtaId,
+            ActualQuantity = 2,
+            UnitCode = "ống",
+            IsFinal = true,
+            CapturedBy = BacSiXnId
+        });
+    }
+
+    private static void SeedNotifications(MedDataStore store)
+    {
+        // Thông báo cho admin: quy trình mới chờ phê duyệt
+        store.AddNotification(new MedNotification
+        {
+            RecipientUserId = AdminUserId,
+            NotificationType = "procedure_approval",
+            Title = "Quy trình mới chờ phê duyệt",
+            Body = "Quy trình 'Xét nghiệm công thức máu' đã được gửi để phê duyệt.",
+            Severity = "info",
+            SourceType = "procedure_version",
+            SourceId = ProcXnVersionId.ToString()
+        });
+
+        // Thông báo cho Trưởng khoa Nội: phiên bản quy trình đã được gửi duyệt
+        store.AddNotification(new MedNotification
+        {
+            RecipientUserId = TruongKhoaNoiId,
+            NotificationType = "procedure_submitted",
+            Title = "Phiên bản quy trình đã được gửi duyệt",
+            Body = "Phiên bản 1 của quy trình 'Khám bệnh nội khoa' đã được phê duyệt và xuất bản.",
+            Severity = "info",
+            SourceType = "procedure_version",
+            SourceId = ProcNoiVersionId.ToString()
+        });
     }
 }

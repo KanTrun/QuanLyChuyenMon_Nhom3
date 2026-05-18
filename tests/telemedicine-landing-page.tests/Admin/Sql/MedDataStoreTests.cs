@@ -342,13 +342,14 @@ public sealed class MedDataStoreTests
         Assert.Equal(8, store.Departments.Count);
     }
 
-    // === 16. Seed data: có 1 admin user ===
+    // === 16. Seed data: có 10 người dùng ===
     [Fact]
-    public void Seed_Creates1AdminUser()
+    public void Seed_Creates10Users()
     {
         var store = CreateStore();
-        Assert.Single(store.Users);
-        Assert.Equal("admin", store.Users[0].Username);
-        Assert.Equal("Quản trị viên hệ thống", store.Users[0].FullName);
+        Assert.Equal(10, store.Users.Count);
+        var admin = store.Users.First(u => u.UserId == MedDataStoreSeed.AdminUserId);
+        Assert.Equal("admin", admin.Username);
+        Assert.Equal("Quản trị viên hệ thống", admin.FullName);
     }
 }

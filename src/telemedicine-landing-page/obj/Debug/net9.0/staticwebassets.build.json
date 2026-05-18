@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "P9WDylDExd1GSMjyipgMiyBAKg790ffbsix9V7A6tJ0=",
+  "Hash": "+8Cmd7InSGrmesMmowS7VC2QezJdZIkZ3daIN60ektg=",
   "Source": "TelemedicineLandingPage",
   "BasePath": "_content/TelemedicineLandingPage",
   "Mode": "Default",
@@ -10,206 +10,311 @@
     {
       "Name": "TelemedicineLandingPage\\wwwroot",
       "Source": "TelemedicineLandingPage",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
       "BasePath": "_content/TelemedicineLandingPage",
       "Pattern": "**"
     }
   ],
   "Assets": [
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\9ywmv6kd8b-4kzuo66zg4.gz",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\9ywmv6kd8b-a8f7owx677.gz",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
       "BasePath": "_content/TelemedicineLandingPage",
-      "RelativePath": "css/landing-hero#[.{fingerprint=4kzuo66zg4}]?.css.gz",
+      "RelativePath": "css/landing-hero#[.{fingerprint=a8f7owx677}]?.css.gz",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Alternative",
       "AssetMergeBehavior": "",
       "AssetMergeSource": "",
-      "RelatedAsset": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css",
+      "RelatedAsset": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css",
       "AssetTraitName": "Content-Encoding",
       "AssetTraitValue": "gzip",
-      "Fingerprint": "p3a6vrglqi",
-      "Integrity": "W3zTM8M9Vx2xsohlNa1DAyuW4DMNg68OvqJF5h3pklM=",
+      "Fingerprint": "e598l2qrds",
+      "Integrity": "Ur0q0ftNk0tqQZ1kYF4m39t88FcbHfnS/Xjr59dgS28=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css"
+      "OriginalItemSpec": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\cq5oqmwkfo-puv41a7af3.gz",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ahi9ywyby3-qa5y03ce7p.gz",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
       "BasePath": "_content/TelemedicineLandingPage",
-      "RelativePath": "css/animations#[.{fingerprint=puv41a7af3}]?.css.gz",
+      "RelativePath": "js/admin-shell#[.{fingerprint=qa5y03ce7p}]?.js.gz",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Alternative",
       "AssetMergeBehavior": "",
       "AssetMergeSource": "",
-      "RelatedAsset": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css",
+      "RelatedAsset": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\admin-shell.js",
       "AssetTraitName": "Content-Encoding",
       "AssetTraitValue": "gzip",
-      "Fingerprint": "bg2w7ci8mx",
-      "Integrity": "awuVoRCpVixsUAvrBJlkAem0p6wRlgR5mR+3ikEFHCQ=",
+      "Fingerprint": "cxawwk6oqb",
+      "Integrity": "sLC5CaoLePG/jtcNYHpfJ0O4EF04dghAprC5MlHyYgw=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css"
+      "OriginalItemSpec": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\admin-shell.js"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\crnbpr8pfs-ksxqnpcwww.gz",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\cq5oqmwkfo-r2escwrd6j.gz",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
       "BasePath": "_content/TelemedicineLandingPage",
-      "RelativePath": "css/landing-directory-tracking#[.{fingerprint=ksxqnpcwww}]?.css.gz",
+      "RelativePath": "css/animations#[.{fingerprint=r2escwrd6j}]?.css.gz",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Alternative",
       "AssetMergeBehavior": "",
       "AssetMergeSource": "",
-      "RelatedAsset": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css",
+      "RelatedAsset": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css",
       "AssetTraitName": "Content-Encoding",
       "AssetTraitValue": "gzip",
-      "Fingerprint": "3w8mxbguws",
-      "Integrity": "gyOPnSpcVlsMMMHP9OYTvF9tAn/reeggwzj3ol1aPPA=",
+      "Fingerprint": "x9py1jct2h",
+      "Integrity": "dYHkA8+QGkkwWyeMV5RyzMO2Kaz4vk5LSYGkukazpA8=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css"
+      "OriginalItemSpec": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\o4u6gh8ri8-wjl3radht7.gz",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\crnbpr8pfs-8gtm283y14.gz",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
       "BasePath": "_content/TelemedicineLandingPage",
-      "RelativePath": "css/design-tokens#[.{fingerprint=wjl3radht7}]?.css.gz",
+      "RelativePath": "css/landing-directory-tracking#[.{fingerprint=8gtm283y14}]?.css.gz",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Alternative",
       "AssetMergeBehavior": "",
       "AssetMergeSource": "",
-      "RelatedAsset": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css",
+      "RelatedAsset": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css",
       "AssetTraitName": "Content-Encoding",
       "AssetTraitValue": "gzip",
-      "Fingerprint": "avg98bey9z",
-      "Integrity": "Ws7qBPwWr7y5UahevUpmCMKWGqgmftZH0sOzg9Qvou8=",
+      "Fingerprint": "o9tkw3gj7j",
+      "Integrity": "LJ3FVnCb6bUdoSQQlGbCd92s6F3ZnwZrOp06b13vpSU=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css"
+      "OriginalItemSpec": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\p91jz875tl-xoe6si5h0u.gz",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\gxodc1khnw-i1q8vhddwk.gz",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
       "BasePath": "_content/TelemedicineLandingPage",
-      "RelativePath": "js/animations#[.{fingerprint=xoe6si5h0u}]?.js.gz",
+      "RelativePath": "css/admin-shell#[.{fingerprint=i1q8vhddwk}]?.css.gz",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Alternative",
       "AssetMergeBehavior": "",
       "AssetMergeSource": "",
-      "RelatedAsset": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js",
+      "RelatedAsset": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-shell.css",
       "AssetTraitName": "Content-Encoding",
       "AssetTraitValue": "gzip",
-      "Fingerprint": "yit15b35cw",
-      "Integrity": "uuyWkoiMfYYLGIK8WPmrT9RK3dMBUwIdj/1v1tLBYnw=",
+      "Fingerprint": "s59q13ur16",
+      "Integrity": "4N0p0zoK5c4WacpIPSVdA/C2nbEnXCIqM8jymHfsaD4=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js"
+      "OriginalItemSpec": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-shell.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\susjwig8sl-afcsqqms5y.gz",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\o4u6gh8ri8-b1dndedpo1.gz",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
       "BasePath": "_content/TelemedicineLandingPage",
-      "RelativePath": "css/landing-download-responsive#[.{fingerprint=afcsqqms5y}]?.css.gz",
+      "RelativePath": "css/design-tokens#[.{fingerprint=b1dndedpo1}]?.css.gz",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Alternative",
       "AssetMergeBehavior": "",
       "AssetMergeSource": "",
-      "RelatedAsset": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css",
+      "RelatedAsset": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css",
       "AssetTraitName": "Content-Encoding",
       "AssetTraitValue": "gzip",
-      "Fingerprint": "9h9igm1igt",
-      "Integrity": "fbhUsVMlM1IC5XZiMtJY6bNErx2eJc1km9Mw8hZwRzA=",
+      "Fingerprint": "goip2u32vh",
+      "Integrity": "MKu+yaRhsyfAkSFS+Abmbqx2CAkANiuZziAxBTFDk6E=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css"
+      "OriginalItemSpec": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ub56i21yrk-fbzswao8zz.gz",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\p91jz875tl-ypaky3owwl.gz",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
       "BasePath": "_content/TelemedicineLandingPage",
-      "RelativePath": "css/landing-sections#[.{fingerprint=fbzswao8zz}]?.css.gz",
+      "RelativePath": "js/animations#[.{fingerprint=ypaky3owwl}]?.js.gz",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Alternative",
       "AssetMergeBehavior": "",
       "AssetMergeSource": "",
-      "RelatedAsset": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css",
+      "RelatedAsset": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js",
       "AssetTraitName": "Content-Encoding",
       "AssetTraitValue": "gzip",
-      "Fingerprint": "diloce32rg",
-      "Integrity": "5bZ+m5M9pjQ43Bb49FyMrABvrcEpWsws25ShNQSuADQ=",
+      "Fingerprint": "iz1g3zql8z",
+      "Integrity": "8mKcaZE/XLKMEiVt1+dlXK4+Ns/bIOifLjCnatAJIHY=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css"
+      "OriginalItemSpec": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\v4y6qbcjj4-mmr8zem7gx.gz",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\rmpkd2ewu6-rlirzv3b7p.gz",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
       "BasePath": "_content/TelemedicineLandingPage",
-      "RelativePath": "css/login#[.{fingerprint=mmr8zem7gx}]?.css.gz",
+      "RelativePath": "css/admin-page#[.{fingerprint=rlirzv3b7p}]?.css.gz",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Alternative",
       "AssetMergeBehavior": "",
       "AssetMergeSource": "",
-      "RelatedAsset": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css",
+      "RelatedAsset": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-page.css",
       "AssetTraitName": "Content-Encoding",
       "AssetTraitValue": "gzip",
-      "Fingerprint": "fber1ngzk0",
-      "Integrity": "O575qohdbp8hWeEkorZraNWumLCV5XRFmXVCpL4bKmo=",
+      "Fingerprint": "0g6f1nnfgq",
+      "Integrity": "YFvRXZdRCiQ3rimSMtx+4JzcfVWB8bnR6ygUPvLjxBw=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css"
+      "OriginalItemSpec": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-page.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\x8yc0i4dko-tzc9j754ip.gz",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\susjwig8sl-j7mctsrhvg.gz",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
       "BasePath": "_content/TelemedicineLandingPage",
-      "RelativePath": "css/base-layout#[.{fingerprint=tzc9j754ip}]?.css.gz",
+      "RelativePath": "css/landing-download-responsive#[.{fingerprint=j7mctsrhvg}]?.css.gz",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Alternative",
       "AssetMergeBehavior": "",
       "AssetMergeSource": "",
-      "RelatedAsset": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css",
+      "RelatedAsset": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css",
       "AssetTraitName": "Content-Encoding",
       "AssetTraitValue": "gzip",
-      "Fingerprint": "7a6ss5zivp",
-      "Integrity": "z455VL0HsShmUdDCsr5/AkYK7jIYWdtQdSsIiZ7V8cs=",
+      "Fingerprint": "jk2qnw7q7z",
+      "Integrity": "fYlc1qNwV420X9VrDW2+joFCCwbf08mAto5fuNHyoT4=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css"
+      "OriginalItemSpec": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ub56i21yrk-xhdrbwwwre.gz",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
+      "BasePath": "_content/TelemedicineLandingPage",
+      "RelativePath": "css/landing-sections#[.{fingerprint=xhdrbwwwre}]?.css.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "9ngudguuuh",
+      "Integrity": "xXxeOG/B0TZsHmtkbWXE/ld5kbBdMyKoqpV2IXCUaFs=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css"
+    },
+    {
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\v4y6qbcjj4-2biwhk0zw6.gz",
+      "SourceId": "TelemedicineLandingPage",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
+      "BasePath": "_content/TelemedicineLandingPage",
+      "RelativePath": "css/login#[.{fingerprint=2biwhk0zw6}]?.css.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "gghcwe8sui",
+      "Integrity": "oISQ4EwcCh781yFUrtcfkJeYXDw2cmsmYPSDdyF/lAg=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css"
+    },
+    {
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\x8yc0i4dko-k9fwvp5rep.gz",
+      "SourceId": "TelemedicineLandingPage",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\",
+      "BasePath": "_content/TelemedicineLandingPage",
+      "RelativePath": "css/base-layout#[.{fingerprint=k9fwvp5rep}]?.css.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "dukvmit16a",
+      "Integrity": "Rel6ZdwfQBRQz7b6/0cBTe40rckSNvELnJIkzDSgXeY=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css"
+    },
+    {
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-page.css",
+      "SourceId": "TelemedicineLandingPage",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "BasePath": "_content/TelemedicineLandingPage",
+      "RelativePath": "css/admin-page#[.{fingerprint}]?.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "rlirzv3b7p",
+      "Integrity": "EZo8u5bIcsPQ5jk8IkSMgkoaZ+QYdNxcTmi4Gh5vtpA=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\css\\admin-page.css"
+    },
+    {
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-shell.css",
+      "SourceId": "TelemedicineLandingPage",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "BasePath": "_content/TelemedicineLandingPage",
+      "RelativePath": "css/admin-shell#[.{fingerprint}]?.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "i1q8vhddwk",
+      "Integrity": "KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\css\\admin-shell.css"
+    },
+    {
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css",
+      "SourceId": "TelemedicineLandingPage",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
       "BasePath": "_content/TelemedicineLandingPage",
       "RelativePath": "css/animations#[.{fingerprint}]?.css",
       "AssetKind": "All",
@@ -220,17 +325,17 @@
       "RelatedAsset": "",
       "AssetTraitName": "",
       "AssetTraitValue": "",
-      "Fingerprint": "puv41a7af3",
-      "Integrity": "v4xla1V+/BTQ4T/14Ir5l60g+QS0YDoskxLXd1No/mU=",
+      "Fingerprint": "r2escwrd6j",
+      "Integrity": "QzKO79qptSNmUk82nT+rIcN+8gVU8JwMwZ0HGYWX688=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\animations.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
       "BasePath": "_content/TelemedicineLandingPage",
       "RelativePath": "css/base-layout#[.{fingerprint}]?.css",
       "AssetKind": "All",
@@ -241,17 +346,17 @@
       "RelatedAsset": "",
       "AssetTraitName": "",
       "AssetTraitValue": "",
-      "Fingerprint": "tzc9j754ip",
-      "Integrity": "95a99510A9LDmLvsCcYctgS+6Y38buIHw2abukoz804=",
+      "Fingerprint": "k9fwvp5rep",
+      "Integrity": "uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\base-layout.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
       "BasePath": "_content/TelemedicineLandingPage",
       "RelativePath": "css/design-tokens#[.{fingerprint}]?.css",
       "AssetKind": "All",
@@ -262,17 +367,17 @@
       "RelatedAsset": "",
       "AssetTraitName": "",
       "AssetTraitValue": "",
-      "Fingerprint": "wjl3radht7",
-      "Integrity": "JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ=",
+      "Fingerprint": "b1dndedpo1",
+      "Integrity": "v9bGyTfTXwYlqxIlBMJvQnaLJMy/C+WdAjrtoqlGk7o=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\design-tokens.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
       "BasePath": "_content/TelemedicineLandingPage",
       "RelativePath": "css/landing-directory-tracking#[.{fingerprint}]?.css",
       "AssetKind": "All",
@@ -283,17 +388,17 @@
       "RelatedAsset": "",
       "AssetTraitName": "",
       "AssetTraitValue": "",
-      "Fingerprint": "ksxqnpcwww",
-      "Integrity": "bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx+2jRFU/A=",
+      "Fingerprint": "8gtm283y14",
+      "Integrity": "aK+UR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT+Mg=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\landing-directory-tracking.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
       "BasePath": "_content/TelemedicineLandingPage",
       "RelativePath": "css/landing-download-responsive#[.{fingerprint}]?.css",
       "AssetKind": "All",
@@ -304,17 +409,17 @@
       "RelatedAsset": "",
       "AssetTraitName": "",
       "AssetTraitValue": "",
-      "Fingerprint": "afcsqqms5y",
-      "Integrity": "5o+qw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c=",
+      "Fingerprint": "j7mctsrhvg",
+      "Integrity": "bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\landing-download-responsive.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
       "BasePath": "_content/TelemedicineLandingPage",
       "RelativePath": "css/landing-hero#[.{fingerprint}]?.css",
       "AssetKind": "All",
@@ -325,17 +430,17 @@
       "RelatedAsset": "",
       "AssetTraitName": "",
       "AssetTraitValue": "",
-      "Fingerprint": "4kzuo66zg4",
-      "Integrity": "fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc+x0wAZ2w=",
+      "Fingerprint": "a8f7owx677",
+      "Integrity": "2nAKM/JexXMbI6PY3RffgWM7Uf0Sc0mEEVrK1zdiAFI=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\landing-hero.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
       "BasePath": "_content/TelemedicineLandingPage",
       "RelativePath": "css/landing-sections#[.{fingerprint}]?.css",
       "AssetKind": "All",
@@ -346,17 +451,17 @@
       "RelatedAsset": "",
       "AssetTraitName": "",
       "AssetTraitValue": "",
-      "Fingerprint": "fbzswao8zz",
-      "Integrity": "y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk=",
+      "Fingerprint": "xhdrbwwwre",
+      "Integrity": "6xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\landing-sections.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
       "BasePath": "_content/TelemedicineLandingPage",
       "RelativePath": "css/login#[.{fingerprint}]?.css",
       "AssetKind": "All",
@@ -367,17 +472,17 @@
       "RelatedAsset": "",
       "AssetTraitName": "",
       "AssetTraitValue": "",
-      "Fingerprint": "mmr8zem7gx",
-      "Integrity": "3ljPUOiVvLsco8JdJhYg70PWuqY8lmPKWaLY2F2Cf0E=",
+      "Fingerprint": "2biwhk0zw6",
+      "Integrity": "rmVqN83AjB0m62hH0Qj+QFJk2/gdTMXBZTZTXZUtsrM=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\login.css"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\favicon.png",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\favicon.png",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
       "BasePath": "_content/TelemedicineLandingPage",
       "RelativePath": "favicon#[.{fingerprint}]?.png",
       "AssetKind": "All",
@@ -395,10 +500,31 @@
       "OriginalItemSpec": "wwwroot\\favicon.png"
     },
     {
-      "Identity": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js",
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\admin-shell.js",
       "SourceId": "TelemedicineLandingPage",
       "SourceType": "Discovered",
-      "ContentRoot": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
+      "BasePath": "_content/TelemedicineLandingPage",
+      "RelativePath": "js/admin-shell#[.{fingerprint}]?.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "qa5y03ce7p",
+      "Integrity": "roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\js\\admin-shell.js"
+    },
+    {
+      "Identity": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js",
+      "SourceId": "TelemedicineLandingPage",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\",
       "BasePath": "_content/TelemedicineLandingPage",
       "RelativePath": "js/animations#[.{fingerprint}]?.js",
       "AssetKind": "All",
@@ -409,8 +535,8 @@
       "RelatedAsset": "",
       "AssetTraitName": "",
       "AssetTraitValue": "",
-      "Fingerprint": "xoe6si5h0u",
-      "Integrity": "4UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg=",
+      "Fingerprint": "ypaky3owwl",
+      "Integrity": "RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\js\\animations.js"
@@ -418,13 +544,13 @@
   ],
   "Endpoints": [
     {
-      "Route": "css/animations.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\cq5oqmwkfo-puv41a7af3.gz",
+      "Route": "css/admin-page.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\rmpkd2ewu6-rlirzv3b7p.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000515463918"
+          "Quality": "0.000194061712"
         }
       ],
       "ResponseHeaders": [
@@ -434,15 +560,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1939"
+          "Value": "5152"
         },
         {
           "Name": "ETag",
-          "Value": "\"awuVoRCpVixsUAvrBJlkAem0p6wRlgR5mR+3ikEFHCQ=\""
+          "Value": "\"YFvRXZdRCiQ3rimSMtx+4JzcfVWB8bnR6ygUPvLjxBw=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:01:01 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -462,19 +588,19 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"v4xla1V+/BTQ4T/14Ir5l60g+QS0YDoskxLXd1No/mU=\""
+          "Value": "W/\"EZo8u5bIcsPQ5jk8IkSMgkoaZ+QYdNxcTmi4Gh5vtpA=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-v4xla1V+/BTQ4T/14Ir5l60g+QS0YDoskxLXd1No/mU="
+          "Value": "sha256-EZo8u5bIcsPQ5jk8IkSMgkoaZ+QYdNxcTmi4Gh5vtpA="
         }
       ]
     },
     {
-      "Route": "css/animations.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css",
+      "Route": "css/admin-page.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-page.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -483,7 +609,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "8225"
+          "Value": "33039"
         },
         {
           "Name": "Content-Type",
@@ -491,11 +617,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"v4xla1V+/BTQ4T/14Ir5l60g+QS0YDoskxLXd1No/mU=\""
+          "Value": "\"EZo8u5bIcsPQ5jk8IkSMgkoaZ+QYdNxcTmi4Gh5vtpA=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:01:01 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -505,13 +631,609 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-v4xla1V+/BTQ4T/14Ir5l60g+QS0YDoskxLXd1No/mU="
+          "Value": "sha256-EZo8u5bIcsPQ5jk8IkSMgkoaZ+QYdNxcTmi4Gh5vtpA="
+        }
+      ]
+    },
+    {
+      "Route": "css/admin-page.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\rmpkd2ewu6-rlirzv3b7p.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "5152"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"YFvRXZdRCiQ3rimSMtx+4JzcfVWB8bnR6ygUPvLjxBw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-YFvRXZdRCiQ3rimSMtx+4JzcfVWB8bnR6ygUPvLjxBw="
+        }
+      ]
+    },
+    {
+      "Route": "css/admin-page.rlirzv3b7p.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\rmpkd2ewu6-rlirzv3b7p.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000194061712"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "5152"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"YFvRXZdRCiQ3rimSMtx+4JzcfVWB8bnR6ygUPvLjxBw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"EZo8u5bIcsPQ5jk8IkSMgkoaZ+QYdNxcTmi4Gh5vtpA=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "rlirzv3b7p"
+        },
+        {
+          "Name": "label",
+          "Value": "css/admin-page.css"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-EZo8u5bIcsPQ5jk8IkSMgkoaZ+QYdNxcTmi4Gh5vtpA="
+        }
+      ]
+    },
+    {
+      "Route": "css/admin-page.rlirzv3b7p.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-page.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "33039"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"EZo8u5bIcsPQ5jk8IkSMgkoaZ+QYdNxcTmi4Gh5vtpA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "rlirzv3b7p"
+        },
+        {
+          "Name": "label",
+          "Value": "css/admin-page.css"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-EZo8u5bIcsPQ5jk8IkSMgkoaZ+QYdNxcTmi4Gh5vtpA="
+        }
+      ]
+    },
+    {
+      "Route": "css/admin-page.rlirzv3b7p.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\rmpkd2ewu6-rlirzv3b7p.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "5152"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"YFvRXZdRCiQ3rimSMtx+4JzcfVWB8bnR6ygUPvLjxBw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "rlirzv3b7p"
+        },
+        {
+          "Name": "label",
+          "Value": "css/admin-page.css.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-YFvRXZdRCiQ3rimSMtx+4JzcfVWB8bnR6ygUPvLjxBw="
+        }
+      ]
+    },
+    {
+      "Route": "css/admin-shell.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\gxodc1khnw-i1q8vhddwk.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000146327188"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "6833"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"4N0p0zoK5c4WacpIPSVdA/C2nbEnXCIqM8jymHfsaD4=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0="
+        }
+      ]
+    },
+    {
+      "Route": "css/admin-shell.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-shell.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "47860"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0="
+        }
+      ]
+    },
+    {
+      "Route": "css/admin-shell.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\gxodc1khnw-i1q8vhddwk.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "6833"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"4N0p0zoK5c4WacpIPSVdA/C2nbEnXCIqM8jymHfsaD4=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-4N0p0zoK5c4WacpIPSVdA/C2nbEnXCIqM8jymHfsaD4="
+        }
+      ]
+    },
+    {
+      "Route": "css/admin-shell.i1q8vhddwk.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\gxodc1khnw-i1q8vhddwk.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000146327188"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "6833"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"4N0p0zoK5c4WacpIPSVdA/C2nbEnXCIqM8jymHfsaD4=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "i1q8vhddwk"
+        },
+        {
+          "Name": "label",
+          "Value": "css/admin-shell.css"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0="
+        }
+      ]
+    },
+    {
+      "Route": "css/admin-shell.i1q8vhddwk.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-shell.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "47860"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "i1q8vhddwk"
+        },
+        {
+          "Name": "label",
+          "Value": "css/admin-shell.css"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-KlfNya2yTZbx9zRIWKKZnlsmIQvz4Lc9VxA/PXS6lQ0="
+        }
+      ]
+    },
+    {
+      "Route": "css/admin-shell.i1q8vhddwk.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\gxodc1khnw-i1q8vhddwk.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "6833"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"4N0p0zoK5c4WacpIPSVdA/C2nbEnXCIqM8jymHfsaD4=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "i1q8vhddwk"
+        },
+        {
+          "Name": "label",
+          "Value": "css/admin-shell.css.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-4N0p0zoK5c4WacpIPSVdA/C2nbEnXCIqM8jymHfsaD4="
+        }
+      ]
+    },
+    {
+      "Route": "css/animations.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\cq5oqmwkfo-r2escwrd6j.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000511508951"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1954"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"dYHkA8+QGkkwWyeMV5RyzMO2Kaz4vk5LSYGkukazpA8=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"QzKO79qptSNmUk82nT+rIcN+8gVU8JwMwZ0HGYWX688=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-QzKO79qptSNmUk82nT+rIcN+8gVU8JwMwZ0HGYWX688="
+        }
+      ]
+    },
+    {
+      "Route": "css/animations.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "8581"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"QzKO79qptSNmUk82nT+rIcN+8gVU8JwMwZ0HGYWX688=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-QzKO79qptSNmUk82nT+rIcN+8gVU8JwMwZ0HGYWX688="
         }
       ]
     },
     {
       "Route": "css/animations.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\cq5oqmwkfo-puv41a7af3.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\cq5oqmwkfo-r2escwrd6j.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -520,7 +1242,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1939"
+          "Value": "1954"
         },
         {
           "Name": "Content-Type",
@@ -528,11 +1250,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"awuVoRCpVixsUAvrBJlkAem0p6wRlgR5mR+3ikEFHCQ=\""
+          "Value": "\"dYHkA8+QGkkwWyeMV5RyzMO2Kaz4vk5LSYGkukazpA8=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:01:01 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -550,18 +1272,18 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-awuVoRCpVixsUAvrBJlkAem0p6wRlgR5mR+3ikEFHCQ="
+          "Value": "sha256-dYHkA8+QGkkwWyeMV5RyzMO2Kaz4vk5LSYGkukazpA8="
         }
       ]
     },
     {
-      "Route": "css/animations.puv41a7af3.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\cq5oqmwkfo-puv41a7af3.gz",
+      "Route": "css/animations.r2escwrd6j.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\cq5oqmwkfo-r2escwrd6j.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000515463918"
+          "Quality": "0.000511508951"
         }
       ],
       "ResponseHeaders": [
@@ -571,15 +1293,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1939"
+          "Value": "1954"
         },
         {
           "Name": "ETag",
-          "Value": "\"awuVoRCpVixsUAvrBJlkAem0p6wRlgR5mR+3ikEFHCQ=\""
+          "Value": "\"dYHkA8+QGkkwWyeMV5RyzMO2Kaz4vk5LSYGkukazpA8=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:01:01 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -599,13 +1321,13 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"v4xla1V+/BTQ4T/14Ir5l60g+QS0YDoskxLXd1No/mU=\""
+          "Value": "W/\"QzKO79qptSNmUk82nT+rIcN+8gVU8JwMwZ0HGYWX688=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "puv41a7af3"
+          "Value": "r2escwrd6j"
         },
         {
           "Name": "label",
@@ -613,13 +1335,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-v4xla1V+/BTQ4T/14Ir5l60g+QS0YDoskxLXd1No/mU="
+          "Value": "sha256-QzKO79qptSNmUk82nT+rIcN+8gVU8JwMwZ0HGYWX688="
         }
       ]
     },
     {
-      "Route": "css/animations.puv41a7af3.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css",
+      "Route": "css/animations.r2escwrd6j.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -628,7 +1350,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "8225"
+          "Value": "8581"
         },
         {
           "Name": "Content-Type",
@@ -636,11 +1358,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"v4xla1V+/BTQ4T/14Ir5l60g+QS0YDoskxLXd1No/mU=\""
+          "Value": "\"QzKO79qptSNmUk82nT+rIcN+8gVU8JwMwZ0HGYWX688=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:01:01 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -650,7 +1372,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "puv41a7af3"
+          "Value": "r2escwrd6j"
         },
         {
           "Name": "label",
@@ -658,13 +1380,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-v4xla1V+/BTQ4T/14Ir5l60g+QS0YDoskxLXd1No/mU="
+          "Value": "sha256-QzKO79qptSNmUk82nT+rIcN+8gVU8JwMwZ0HGYWX688="
         }
       ]
     },
     {
-      "Route": "css/animations.puv41a7af3.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\cq5oqmwkfo-puv41a7af3.gz",
+      "Route": "css/animations.r2escwrd6j.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\cq5oqmwkfo-r2escwrd6j.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -673,7 +1395,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1939"
+          "Value": "1954"
         },
         {
           "Name": "Content-Type",
@@ -681,11 +1403,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"awuVoRCpVixsUAvrBJlkAem0p6wRlgR5mR+3ikEFHCQ=\""
+          "Value": "\"dYHkA8+QGkkwWyeMV5RyzMO2Kaz4vk5LSYGkukazpA8=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:01:01 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -703,7 +1425,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "puv41a7af3"
+          "Value": "r2escwrd6j"
         },
         {
           "Name": "label",
@@ -711,18 +1433,18 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-awuVoRCpVixsUAvrBJlkAem0p6wRlgR5mR+3ikEFHCQ="
+          "Value": "sha256-dYHkA8+QGkkwWyeMV5RyzMO2Kaz4vk5LSYGkukazpA8="
         }
       ]
     },
     {
       "Route": "css/base-layout.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\x8yc0i4dko-tzc9j754ip.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\x8yc0i4dko-k9fwvp5rep.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000578703704"
+          "Quality": "0.000573394495"
         }
       ],
       "ResponseHeaders": [
@@ -732,15 +1454,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1727"
+          "Value": "1743"
         },
         {
           "Name": "ETag",
-          "Value": "\"z455VL0HsShmUdDCsr5/AkYK7jIYWdtQdSsIiZ7V8cs=\""
+          "Value": "\"Rel6ZdwfQBRQz7b6/0cBTe40rckSNvELnJIkzDSgXeY=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:47:39 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -760,19 +1482,19 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"95a99510A9LDmLvsCcYctgS+6Y38buIHw2abukoz804=\""
+          "Value": "W/\"uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-95a99510A9LDmLvsCcYctgS+6Y38buIHw2abukoz804="
+          "Value": "sha256-uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4="
         }
       ]
     },
     {
       "Route": "css/base-layout.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -781,7 +1503,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "5842"
+          "Value": "6118"
         },
         {
           "Name": "Content-Type",
@@ -789,11 +1511,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"95a99510A9LDmLvsCcYctgS+6Y38buIHw2abukoz804=\""
+          "Value": "\"uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:47:39 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -803,13 +1525,13 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-95a99510A9LDmLvsCcYctgS+6Y38buIHw2abukoz804="
+          "Value": "sha256-uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4="
         }
       ]
     },
     {
       "Route": "css/base-layout.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\x8yc0i4dko-tzc9j754ip.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\x8yc0i4dko-k9fwvp5rep.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -818,7 +1540,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1727"
+          "Value": "1743"
         },
         {
           "Name": "Content-Type",
@@ -826,11 +1548,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"z455VL0HsShmUdDCsr5/AkYK7jIYWdtQdSsIiZ7V8cs=\""
+          "Value": "\"Rel6ZdwfQBRQz7b6/0cBTe40rckSNvELnJIkzDSgXeY=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:47:39 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -848,18 +1570,18 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-z455VL0HsShmUdDCsr5/AkYK7jIYWdtQdSsIiZ7V8cs="
+          "Value": "sha256-Rel6ZdwfQBRQz7b6/0cBTe40rckSNvELnJIkzDSgXeY="
         }
       ]
     },
     {
-      "Route": "css/base-layout.tzc9j754ip.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\x8yc0i4dko-tzc9j754ip.gz",
+      "Route": "css/base-layout.k9fwvp5rep.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\x8yc0i4dko-k9fwvp5rep.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000578703704"
+          "Quality": "0.000573394495"
         }
       ],
       "ResponseHeaders": [
@@ -869,15 +1591,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1727"
+          "Value": "1743"
         },
         {
           "Name": "ETag",
-          "Value": "\"z455VL0HsShmUdDCsr5/AkYK7jIYWdtQdSsIiZ7V8cs=\""
+          "Value": "\"Rel6ZdwfQBRQz7b6/0cBTe40rckSNvELnJIkzDSgXeY=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:47:39 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -897,13 +1619,13 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"95a99510A9LDmLvsCcYctgS+6Y38buIHw2abukoz804=\""
+          "Value": "W/\"uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "tzc9j754ip"
+          "Value": "k9fwvp5rep"
         },
         {
           "Name": "label",
@@ -911,13 +1633,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-95a99510A9LDmLvsCcYctgS+6Y38buIHw2abukoz804="
+          "Value": "sha256-uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4="
         }
       ]
     },
     {
-      "Route": "css/base-layout.tzc9j754ip.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css",
+      "Route": "css/base-layout.k9fwvp5rep.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -926,7 +1648,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "5842"
+          "Value": "6118"
         },
         {
           "Name": "Content-Type",
@@ -934,11 +1656,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"95a99510A9LDmLvsCcYctgS+6Y38buIHw2abukoz804=\""
+          "Value": "\"uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:47:39 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -948,7 +1670,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "tzc9j754ip"
+          "Value": "k9fwvp5rep"
         },
         {
           "Name": "label",
@@ -956,13 +1678,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-95a99510A9LDmLvsCcYctgS+6Y38buIHw2abukoz804="
+          "Value": "sha256-uFfGec77m6fKfxTHHlG/u3sNf1uXSqXLcCW2Feeu9t4="
         }
       ]
     },
     {
-      "Route": "css/base-layout.tzc9j754ip.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\x8yc0i4dko-tzc9j754ip.gz",
+      "Route": "css/base-layout.k9fwvp5rep.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\x8yc0i4dko-k9fwvp5rep.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -971,7 +1693,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1727"
+          "Value": "1743"
         },
         {
           "Name": "Content-Type",
@@ -979,11 +1701,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"z455VL0HsShmUdDCsr5/AkYK7jIYWdtQdSsIiZ7V8cs=\""
+          "Value": "\"Rel6ZdwfQBRQz7b6/0cBTe40rckSNvELnJIkzDSgXeY=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:47:39 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1001,7 +1723,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "tzc9j754ip"
+          "Value": "k9fwvp5rep"
         },
         {
           "Name": "label",
@@ -1009,18 +1731,18 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-z455VL0HsShmUdDCsr5/AkYK7jIYWdtQdSsIiZ7V8cs="
+          "Value": "sha256-Rel6ZdwfQBRQz7b6/0cBTe40rckSNvELnJIkzDSgXeY="
         }
       ]
     },
     {
-      "Route": "css/design-tokens.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\o4u6gh8ri8-wjl3radht7.gz",
+      "Route": "css/design-tokens.b1dndedpo1.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\o4u6gh8ri8-b1dndedpo1.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000889679715"
+          "Quality": "0.000579710145"
         }
       ],
       "ResponseHeaders": [
@@ -1030,152 +1752,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1123"
+          "Value": "1724"
         },
         {
           "Name": "ETag",
-          "Value": "\"Ws7qBPwWr7y5UahevUpmCMKWGqgmftZH0sOzg9Qvou8=\""
+          "Value": "\"MKu+yaRhsyfAkSFS+Abmbqx2CAkANiuZziAxBTFDk6E=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:46:45 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "no-cache"
-        },
-        {
-          "Name": "Content-Encoding",
-          "Value": "gzip"
-        },
-        {
-          "Name": "Vary",
-          "Value": "Content-Encoding"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/css"
-        },
-        {
-          "Name": "ETag",
-          "Value": "W/\"JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ=\""
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "integrity",
-          "Value": "sha256-JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ="
-        }
-      ]
-    },
-    {
-      "Route": "css/design-tokens.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css",
-      "Selectors": [],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "3279"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/css"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:46:45 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "no-cache"
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "integrity",
-          "Value": "sha256-JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ="
-        }
-      ]
-    },
-    {
-      "Route": "css/design-tokens.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\o4u6gh8ri8-wjl3radht7.gz",
-      "Selectors": [],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "1123"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/css"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"Ws7qBPwWr7y5UahevUpmCMKWGqgmftZH0sOzg9Qvou8=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:46:45 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "no-cache"
-        },
-        {
-          "Name": "Content-Encoding",
-          "Value": "gzip"
-        },
-        {
-          "Name": "Vary",
-          "Value": "Content-Encoding"
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "integrity",
-          "Value": "sha256-Ws7qBPwWr7y5UahevUpmCMKWGqgmftZH0sOzg9Qvou8="
-        }
-      ]
-    },
-    {
-      "Route": "css/design-tokens.wjl3radht7.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\o4u6gh8ri8-wjl3radht7.gz",
-      "Selectors": [
-        {
-          "Name": "Content-Encoding",
-          "Value": "gzip",
-          "Quality": "0.000889679715"
-        }
-      ],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "1123"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"Ws7qBPwWr7y5UahevUpmCMKWGqgmftZH0sOzg9Qvou8=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:46:45 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1195,13 +1780,13 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ=\""
+          "Value": "W/\"v9bGyTfTXwYlqxIlBMJvQnaLJMy/C+WdAjrtoqlGk7o=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "wjl3radht7"
+          "Value": "b1dndedpo1"
         },
         {
           "Name": "label",
@@ -1209,13 +1794,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ="
+          "Value": "sha256-v9bGyTfTXwYlqxIlBMJvQnaLJMy/C+WdAjrtoqlGk7o="
         }
       ]
     },
     {
-      "Route": "css/design-tokens.wjl3radht7.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css",
+      "Route": "css/design-tokens.b1dndedpo1.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -1224,7 +1809,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "3279"
+          "Value": "5996"
         },
         {
           "Name": "Content-Type",
@@ -1232,11 +1817,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ=\""
+          "Value": "\"v9bGyTfTXwYlqxIlBMJvQnaLJMy/C+WdAjrtoqlGk7o=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:46:45 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1246,7 +1831,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "wjl3radht7"
+          "Value": "b1dndedpo1"
         },
         {
           "Name": "label",
@@ -1254,13 +1839,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-JP2f/4NS262nHeOahy89zx4xvv0MFroExC/vzJonWOQ="
+          "Value": "sha256-v9bGyTfTXwYlqxIlBMJvQnaLJMy/C+WdAjrtoqlGk7o="
         }
       ]
     },
     {
-      "Route": "css/design-tokens.wjl3radht7.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\o4u6gh8ri8-wjl3radht7.gz",
+      "Route": "css/design-tokens.b1dndedpo1.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\o4u6gh8ri8-b1dndedpo1.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -1269,7 +1854,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1123"
+          "Value": "1724"
         },
         {
           "Name": "Content-Type",
@@ -1277,11 +1862,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"Ws7qBPwWr7y5UahevUpmCMKWGqgmftZH0sOzg9Qvou8=\""
+          "Value": "\"MKu+yaRhsyfAkSFS+Abmbqx2CAkANiuZziAxBTFDk6E=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:46:45 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1299,7 +1884,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "wjl3radht7"
+          "Value": "b1dndedpo1"
         },
         {
           "Name": "label",
@@ -1307,18 +1892,18 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-Ws7qBPwWr7y5UahevUpmCMKWGqgmftZH0sOzg9Qvou8="
+          "Value": "sha256-MKu+yaRhsyfAkSFS+Abmbqx2CAkANiuZziAxBTFDk6E="
         }
       ]
     },
     {
-      "Route": "css/landing-directory-tracking.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\crnbpr8pfs-ksxqnpcwww.gz",
+      "Route": "css/design-tokens.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\o4u6gh8ri8-b1dndedpo1.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000974658869"
+          "Quality": "0.000579710145"
         }
       ],
       "ResponseHeaders": [
@@ -1328,15 +1913,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1025"
+          "Value": "1724"
         },
         {
           "Name": "ETag",
-          "Value": "\"gyOPnSpcVlsMMMHP9OYTvF9tAn/reeggwzj3ol1aPPA=\""
+          "Value": "\"MKu+yaRhsyfAkSFS+Abmbqx2CAkANiuZziAxBTFDk6E=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:50:34 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1356,19 +1941,19 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx+2jRFU/A=\""
+          "Value": "W/\"v9bGyTfTXwYlqxIlBMJvQnaLJMy/C+WdAjrtoqlGk7o=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx+2jRFU/A="
+          "Value": "sha256-v9bGyTfTXwYlqxIlBMJvQnaLJMy/C+WdAjrtoqlGk7o="
         }
       ]
     },
     {
-      "Route": "css/landing-directory-tracking.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css",
+      "Route": "css/design-tokens.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -1377,7 +1962,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "3266"
+          "Value": "5996"
         },
         {
           "Name": "Content-Type",
@@ -1385,11 +1970,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx+2jRFU/A=\""
+          "Value": "\"v9bGyTfTXwYlqxIlBMJvQnaLJMy/C+WdAjrtoqlGk7o=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:50:34 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1399,13 +1984,13 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx+2jRFU/A="
+          "Value": "sha256-v9bGyTfTXwYlqxIlBMJvQnaLJMy/C+WdAjrtoqlGk7o="
         }
       ]
     },
     {
-      "Route": "css/landing-directory-tracking.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\crnbpr8pfs-ksxqnpcwww.gz",
+      "Route": "css/design-tokens.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\o4u6gh8ri8-b1dndedpo1.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -1414,7 +1999,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1025"
+          "Value": "1724"
         },
         {
           "Name": "Content-Type",
@@ -1422,11 +2007,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"gyOPnSpcVlsMMMHP9OYTvF9tAn/reeggwzj3ol1aPPA=\""
+          "Value": "\"MKu+yaRhsyfAkSFS+Abmbqx2CAkANiuZziAxBTFDk6E=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:50:34 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1444,18 +2029,18 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-gyOPnSpcVlsMMMHP9OYTvF9tAn/reeggwzj3ol1aPPA="
+          "Value": "sha256-MKu+yaRhsyfAkSFS+Abmbqx2CAkANiuZziAxBTFDk6E="
         }
       ]
     },
     {
-      "Route": "css/landing-directory-tracking.ksxqnpcwww.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\crnbpr8pfs-ksxqnpcwww.gz",
+      "Route": "css/landing-directory-tracking.8gtm283y14.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\crnbpr8pfs-8gtm283y14.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000974658869"
+          "Quality": "0.000966183575"
         }
       ],
       "ResponseHeaders": [
@@ -1465,15 +2050,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1025"
+          "Value": "1034"
         },
         {
           "Name": "ETag",
-          "Value": "\"gyOPnSpcVlsMMMHP9OYTvF9tAn/reeggwzj3ol1aPPA=\""
+          "Value": "\"LJ3FVnCb6bUdoSQQlGbCd92s6F3ZnwZrOp06b13vpSU=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:50:34 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1493,13 +2078,13 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx+2jRFU/A=\""
+          "Value": "W/\"aK+UR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT+Mg=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "ksxqnpcwww"
+          "Value": "8gtm283y14"
         },
         {
           "Name": "label",
@@ -1507,13 +2092,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx+2jRFU/A="
+          "Value": "sha256-aK+UR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT+Mg="
         }
       ]
     },
     {
-      "Route": "css/landing-directory-tracking.ksxqnpcwww.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css",
+      "Route": "css/landing-directory-tracking.8gtm283y14.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -1522,7 +2107,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "3266"
+          "Value": "3356"
         },
         {
           "Name": "Content-Type",
@@ -1530,11 +2115,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx+2jRFU/A=\""
+          "Value": "\"aK+UR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT+Mg=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:50:34 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1544,7 +2129,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "ksxqnpcwww"
+          "Value": "8gtm283y14"
         },
         {
           "Name": "label",
@@ -1552,13 +2137,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-bJfI1xtpffOa8kgV3wUCcF/cV8rx9xmFOBx+2jRFU/A="
+          "Value": "sha256-aK+UR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT+Mg="
         }
       ]
     },
     {
-      "Route": "css/landing-directory-tracking.ksxqnpcwww.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\crnbpr8pfs-ksxqnpcwww.gz",
+      "Route": "css/landing-directory-tracking.8gtm283y14.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\crnbpr8pfs-8gtm283y14.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -1567,7 +2152,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1025"
+          "Value": "1034"
         },
         {
           "Name": "Content-Type",
@@ -1575,11 +2160,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"gyOPnSpcVlsMMMHP9OYTvF9tAn/reeggwzj3ol1aPPA=\""
+          "Value": "\"LJ3FVnCb6bUdoSQQlGbCd92s6F3ZnwZrOp06b13vpSU=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:50:34 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1597,7 +2182,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "ksxqnpcwww"
+          "Value": "8gtm283y14"
         },
         {
           "Name": "label",
@@ -1605,18 +2190,18 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-gyOPnSpcVlsMMMHP9OYTvF9tAn/reeggwzj3ol1aPPA="
+          "Value": "sha256-LJ3FVnCb6bUdoSQQlGbCd92s6F3ZnwZrOp06b13vpSU="
         }
       ]
     },
     {
-      "Route": "css/landing-download-responsive.afcsqqms5y.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\susjwig8sl-afcsqqms5y.gz",
+      "Route": "css/landing-directory-tracking.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\crnbpr8pfs-8gtm283y14.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000875656743"
+          "Quality": "0.000966183575"
         }
       ],
       "ResponseHeaders": [
@@ -1626,15 +2211,289 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1141"
+          "Value": "1034"
         },
         {
           "Name": "ETag",
-          "Value": "\"fbhUsVMlM1IC5XZiMtJY6bNErx2eJc1km9Mw8hZwRzA=\""
+          "Value": "\"LJ3FVnCb6bUdoSQQlGbCd92s6F3ZnwZrOp06b13vpSU=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:51:31 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"aK+UR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT+Mg=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-aK+UR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT+Mg="
+        }
+      ]
+    },
+    {
+      "Route": "css/landing-directory-tracking.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "3356"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"aK+UR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT+Mg=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-aK+UR3IoNA/VXCHrLPiWaEb9IUJSJAngEJfyukpT+Mg="
+        }
+      ]
+    },
+    {
+      "Route": "css/landing-directory-tracking.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\crnbpr8pfs-8gtm283y14.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1034"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"LJ3FVnCb6bUdoSQQlGbCd92s6F3ZnwZrOp06b13vpSU=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-LJ3FVnCb6bUdoSQQlGbCd92s6F3ZnwZrOp06b13vpSU="
+        }
+      ]
+    },
+    {
+      "Route": "css/landing-download-responsive.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\susjwig8sl-j7mctsrhvg.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000868055556"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1151"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"fYlc1qNwV420X9VrDW2+joFCCwbf08mAto5fuNHyoT4=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4="
+        }
+      ]
+    },
+    {
+      "Route": "css/landing-download-responsive.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "3127"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4="
+        }
+      ]
+    },
+    {
+      "Route": "css/landing-download-responsive.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\susjwig8sl-j7mctsrhvg.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1151"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"fYlc1qNwV420X9VrDW2+joFCCwbf08mAto5fuNHyoT4=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-fYlc1qNwV420X9VrDW2+joFCCwbf08mAto5fuNHyoT4="
+        }
+      ]
+    },
+    {
+      "Route": "css/landing-download-responsive.j7mctsrhvg.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\susjwig8sl-j7mctsrhvg.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000868055556"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1151"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"fYlc1qNwV420X9VrDW2+joFCCwbf08mAto5fuNHyoT4=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1654,13 +2513,13 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"5o+qw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c=\""
+          "Value": "W/\"bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "afcsqqms5y"
+          "Value": "j7mctsrhvg"
         },
         {
           "Name": "label",
@@ -1668,13 +2527,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-5o+qw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c="
+          "Value": "sha256-bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4="
         }
       ]
     },
     {
-      "Route": "css/landing-download-responsive.afcsqqms5y.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css",
+      "Route": "css/landing-download-responsive.j7mctsrhvg.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -1683,7 +2542,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "3036"
+          "Value": "3127"
         },
         {
           "Name": "Content-Type",
@@ -1691,11 +2550,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"5o+qw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c=\""
+          "Value": "\"bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:51:31 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1705,7 +2564,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "afcsqqms5y"
+          "Value": "j7mctsrhvg"
         },
         {
           "Name": "label",
@@ -1713,13 +2572,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-5o+qw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c="
+          "Value": "sha256-bxjiIyP1cKATlRUtlDzddvBQdIxxZNhqhATElEUANq4="
         }
       ]
     },
     {
-      "Route": "css/landing-download-responsive.afcsqqms5y.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\susjwig8sl-afcsqqms5y.gz",
+      "Route": "css/landing-download-responsive.j7mctsrhvg.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\susjwig8sl-j7mctsrhvg.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -1728,7 +2587,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1141"
+          "Value": "1151"
         },
         {
           "Name": "Content-Type",
@@ -1736,11 +2595,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"fbhUsVMlM1IC5XZiMtJY6bNErx2eJc1km9Mw8hZwRzA=\""
+          "Value": "\"fYlc1qNwV420X9VrDW2+joFCCwbf08mAto5fuNHyoT4=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:51:31 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1758,7 +2617,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "afcsqqms5y"
+          "Value": "j7mctsrhvg"
         },
         {
           "Name": "label",
@@ -1766,18 +2625,18 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-fbhUsVMlM1IC5XZiMtJY6bNErx2eJc1km9Mw8hZwRzA="
+          "Value": "sha256-fYlc1qNwV420X9VrDW2+joFCCwbf08mAto5fuNHyoT4="
         }
       ]
     },
     {
-      "Route": "css/landing-download-responsive.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\susjwig8sl-afcsqqms5y.gz",
+      "Route": "css/landing-hero.a8f7owx677.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\9ywmv6kd8b-a8f7owx677.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000875656743"
+          "Quality": "0.000416319734"
         }
       ],
       "ResponseHeaders": [
@@ -1787,152 +2646,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1141"
+          "Value": "2401"
         },
         {
           "Name": "ETag",
-          "Value": "\"fbhUsVMlM1IC5XZiMtJY6bNErx2eJc1km9Mw8hZwRzA=\""
+          "Value": "\"Ur0q0ftNk0tqQZ1kYF4m39t88FcbHfnS/Xjr59dgS28=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:51:31 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "no-cache"
-        },
-        {
-          "Name": "Content-Encoding",
-          "Value": "gzip"
-        },
-        {
-          "Name": "Vary",
-          "Value": "Content-Encoding"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/css"
-        },
-        {
-          "Name": "ETag",
-          "Value": "W/\"5o+qw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c=\""
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "integrity",
-          "Value": "sha256-5o+qw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c="
-        }
-      ]
-    },
-    {
-      "Route": "css/landing-download-responsive.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css",
-      "Selectors": [],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "3036"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/css"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"5o+qw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:51:31 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "no-cache"
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "integrity",
-          "Value": "sha256-5o+qw07lRBl7pCj/UR5ZZheurKtoFHfFGga9DXrJw9c="
-        }
-      ]
-    },
-    {
-      "Route": "css/landing-download-responsive.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\susjwig8sl-afcsqqms5y.gz",
-      "Selectors": [],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "1141"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/css"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"fbhUsVMlM1IC5XZiMtJY6bNErx2eJc1km9Mw8hZwRzA=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:51:31 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "no-cache"
-        },
-        {
-          "Name": "Content-Encoding",
-          "Value": "gzip"
-        },
-        {
-          "Name": "Vary",
-          "Value": "Content-Encoding"
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "integrity",
-          "Value": "sha256-fbhUsVMlM1IC5XZiMtJY6bNErx2eJc1km9Mw8hZwRzA="
-        }
-      ]
-    },
-    {
-      "Route": "css/landing-hero.4kzuo66zg4.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\9ywmv6kd8b-4kzuo66zg4.gz",
-      "Selectors": [
-        {
-          "Name": "Content-Encoding",
-          "Value": "gzip",
-          "Quality": "0.000506585613"
-        }
-      ],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "1973"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"W3zTM8M9Vx2xsohlNa1DAyuW4DMNg68OvqJF5h3pklM=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:48:26 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -1952,13 +2674,13 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc+x0wAZ2w=\""
+          "Value": "W/\"2nAKM/JexXMbI6PY3RffgWM7Uf0Sc0mEEVrK1zdiAFI=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "4kzuo66zg4"
+          "Value": "a8f7owx677"
         },
         {
           "Name": "label",
@@ -1966,13 +2688,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc+x0wAZ2w="
+          "Value": "sha256-2nAKM/JexXMbI6PY3RffgWM7Uf0Sc0mEEVrK1zdiAFI="
         }
       ]
     },
     {
-      "Route": "css/landing-hero.4kzuo66zg4.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css",
+      "Route": "css/landing-hero.a8f7owx677.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -1981,7 +2703,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "7580"
+          "Value": "10418"
         },
         {
           "Name": "Content-Type",
@@ -1989,11 +2711,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc+x0wAZ2w=\""
+          "Value": "\"2nAKM/JexXMbI6PY3RffgWM7Uf0Sc0mEEVrK1zdiAFI=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:48:26 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2003,7 +2725,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "4kzuo66zg4"
+          "Value": "a8f7owx677"
         },
         {
           "Name": "label",
@@ -2011,13 +2733,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc+x0wAZ2w="
+          "Value": "sha256-2nAKM/JexXMbI6PY3RffgWM7Uf0Sc0mEEVrK1zdiAFI="
         }
       ]
     },
     {
-      "Route": "css/landing-hero.4kzuo66zg4.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\9ywmv6kd8b-4kzuo66zg4.gz",
+      "Route": "css/landing-hero.a8f7owx677.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\9ywmv6kd8b-a8f7owx677.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2026,7 +2748,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1973"
+          "Value": "2401"
         },
         {
           "Name": "Content-Type",
@@ -2034,11 +2756,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"W3zTM8M9Vx2xsohlNa1DAyuW4DMNg68OvqJF5h3pklM=\""
+          "Value": "\"Ur0q0ftNk0tqQZ1kYF4m39t88FcbHfnS/Xjr59dgS28=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:48:26 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2056,7 +2778,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "4kzuo66zg4"
+          "Value": "a8f7owx677"
         },
         {
           "Name": "label",
@@ -2064,18 +2786,18 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-W3zTM8M9Vx2xsohlNa1DAyuW4DMNg68OvqJF5h3pklM="
+          "Value": "sha256-Ur0q0ftNk0tqQZ1kYF4m39t88FcbHfnS/Xjr59dgS28="
         }
       ]
     },
     {
       "Route": "css/landing-hero.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\9ywmv6kd8b-4kzuo66zg4.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\9ywmv6kd8b-a8f7owx677.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000506585613"
+          "Quality": "0.000416319734"
         }
       ],
       "ResponseHeaders": [
@@ -2085,15 +2807,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1973"
+          "Value": "2401"
         },
         {
           "Name": "ETag",
-          "Value": "\"W3zTM8M9Vx2xsohlNa1DAyuW4DMNg68OvqJF5h3pklM=\""
+          "Value": "\"Ur0q0ftNk0tqQZ1kYF4m39t88FcbHfnS/Xjr59dgS28=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:48:26 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2113,19 +2835,19 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc+x0wAZ2w=\""
+          "Value": "W/\"2nAKM/JexXMbI6PY3RffgWM7Uf0Sc0mEEVrK1zdiAFI=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc+x0wAZ2w="
+          "Value": "sha256-2nAKM/JexXMbI6PY3RffgWM7Uf0Sc0mEEVrK1zdiAFI="
         }
       ]
     },
     {
       "Route": "css/landing-hero.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2134,7 +2856,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "7580"
+          "Value": "10418"
         },
         {
           "Name": "Content-Type",
@@ -2142,11 +2864,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc+x0wAZ2w=\""
+          "Value": "\"2nAKM/JexXMbI6PY3RffgWM7Uf0Sc0mEEVrK1zdiAFI=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:48:26 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2156,13 +2878,13 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-fODl3uvLQuCKWKR8s8ukqRpf8dkwFhOlVuc+x0wAZ2w="
+          "Value": "sha256-2nAKM/JexXMbI6PY3RffgWM7Uf0Sc0mEEVrK1zdiAFI="
         }
       ]
     },
     {
       "Route": "css/landing-hero.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\9ywmv6kd8b-4kzuo66zg4.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\9ywmv6kd8b-a8f7owx677.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2171,7 +2893,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1973"
+          "Value": "2401"
         },
         {
           "Name": "Content-Type",
@@ -2179,11 +2901,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"W3zTM8M9Vx2xsohlNa1DAyuW4DMNg68OvqJF5h3pklM=\""
+          "Value": "\"Ur0q0ftNk0tqQZ1kYF4m39t88FcbHfnS/Xjr59dgS28=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:48:26 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2201,18 +2923,18 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-W3zTM8M9Vx2xsohlNa1DAyuW4DMNg68OvqJF5h3pklM="
+          "Value": "sha256-Ur0q0ftNk0tqQZ1kYF4m39t88FcbHfnS/Xjr59dgS28="
         }
       ]
     },
     {
       "Route": "css/landing-sections.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ub56i21yrk-fbzswao8zz.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ub56i21yrk-xhdrbwwwre.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000752445448"
+          "Quality": "0.000746825990"
         }
       ],
       "ResponseHeaders": [
@@ -2222,15 +2944,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1328"
+          "Value": "1338"
         },
         {
           "Name": "ETag",
-          "Value": "\"5bZ+m5M9pjQ43Bb49FyMrABvrcEpWsws25ShNQSuADQ=\""
+          "Value": "\"xXxeOG/B0TZsHmtkbWXE/ld5kbBdMyKoqpV2IXCUaFs=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:49:39 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2250,19 +2972,19 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk=\""
+          "Value": "W/\"6xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk="
+          "Value": "sha256-6xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk="
         }
       ]
     },
     {
       "Route": "css/landing-sections.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2271,7 +2993,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "4360"
+          "Value": "4513"
         },
         {
           "Name": "Content-Type",
@@ -2279,11 +3001,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk=\""
+          "Value": "\"6xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:49:39 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2293,13 +3015,13 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk="
+          "Value": "sha256-6xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk="
         }
       ]
     },
     {
       "Route": "css/landing-sections.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ub56i21yrk-fbzswao8zz.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ub56i21yrk-xhdrbwwwre.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2308,7 +3030,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1328"
+          "Value": "1338"
         },
         {
           "Name": "Content-Type",
@@ -2316,11 +3038,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"5bZ+m5M9pjQ43Bb49FyMrABvrcEpWsws25ShNQSuADQ=\""
+          "Value": "\"xXxeOG/B0TZsHmtkbWXE/ld5kbBdMyKoqpV2IXCUaFs=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:49:39 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2338,18 +3060,18 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-5bZ+m5M9pjQ43Bb49FyMrABvrcEpWsws25ShNQSuADQ="
+          "Value": "sha256-xXxeOG/B0TZsHmtkbWXE/ld5kbBdMyKoqpV2IXCUaFs="
         }
       ]
     },
     {
-      "Route": "css/landing-sections.fbzswao8zz.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ub56i21yrk-fbzswao8zz.gz",
+      "Route": "css/landing-sections.xhdrbwwwre.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ub56i21yrk-xhdrbwwwre.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000752445448"
+          "Quality": "0.000746825990"
         }
       ],
       "ResponseHeaders": [
@@ -2359,15 +3081,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1328"
+          "Value": "1338"
         },
         {
           "Name": "ETag",
-          "Value": "\"5bZ+m5M9pjQ43Bb49FyMrABvrcEpWsws25ShNQSuADQ=\""
+          "Value": "\"xXxeOG/B0TZsHmtkbWXE/ld5kbBdMyKoqpV2IXCUaFs=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:49:39 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2387,13 +3109,13 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk=\""
+          "Value": "W/\"6xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "fbzswao8zz"
+          "Value": "xhdrbwwwre"
         },
         {
           "Name": "label",
@@ -2401,13 +3123,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk="
+          "Value": "sha256-6xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk="
         }
       ]
     },
     {
-      "Route": "css/landing-sections.fbzswao8zz.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css",
+      "Route": "css/landing-sections.xhdrbwwwre.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2416,7 +3138,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "4360"
+          "Value": "4513"
         },
         {
           "Name": "Content-Type",
@@ -2424,11 +3146,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk=\""
+          "Value": "\"6xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:49:39 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2438,7 +3160,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "fbzswao8zz"
+          "Value": "xhdrbwwwre"
         },
         {
           "Name": "label",
@@ -2446,13 +3168,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-y6lN37DV3lNxilx8PCgqpw2XpDB3ptQCMhipA7DsTyk="
+          "Value": "sha256-6xcB1Vun9ROx25v/J6vm6knL2E4uyN5qbrJfzjmi3nk="
         }
       ]
     },
     {
-      "Route": "css/landing-sections.fbzswao8zz.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ub56i21yrk-fbzswao8zz.gz",
+      "Route": "css/landing-sections.xhdrbwwwre.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ub56i21yrk-xhdrbwwwre.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2461,7 +3183,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1328"
+          "Value": "1338"
         },
         {
           "Name": "Content-Type",
@@ -2469,11 +3191,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"5bZ+m5M9pjQ43Bb49FyMrABvrcEpWsws25ShNQSuADQ=\""
+          "Value": "\"xXxeOG/B0TZsHmtkbWXE/ld5kbBdMyKoqpV2IXCUaFs=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:49:39 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2491,7 +3213,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "fbzswao8zz"
+          "Value": "xhdrbwwwre"
         },
         {
           "Name": "label",
@@ -2499,18 +3221,18 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-5bZ+m5M9pjQ43Bb49FyMrABvrcEpWsws25ShNQSuADQ="
+          "Value": "sha256-xXxeOG/B0TZsHmtkbWXE/ld5kbBdMyKoqpV2IXCUaFs="
         }
       ]
     },
     {
-      "Route": "css/login.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\v4y6qbcjj4-mmr8zem7gx.gz",
+      "Route": "css/login.2biwhk0zw6.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\v4y6qbcjj4-2biwhk0zw6.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000546746856"
+          "Quality": "0.000542888165"
         }
       ],
       "ResponseHeaders": [
@@ -2520,152 +3242,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1828"
+          "Value": "1841"
         },
         {
           "Name": "ETag",
-          "Value": "\"O575qohdbp8hWeEkorZraNWumLCV5XRFmXVCpL4bKmo=\""
+          "Value": "\"oISQ4EwcCh781yFUrtcfkJeYXDw2cmsmYPSDdyF/lAg=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:52:43 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "no-cache"
-        },
-        {
-          "Name": "Content-Encoding",
-          "Value": "gzip"
-        },
-        {
-          "Name": "Vary",
-          "Value": "Content-Encoding"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/css"
-        },
-        {
-          "Name": "ETag",
-          "Value": "W/\"3ljPUOiVvLsco8JdJhYg70PWuqY8lmPKWaLY2F2Cf0E=\""
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "integrity",
-          "Value": "sha256-3ljPUOiVvLsco8JdJhYg70PWuqY8lmPKWaLY2F2Cf0E="
-        }
-      ]
-    },
-    {
-      "Route": "css/login.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css",
-      "Selectors": [],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "7755"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/css"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"3ljPUOiVvLsco8JdJhYg70PWuqY8lmPKWaLY2F2Cf0E=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:52:43 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "no-cache"
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "integrity",
-          "Value": "sha256-3ljPUOiVvLsco8JdJhYg70PWuqY8lmPKWaLY2F2Cf0E="
-        }
-      ]
-    },
-    {
-      "Route": "css/login.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\v4y6qbcjj4-mmr8zem7gx.gz",
-      "Selectors": [],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "1828"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/css"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"O575qohdbp8hWeEkorZraNWumLCV5XRFmXVCpL4bKmo=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:52:43 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "no-cache"
-        },
-        {
-          "Name": "Content-Encoding",
-          "Value": "gzip"
-        },
-        {
-          "Name": "Vary",
-          "Value": "Content-Encoding"
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "integrity",
-          "Value": "sha256-O575qohdbp8hWeEkorZraNWumLCV5XRFmXVCpL4bKmo="
-        }
-      ]
-    },
-    {
-      "Route": "css/login.mmr8zem7gx.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\v4y6qbcjj4-mmr8zem7gx.gz",
-      "Selectors": [
-        {
-          "Name": "Content-Encoding",
-          "Value": "gzip",
-          "Quality": "0.000546746856"
-        }
-      ],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "1828"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"O575qohdbp8hWeEkorZraNWumLCV5XRFmXVCpL4bKmo=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:52:43 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2685,13 +3270,13 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"3ljPUOiVvLsco8JdJhYg70PWuqY8lmPKWaLY2F2Cf0E=\""
+          "Value": "W/\"rmVqN83AjB0m62hH0Qj+QFJk2/gdTMXBZTZTXZUtsrM=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "mmr8zem7gx"
+          "Value": "2biwhk0zw6"
         },
         {
           "Name": "label",
@@ -2699,13 +3284,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-3ljPUOiVvLsco8JdJhYg70PWuqY8lmPKWaLY2F2Cf0E="
+          "Value": "sha256-rmVqN83AjB0m62hH0Qj+QFJk2/gdTMXBZTZTXZUtsrM="
         }
       ]
     },
     {
-      "Route": "css/login.mmr8zem7gx.css",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css",
+      "Route": "css/login.2biwhk0zw6.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2714,7 +3299,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "7755"
+          "Value": "8072"
         },
         {
           "Name": "Content-Type",
@@ -2722,11 +3307,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"3ljPUOiVvLsco8JdJhYg70PWuqY8lmPKWaLY2F2Cf0E=\""
+          "Value": "\"rmVqN83AjB0m62hH0Qj+QFJk2/gdTMXBZTZTXZUtsrM=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:52:43 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2736,7 +3321,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "mmr8zem7gx"
+          "Value": "2biwhk0zw6"
         },
         {
           "Name": "label",
@@ -2744,13 +3329,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-3ljPUOiVvLsco8JdJhYg70PWuqY8lmPKWaLY2F2Cf0E="
+          "Value": "sha256-rmVqN83AjB0m62hH0Qj+QFJk2/gdTMXBZTZTXZUtsrM="
         }
       ]
     },
     {
-      "Route": "css/login.mmr8zem7gx.css.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\v4y6qbcjj4-mmr8zem7gx.gz",
+      "Route": "css/login.2biwhk0zw6.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\v4y6qbcjj4-2biwhk0zw6.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2759,7 +3344,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1828"
+          "Value": "1841"
         },
         {
           "Name": "Content-Type",
@@ -2767,11 +3352,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"O575qohdbp8hWeEkorZraNWumLCV5XRFmXVCpL4bKmo=\""
+          "Value": "\"oISQ4EwcCh781yFUrtcfkJeYXDw2cmsmYPSDdyF/lAg=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:52:43 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2789,7 +3374,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "mmr8zem7gx"
+          "Value": "2biwhk0zw6"
         },
         {
           "Name": "label",
@@ -2797,13 +3382,150 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-O575qohdbp8hWeEkorZraNWumLCV5XRFmXVCpL4bKmo="
+          "Value": "sha256-oISQ4EwcCh781yFUrtcfkJeYXDw2cmsmYPSDdyF/lAg="
+        }
+      ]
+    },
+    {
+      "Route": "css/login.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\v4y6qbcjj4-2biwhk0zw6.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000542888165"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1841"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"oISQ4EwcCh781yFUrtcfkJeYXDw2cmsmYPSDdyF/lAg=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"rmVqN83AjB0m62hH0Qj+QFJk2/gdTMXBZTZTXZUtsrM=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-rmVqN83AjB0m62hH0Qj+QFJk2/gdTMXBZTZTXZUtsrM="
+        }
+      ]
+    },
+    {
+      "Route": "css/login.css",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "8072"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"rmVqN83AjB0m62hH0Qj+QFJk2/gdTMXBZTZTXZUtsrM=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-rmVqN83AjB0m62hH0Qj+QFJk2/gdTMXBZTZTXZUtsrM="
+        }
+      ]
+    },
+    {
+      "Route": "css/login.css.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\v4y6qbcjj4-2biwhk0zw6.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1841"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"oISQ4EwcCh781yFUrtcfkJeYXDw2cmsmYPSDdyF/lAg=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-oISQ4EwcCh781yFUrtcfkJeYXDw2cmsmYPSDdyF/lAg="
         }
       ]
     },
     {
       "Route": "favicon.ifv42okdf2.png",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\favicon.png",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\favicon.png",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2824,7 +3546,7 @@
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 04:33:20 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2848,7 +3570,7 @@
     },
     {
       "Route": "favicon.png",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\favicon.png",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\favicon.png",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2869,7 +3591,7 @@
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 04:33:20 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2884,13 +3606,13 @@
       ]
     },
     {
-      "Route": "js/animations.js",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\p91jz875tl-xoe6si5h0u.gz",
+      "Route": "js/admin-shell.js",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ahi9ywyby3-qa5y03ce7p.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.001046025105"
+          "Quality": "0.000376506024"
         }
       ],
       "ResponseHeaders": [
@@ -2900,15 +3622,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "955"
+          "Value": "2655"
         },
         {
           "Name": "ETag",
-          "Value": "\"uuyWkoiMfYYLGIK8WPmrT9RK3dMBUwIdj/1v1tLBYnw=\""
+          "Value": "\"sLC5CaoLePG/jtcNYHpfJ0O4EF04dghAprC5MlHyYgw=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:09:59 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2928,19 +3650,19 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"4UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg=\""
+          "Value": "W/\"roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-4UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg="
+          "Value": "sha256-roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8="
         }
       ]
     },
     {
-      "Route": "js/animations.js",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js",
+      "Route": "js/admin-shell.js",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\admin-shell.js",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2949,7 +3671,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "3043"
+          "Value": "10123"
         },
         {
           "Name": "Content-Type",
@@ -2957,11 +3679,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"4UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg=\""
+          "Value": "\"roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:09:59 GMT"
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -2971,13 +3693,311 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-4UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg="
+          "Value": "sha256-roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8="
+        }
+      ]
+    },
+    {
+      "Route": "js/admin-shell.js.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ahi9ywyby3-qa5y03ce7p.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2655"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"sLC5CaoLePG/jtcNYHpfJ0O4EF04dghAprC5MlHyYgw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-sLC5CaoLePG/jtcNYHpfJ0O4EF04dghAprC5MlHyYgw="
+        }
+      ]
+    },
+    {
+      "Route": "js/admin-shell.qa5y03ce7p.js",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ahi9ywyby3-qa5y03ce7p.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000376506024"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2655"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"sLC5CaoLePG/jtcNYHpfJ0O4EF04dghAprC5MlHyYgw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "qa5y03ce7p"
+        },
+        {
+          "Name": "label",
+          "Value": "js/admin-shell.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8="
+        }
+      ]
+    },
+    {
+      "Route": "js/admin-shell.qa5y03ce7p.js",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\admin-shell.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "10123"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "qa5y03ce7p"
+        },
+        {
+          "Name": "label",
+          "Value": "js/admin-shell.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-roTQufi7TPWMW6O29z/JDsbzXsebrtppf191oibyzj8="
+        }
+      ]
+    },
+    {
+      "Route": "js/admin-shell.qa5y03ce7p.js.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\ahi9ywyby3-qa5y03ce7p.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2655"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"sLC5CaoLePG/jtcNYHpfJ0O4EF04dghAprC5MlHyYgw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:48:28 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "qa5y03ce7p"
+        },
+        {
+          "Name": "label",
+          "Value": "js/admin-shell.js.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-sLC5CaoLePG/jtcNYHpfJ0O4EF04dghAprC5MlHyYgw="
+        }
+      ]
+    },
+    {
+      "Route": "js/animations.js",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\p91jz875tl-ypaky3owwl.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.001037344398"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "963"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"8mKcaZE/XLKMEiVt1+dlXK4+Ns/bIOifLjCnatAJIHY=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw="
+        }
+      ]
+    },
+    {
+      "Route": "js/animations.js",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "3132"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw="
         }
       ]
     },
     {
       "Route": "js/animations.js.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\p91jz875tl-xoe6si5h0u.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\p91jz875tl-ypaky3owwl.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -2986,7 +4006,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "955"
+          "Value": "963"
         },
         {
           "Name": "Content-Type",
@@ -2994,11 +4014,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"uuyWkoiMfYYLGIK8WPmrT9RK3dMBUwIdj/1v1tLBYnw=\""
+          "Value": "\"8mKcaZE/XLKMEiVt1+dlXK4+Ns/bIOifLjCnatAJIHY=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:09:59 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -3016,18 +4036,18 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-uuyWkoiMfYYLGIK8WPmrT9RK3dMBUwIdj/1v1tLBYnw="
+          "Value": "sha256-8mKcaZE/XLKMEiVt1+dlXK4+Ns/bIOifLjCnatAJIHY="
         }
       ]
     },
     {
-      "Route": "js/animations.xoe6si5h0u.js",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\p91jz875tl-xoe6si5h0u.gz",
+      "Route": "js/animations.ypaky3owwl.js",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\p91jz875tl-ypaky3owwl.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.001046025105"
+          "Quality": "0.001037344398"
         }
       ],
       "ResponseHeaders": [
@@ -3037,15 +4057,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "955"
+          "Value": "963"
         },
         {
           "Name": "ETag",
-          "Value": "\"uuyWkoiMfYYLGIK8WPmrT9RK3dMBUwIdj/1v1tLBYnw=\""
+          "Value": "\"8mKcaZE/XLKMEiVt1+dlXK4+Ns/bIOifLjCnatAJIHY=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:09:59 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -3065,13 +4085,13 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"4UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg=\""
+          "Value": "W/\"RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "xoe6si5h0u"
+          "Value": "ypaky3owwl"
         },
         {
           "Name": "label",
@@ -3079,13 +4099,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-4UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg="
+          "Value": "sha256-RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw="
         }
       ]
     },
     {
-      "Route": "js/animations.xoe6si5h0u.js",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js",
+      "Route": "js/animations.ypaky3owwl.js",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -3094,7 +4114,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "3043"
+          "Value": "3132"
         },
         {
           "Name": "Content-Type",
@@ -3102,11 +4122,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"4UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg=\""
+          "Value": "\"RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:09:59 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -3116,7 +4136,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "xoe6si5h0u"
+          "Value": "ypaky3owwl"
         },
         {
           "Name": "label",
@@ -3124,13 +4144,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-4UMnGour/Z9wVIs04UGqUDR55sAiEjR/2UEzLEY2mSg="
+          "Value": "sha256-RkE7ElNasPYH2EmxIX1dh6nZkqbAB8XpI4aN8zYj2kw="
         }
       ]
     },
     {
-      "Route": "js/animations.xoe6si5h0u.js.gz",
-      "AssetFile": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\p91jz875tl-xoe6si5h0u.gz",
+      "Route": "js/animations.ypaky3owwl.js.gz",
+      "AssetFile": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\obj\\Debug\\net9.0\\compressed\\p91jz875tl-ypaky3owwl.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -3139,7 +4159,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "955"
+          "Value": "963"
         },
         {
           "Name": "Content-Type",
@@ -3147,11 +4167,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"uuyWkoiMfYYLGIK8WPmrT9RK3dMBUwIdj/1v1tLBYnw=\""
+          "Value": "\"8mKcaZE/XLKMEiVt1+dlXK4+Ns/bIOifLjCnatAJIHY=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 14 May 2026 07:09:59 GMT"
+          "Value": "Mon, 18 May 2026 07:27:37 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -3169,7 +4189,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "xoe6si5h0u"
+          "Value": "ypaky3owwl"
         },
         {
           "Name": "label",
@@ -3177,7 +4197,7 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-uuyWkoiMfYYLGIK8WPmrT9RK3dMBUwIdj/1v1tLBYnw="
+          "Value": "sha256-8mKcaZE/XLKMEiVt1+dlXK4+Ns/bIOifLjCnatAJIHY="
         }
       ]
     }

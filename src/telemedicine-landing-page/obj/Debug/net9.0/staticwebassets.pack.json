@@ -1,43 +1,55 @@
 {
   "Files": [
     {
-      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css",
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-page.css",
+      "PackagePath": "staticwebassets\\css\\admin-page.css"
+    },
+    {
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\admin-shell.css",
+      "PackagePath": "staticwebassets\\css\\admin-shell.css"
+    },
+    {
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\animations.css",
       "PackagePath": "staticwebassets\\css\\animations.css"
     },
     {
-      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css",
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\base-layout.css",
       "PackagePath": "staticwebassets\\css\\base-layout.css"
     },
     {
-      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css",
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\design-tokens.css",
       "PackagePath": "staticwebassets\\css\\design-tokens.css"
     },
     {
-      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css",
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-directory-tracking.css",
       "PackagePath": "staticwebassets\\css\\landing-directory-tracking.css"
     },
     {
-      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css",
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-download-responsive.css",
       "PackagePath": "staticwebassets\\css\\landing-download-responsive.css"
     },
     {
-      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css",
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-hero.css",
       "PackagePath": "staticwebassets\\css\\landing-hero.css"
     },
     {
-      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css",
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\landing-sections.css",
       "PackagePath": "staticwebassets\\css\\landing-sections.css"
     },
     {
-      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css",
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\css\\login.css",
       "PackagePath": "staticwebassets\\css\\login.css"
     },
     {
-      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\favicon.png",
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\favicon.png",
       "PackagePath": "staticwebassets\\favicon.png"
     },
     {
-      "Id": "D:\\BenhVien_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js",
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\admin-shell.js",
+      "PackagePath": "staticwebassets\\js\\admin-shell.js"
+    },
+    {
+      "Id": "D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\src\\telemedicine-landing-page\\wwwroot\\js\\animations.js",
       "PackagePath": "staticwebassets\\js\\animations.js"
     },
     {
