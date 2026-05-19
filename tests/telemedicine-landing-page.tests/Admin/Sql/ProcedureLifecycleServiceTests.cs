@@ -23,7 +23,7 @@ public sealed class ProcedureLifecycleServiceTests : IDisposable
             ProcedureId = _testProcId,
             ProcedureCode = "QT-TEST-001",
             Name = "Quy trình kiểm thử",
-            ProcedureType = "clinical",
+            ProcedureType = "technical",
             OwnerDepartmentId = MedDataStoreSeed.DeptNoiId,
             Description = "Quy trình dùng cho kiểm thử đơn vị",
             CreatedBy = MedDataStoreSeed.AdminUserId
@@ -104,7 +104,7 @@ public sealed class ProcedureLifecycleServiceTests : IDisposable
         Assert.Equal(50020, ex.SqlErrorNumber);
     }
 
-    // === 7. Publish: pending_approval → published ===
+    // === 7. Publish: pending_approval → active ===
     [Fact]
     public void Publish_PendingVersion_Succeeds()
     {
@@ -115,7 +115,7 @@ public sealed class ProcedureLifecycleServiceTests : IDisposable
 
         var updated = _db.ProcedureVersions
             .First(v => v.ProcedureVersionId == ver.ProcedureVersionId);
-        Assert.Equal("published", updated.StatusCode);
+        Assert.Equal("active", updated.StatusCode);
         Assert.NotNull(updated.PublishedAt);
     }
 
@@ -136,7 +136,7 @@ public sealed class ProcedureLifecycleServiceTests : IDisposable
         Assert.Equal("superseded", superseded.StatusCode);
 
         var publishedCount = _db.ProcedureVersions
-            .Count(v => v.ProcedureId == _testProcId && v.StatusCode == "published");
+            .Count(v => v.ProcedureId == _testProcId && v.StatusCode == "active");
         Assert.Equal(1, publishedCount);
     }
 
@@ -154,7 +154,7 @@ public sealed class ProcedureLifecycleServiceTests : IDisposable
         Assert.Equal("rejected", updated.StatusCode);
     }
 
-    // === 10. Withdraw: published → withdrawn ===
+    // === 10. Withdraw: active → archived ===
     [Fact]
     public void Withdraw_PublishedVersion_Succeeds()
     {
@@ -166,11 +166,11 @@ public sealed class ProcedureLifecycleServiceTests : IDisposable
 
         var updated = _db.ProcedureVersions
             .First(v => v.ProcedureVersionId == ver.ProcedureVersionId);
-        Assert.Equal("withdrawn", updated.StatusCode);
+        Assert.Equal("archived", updated.StatusCode);
         Assert.NotNull(updated.EffectiveTo);
     }
 
-    // === 11. Withdraw: không phải published → lỗi 50024 ===
+    // === 11. Withdraw: không phải active → lỗi 50024 ===
     [Fact]
     public void Withdraw_NotPublished_Throws50024()
     {
@@ -182,7 +182,7 @@ public sealed class ProcedureLifecycleServiceTests : IDisposable
         Assert.Equal(50024, ex.SqlErrorNumber);
     }
 
-    // === 12. GetActiveVersion: trả về bản published ===
+    // === 12. GetActiveVersion: trả về bản active ===
     [Fact]
     public void GetActiveVersion_ReturnsPublished()
     {

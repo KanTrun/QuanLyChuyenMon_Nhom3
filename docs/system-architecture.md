@@ -12,14 +12,26 @@ Ngày 2026-05-14, repo có thêm một ứng dụng Blazor Web App riêng cho tr
 | Data persistence | Không lưu dữ liệu người bệnh trong scope landing page |
 | UI system | CSS token theo màu y tế dịu, Figtree/Noto Sans, motion nhẹ có `prefers-reduced-motion` |
 
-Landing page hiện là track độc lập với blueprint quản lý quy trình kỹ thuật chuyên môn. Nếu sau này tích hợp đặt lịch, tư vấn thật hoặc hồ sơ người bệnh, cần thêm API/server-side authorization và review tuân thủ dữ liệu y tế trước khi lưu PHI.
+Landing page hiện chạy cùng Blazor app với module QLCM Pro. Nếu sau này tích hợp đặt lịch, tư vấn thật hoặc hồ sơ người bệnh, cần thêm API/server-side authorization và review tuân thủ dữ liệu y tế trước khi lưu PHI.
 
-## Legacy Procedure Module Architecture
-Kiến trúc dưới đây là blueprint logic cho module quản lý quy trình kỹ thuật chuyên môn. Track này là tài liệu nghiệp vụ độc lập với landing page Blazor hiện có; chưa có source triển khai riêng cho module quy trình/RBAC.
+## QLCM Pro SQL-Backed Architecture
+Ngày 2026-05-19, module quản lý quy trình kỹ thuật chuyên môn đã được triển khai trong `src/telemedicine-landing-page` theo hướng SQL-backed.
 
-## Legacy Notes
+| Layer | Decision |
+|---|---|
+| UI | Razor Components trong `Components/Pages`, tổ chức theo Admin, Procedure, Resource, Order, Clinical, Notification |
+| Application services | Các service admin dùng `IMedDataStore`, `IProcedureLifecycleService`, `ICurrentUserContext`, `IToastService` |
+| Persistence | Entity Framework Core `MedDbContext` map schema `MedicalProcedureManagement` |
+| SQL facade | `IMedDataStore` che chi tiết query/mutation cho identity, permissions, procedures, catalog, patients, orders, protocols, notifications |
+| Seed data | `scripts/seed-realistic-data.sql` nạp dữ liệu demo/QA có lookup hợp lệ |
+| Version lifecycle | `procedure_versions.status_code` dùng `draft`, `pending_approval`, `active`, `superseded`, `archived` |
+
+## Procedure Module Architecture
+Kiến trúc dưới đây là logic đang được hiện thực trong module QLCM Pro của Blazor app.
+
+## Notes
 For the procedure/RBAC module only:
-Kiến trúc dưới đây là blueprint logic cho module quản lý quy trình kỹ thuật chuyên môn. Workspace hiện chưa có source ứng dụng, nên tài liệu này không ràng buộc stack cụ thể.
+Các tích hợp kho/dược/thiết bị và auth production vẫn đi qua boundary service để giữ UI và data store không phụ thuộc trực tiếp hệ thống ngoài.
 
 ## Logical Components
 | Component | Responsibility |
@@ -40,11 +52,12 @@ Kiến trúc dưới đây là blueprint logic cho module quản lý quy trình 
 |---|---|
 | departments | Khoa/phòng áp dụng |
 | users | Tài khoản người dùng |
-| user_groups | Nhóm tài khoản |
+| groups | Nhóm tài khoản |
 | roles | Vai trò nghiệp vụ |
 | user_group_members | Thành viên nhóm |
 | permissions | Danh mục quyền theo màn hình/chức năng và thao tác |
 | role_permissions | Quyền mặc định theo vai trò |
+| group_permissions | Quyền kế thừa theo nhóm người dùng |
 | user_permission_overrides | Quyền bổ sung/thu hồi riêng theo user |
 | permission_change_logs | Log thay đổi quyền trước/sau |
 | professional_procedures | Quy trình gốc |
@@ -80,13 +93,21 @@ Kiến trúc dưới đây là blueprint logic cho module quản lý quy trình 
 1. User gửi request hoặc mở màn hình.
 2. UI đọc danh sách quyền để ẩn chức năng không hợp lệ.
 3. API nhận request và gọi Permission Service.
-4. Permission Service tính quyền từ user, nhóm, role, override, khoa/phòng.
-5. Nếu không có quyền, API trả `403 Không có quyền truy cập`.
-6. Nếu có quyền, request chuyển sang Workflow Runtime Guard.
-7. Guard kiểm tra quy trình active đã ánh xạ với màn hình/chức năng.
-8. Guard xác định bước hiện tại, role được phép, điều kiện chuyển bước, SLA.
-9. Nếu lệch quy trình, hệ thống cảnh báo hoặc chặn theo `enforcementMode`.
-10. Hệ thống ghi workflow_action_logs và audit_logs.
+4. Permission Service tính quyền từ vai trò, nhóm, override user và scope khoa/phòng.
+5. Khi nhiều nguồn cùng cấp quyền, hệ thống chọn theo thứ tự SQL: priority cao hơn, deny thắng khi hòa, source user override > group > role, rồi effective_from mới hơn.
+6. Nếu không có quyền, API trả `403 Không có quyền truy cập`.
+7. Nếu có quyền, request chuyển sang Workflow Runtime Guard.
+8. Guard kiểm tra quy trình active đã ánh xạ với màn hình/chức năng.
+9. Guard xác định bước hiện tại, role được phép, điều kiện chuyển bước, SLA.
+10. Nếu lệch quy trình, hệ thống cảnh báo hoặc chặn theo `enforcementMode`.
+11. Hệ thống ghi workflow_action_logs và audit_logs.
+
+## Audit Flow
+1. Mọi mutation qua `MedDbContext.SaveChanges` được quét từ ChangeTracker.
+2. Entity nghiệp vụ ở trạng thái Added/Modified/Deleted sinh audit log tự động với `target_type`, `target_id`, `before_json`, `after_json`.
+3. Các nghiệp vụ có ý nghĩa riêng như đăng nhập, gửi duyệt, phê duyệt, ban hành, từ chối vẫn ghi thêm action nghiệp vụ chuyên biệt.
+4. `audit_logs` là append-only; trigger SQL chặn UPDATE/DELETE.
+5. UI `/admin/nhat-ky` hiển thị toàn bộ log và JSON trước/sau, còn tab lịch sử phân quyền lọc các target liên quan quyền.
 
 ## Procedure Versioning Flow
 1. Tạo version draft từ quy trình mới hoặc copy version active.
@@ -150,9 +171,4 @@ Kiến trúc dưới đây là blueprint logic cho module quản lý quy trình 
 | Sensitive patient data | Protocol application log phải theo quyền hồ sơ bệnh án |
 
 ## Unresolved Questions
-| Question | Impact |
-|---|---|
-| Database dùng SQL Server, PostgreSQL, MySQL hay DB khác? | Cần để thiết kế migration |
-| Cơ chế auth hiện tại dùng session, JWT hay SSO? | Cần để tích hợp RBAC |
-| Có event bus/scheduler sẵn không? | Cần cho effectiveAt và notification |
-| Kho/dược/thiết bị có API chuẩn không? | Cần cho adapter F05 |
+None.

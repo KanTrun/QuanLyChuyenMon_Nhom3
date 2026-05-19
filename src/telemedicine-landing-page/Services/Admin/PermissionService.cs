@@ -208,6 +208,72 @@ public sealed class PermissionService : IPermissionService
 
     private static (List<RoleRecord> Roles, List<UserAccountRecord> Users) Seed()
     {
-        return (new List<RoleRecord>(), new List<UserAccountRecord>());
+        List<PermissionGrant> Grants(bool approve = false) => s_modules
+            .Select(module => new PermissionGrant(
+                module,
+                CanView: true,
+                CanCreate: module is not "bao-cao",
+                CanUpdate: module is not "bao-cao",
+                CanDelete: false,
+                CanApprove: approve && (module is "quy-trinh" or "phan-quyen")))
+            .ToList();
+
+        var adminRole = new RoleRecord
+        {
+            Code = "ADMIN",
+            Name = "Quản trị hệ thống",
+            Description = "Toàn quyền cấu hình hệ thống",
+            Department = Department.HanhChinh,
+            Permissions = s_modules
+                .Select(module => new PermissionGrant(module, true, true, true, true, true))
+                .ToList(),
+        };
+        var doctorRole = new RoleRecord
+        {
+            Code = "BSDT",
+            Name = "Bác sĩ điều trị",
+            Description = "Thực hiện quy trình, chỉ định và theo dõi lâm sàng",
+            Department = Department.NoiTiet,
+            Permissions = Grants(),
+        };
+        var managerRole = new RoleRecord
+        {
+            Code = "TK",
+            Name = "Trưởng khoa",
+            Description = "Duyệt và quản lý dữ liệu trong khoa",
+            Department = Department.NoiTiet,
+            Permissions = Grants(approve: true),
+        };
+
+        var roles = new List<RoleRecord> { adminRole, doctorRole, managerRole };
+        var users = new List<UserAccountRecord>
+        {
+            new()
+            {
+                FullName = "Quản trị hệ thống",
+                Email = "admin@benhvien.vn",
+                Department = Department.HanhChinh,
+                RoleIds = new[] { adminRole.Id },
+                LastLogin = DateTime.Now.AddMinutes(-20),
+            },
+            new()
+            {
+                FullName = "BS. Đỗ An Nhiên",
+                Email = "bs.noi01@benhvien.vn",
+                Department = Department.NoiTiet,
+                RoleIds = new[] { doctorRole.Id },
+                LastLogin = DateTime.Now.AddHours(-2),
+            },
+            new()
+            {
+                FullName = "TS. Nguyễn Minh Khang",
+                Email = "tk.noi@benhvien.vn",
+                Department = Department.NoiTiet,
+                RoleIds = new[] { managerRole.Id },
+                LastLogin = DateTime.Now.AddHours(-1),
+            },
+        };
+
+        return (roles, users);
     }
 }

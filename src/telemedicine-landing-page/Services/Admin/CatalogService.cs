@@ -336,6 +336,19 @@ public sealed class CatalogService : ICatalogService
                     new(ResourceType.VatTu, "VT-SA-003", "Khăn giấy lau gel", "Tờ", 3m, "Khăn giấy dùng một lần"),
                 },
             },
+            new TechnicalServiceRecord
+            {
+                Code = "KT-NOI-001",
+                Name = "Theo dõi đường huyết tại giường",
+                ServiceType = ServiceType.ThuThuat,
+                Department = Department.NoiTiet,
+                Status = CatalogStatus.HoatDong,
+                ResourceNorms = new List<ResourceNorm>
+                {
+                    new(ResourceType.VatTu, "VT-DH-001", "Que thử đường huyết", "cái", 1m, "Dùng một lần"),
+                    new(ResourceType.ThietBi, "TB-DH-001", "Máy đo đường huyết", "lượt", 1m, "Thiết bị dùng chung"),
+                },
+            },
         };
     }
 }

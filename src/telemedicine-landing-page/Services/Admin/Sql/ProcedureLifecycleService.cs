@@ -5,7 +5,7 @@ namespace TelemedicineLandingPage.Services.Admin.Sql;
 
 /// <summary>
 /// Dịch vụ vòng đời phiên bản quy trình chuyên môn.
-/// Quản lý chuyển trạng thái: draft → pending_approval → published (chỉ 1 bản active).
+/// Quản lý chuyển trạng thái: draft → pending_approval → active (chỉ 1 bản đang hiệu lực).
 /// </summary>
 public sealed class ProcedureLifecycleService
 {
@@ -82,7 +82,7 @@ public sealed class ProcedureLifecycleService
         });
     }
 
-    /// <summary>Phê duyệt và xuất bản phiên bản (pending_approval → published). Hủy bản published cũ.</summary>
+    /// <summary>Phê duyệt và xuất bản phiên bản (pending_approval → active). Hủy bản active cũ.</summary>
     public void Publish(Guid versionId, Guid approvedBy)
     {
         var ver = GetVersionOrThrow(versionId);
@@ -90,9 +90,9 @@ public sealed class ProcedureLifecycleService
             throw MedDomainException.Constraint("CK_procedure_version_publish", 50022,
                 "Chỉ có thể xuất bản phiên bản đang chờ phê duyệt.");
 
-        // Hủy kích hoạt phiên bản published hiện tại (one-active guard)
+        // Hủy kích hoạt phiên bản đang hiệu lực hiện tại (one-active guard)
         var currentPublished = _db.ProcedureVersions
-            .Where(v => v.ProcedureId == ver.ProcedureId && v.StatusCode == "published")
+            .Where(v => v.ProcedureId == ver.ProcedureId && v.StatusCode == "active")
             .ToList();
 
         foreach (var old in currentPublished)
@@ -107,7 +107,7 @@ public sealed class ProcedureLifecycleService
 
         var published = ver with
         {
-            StatusCode = "published",
+            StatusCode = "active",
             ApprovedBy = approvedBy,
             ApprovedAt = DateTime.UtcNow,
             PublishedBy = approvedBy,
@@ -154,17 +154,17 @@ public sealed class ProcedureLifecycleService
         });
     }
 
-    /// <summary>Thu hồi phiên bản đã xuất bản (published → withdrawn).</summary>
+    /// <summary>Thu hồi phiên bản đã xuất bản (active → archived).</summary>
     public void Withdraw(Guid versionId, Guid withdrawnBy, string reason)
     {
         var ver = GetVersionOrThrow(versionId);
-        if (ver.StatusCode != "published")
+        if (ver.StatusCode != "active")
             throw MedDomainException.Constraint("CK_procedure_version_withdraw", 50024,
                 "Chỉ có thể thu hồi phiên bản đã xuất bản.");
 
         var withdrawn = ver with
         {
-            StatusCode = "withdrawn",
+            StatusCode = "archived",
             EffectiveTo = DateTime.UtcNow,
             ChangeReason = reason
         };
@@ -185,7 +185,7 @@ public sealed class ProcedureLifecycleService
     public ProcedureVersion? GetActiveVersion(Guid procedureId)
     {
         return _db.ProcedureVersions
-            .FirstOrDefault(v => v.ProcedureId == procedureId && v.StatusCode == "published");
+            .FirstOrDefault(v => v.ProcedureId == procedureId && v.StatusCode == "active");
     }
 
     /// <summary>Lấy tất cả phiên bản của quy trình.</summary>

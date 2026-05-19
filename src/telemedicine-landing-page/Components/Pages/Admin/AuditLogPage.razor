@@ -38,7 +38,7 @@
 
     <AdminDataTable TItem="AuditLog"
                     Items="_pagedItems"
-                    ColumnCount="6"
+                    ColumnCount="7"
                     CurrentPage="_page"
                     PageSize="_pageSize"
                     TotalItems="_total"
@@ -52,6 +52,7 @@
             <th>Hành động</th>
             <th>Đối tượng</th>
             <th>Mã đối tượng</th>
+            <th>Chi tiết</th>
         </HeaderTemplate>
         <RowTemplate Context="log">
             <tr>
@@ -63,6 +64,34 @@
                 </td>
                 <td>@log.TargetType</td>
                 <td>@(log.TargetId ?? "—")</td>
+                <td>
+                    @if (!string.IsNullOrWhiteSpace(log.BeforeJson) || !string.IsNullOrWhiteSpace(log.AfterJson))
+                    {
+                        <details>
+                            <summary style="cursor:pointer;color:var(--color-primary-deep);font-weight:600;">Xem</summary>
+                            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+                                @if (!string.IsNullOrWhiteSpace(log.BeforeJson))
+                                {
+                                    <div>
+                                        <div class="admin-form-field-hint">Trước</div>
+                                        <pre class="admin-json-block">@log.BeforeJson</pre>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(log.AfterJson))
+                                {
+                                    <div>
+                                        <div class="admin-form-field-hint">Sau</div>
+                                        <pre class="admin-json-block">@log.AfterJson</pre>
+                                    </div>
+                                }
+                            </div>
+                        </details>
+                    }
+                    else
+                    {
+                        <span class="admin-table-cell-muted">—</span>
+                    }
+                </td>
             </tr>
         </RowTemplate>
     </AdminDataTable>
@@ -77,19 +106,29 @@
     private string _filterActor = "";
     private List<AuditLog> _filtered = new();
 
-    private static readonly string[] _actionCodes =
-    [
-        "create", "update", "delete", "archive", "approve", "reject",
-        "submit", "publish", "revoke", "login", "logout"
-    ];
+    private IReadOnlyList<string> _actionCodes = Array.Empty<string>();
 
     protected override void OnInitialized()
     {
         Store.StateChanged += OnChanged;
+        _actionCodes = AuditService.GetAll()
+            .Select(l => l.ActionCode)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
         ApplyFilter();
     }
 
-    private void OnChanged() => InvokeAsync(() => { ApplyFilter(); StateHasChanged(); });
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        _actionCodes = AuditService.GetAll()
+            .Select(l => l.ActionCode)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+        ApplyFilter();
+        StateHasChanged();
+    });
 
     private void OnPageChanged(int p) { _page = p; Paginate(); }
 

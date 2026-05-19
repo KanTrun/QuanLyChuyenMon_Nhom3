@@ -57,12 +57,34 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void RemoveProcedureAttachment(Guid attachmentId)
+    {
+        lock (_lock)
+        {
+            var removed = _procedureAttachments.RemoveAll(a => a.ProcedureAttachmentId == attachmentId);
+            if (removed == 0)
+                throw MedDomainException.Constraint("PK_procedure_attachments", 547, "Tệp đính kèm không tồn tại.");
+            RaiseStateChanged();
+        }
+    }
+
     public void AddProcedureScreenMapping(ProcedureScreenMapping mapping)
     {
         lock (_lock)
         {
             ValidateJson(mapping.RuleJson, "rule");
             _procedureScreenMappings.Add(mapping);
+            RaiseStateChanged();
+        }
+    }
+
+    public void RemoveProcedureScreenMapping(Guid mappingId)
+    {
+        lock (_lock)
+        {
+            var removed = _procedureScreenMappings.RemoveAll(m => m.ProcedureScreenMappingId == mappingId);
+            if (removed == 0)
+                throw MedDomainException.Constraint("PK_procedure_screen_mappings", 547, "Ánh xạ màn hình không tồn tại.");
             RaiseStateChanged();
         }
     }

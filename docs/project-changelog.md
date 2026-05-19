@@ -1,5 +1,39 @@
 # Project Changelog
 
+## 2026-05-19
+### Added
+| Item | Description |
+|---|---|
+| QLCM Pro SQL-backed workflows | Hoàn thiện các màn hình quản trị/lâm sàng dùng `IMedDataStore` thật: quy trình, danh mục kỹ thuật, tài nguyên, chỉ định kỹ thuật, bệnh nhân, thông báo, nhóm người dùng, phác đồ và ghi đè phân quyền cá nhân |
+| Mutable data-store operations | Bổ sung các hàm create/update/remove còn thiếu cho role/group/permission, procedure mapping/attachment, patient/encounter, technical service/norm/order, protocol/rule, notification preference và read state |
+| Realistic seed data | Thêm `scripts/seed-realistic-data.sql` để nạp dữ liệu mẫu thực tế cho khoa phòng, người dùng, vai trò, quyền, quy trình, dịch vụ kỹ thuật, định mức, bệnh nhân, chỉ định, phác đồ và thông báo |
+| Lifecycle lookup alignment | Đồng bộ trạng thái version theo lookup SQL: `draft`, `pending_approval`, `active`, `superseded`, `archived` |
+| Test seed compatibility | Khôi phục seed in-memory legacy cho các test hiện hữu trong khi UI chính dùng SQL-backed data store |
+| Organization navigation | Thêm nhánh `Tổ chức` trong sidebar cho Khoa/Phòng, Người dùng, Vai trò và Nhóm |
+| Automatic audit trail | `MedDbContext.SaveChanges` tự ghi audit cho mọi bản ghi nghiệp vụ được tạo/sửa/xóa, kể cả khi UI gọi trực tiếp `Db.SaveChanges()` |
+
+### Changed
+| Item | Description |
+|---|---|
+| Admin procedure creation | Trang tạo mới quy trình lưu đầy đủ procedure, version, steps, resource norms, screen mappings và attachments |
+| Permission administration | Trang phân quyền có thêm tab ghi đè cá nhân, hỗ trợ thêm/sửa/xóa override theo user |
+| RBAC scope logic | `EffectivePermissionResolver` khớp hàm SQL `fn_user_has_permission_itvf`: lọc theo khoa/phòng, role/group scope, priority, deny và source rank |
+| Department and group UX | Trang phân quyền hiển thị tab Khoa/Phòng và Nhóm; trang Khoa/Phòng hỗ trợ xem cây, sửa và lưu trữ đơn vị |
+| Role management CRUD | Trang Vai trò hỗ trợ thêm, sửa và lưu trữ vai trò tùy chỉnh; khi lưu trữ vai trò sẽ hết hạn các gán vai trò đang hoạt động |
+| Audit log UX | Thêm mục Nhật ký vào sidebar, mở rộng lọc action động và xem JSON trước/sau cho bản ghi audit |
+| Clinical operations | Trang lâm sàng hiển thị bệnh nhân, lượt khám, phác đồ áp dụng và chỉ định kỹ thuật theo dữ liệu SQL |
+| Notification center | Trung tâm thông báo hỗ trợ lọc mức độ, đánh dấu đã đọc, xem lần gửi và cấu hình preference |
+| Profile and lookup hardening | Sửa lỗi lưu hồ sơ với bảng SQL có trigger, làm lại UI hồ sơ theo admin style, thêm seed chuẩn hóa lookup và mở rộng unit catalog |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 91 tests |
+
+### Unresolved Questions
+None.
+
 ## 2026-05-15
 ### Added
 | Item | Description |

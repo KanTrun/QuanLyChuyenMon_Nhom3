@@ -49,6 +49,17 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void RemoveRolePermission(Guid rolePermissionId)
+    {
+        lock (_lock)
+        {
+            var removed = _rolePermissions.RemoveAll(p => p.RolePermissionId == rolePermissionId);
+            if (removed == 0)
+                throw MedDomainException.Constraint("PK_role_permissions", 547, "Quyền vai trò không tồn tại.");
+            RaiseStateChanged();
+        }
+    }
+
     public void AddGroupPermission(GroupPermission gp)
     {
         lock (_lock)
@@ -60,6 +71,17 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void RemoveGroupPermission(Guid groupPermissionId)
+    {
+        lock (_lock)
+        {
+            var removed = _groupPermissions.RemoveAll(p => p.GroupPermissionId == groupPermissionId);
+            if (removed == 0)
+                throw MedDomainException.Constraint("PK_group_permissions", 547, "Quyền nhóm không tồn tại.");
+            RaiseStateChanged();
+        }
+    }
+
     public void AddUserPermissionOverride(UserPermissionOverride upo)
     {
         lock (_lock)
@@ -67,6 +89,31 @@ public sealed partial class MedDataStore
             ValidateDates(upo.EffectiveFrom, upo.EffectiveTo, "CK_user_permission_overrides_dates");
             ValidateJson(upo.ScopeRuleJson, "scope_rule");
             _userPermissionOverrides.Add(upo);
+            RaiseStateChanged();
+        }
+    }
+
+    public void UpdateUserPermissionOverride(UserPermissionOverride upo)
+    {
+        lock (_lock)
+        {
+            ValidateDates(upo.EffectiveFrom, upo.EffectiveTo, "CK_user_permission_overrides_dates");
+            ValidateJson(upo.ScopeRuleJson, "scope_rule");
+            var idx = _userPermissionOverrides.FindIndex(p => p.UserPermissionOverrideId == upo.UserPermissionOverrideId);
+            if (idx < 0)
+                throw MedDomainException.Constraint("PK_user_permission_overrides", 547, "Ghi đè quyền không tồn tại.");
+            _userPermissionOverrides[idx] = upo;
+            RaiseStateChanged();
+        }
+    }
+
+    public void RemoveUserPermissionOverride(Guid userPermissionOverrideId)
+    {
+        lock (_lock)
+        {
+            var removed = _userPermissionOverrides.RemoveAll(p => p.UserPermissionOverrideId == userPermissionOverrideId);
+            if (removed == 0)
+                throw MedDomainException.Constraint("PK_user_permission_overrides", 547, "Ghi đè quyền không tồn tại.");
             RaiseStateChanged();
         }
     }

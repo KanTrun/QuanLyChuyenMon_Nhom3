@@ -64,6 +64,48 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void UpdateRole(Role role)
+    {
+        lock (_lock)
+        {
+            var idx = _roles.FindIndex(r => r.RoleId == role.RoleId);
+            if (idx < 0)
+                throw MedDomainException.Constraint("PK_roles", 547, "Vai trò không tồn tại.");
+            if (_roles.Any(r => r.RoleId != role.RoleId && r.Code == role.Code))
+                throw MedDomainException.Constraint("UQ_roles_code", 2627, $"Mã vai trò '{role.Code}' đã tồn tại.");
+
+            var current = _roles[idx];
+            _roles[idx] = role with
+            {
+                IsSystem = current.IsSystem,
+                CreatedAt = current.CreatedAt,
+                UpdatedAt = DateTime.UtcNow
+            };
+            RaiseStateChanged();
+        }
+    }
+
+    public void ArchiveRole(Guid roleId)
+    {
+        lock (_lock)
+        {
+            var idx = _roles.FindIndex(r => r.RoleId == roleId);
+            if (idx < 0)
+                throw MedDomainException.Constraint("PK_roles", 547, "Vai trò không tồn tại.");
+            if (_roles[idx].IsSystem)
+                throw MedDomainException.Constraint("CK_roles_system_archive", 51030, "Không thể lưu trữ vai trò hệ thống.");
+
+            _roles[idx] = _roles[idx] with { Status = "archived", UpdatedAt = DateTime.UtcNow };
+            var now = DateTime.UtcNow;
+            for (var i = 0; i < _userRoles.Count; i++)
+            {
+                if (_userRoles[i].RoleId == roleId && _userRoles[i].EffectiveTo is null)
+                    _userRoles[i] = _userRoles[i] with { EffectiveTo = now };
+            }
+            RaiseStateChanged();
+        }
+    }
+
     public void AddGroup(Group group)
     {
         lock (_lock)
@@ -85,12 +127,34 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void RemoveUserRole(Guid userRoleId)
+    {
+        lock (_lock)
+        {
+            var removed = _userRoles.RemoveAll(r => r.UserRoleId == userRoleId);
+            if (removed == 0)
+                throw MedDomainException.Constraint("PK_user_roles", 547, "Gán vai trò không tồn tại.");
+            RaiseStateChanged();
+        }
+    }
+
     public void AddUserGroupMember(UserGroupMember member)
     {
         lock (_lock)
         {
             ValidateDates(member.EffectiveFrom, member.EffectiveTo, "CK_user_group_members_dates");
             _userGroupMembers.Add(member);
+            RaiseStateChanged();
+        }
+    }
+
+    public void RemoveUserGroupMember(Guid membershipId)
+    {
+        lock (_lock)
+        {
+            var removed = _userGroupMembers.RemoveAll(m => m.UserGroupMemberId == membershipId);
+            if (removed == 0)
+                throw MedDomainException.Constraint("PK_user_group_members", 547, "Thành viên nhóm không tồn tại.");
             RaiseStateChanged();
         }
     }

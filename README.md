@@ -3,7 +3,7 @@
 ## Tổng quan
 Dự án hiện có một landing page khám từ xa chạy bằng Blazor Web App trên `.NET 9`. Trang được thiết kế theo hướng editorial/App Store-style soft UI cho hệ thống bệnh viện: tư vấn video, danh bạ bác sĩ chuyên khoa, theo dõi sức khỏe và CTA tải ứng dụng.
 
-Bên cạnh trang công khai, dự án còn có module quản trị nội bộ tại `/admin` (gọi tắt là `QLCM Pro`) gồm sidebar điều hướng, bảng lệnh nhanh và các trang Tổng quan, Quy trình kỹ thuật, Phân quyền, Danh mục, Phác đồ, Báo cáo, Lâm sàng, Cài đặt. Module sử dụng dữ liệu demo trong bộ nhớ và đi kèm trợ lý AI tích hợp Google Gemini (mô hình mặc định `gemini-2.5-flash` - free tier). Khi chưa cấu hình API key, trợ lý sẽ chạy ở chế độ demo và phản hồi bằng tiếng Việt có dấu.
+Bên cạnh trang công khai, dự án còn có module quản trị nội bộ tại `/admin` (gọi tắt là `QLCM Pro`) gồm sidebar điều hướng, bảng lệnh nhanh và các trang Tổng quan, Quy trình kỹ thuật, Phân quyền, Danh mục, Tài nguyên, Chỉ định, Phác đồ, Báo cáo, Lâm sàng, Thông báo, Cài đặt. Module dùng SQL-backed data store qua `MedDbContext`/`IMedDataStore` cho các luồng quản trị quy trình chuyên môn, RBAC, định mức tài nguyên, chỉ định kỹ thuật, phác đồ, bệnh nhân và thông báo. Trợ lý AI tích hợp Google Gemini (mô hình mặc định `gemini-2.5-flash` - free tier). Khi chưa cấu hình API key, trợ lý sẽ chạy ở chế độ demo và phản hồi bằng tiếng Việt có dấu.
 
 ### Cấu hình trợ lý AI
 Mặc định chatbot dùng Google Gemini qua endpoint `https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse`. Lấy API key miễn phí tại [Google AI Studio](https://aistudio.google.com/apikey). Mô hình mặc định `gemini-2.5-flash` cho chất lượng tốt nhất ở free tier; có thể đổi sang `gemini-2.5-flash-lite` (quota cao hơn) hoặc `gemini-2.5-pro` (chất lượng cao nhất, quota thấp hơn) trong trang Cài đặt.
@@ -39,6 +39,7 @@ Vẫn có thể chuyển sang Anthropic Claude bằng cách đặt `Chatbot:Prov
 | Target framework | `net9.0` |
 | Test | xUnit |
 | UI | Razor Components + CSS tokens |
+| Data | Entity Framework Core + SQL Server schema `MedicalProcedureManagement` |
 
 ## Pull code mới nhất về VS Code
 ```powershell
@@ -62,6 +63,15 @@ dotnet run --project .\src\telemedicine-landing-page\telemedicine-landing-page.c
 ```
 
 Sau khi chạy, mở trình duyệt tại địa chỉ in ra trong terminal (mặc định `http://localhost:5xxx`), trang quản trị nội bộ ở `/admin`.
+
+## Dữ liệu mẫu QLCM Pro
+Sau khi có SQL Server database đúng schema, có thể nạp dữ liệu demo/QA:
+
+```powershell
+sqlcmd -S <server> -d <database> -i .\scripts\seed-realistic-data.sql
+```
+
+Script tạo dữ liệu mẫu cho khoa phòng, người dùng, vai trò, quyền, quy trình, dịch vụ kỹ thuật, tài nguyên, chỉ định, bệnh nhân, phác đồ và thông báo.
 
 ## Kiểm tra
 ```powershell

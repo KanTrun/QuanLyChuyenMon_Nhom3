@@ -48,6 +48,37 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void UpdateDepartment(Department dept)
+    {
+        lock (_lock)
+        {
+            var current = _departments.FirstOrDefault(d => d.DepartmentId == dept.DepartmentId)
+                ?? throw MedDomainException.Constraint(
+                    "PK_departments", 547, "Khoa/phòng không tồn tại.");
+
+            if (_departments.Any(d => d.DepartmentId != dept.DepartmentId && d.Code == dept.Code))
+                throw MedDomainException.Constraint(
+                    "UQ_departments_code", 2627, $"Mã khoa/phòng '{dept.Code}' đã tồn tại.");
+
+            if (dept.ParentDepartmentId != current.ParentDepartmentId)
+            {
+                UpdateDepartmentParent(dept.DepartmentId, dept.ParentDepartmentId);
+                current = _departments.First(d => d.DepartmentId == dept.DepartmentId);
+            }
+
+            var idx = _departments.IndexOf(current);
+            _departments[idx] = current with
+            {
+                Code = dept.Code,
+                Name = dept.Name,
+                Status = dept.Status,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            RaiseStateChanged();
+        }
+    }
+
     public void UpdateDepartmentParent(Guid departmentId, Guid? newParentId)
     {
         lock (_lock)

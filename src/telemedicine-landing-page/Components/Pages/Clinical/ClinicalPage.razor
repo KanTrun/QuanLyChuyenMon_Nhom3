@@ -1,8 +1,9 @@
 @page "/lam-sang"
 @layout PersonaLayout
-@using TelemedicineLandingPage.Services.Admin.Sql
-@using TelemedicineLandingPage.Models.Admin.Sql
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
+@inject ICurrentUserContext UserContext
+@inject IToastService Toasts
 @implements IDisposable
 
 <PageTitle>Lâm sàng | QLCM Pro</PageTitle>
@@ -11,47 +12,277 @@
     <header class="admin-page-header">
         <div>
             <span class="admin-page-eyebrow">Lâm sàng</span>
-            <h1 class="admin-page-title">Bảng điều phối lâm sàng</h1>
-            <p class="admin-page-subtitle">Theo dõi lượt khám, áp dụng phác đồ và trạng thái bệnh nhân.</p>
+            <h1 class="admin-page-title">Bệnh nhân, lượt khám và phác đồ</h1>
+            <p class="admin-page-subtitle">Quản lý hồ sơ tham chiếu, lượt khám, phác đồ đã áp dụng và chỉ định kỹ thuật liên quan.</p>
         </div>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="OpenCreatePatient">Thêm bệnh nhân</button>
     </header>
 
-    <div class="admin-panel">
-        <h2 class="admin-panel-title" style="margin-bottom:1rem;">Bệnh nhân đang theo dõi</h2>
-        <AdminDataTable TItem="PatientRef"
-                        Items="_pagedPatients"
-                        ColumnCount="5"
-                        CurrentPage="_page"
-                        PageSize="_pageSize"
-                        TotalItems="_total"
-                        CurrentPageChanged="p => { _page = p; Paginate(); }"
-                        EmptyTitle="Chưa có bệnh nhân"
-                        EmptyBody="Hệ thống chưa ghi nhận bệnh nhân nào.">
-            <HeaderTemplate>
-                <th>Mã BN</th>
-                <th>Họ tên</th>
-                <th>Ngày sinh</th>
-                <th>Giới tính</th>
-                <th>Số lượt khám</th>
-            </HeaderTemplate>
-            <RowTemplate Context="patient">
-                <tr>
-                    <td>@patient.PatientCode</td>
-                    <td>@patient.DisplayName</td>
-                    <td>@patient.BirthDate?.ToString("dd/MM/yyyy")</td>
-                    <td>@(patient.GenderCode == "F" ? "Nữ" : "Nam")</td>
-                    <td>@Store.EncounterRefs.Count(e => e.PatientRefId == patient.PatientRefId)</td>
-                </tr>
-            </RowTemplate>
-        </AdminDataTable>
-    </div>
+    <AdminDataTable TItem="Sql.PatientRef"
+                    Items="_pagedPatients"
+                    ColumnCount="7"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_total"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }"
+                    EmptyTitle="Chưa có bệnh nhân"
+                    EmptyBody="Hệ thống chưa ghi nhận bệnh nhân nào.">
+        <HeaderTemplate>
+            <th>Mã BN</th>
+            <th>Họ tên</th>
+            <th>Ngày sinh</th>
+            <th>Giới tính</th>
+            <th>Lượt khám</th>
+            <th>Phác đồ</th>
+            <th></th>
+        </HeaderTemplate>
+        <RowTemplate Context="patient">
+            <tr @onclick="() => OpenPatient(patient)" style="cursor:pointer;">
+                <td class="admin-table-cell-strong">@patient.PatientCode</td>
+                <td>@patient.DisplayName</td>
+                <td>@patient.BirthDate?.ToString("dd/MM/yyyy")</td>
+                <td>@Lookup(Sql.MedLookups.Genders, patient.GenderCode)</td>
+                <td>@Store.EncounterRefs.Count(e => e.PatientRefId == patient.PatientRefId)</td>
+                <td>@Store.PatientProtocolApplications.Count(a => a.PatientRefId == patient.PatientRefId)</td>
+                <td style="text-align:right;" @onclick:stopPropagation="true">
+                    <button type="button" class="admin-icon-btn" title="Sửa" @onclick="() => OpenEditPatient(patient)">✎</button>
+                </td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
 </section>
 
+<AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" SizeClass="admin-drawer-wide"
+             Eyebrow="Bệnh nhân"
+             Title="@(_selected?.DisplayName ?? string.Empty)"
+             Subtitle="@(_selected is null ? null : $"{_selected.PatientCode} • {Lookup(Sql.MedLookups.Genders, _selected.GenderCode)}")">
+    <ChildContent>
+        @if (_selected is not null)
+        {
+            <dl class="admin-detail-grid">
+                <dt>Mã ngoài</dt>
+                <dd>@_selected.ExternalPatientId</dd>
+                <dt>Nguồn</dt>
+                <dd>@_selected.SourceSystemCode</dd>
+                <dt>Ngày sinh</dt>
+                <dd>@_selected.BirthDate?.ToString("dd/MM/yyyy")</dd>
+                <dt>Giới tính</dt>
+                <dd>@Lookup(Sql.MedLookups.Genders, _selected.GenderCode)</dd>
+            </dl>
+
+            <div class="admin-tabs" role="tablist" aria-label="Chi tiết bệnh nhân">
+                <button type="button" class="@EncountersTabClass" @onclick="ShowEncounters">Lượt khám</button>
+                <button type="button" class="@ProtocolsTabClass" @onclick="ShowProtocols">Phác đồ</button>
+                <button type="button" class="@OrdersTabClass" @onclick="ShowOrders">Chỉ định</button>
+            </div>
+
+            @if (_patientTab == "encounters")
+            {
+                <div class="admin-panel" style="padding:14px;">
+                    <h3 class="admin-panel-title">Lượt khám</h3>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead><tr><th>Mã lượt khám</th><th>Loại</th><th>Khoa</th><th>Bắt đầu</th><th>Kết thúc</th></tr></thead>
+                            <tbody>
+                                @foreach (var encounter in Store.EncounterRefs.Where(e => e.PatientRefId == _selected.PatientRefId).OrderByDescending(e => e.StartedAt))
+                                {
+                                    <tr>
+                                        <td class="admin-table-cell-strong">@encounter.ExternalEncounterId</td>
+                                        <td>@(encounter.EncounterType ?? "—")</td>
+                                        <td>@GetDeptName(encounter.DepartmentId)</td>
+                                        <td>@encounter.StartedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@encounter.EndedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="admin-form-grid" style="margin-top:14px;">
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Mã lượt khám</label>
+                            <input class="admin-input" @bind="_encounterExternalId" />
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Loại</label>
+                            <input class="admin-input" placeholder="outpatient / inpatient" @bind="_encounterType" />
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Khoa</label>
+                            <select class="admin-select" @bind="_encounterDepartmentId">
+                                <option value="">Không chọn</option>
+                                @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Code))
+                                {
+                                    <option value="@dept.DepartmentId">@dept.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Bắt đầu</label>
+                            <input class="admin-input" type="datetime-local" value="@_encounterStartedAt" @onchange="e => _encounterStartedAt = e.Value?.ToString() ?? string.Empty" />
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                        <button type="button" class="admin-btn admin-btn-primary" @onclick="AddEncounter">Tạo lượt khám</button>
+                    </div>
+                </div>
+            }
+            else if (_patientTab == "protocols")
+            {
+                <div class="admin-panel" style="padding:14px;">
+                    <h3 class="admin-panel-title">Phác đồ đã áp dụng</h3>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead><tr><th>Phác đồ</th><th>Lượt khám</th><th>Chẩn đoán</th><th>Trạng thái</th><th>Thời điểm</th></tr></thead>
+                            <tbody>
+                                @foreach (var app in Store.PatientProtocolApplications.Where(a => a.PatientRefId == _selected.PatientRefId).OrderByDescending(a => a.AppliedAt))
+                                {
+                                    <tr>
+                                        <td>@GetProtocolVersionName(app.ClinicalProtocolVersionId)</td>
+                                        <td>@GetEncounterCode(app.EncounterRefId)</td>
+                                        <td>@(app.DiagnosisCode ?? "—")</td>
+                                        <td><AdminBadge Tone="@ProtocolAppTone(app.ApplicationStatus)">@Lookup(Sql.MedLookups.ProtocolApplicationStatuses, app.ApplicationStatus)</AdminBadge></td>
+                                        <td>@app.AppliedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="admin-form-grid" style="margin-top:14px;">
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Phác đồ phiên bản</label>
+                            <select class="admin-select" @bind="_appProtocolVersionId">
+                                <option value="">Chọn phác đồ</option>
+                                @foreach (var ver in Store.ClinicalProtocolVersions.OrderByDescending(v => v.VersionNo))
+                                {
+                                    <option value="@ver.ClinicalProtocolVersionId">@GetProtocolVersionName(ver.ClinicalProtocolVersionId)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Lượt khám</label>
+                            <select class="admin-select" @bind="_appEncounterId">
+                                <option value="">Không chọn</option>
+                                @foreach (var enc in Store.EncounterRefs.Where(e => e.PatientRefId == _selected.PatientRefId).OrderByDescending(e => e.StartedAt))
+                                {
+                                    <option value="@enc.EncounterRefId">@enc.ExternalEncounterId</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Trạng thái</label>
+                            <select class="admin-select" @bind="_appStatus">
+                                @foreach (var status in Sql.MedLookups.ProtocolApplicationStatuses)
+                                {
+                                    <option value="@status.Code">@status.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">ICD / chẩn đoán</label>
+                            <input class="admin-input" @bind="_appDiagnosisCode" />
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                        <button type="button" class="admin-btn admin-btn-primary" @onclick="ApplyProtocol">Áp dụng phác đồ</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="admin-panel" style="padding:14px;">
+                    <h3 class="admin-panel-title">Chỉ định kỹ thuật liên quan</h3>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead><tr><th>Dịch vụ</th><th>Lượt khám</th><th>Khoa</th><th>Trạng thái</th><th>Ngày tạo</th></tr></thead>
+                            <tbody>
+                                @foreach (var order in Store.TechnicalOrders.Where(o => o.PatientRefId == _selected.PatientRefId).OrderByDescending(o => o.OrderedAt))
+                                {
+                                    <tr>
+                                        <td>@GetServiceName(order.TechnicalServiceId)</td>
+                                        <td>@GetEncounterCode(order.EncounterRefId)</td>
+                                        <td>@GetDeptName(order.OrderingDepartmentId)</td>
+                                        <td><AdminBadge Tone="@OrderTone(order.OrderStatus)">@Lookup(Sql.MedLookups.OrderStatuses, order.OrderStatus)</AdminBadge></td>
+                                        <td>@order.OrderedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        }
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="@(() => OpenEditPatient(_selected!))">Sửa bệnh nhân</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="() => _drawerOpen = false">Đóng</button>
+    </FooterContent>
+</AdminDrawer>
+
+<AdminModal IsOpen="_patientModalOpen" IsOpenChanged="v => _patientModalOpen = v" Title="@(_editingPatientId.HasValue ? "Sửa bệnh nhân" : "Thêm bệnh nhân")">
+    <ChildContent>
+        <div class="admin-form-grid">
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">External ID</label>
+                <input class="admin-input" @bind="_patientExternalId" />
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Mã bệnh nhân</label>
+                <input class="admin-input" @bind="_patientCode" />
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Họ tên</label>
+                <input class="admin-input" @bind="_patientDisplayName" />
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Ngày sinh</label>
+                <input class="admin-input" type="date" value="@_patientBirthDate" @onchange="e => _patientBirthDate = e.Value?.ToString() ?? string.Empty" />
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Giới tính</label>
+                <select class="admin-select" @bind="_patientGender">
+                    @foreach (var gender in Sql.MedLookups.Genders)
+                    {
+                        <option value="@gender.Code">@gender.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _patientModalOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="SavePatient">Lưu</button>
+    </FooterContent>
+</AdminModal>
+
 @code {
-    private int _page = 1;
     private const int _pageSize = 10;
+    private int _page = 1;
     private int _total;
-    private IReadOnlyList<PatientRef> _pagedPatients = Array.Empty<PatientRef>();
+    private IReadOnlyList<Sql.PatientRef> _pagedPatients = Array.Empty<Sql.PatientRef>();
+
+    private bool _drawerOpen;
+    private Sql.PatientRef? _selected;
+    private string _patientTab = "encounters";
+
+    private bool _patientModalOpen;
+    private Guid? _editingPatientId;
+    private string _patientExternalId = string.Empty;
+    private string _patientCode = string.Empty;
+    private string _patientDisplayName = string.Empty;
+    private string _patientBirthDate = string.Empty;
+    private string _patientGender = "unknown";
+
+    private string _encounterExternalId = string.Empty;
+    private string _encounterType = "outpatient";
+    private string _encounterDepartmentId = string.Empty;
+    private string _encounterStartedAt = string.Empty;
+
+    private string _appProtocolVersionId = string.Empty;
+    private string _appEncounterId = string.Empty;
+    private string _appStatus = "applied";
+    private string _appDiagnosisCode = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -59,14 +290,204 @@
         Paginate();
     }
 
-    private void OnChanged() => InvokeAsync(() => { Paginate(); StateHasChanged(); });
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        if (_selected is not null)
+        {
+            _selected = Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == _selected.PatientRefId);
+        }
+        Paginate();
+        StateHasChanged();
+    });
 
     private void Paginate()
     {
-        var all = Store.PatientRefs.OrderBy(p => p.DisplayName).ToList();
+        var all = Store.PatientRefs.OrderBy(p => p.PatientCode).ToList();
         _total = all.Count;
+        var totalPages = Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
+        _page = Math.Clamp(_page, 1, totalPages);
         _pagedPatients = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
     }
+
+    private void OpenCreatePatient()
+    {
+        _editingPatientId = null;
+        _patientExternalId = string.Empty;
+        _patientCode = string.Empty;
+        _patientDisplayName = string.Empty;
+        _patientBirthDate = string.Empty;
+        _patientGender = "unknown";
+        _patientModalOpen = true;
+    }
+
+    private void OpenEditPatient(Sql.PatientRef patient)
+    {
+        _editingPatientId = patient.PatientRefId;
+        _patientExternalId = patient.ExternalPatientId;
+        _patientCode = patient.PatientCode ?? string.Empty;
+        _patientDisplayName = patient.DisplayName ?? string.Empty;
+        _patientBirthDate = patient.BirthDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+        _patientGender = patient.GenderCode ?? "unknown";
+        _patientModalOpen = true;
+    }
+
+    private void SavePatient()
+    {
+        if (string.IsNullOrWhiteSpace(_patientExternalId))
+        {
+            Toasts.Show("Thiếu External ID", "Vui lòng nhập mã tham chiếu bệnh nhân.", ToastVariant.Warning);
+            return;
+        }
+
+        var patient = new Sql.PatientRef
+        {
+            PatientRefId = _editingPatientId ?? Guid.NewGuid(),
+            ExternalPatientId = _patientExternalId.Trim(),
+            PatientCode = string.IsNullOrWhiteSpace(_patientCode) ? _patientExternalId.Trim() : _patientCode.Trim(),
+            DisplayName = string.IsNullOrWhiteSpace(_patientDisplayName) ? _patientExternalId.Trim() : _patientDisplayName.Trim(),
+            BirthDate = DateOnly.TryParse(_patientBirthDate, out var birthDate) ? birthDate : null,
+            GenderCode = _patientGender
+        };
+
+        try
+        {
+            if (_editingPatientId.HasValue)
+            {
+                var current = Store.PatientRefs.First(p => p.PatientRefId == _editingPatientId.Value);
+                Store.UpdatePatientRef(patient with { SourceSystemCode = current.SourceSystemCode, CreatedAt = current.CreatedAt });
+                Toasts.Show("Đã cập nhật bệnh nhân", patient.DisplayName, ToastVariant.Success);
+            }
+            else
+            {
+                Store.AddPatientRef(patient);
+                Toasts.Show("Đã thêm bệnh nhân", patient.DisplayName, ToastVariant.Success);
+            }
+            _patientModalOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể lưu bệnh nhân", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void OpenPatient(Sql.PatientRef patient)
+    {
+        _selected = patient;
+        _patientTab = "encounters";
+        ResetEncounterForm();
+        ResetProtocolForm();
+        _drawerOpen = true;
+    }
+
+    private void AddEncounter()
+    {
+        if (_selected is null || string.IsNullOrWhiteSpace(_encounterExternalId))
+        {
+            Toasts.Show("Thiếu mã lượt khám", "Vui lòng nhập External Encounter ID.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            Store.AddEncounterRef(new Sql.EncounterRef
+            {
+                PatientRefId = _selected.PatientRefId,
+                ExternalEncounterId = _encounterExternalId.Trim(),
+                EncounterType = string.IsNullOrWhiteSpace(_encounterType) ? null : _encounterType.Trim(),
+                DepartmentId = ParseGuid(_encounterDepartmentId),
+                StartedAt = DateTime.TryParse(_encounterStartedAt, out var started) ? started : DateTime.UtcNow
+            });
+            Toasts.Show("Đã tạo lượt khám", _encounterExternalId, ToastVariant.Success);
+            ResetEncounterForm();
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể tạo lượt khám", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void ApplyProtocol()
+    {
+        if (_selected is null || !Guid.TryParse(_appProtocolVersionId, out var versionId))
+        {
+            Toasts.Show("Thiếu phác đồ", "Vui lòng chọn phiên bản phác đồ.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            Store.AddPatientProtocolApplication(new Sql.PatientProtocolApplication
+            {
+                PatientRefId = _selected.PatientRefId,
+                EncounterRefId = ParseGuid(_appEncounterId),
+                ClinicalProtocolVersionId = versionId,
+                DiagnosisCode = string.IsNullOrWhiteSpace(_appDiagnosisCode) ? null : _appDiagnosisCode.Trim(),
+                ApplicationStatus = _appStatus,
+                AppliedBy = UserContext.CurrentUser?.UserId,
+                AppliedAt = DateTime.UtcNow,
+                DecisionContextJson = "{\"source\":\"manual\"}"
+            });
+            Toasts.Show("Đã áp dụng phác đồ", GetProtocolVersionName(versionId), ToastVariant.Success);
+            ResetProtocolForm();
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể áp dụng phác đồ", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void ResetEncounterForm()
+    {
+        _encounterExternalId = string.Empty;
+        _encounterType = "outpatient";
+        _encounterDepartmentId = string.Empty;
+        _encounterStartedAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
+    }
+
+    private void ResetProtocolForm()
+    {
+        _appProtocolVersionId = string.Empty;
+        _appEncounterId = string.Empty;
+        _appStatus = "applied";
+        _appDiagnosisCode = string.Empty;
+    }
+
+    private void ShowEncounters() => _patientTab = "encounters";
+    private void ShowProtocols() => _patientTab = "protocols";
+    private void ShowOrders() => _patientTab = "orders";
+    private string EncountersTabClass => _patientTab == "encounters" ? "admin-tab is-active" : "admin-tab";
+    private string ProtocolsTabClass => _patientTab == "protocols" ? "admin-tab is-active" : "admin-tab";
+    private string OrdersTabClass => _patientTab == "orders" ? "admin-tab is-active" : "admin-tab";
+
+    private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+    private string GetEncounterCode(Guid? encounterId) => encounterId.HasValue ? Store.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == encounterId.Value)?.ExternalEncounterId ?? "—" : "—";
+    private string GetServiceName(Guid serviceId) => Store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == serviceId)?.Name ?? "—";
+    private string GetProtocolVersionName(Guid versionId)
+    {
+        var version = Store.ClinicalProtocolVersions.FirstOrDefault(v => v.ClinicalProtocolVersionId == versionId);
+        if (version is null) return "—";
+        var protocol = Store.ClinicalProtocols.FirstOrDefault(p => p.ClinicalProtocolId == version.ClinicalProtocolId);
+        return $"{protocol?.Name ?? version.Title} v{version.VersionNo}";
+    }
+
+    private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
+    private static string ProtocolAppTone(string status) => status switch
+    {
+        "applied" => "tone-success",
+        "suggested" => "tone-primary",
+        "skipped" => "tone-warning",
+        "cancelled" => "tone-danger",
+        _ => "tone-muted"
+    };
+    private static string OrderTone(string status) => status switch
+    {
+        "completed" => "tone-success",
+        "scheduled" or "resource_warning" => "tone-warning",
+        "in_progress" => "tone-primary",
+        "cancelled" => "tone-danger",
+        _ => "tone-muted"
+    };
 
     public void Dispose() => Store.StateChanged -= OnChanged;
 }

@@ -1,6 +1,7 @@
 @using Microsoft.EntityFrameworkCore
 @using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Models.Admin.Sql
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @using TelemedicineLandingPage.Services.Admin.Sql
 @inject MedDbContext Db
 @inject IToastService Toast
@@ -42,11 +43,11 @@
                                     @foreach (var role in user.Roles)
                                     {
                                         <span style="display:inline-flex;align-items:center;gap:2px;">
-                                            <AdminBadge Tone="tone-secondary">@role.Name</AdminBadge>
+                                            <AdminBadge Tone="tone-secondary">@role.DisplayName</AdminBadge>
                                             <button type="button"
                                                     class="admin-btn-icon-xs"
-                                                    title="Hủy vai trò @role.Name"
-                                                    @onclick="() => RemoveRole(user.UserId, user.Username, user.FullName, role.RoleId, role.Name)">×</button>
+                                                    title="Hủy vai trò @role.DisplayName"
+                                                    @onclick="() => RemoveRole(user.UserId, user.FullName, role.UserRoleId, role.DisplayName)">×</button>
                                         </span>
                                     }
                                 }
@@ -79,6 +80,17 @@
                         <option value="@role.RoleId">@role.Name (@role.Code)</option>
                     }
                 </select>
+            </div>
+            <div class="admin-form-field" style="margin-top:12px;">
+                <label class="admin-form-field-label">Phạm vi khoa/phòng của vai trò</label>
+                <select class="admin-select" @bind="_selectedDepartmentId">
+                    <option value="">Toàn hệ thống</option>
+                    @foreach (var dept in _allDepartments)
+                    {
+                        <option value="@dept.DepartmentId">@dept.Name</option>
+                    }
+                </select>
+                <p class="admin-panel-subtitle" style="margin-top:6px;">Để trống nếu vai trò có hiệu lực toàn hệ thống. Chọn khoa/phòng nếu quyền chỉ áp dụng trong khoa đó và các đơn vị con.</p>
             </div>
             @if (!string.IsNullOrEmpty(_assignError))
             {
@@ -119,14 +131,17 @@
 @code {
     private List<UserView> _users = new();
     private List<Role> _allRoles = new();
+    private List<Sql.Department> _allDepartments = new();
     private bool _assignModalOpen;
     private UserView? _assigningUser;
     private string _selectedRoleId = "";
+    private string _selectedDepartmentId = "";
     private string? _assignError;
 
     protected override void OnInitialized()
     {
         _allRoles = Db.Roles.Where(r => r.Status == "active").OrderBy(r => r.Name).ToList();
+        _allDepartments = Db.Departments.Where(d => d.Status == "active").OrderBy(d => d.Code).ToList();
         LoadUsers();
     }
 
@@ -148,7 +163,19 @@
         {
             var userRoles = activeUserRoles
                 .Where(ur => ur.UserId == u.UserId)
-                .Select(ur => new RoleInfo { RoleId = ur.RoleId, Name = allRoles.GetValueOrDefault(ur.RoleId, "(Không rõ)") })
+                .Select(ur =>
+                {
+                    var roleName = allRoles.GetValueOrDefault(ur.RoleId, "(Không rõ)");
+                    var roleDept = ur.DepartmentId.HasValue ? allDepts.GetValueOrDefault(ur.DepartmentId.Value) : null;
+                    return new RoleInfo
+                    {
+                        UserRoleId = ur.UserRoleId,
+                        RoleId = ur.RoleId,
+                        Name = roleName,
+                        DepartmentName = roleDept,
+                        DisplayName = roleDept is null ? roleName : $"{roleName} • {roleDept}"
+                    };
+                })
                 .ToList();
 
             string? deptName = u.PrimaryDepartmentId.HasValue
@@ -171,6 +198,7 @@
     {
         _assigningUser = user;
         _selectedRoleId = "";
+        _selectedDepartmentId = "";
         _assignError = null;
         _assignModalOpen = true;
     }
@@ -186,13 +214,17 @@
         }
 
         if (_assigningUser is null) return;
+        var departmentId = Guid.TryParse(_selectedDepartmentId, out var parsedDeptId) ? parsedDeptId : (Guid?)null;
 
         // Kiểm tra đã gán chưa
         var existing = Db.UserRoles.FirstOrDefault(ur =>
-            ur.UserId == _assigningUser.UserId && ur.RoleId == roleId && ur.EffectiveTo == null);
+            ur.UserId == _assigningUser.UserId &&
+            ur.RoleId == roleId &&
+            ur.DepartmentId == departmentId &&
+            ur.EffectiveTo == null);
         if (existing is not null)
         {
-            _assignError = "Tài khoản đã có vai trò này.";
+            _assignError = "Tài khoản đã có vai trò này trong phạm vi đã chọn.";
             return;
         }
 
@@ -200,12 +232,16 @@
         Db.UserRoles.Add(new UserRole
         {
             UserId = _assigningUser.UserId,
-            RoleId = roleId
+            RoleId = roleId,
+            DepartmentId = departmentId
         });
         Db.SaveChanges();
 
         // Ghi audit log
         var roleName = _allRoles.FirstOrDefault(r => r.RoleId == roleId)?.Name ?? "";
+        var departmentName = departmentId.HasValue
+            ? _allDepartments.FirstOrDefault(d => d.DepartmentId == departmentId.Value)?.Name
+            : "Toàn hệ thống";
         var currentUser = UserContext.CurrentUser;
         Db.AuditLogs.Add(new AuditLog
         {
@@ -215,7 +251,7 @@
             ActionCode = "assign_role",
             TargetType = "user_role",
             TargetId = _assigningUser.UserId.ToString(),
-            AfterJson = $"{{\"role\":\"{roleName}\",\"user\":\"{_assigningUser.FullName}\"}}"
+            AfterJson = $"{{\"role\":\"{roleName}\",\"department\":\"{departmentName}\",\"user\":\"{_assigningUser.FullName}\"}}"
         });
         Db.SaveChanges();
 
@@ -225,7 +261,7 @@
         LoadUsers();
     }
 
-    private async Task RemoveRole(Guid userId, string username, string fullName, Guid roleId, string roleName)
+    private async Task RemoveRole(Guid userId, string fullName, Guid userRoleId, string roleName)
     {
         var confirmed = await Confirm.ShowAsync(
             "Hủy vai trò",
@@ -236,7 +272,7 @@
 
         // Soft-delete: đặt effective_to = now
         var userRole = Db.UserRoles.FirstOrDefault(ur =>
-            ur.UserId == userId && ur.RoleId == roleId && ur.EffectiveTo == null);
+            ur.UserRoleId == userRoleId && ur.UserId == userId && ur.EffectiveTo == null);
 
         if (userRole is null) return;
 
@@ -264,8 +300,11 @@
 
     private sealed class RoleInfo
     {
+        public Guid UserRoleId { get; init; }
         public Guid RoleId { get; init; }
         public string Name { get; init; } = "";
+        public string? DepartmentName { get; init; }
+        public string DisplayName { get; init; } = "";
     }
 
     private sealed class UserView

@@ -862,6 +862,102 @@
     color: var(--color-ink);
 }
 
+/* ── Profile page ───────────────────────────────── */
+
+.admin-profile-page {
+    max-width: 1180px;
+}
+
+.admin-profile-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.admin-profile-summary {
+    position: sticky;
+    top: 16px;
+}
+
+.admin-profile-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    background: var(--gradient-primary);
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.2rem;
+    box-shadow: var(--shadow-accent);
+}
+
+.admin-profile-name {
+    margin: 0;
+    color: var(--color-ink);
+    font-size: 1.16rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.admin-profile-username {
+    margin: 4px 0 0;
+    color: var(--color-muted);
+    font-size: 0.86rem;
+}
+
+.admin-profile-facts {
+    display: grid;
+    gap: 10px;
+    margin: 4px 0 0;
+}
+
+.admin-profile-facts div {
+    padding-top: 10px;
+    border-top: 1px dashed var(--color-border-subtle);
+}
+
+.admin-profile-facts dt {
+    color: var(--color-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.admin-profile-facts dd {
+    margin: 4px 0 0;
+    color: var(--color-ink);
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.admin-profile-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+.admin-profile-card {
+    gap: 18px;
+}
+
+.admin-profile-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 12px 0 4px;
+}
+
+.admin-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+    transform: none;
+    box-shadow: none;
+}
+
 .admin-toggle-row {
     display: flex;
     justify-content: space-between;
@@ -1156,6 +1252,8 @@
     .admin-kanban { grid-template-columns: 1fr; }
     .admin-form-grid { grid-template-columns: 1fr; }
     .admin-step-row { grid-template-columns: 60px 1fr 1fr; }
+    .admin-profile-grid { grid-template-columns: 1fr; }
+    .admin-profile-summary { position: static; }
 }
 
 @media (max-width: 700px) {
@@ -1166,6 +1264,14 @@
     .admin-step-row { grid-template-columns: 1fr; }
     .admin-toast-host { right: 12px; bottom: 12px; left: 12px; }
     .admin-toast { max-width: none; }
+    .admin-profile-actions {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+        background: var(--color-page);
+        border-top: 1px solid var(--color-border-subtle);
+        padding: 12px 0;
+    }
 }
 
 /* ── Accessibility helpers ──────────────────────── */

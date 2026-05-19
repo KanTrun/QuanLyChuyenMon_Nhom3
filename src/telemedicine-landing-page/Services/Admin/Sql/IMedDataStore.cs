@@ -53,6 +53,7 @@ public interface IMedDataStore
 
     // === Ghi dữ liệu ===
     void AddDepartment(Department dept);
+    void UpdateDepartment(Department dept);
     void UpdateDepartmentParent(Guid departmentId, Guid? newParentId);
     void ArchiveDepartment(Guid departmentId);
 
@@ -60,16 +61,24 @@ public interface IMedDataStore
     void UpdateUser(AppUser user);
 
     void AddRole(Role role);
+    void UpdateRole(Role role);
+    void ArchiveRole(Guid roleId);
     void AddGroup(Group group);
     void AddUserRole(UserRole userRole);
+    void RemoveUserRole(Guid userRoleId);
     void AddUserGroupMember(UserGroupMember member);
+    void RemoveUserGroupMember(Guid membershipId);
 
     void AddScreen(ScreenCatalog screen);
     void AddFeature(FeatureCatalog feature);
     void AddPermission(MedPermission permission);
     void AddRolePermission(RolePermission rp);
+    void RemoveRolePermission(Guid rolePermissionId);
     void AddGroupPermission(GroupPermission gp);
+    void RemoveGroupPermission(Guid groupPermissionId);
     void AddUserPermissionOverride(UserPermissionOverride upo);
+    void UpdateUserPermissionOverride(UserPermissionOverride upo);
+    void RemoveUserPermissionOverride(Guid userPermissionOverrideId);
 
     void AppendAudit(AuditLog log);
 
@@ -82,26 +91,44 @@ public interface IMedDataStore
     void UpdateProcedureVersion(ProcedureVersion updated);
     void AddProcedureStep(ProcedureStep step);
     void AddProcedureAttachment(ProcedureAttachment att);
+    void RemoveProcedureAttachment(Guid attachmentId);
     void AddProcedureScreenMapping(ProcedureScreenMapping mapping);
+    void RemoveProcedureScreenMapping(Guid mappingId);
 
     void AddPatientRef(PatientRef patient);
+    void UpdatePatientRef(PatientRef patient);
     void AddEncounterRef(EncounterRef encounter);
+    void UpdateEncounterRef(EncounterRef encounter);
 
     void AddTechnicalService(TechnicalService svc);
+    void UpdateTechnicalService(TechnicalService svc);
+    void RemoveTechnicalService(Guid technicalServiceId);
     void AddResourceCatalogItem(ResourceCatalogItem item);
+    void UpdateResourceCatalogItem(ResourceCatalogItem item);
+    void RemoveResourceCatalogItem(Guid resourceId);
     void AddTechnicalResourceNorm(TechnicalResourceNorm norm);
+    void RemoveTechnicalResourceNorm(Guid normId);
     void AddProcedureVersionResourceNorm(ProcedureVersionResourceNorm norm);
+    void RemoveProcedureVersionResourceNorm(Guid normId);
     void AddTechnicalOrder(TechnicalOrder order);
+    void UpdateTechnicalOrder(TechnicalOrder order);
     void AddResourceAvailabilitySnapshot(ResourceAvailabilitySnapshot snap);
     void AddActualResourceUsage(ActualResourceUsage usage);
+    void RemoveActualResourceUsage(Guid usageId);
 
     void AddClinicalProtocol(ClinicalProtocol protocol);
     void AddClinicalProtocolVersion(ClinicalProtocolVersion ver);
+    void UpdateClinicalProtocolVersion(ClinicalProtocolVersion ver);
     void AddClinicalProtocolProcedure(ClinicalProtocolProcedure cpp);
+    void RemoveClinicalProtocolProcedure(Guid clinicalProtocolProcedureId);
     void AddProtocolApplicabilityRule(ProtocolApplicabilityRule rule);
+    void RemoveProtocolApplicabilityRule(Guid ruleId);
     void AddPatientProtocolApplication(PatientProtocolApplication app);
 
     void AddNotificationPreference(NotificationPreference pref);
+    void UpdateNotificationPreference(NotificationPreference pref);
+    void RemoveNotificationPreference(Guid prefId);
     void AddNotification(MedNotification notification);
+    void UpdateNotificationReadAt(Guid notificationId, DateTime readAt);
     void AddNotificationDeliveryAttempt(NotificationDeliveryAttempt attempt);
 }

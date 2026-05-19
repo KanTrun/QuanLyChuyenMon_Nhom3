@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using TelemedicineLandingPage.Models.Admin.Sql;
 
 namespace TelemedicineLandingPage.Data;
@@ -9,6 +10,11 @@ namespace TelemedicineLandingPage.Data;
 /// </summary>
 public class MedDbContext : DbContext
 {
+    private static readonly JsonSerializerOptions AuditJsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = false
+    };
+
     public MedDbContext(DbContextOptions<MedDbContext> options) : base(options) { }
 
     // === Tổ chức & Danh tính ===
@@ -74,5 +80,132 @@ public class MedDbContext : DbContext
         // DepartmentClosureEdge: composite key
         modelBuilder.Entity<DepartmentClosureEdge>()
             .HasKey(e => new { e.AncestorDepartmentId, e.DescendantDepartmentId });
+
+        // SQL Server disables EF Core's OUTPUT clause for tables with triggers.
+        modelBuilder.Entity<Department>()
+            .ToTable("departments", "med", table => table.HasTrigger("TR_departments_insert_closure"));
+
+        modelBuilder.Entity<AppUser>()
+            .ToTable("users", "med", table => table.HasTrigger("TR_users_expire_security_assignments"));
+
+        modelBuilder.Entity<AuditLog>()
+            .ToTable("audit_logs", "med", table => table.HasTrigger("TR_audit_logs_immutable"));
+
+        modelBuilder.Entity<ActualResourceUsage>()
+            .ToTable("actual_resource_usages", "med", table => table.HasTrigger("TR_actual_resource_usages_set_final"));
     }
+
+    public override int SaveChanges()
+    {
+        AddAutomaticAuditLogs();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        AddAutomaticAuditLogs();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void AddAutomaticAuditLogs()
+    {
+        var entries = ChangeTracker.Entries()
+            .Where(e => e.Entity is not AuditLog &&
+                        e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            .ToList();
+
+        foreach (var entry in entries)
+        {
+            var tableName = entry.Metadata.GetTableName() ?? entry.Metadata.ClrType.Name;
+            var targetType = NormalizeTargetType(tableName);
+            var targetId = GetPrimaryKey(entry);
+
+            AuditLogs.Add(new AuditLog
+            {
+                CorrelationId = Guid.NewGuid(),
+                ActionCode = entry.State switch
+                {
+                    EntityState.Added => "create",
+                    EntityState.Modified => "update",
+                    EntityState.Deleted => "delete",
+                    _ => "update"
+                },
+                TargetType = targetType,
+                TargetId = targetId,
+                DepartmentId = TryGetDepartmentId(entry),
+                BeforeJson = entry.State is EntityState.Modified or EntityState.Deleted
+                    ? ToAuditJson(entry.Properties.ToDictionary(p => p.Metadata.GetColumnName(), p => p.OriginalValue))
+                    : null,
+                AfterJson = entry.State is EntityState.Added or EntityState.Modified
+                    ? ToAuditJson(entry.Properties.ToDictionary(p => p.Metadata.GetColumnName(), p => p.CurrentValue))
+                    : null,
+                MetadataJson = ToAuditJson(new
+                {
+                    entity = entry.Metadata.ClrType.Name,
+                    table = tableName,
+                    automatic = true
+                })
+            });
+        }
+    }
+
+    private static string NormalizeTargetType(string tableName)
+    {
+        if (tableName.EndsWith("ies", StringComparison.OrdinalIgnoreCase))
+            return ToSnakeCase(tableName[..^3] + "y");
+        if (tableName.EndsWith("ses", StringComparison.OrdinalIgnoreCase))
+            return ToSnakeCase(tableName[..^2]);
+        if (tableName.EndsWith("s", StringComparison.OrdinalIgnoreCase))
+            return ToSnakeCase(tableName[..^1]);
+        return ToSnakeCase(tableName);
+    }
+
+    private static string ToSnakeCase(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return value;
+
+        var chars = new List<char>(value.Length + 8);
+        for (var i = 0; i < value.Length; i++)
+        {
+            var ch = value[i];
+            if (char.IsUpper(ch))
+            {
+                if (i > 0 && chars[^1] != '_')
+                    chars.Add('_');
+                chars.Add(char.ToLowerInvariant(ch));
+            }
+            else
+            {
+                chars.Add(ch);
+            }
+        }
+
+        return new string(chars.ToArray());
+    }
+
+    private static string? GetPrimaryKey(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
+    {
+        var key = entry.Metadata.FindPrimaryKey();
+        if (key is null) return null;
+
+        var values = key.Properties
+            .Select(p => entry.Property(p.Name).CurrentValue?.ToString())
+            .Where(v => !string.IsNullOrWhiteSpace(v))
+            .ToList();
+
+        return values.Count == 0 ? null : string.Join(":", values);
+    }
+
+    private static Guid? TryGetDepartmentId(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
+    {
+        var departmentProperty = entry.Properties.FirstOrDefault(p =>
+            string.Equals(p.Metadata.Name, "DepartmentId", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(p.Metadata.Name, "OwnerDepartmentId", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(p.Metadata.Name, "PrimaryDepartmentId", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(p.Metadata.Name, "OrderingDepartmentId", StringComparison.OrdinalIgnoreCase));
+
+        return departmentProperty?.CurrentValue as Guid?;
+    }
+
+    private static string ToAuditJson(object value) => JsonSerializer.Serialize(value, AuditJsonOptions);
 }

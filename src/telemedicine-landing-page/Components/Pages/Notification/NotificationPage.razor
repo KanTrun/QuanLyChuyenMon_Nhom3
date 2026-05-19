@@ -1,8 +1,9 @@
 @page "/thong-bao"
 @layout PersonaLayout
-@using TelemedicineLandingPage.Services.Admin.Sql
-@using TelemedicineLandingPage.Models.Admin.Sql
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
+@inject ICurrentUserContext UserContext
+@inject IToastService Toasts
 @implements IDisposable
 
 <PageTitle>Thông báo | QLCM Pro</PageTitle>
@@ -12,66 +13,318 @@
         <div>
             <span class="admin-page-eyebrow">Thông báo</span>
             <h1 class="admin-page-title">Trung tâm thông báo</h1>
-            <p class="admin-page-subtitle">Tất cả thông báo hệ thống gửi đến người dùng hiện tại.</p>
+            <p class="admin-page-subtitle">Thông báo, lịch sử gửi và tùy chọn kênh của người dùng hiện tại.</p>
+        </div>
+        <div class="admin-page-actions">
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="MarkAllRead">Đánh dấu tất cả đã đọc</button>
         </div>
     </header>
 
-    <AdminDataTable TItem="MedNotification"
-                    Items="_pagedItems"
-                    ColumnCount="5"
-                    CurrentPage="_page"
-                    PageSize="_pageSize"
-                    TotalItems="_total"
-                    CurrentPageChanged="p => { _page = p; Paginate(); }"
-                    EmptyTitle="Không có thông báo"
-                    EmptyBody="Bạn chưa nhận được thông báo nào.">
-        <HeaderTemplate>
-            <th>Tiêu đề</th>
-            <th>Nội dung</th>
-            <th>Loại</th>
-            <th>Mức độ</th>
-            <th>Thời gian</th>
-        </HeaderTemplate>
-        <RowTemplate Context="notif">
-            <tr>
-                <td>@notif.Title</td>
-                <td>@notif.Body</td>
-                <td>@notif.NotificationType</td>
-                <td>
-                    <AdminBadge Tone="@GetSeverityTone(notif.Severity)">@notif.Severity</AdminBadge>
-                </td>
-                <td>@notif.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
-            </tr>
-        </RowTemplate>
-    </AdminDataTable>
+    <AdminTabs Tabs="_tabs" ActiveKey="_activeTab" ActiveKeyChanged="SetActiveTab" AriaLabel="Thông báo" />
+
+    @if (_activeTab == "notifications")
+    {
+        <div class="admin-filter-bar is-compact">
+            <div class="admin-filter-field">
+                <label class="admin-filter-label" for="severity-filter">Mức độ</label>
+                <select id="severity-filter" class="admin-select" @bind="_severityFilter" @bind:after="Paginate">
+                    <option value="">Tất cả</option>
+                    @foreach (var severity in Sql.MedLookups.NotificationSeverities)
+                    {
+                        <option value="@severity.Code">@severity.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <AdminDataTable TItem="Sql.MedNotification"
+                        Items="_pagedItems"
+                        ColumnCount="7"
+                        CurrentPage="_page"
+                        PageSize="_pageSize"
+                        TotalItems="_total"
+                        CurrentPageChanged="p => { _page = p; Paginate(); }"
+                        EmptyTitle="Không có thông báo"
+                        EmptyBody="Bạn chưa nhận được thông báo nào.">
+            <HeaderTemplate>
+                <th>Tiêu đề</th>
+                <th>Nội dung</th>
+                <th>Loại</th>
+                <th>Mức độ</th>
+                <th>Trạng thái</th>
+                <th>Thời gian</th>
+                <th></th>
+            </HeaderTemplate>
+            <RowTemplate Context="notif">
+                <tr @onclick="() => OpenNotification(notif)" style="cursor:pointer;">
+                    <td class="admin-table-cell-strong">@notif.Title</td>
+                    <td>@notif.Body</td>
+                    <td>@notif.NotificationType</td>
+                    <td><AdminBadge Tone="@SeverityTone(notif.Severity)">@Lookup(Sql.MedLookups.NotificationSeverities, notif.Severity)</AdminBadge></td>
+                    <td>@(notif.ReadAt.HasValue ? "Đã đọc" : "Chưa đọc")</td>
+                    <td>@notif.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td style="text-align:right;" @onclick:stopPropagation="true">
+                        @if (!notif.ReadAt.HasValue)
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => MarkRead(notif)">Đã đọc</button>
+                        }
+                    </td>
+                </tr>
+            </RowTemplate>
+        </AdminDataTable>
+    }
+    else
+    {
+        <div class="admin-panel" style="padding:16px;">
+            <h2 class="admin-panel-title">Cài đặt kênh thông báo</h2>
+            <div class="admin-table-wrapper" style="margin-top:12px;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Loại thông báo</th>
+                            @foreach (var channel in Sql.MedLookups.NotificationChannels)
+                            {
+                                <th>@channel.Name</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var type in NotificationTypes())
+                        {
+                            <tr>
+                                <td class="admin-table-cell-strong">@type</td>
+                                @foreach (var channel in Sql.MedLookups.NotificationChannels)
+                                {
+                                    <td>
+                                        <input type="checkbox"
+                                               checked="@IsPrefEnabled(type, channel.Code)"
+                                               @onchange="e => TogglePreference(type, channel.Code, e.Value is bool value && value)" />
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
 </section>
 
+<AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" SizeClass="admin-drawer-wide"
+             Eyebrow="Thông báo"
+             Title="@(_selected?.Title ?? string.Empty)"
+             Subtitle="@(_selected is null ? null : $"{Lookup(Sql.MedLookups.NotificationSeverities, _selected.Severity)} • {_selected.CreatedAt:dd/MM/yyyy HH:mm}")">
+    <ChildContent>
+        @if (_selected is not null)
+        {
+            <dl class="admin-detail-grid">
+                <dt>Loại</dt>
+                <dd>@_selected.NotificationType</dd>
+                <dt>Nguồn</dt>
+                <dd>@(_selected.SourceType ?? "—")</dd>
+                <dt>Source ID</dt>
+                <dd>@(_selected.SourceId ?? "—")</dd>
+                <dt>Đã đọc lúc</dt>
+                <dd>@(_selected.ReadAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa đọc")</dd>
+            </dl>
+            <p class="admin-card-meta">@_selected.Body</p>
+
+            <div class="admin-panel" style="padding:14px;">
+                <h3 class="admin-panel-title">Lịch sử gửi thông báo</h3>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead><tr><th>Kênh</th><th>Trạng thái</th><th>Thời gian</th><th>Lỗi</th></tr></thead>
+                        <tbody>
+                            @foreach (var attempt in Store.NotificationDeliveryAttempts.Where(a => a.NotificationId == _selected.NotificationId).OrderByDescending(a => a.AttemptedAt))
+                            {
+                                <tr>
+                                    <td>@Lookup(Sql.MedLookups.NotificationChannels, attempt.ChannelCode)</td>
+                                    <td><AdminBadge Tone="@DeliveryTone(attempt.DeliveryStatus)">@Lookup(Sql.MedLookups.DeliveryStatuses, attempt.DeliveryStatus)</AdminBadge></td>
+                                    <td>@attempt.AttemptedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@(attempt.ErrorMessage ?? "—")</td>
+                                </tr>
+                            }
+                            @if (!Store.NotificationDeliveryAttempts.Any(a => a.NotificationId == _selected.NotificationId))
+                            {
+                                <tr class="admin-table-empty-row"><td colspan="4"><div class="admin-empty"><div class="admin-empty-title">Chưa có lịch sử gửi</div><div class="admin-empty-body">Thông báo chỉ mới ghi nhận trong ứng dụng.</div></div></td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </ChildContent>
+    <FooterContent>
+        @if (_selected is { ReadAt: null })
+        {
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => MarkRead(_selected)">Đánh dấu đã đọc</button>
+        }
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="() => _drawerOpen = false">Đóng</button>
+    </FooterContent>
+</AdminDrawer>
+
 @code {
-    private int _page = 1;
     private const int _pageSize = 10;
+    private int _page = 1;
     private int _total;
-    private IReadOnlyList<MedNotification> _pagedItems = Array.Empty<MedNotification>();
+    private string _severityFilter = string.Empty;
+    private string _activeTab = "notifications";
+    private IReadOnlyList<Sql.MedNotification> _pagedItems = Array.Empty<Sql.MedNotification>();
+    private IReadOnlyList<AdminTabs.TabItem> _tabs = Array.Empty<AdminTabs.TabItem>();
+
+    private bool _drawerOpen;
+    private Sql.MedNotification? _selected;
+
+    private Guid? CurrentUserId => UserContext.CurrentUser?.UserId ?? Store.Users.FirstOrDefault()?.UserId;
 
     protected override void OnInitialized()
     {
         Store.StateChanged += OnChanged;
+        BuildTabs();
         Paginate();
     }
 
-    private void OnChanged() => InvokeAsync(() => { Paginate(); StateHasChanged(); });
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        if (_selected is not null)
+        {
+            _selected = Store.Notifications.FirstOrDefault(n => n.NotificationId == _selected.NotificationId);
+        }
+        BuildTabs();
+        Paginate();
+        StateHasChanged();
+    });
+
+    private void SetActiveTab(string key)
+    {
+        _activeTab = key;
+        BuildTabs();
+    }
+
+    private void BuildTabs()
+    {
+        var userId = CurrentUserId;
+        var unread = userId.HasValue
+            ? Store.Notifications.Count(n => n.RecipientUserId == userId.Value && n.ReadAt is null)
+            : 0;
+        _tabs = new[]
+        {
+            new AdminTabs.TabItem("notifications", "Thông báo", unread),
+            new AdminTabs.TabItem("preferences", "Cài đặt", Store.NotificationPreferences.Count(p => !userId.HasValue || p.UserId == userId.Value))
+        };
+    }
 
     private void Paginate()
     {
-        var all = Store.Notifications.OrderByDescending(n => n.CreatedAt).ToList();
-        _total = all.Count;
-        _pagedItems = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+        var userId = CurrentUserId;
+        var query = Store.Notifications
+            .Where(n => userId.HasValue && n.RecipientUserId == userId.Value)
+            .Where(n => string.IsNullOrEmpty(_severityFilter) || n.Severity == _severityFilter)
+            .OrderByDescending(n => n.CreatedAt)
+            .ToList();
+        _total = query.Count;
+        var totalPages = Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
+        _page = Math.Clamp(_page, 1, totalPages);
+        _pagedItems = query.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
     }
 
-    private static string GetSeverityTone(string severity) => severity switch
+    private void OpenNotification(Sql.MedNotification notif)
+    {
+        _selected = notif;
+        _drawerOpen = true;
+    }
+
+    private void MarkRead(Sql.MedNotification notif)
+    {
+        if (notif.ReadAt.HasValue) return;
+        try
+        {
+            Store.UpdateNotificationReadAt(notif.NotificationId, DateTime.UtcNow);
+            Toasts.Show("Đã đánh dấu đã đọc", notif.Title, ToastVariant.Success);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể cập nhật thông báo", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void MarkAllRead()
+    {
+        var userId = CurrentUserId;
+        if (!userId.HasValue) return;
+        foreach (var notif in Store.Notifications.Where(n => n.RecipientUserId == userId.Value && n.ReadAt is null).ToList())
+        {
+            Store.UpdateNotificationReadAt(notif.NotificationId, DateTime.UtcNow);
+        }
+        Toasts.Show("Đã đánh dấu tất cả đã đọc", null, ToastVariant.Success);
+    }
+
+    private IEnumerable<string> NotificationTypes()
+    {
+        var fromNotifications = Store.Notifications.Select(n => n.NotificationType);
+        var fromPrefs = Store.NotificationPreferences.Select(p => p.NotificationType);
+        return fromNotifications.Concat(fromPrefs)
+            .Concat(new[] { "procedure_approval", "procedure_submitted", "order_status" })
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(t => t);
+    }
+
+    private bool IsPrefEnabled(string type, string channel)
+    {
+        var userId = CurrentUserId;
+        if (!userId.HasValue) return false;
+        return Store.NotificationPreferences
+            .FirstOrDefault(p => p.UserId == userId.Value && p.NotificationType == type && p.ChannelCode == channel)
+            ?.IsEnabled ?? true;
+    }
+
+    private void TogglePreference(string type, string channel, bool enabled)
+    {
+        var userId = CurrentUserId;
+        if (!userId.HasValue) return;
+
+        try
+        {
+            var existing = Store.NotificationPreferences
+                .FirstOrDefault(p => p.UserId == userId.Value && p.NotificationType == type && p.ChannelCode == channel);
+            if (existing is null)
+            {
+                Store.AddNotificationPreference(new Sql.NotificationPreference
+                {
+                    UserId = userId.Value,
+                    NotificationType = type,
+                    ChannelCode = channel,
+                    IsEnabled = enabled
+                });
+            }
+            else
+            {
+                Store.UpdateNotificationPreference(existing with { IsEnabled = enabled, UpdatedAt = DateTime.UtcNow });
+            }
+            Toasts.Show("Đã cập nhật cài đặt", $"{type} • {Lookup(Sql.MedLookups.NotificationChannels, channel)}", ToastVariant.Success);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể cập nhật cài đặt", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code)
+        => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
+
+    private static string SeverityTone(string severity) => severity switch
     {
         "critical" => "tone-danger",
         "warning" => "tone-warning",
         "info" => "tone-primary",
+        _ => "tone-muted"
+    };
+
+    private static string DeliveryTone(string status) => status switch
+    {
+        "sent" => "tone-success",
+        "failed" => "tone-danger",
+        "pending" => "tone-warning",
         _ => "tone-muted"
     };
 

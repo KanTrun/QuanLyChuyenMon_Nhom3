@@ -33,6 +33,15 @@ public static class TestDbHelper
             new Department { DepartmentId = MedDataStoreSeed.DeptNgoaiId, Code = "KHOA-NGOAI", Name = "Khoa Ngoại", ParentDepartmentId = MedDataStoreSeed.RootDeptId },
             new Department { DepartmentId = MedDataStoreSeed.DeptXetNghiemId, Code = "KHOA-XN", Name = "Khoa Xét nghiệm", ParentDepartmentId = MedDataStoreSeed.RootDeptId }
         );
+        db.DepartmentClosure.AddRange(
+            new DepartmentClosureEdge { AncestorDepartmentId = MedDataStoreSeed.RootDeptId, DescendantDepartmentId = MedDataStoreSeed.RootDeptId, Depth = 0 },
+            new DepartmentClosureEdge { AncestorDepartmentId = MedDataStoreSeed.DeptNoiId, DescendantDepartmentId = MedDataStoreSeed.DeptNoiId, Depth = 0 },
+            new DepartmentClosureEdge { AncestorDepartmentId = MedDataStoreSeed.DeptNgoaiId, DescendantDepartmentId = MedDataStoreSeed.DeptNgoaiId, Depth = 0 },
+            new DepartmentClosureEdge { AncestorDepartmentId = MedDataStoreSeed.DeptXetNghiemId, DescendantDepartmentId = MedDataStoreSeed.DeptXetNghiemId, Depth = 0 },
+            new DepartmentClosureEdge { AncestorDepartmentId = MedDataStoreSeed.RootDeptId, DescendantDepartmentId = MedDataStoreSeed.DeptNoiId, Depth = 1 },
+            new DepartmentClosureEdge { AncestorDepartmentId = MedDataStoreSeed.RootDeptId, DescendantDepartmentId = MedDataStoreSeed.DeptNgoaiId, Depth = 1 },
+            new DepartmentClosureEdge { AncestorDepartmentId = MedDataStoreSeed.RootDeptId, DescendantDepartmentId = MedDataStoreSeed.DeptXetNghiemId, Depth = 1 }
+        );
 
         // Vai trò
         db.Roles.AddRange(

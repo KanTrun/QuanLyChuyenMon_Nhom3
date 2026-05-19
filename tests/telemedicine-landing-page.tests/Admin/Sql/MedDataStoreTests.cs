@@ -275,32 +275,55 @@ public sealed class MedDataStoreTests
         Assert.False(result);
     }
 
-    // === 12. RBAC: source_rank ưu tiên cao hơn ===
+    // === 12. RBAC: priority khớp hàm SQL, thắng source_rank ===
     [Fact]
-    public void PermissionResolver_HigherSourceRankWins()
+    public void PermissionResolver_HigherPriorityWinsBeforeSourceRank()
     {
         using var db = TestDbHelper.CreateSeededContext();
         var resolver = new EffectivePermissionResolver(db);
 
         // Admin user có PERM_VIEW_DASHBOARD từ role (allow, rank 1)
-        // Thêm user override allow với priority thấp hơn → vẫn thắng vì rank cao hơn
+        // Thêm user override deny với priority thấp hơn → role vẫn thắng vì SQL ưu tiên priority trước source_rank
         db.UserPermissionOverrides.Add(new UserPermissionOverride
         {
             UserId = MedDataStoreSeed.AdminUserId,
             PermissionId = MedDataStoreSeed.PermViewDashId,
-            EffectCode = "allow",
-            Priority = 1, // priority thấp nhưng source_rank = 3
-            Reason = "Kiểm thử source_rank"
+            EffectCode = "deny",
+            Priority = 1,
+            Reason = "Kiểm thử priority"
         });
         db.SaveChanges();
 
         var resolved = resolver.Resolve(MedDataStoreSeed.AdminUserId);
         var dashPerm = resolved.First(r => r.PermissionCode == "PERM_VIEW_DASHBOARD");
-        Assert.Equal(3, dashPerm.SourceRank);
+        Assert.Equal(1, dashPerm.SourceRank);
         Assert.Equal("allow", dashPerm.EffectCode);
     }
 
-    // === 13. AuditTrailService: invalid action_code bị từ chối ===
+    // === 13. RBAC: department scope phải khớp context khoa/phòng ===
+    [Fact]
+    public void PermissionResolver_DepartmentScopeRequiresMatchingContext()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var resolver = new EffectivePermissionResolver(db);
+
+        db.RolePermissions.Add(new RolePermission
+        {
+            RoleId = MedDataStoreSeed.RoleSysAdminId,
+            PermissionId = MedDataStoreSeed.PermManagePermId,
+            EffectCode = "deny",
+            DepartmentScopeType = "department",
+            DepartmentId = MedDataStoreSeed.DeptNoiId,
+            Priority = 500,
+            Reason = "Deny chỉ trong khoa nội"
+        });
+        db.SaveChanges();
+
+        Assert.False(resolver.HasPermission(MedDataStoreSeed.AdminUserId, "PERM_MANAGE_PERM", MedDataStoreSeed.DeptNoiId));
+        Assert.True(resolver.HasPermission(MedDataStoreSeed.AdminUserId, "PERM_MANAGE_PERM", MedDataStoreSeed.DeptNgoaiId));
+    }
+
+    // === 14. AuditTrailService: invalid action_code bị từ chối ===
     [Fact]
     public void AuditTrailService_InvalidActionCode_Throws()
     {
@@ -317,7 +340,7 @@ public sealed class MedDataStoreTests
         Assert.Contains("không hợp lệ", ex.Message);
     }
 
-    // === 14. AuditTrailService: valid action_code ghi thành công ===
+    // === 15. AuditTrailService: valid action_code ghi thành công ===
     [Fact]
     public void AuditTrailService_ValidActionCode_Succeeds()
     {
@@ -337,7 +360,7 @@ public sealed class MedDataStoreTests
         Assert.Equal(countBefore + 1, db.AuditLogs.Count());
     }
 
-    // === 15. Seed data: đủ 8 departments (1 root + 7 con) ===
+    // === 16. Seed data: đủ 8 departments (1 root + 7 con) ===
     [Fact]
     public void Seed_Creates8Departments()
     {
@@ -345,7 +368,7 @@ public sealed class MedDataStoreTests
         Assert.Equal(8, store.Departments.Count);
     }
 
-    // === 16. Seed data: có 10 người dùng ===
+    // === 17. Seed data: có 10 người dùng ===
     [Fact]
     public void Seed_Creates10Users()
     {
@@ -354,5 +377,29 @@ public sealed class MedDataStoreTests
         var admin = store.Users.First(u => u.UserId == MedDataStoreSeed.AdminUserId);
         Assert.Equal("admin", admin.Username);
         Assert.Equal("Quản trị viên hệ thống", admin.FullName);
+    }
+
+    // === 18. Audit tự động: DbContext ghi log khi mutation dữ liệu nghiệp vụ ===
+    [Fact]
+    public void MedDbContext_SaveChanges_CreatesAutomaticAuditLog()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var roleId = Guid.NewGuid();
+
+        db.Roles.Add(new Role
+        {
+            RoleId = roleId,
+            Code = "AUDIT_TEST_ROLE",
+            Name = "Vai trò kiểm thử audit"
+        });
+        db.SaveChanges();
+
+        var log = db.AuditLogs
+            .OrderByDescending(a => a.OccurredAt)
+            .FirstOrDefault(a => a.TargetType == "role" && a.TargetId == roleId.ToString());
+
+        Assert.NotNull(log);
+        Assert.Equal("create", log!.ActionCode);
+        Assert.Contains("AUDIT_TEST_ROLE", log.AfterJson!);
     }
 }

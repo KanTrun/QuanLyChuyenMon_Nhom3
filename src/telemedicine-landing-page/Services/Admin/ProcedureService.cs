@@ -144,6 +144,55 @@ public sealed class ProcedureService : IProcedureService
 
     private static List<ProcedureRecord> SeedData()
     {
-        return new List<ProcedureRecord>();
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        return new List<ProcedureRecord>
+        {
+            new()
+            {
+                Code = "QT-NOI-001",
+                Name = "Quy trình khám và theo dõi nội tiết",
+                Department = Department.NoiTiet,
+                Version = "1.0-draft",
+                Status = ProcedureStatus.DangChoPheDuyet,
+                EffectiveFrom = today.AddDays(7),
+                UpdatedBy = "TS. Nguyễn Minh Khang",
+                Steps = new[]
+                {
+                    new ProcedureStep(1, "Tiếp nhận", "Điều dưỡng", 5, "Đủ hồ sơ khám"),
+                    new ProcedureStep(2, "Khám chuyên khoa", "Bác sĩ", 20, "Có chẩn đoán sơ bộ"),
+                },
+            },
+            new()
+            {
+                Code = "QT-XN-001",
+                Name = "Quy trình xét nghiệm công thức máu",
+                Department = Department.XetNghiem,
+                Version = "1.0",
+                Status = ProcedureStatus.DaBanHanh,
+                EffectiveFrom = today.AddDays(-30),
+                UpdatedBy = "ThS. Phạm Thu Hà",
+                Steps = new[]
+                {
+                    new ProcedureStep(1, "Nhận mẫu", "Kỹ thuật viên", 5, "Mẫu đạt tiêu chuẩn"),
+                    new ProcedureStep(2, "Chạy máy", "Kỹ thuật viên", 15, "Máy QC hợp lệ"),
+                    new ProcedureStep(3, "Trả kết quả", "Bác sĩ xét nghiệm", 5, "Kết quả đã kiểm tra"),
+                },
+            },
+            new()
+            {
+                Code = "QT-NHI-VC-001",
+                Name = "Quy trình tiêm vaccine cúm mùa",
+                Department = Department.NhiKhoa,
+                Version = "0.9",
+                Status = ProcedureStatus.DangSoanThao,
+                EffectiveFrom = today.AddDays(14),
+                UpdatedBy = "BS. Nguyễn Nhật Linh",
+                Steps = new[]
+                {
+                    new ProcedureStep(1, "Sàng lọc trước tiêm", "Bác sĩ", 10, "Không có chống chỉ định"),
+                    new ProcedureStep(2, "Theo dõi sau tiêm", "Điều dưỡng", 30, "Không phản ứng bất lợi"),
+                },
+            },
+        };
     }
 }

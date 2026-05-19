@@ -15,12 +15,14 @@ public sealed class NavGate
     private static readonly Dictionary<string, string> RoutePermissionMap = new(StringComparer.OrdinalIgnoreCase)
     {
         ["/admin"] = "PERM_VIEW_DASHBOARD",
+        ["/admin/to-chuc"] = "PERM_MANAGE_PERM",
         ["/admin/quy-trinh"] = "PERM_MANAGE_PROC",
         ["/admin/phan-quyen"] = "PERM_MANAGE_PERM",
         ["/admin/bao-cao"] = "PERM_VIEW_REPORT",
         ["/admin/danh-muc"] = "PERM_MANAGE_PROC",
         ["/admin/phac-do"] = "PERM_MANAGE_PROC",
         ["/admin/lam-sang"] = "PERM_CREATE_ORDER",
+        ["/admin/nhat-ky"] = "PERM_MANAGE_PERM",
         ["/admin/cai-dat"] = "PERM_VIEW_DASHBOARD",
         ["/phe-duyet"] = "PERM_APPROVE_PROC",
         ["/quy-trinh-pro"] = "PERM_MANAGE_PROC",

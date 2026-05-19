@@ -1,7 +1,9 @@
 @using Microsoft.EntityFrameworkCore
 @using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Models.Admin.Sql
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject MedDbContext Db
+@inject IToastService Toasts
 
 <article class="admin-panel">
     <header class="admin-panel-head">
@@ -87,13 +89,16 @@
                         <th>Quyền</th>
                         <th>Hiệu lực</th>
                         <th>Phạm vi</th>
+                        <th>Khoa/phòng</th>
+                        <th>Ưu tiên</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (_rolePermissions.Count == 0)
                     {
                         <tr>
-                            <td colspan="4" class="admin-table-cell-muted" style="text-align:center; padding:24px;">
+                            <td colspan="7" class="admin-table-cell-muted" style="text-align:center; padding:24px;">
                                 Chưa có quyền nào được gán cho vai trò này.
                             </td>
                         </tr>
@@ -115,26 +120,93 @@
                                         <AdminBadge Tone="tone-danger">Từ chối</AdminBadge>
                                     }
                                 </td>
-                                <td class="admin-table-cell-muted">@rp.ScopeType</td>
+                                <td class="admin-table-cell-muted">@Lookup(MedLookups.DepartmentScopeTypes, rp.ScopeType)</td>
+                                <td>@GetDepartmentName(rp.DepartmentId)</td>
+                                <td>@rp.Priority</td>
+                                <td style="text-align:right;">
+                                    <button type="button" class="admin-icon-btn is-danger" title="Xóa quyền" @onclick="() => RemoveRolePermission(rp.RolePermissionId)">×</button>
+                                </td>
                             </tr>
                         }
                     }
                 </tbody>
             </table>
         </div>
+
+        <div class="admin-form-grid" style="margin-top:16px;">
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Thêm quyền</label>
+                <select class="admin-select" @bind="_permissionId">
+                    <option value="">Chọn quyền</option>
+                    @foreach (var permission in _permissions)
+                    {
+                        <option value="@permission.PermissionId">@permission.PermissionCode</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Hiệu lực</label>
+                <select class="admin-select" @bind="_effectCode">
+                    @foreach (var effect in MedLookups.PermissionEffects)
+                    {
+                        <option value="@effect.Code">@effect.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Phạm vi</label>
+                <select class="admin-select" @bind="_scopeType">
+                    @foreach (var scope in MedLookups.DepartmentScopeTypes)
+                    {
+                        <option value="@scope.Code">@scope.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Khoa/phòng</label>
+                <select class="admin-select" @bind="_departmentId">
+                    <option value="">Không chọn</option>
+                    @foreach (var dept in _departments)
+                    {
+                        <option value="@dept.DepartmentId">@dept.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Ưu tiên</label>
+                <input class="admin-input" type="number" @bind="_priority" />
+            </div>
+            <div class="admin-form-field admin-form-field-full">
+                <label class="admin-form-field-label">Lý do</label>
+                <input class="admin-input" @bind="_reason" />
+            </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+            <button type="button" class="admin-btn admin-btn-primary" @onclick="AddRolePermission">Thêm quyền vai trò</button>
+        </div>
     }
 </article>
 
 @code {
     private List<Role> _roles = new();
+    private List<MedPermission> _permissions = new();
+    private List<Sql.Department> _departments = new();
     private Dictionary<Guid, int> _memberCounts = new();
     private Role? _selectedRole;
     private Guid? _selectedRoleId;
     private List<RolePermissionView> _rolePermissions = new();
+    private string _permissionId = "";
+    private string _effectCode = "allow";
+    private string _scopeType = "global";
+    private string _departmentId = "";
+    private int _priority = 100;
+    private string _reason = "";
 
     protected override void OnInitialized()
     {
         _roles = Db.Roles.OrderBy(r => r.Name).ToList();
+        _permissions = Db.Permissions.Where(p => p.Status == "active").OrderBy(p => p.PermissionCode).ToList();
+        _departments = Db.Departments.Where(d => d.Status == "active").OrderBy(d => d.Code).ToList();
 
         // Đếm thành viên cho mỗi vai trò (chỉ tính user_role còn hiệu lực)
         _memberCounts = Db.UserRoles
@@ -152,6 +224,7 @@
         {
             _selectedRoleId = id;
             _selectedRole = _roles.FirstOrDefault(r => r.RoleId == id);
+            ResetPermissionForm();
             LoadRolePermissions(id);
         }
         else
@@ -170,18 +243,103 @@
                             where rp.RoleId == roleId && rp.EffectiveTo == null
                             select new RolePermissionView
                             {
+                                RolePermissionId = rp.RolePermissionId,
                                 ScreenName = s.Name,
                                 PermissionCode = p.PermissionCode,
                                 EffectCode = rp.EffectCode,
-                                ScopeType = rp.DepartmentScopeType
+                                ScopeType = rp.DepartmentScopeType,
+                                DepartmentId = rp.DepartmentId,
+                                Priority = rp.Priority
                             }).ToList();
     }
 
+    private void AddRolePermission()
+    {
+        if (_selectedRoleId is null || !Guid.TryParse(_permissionId, out var permissionId))
+        {
+            Toasts.Show("Thiếu quyền", "Chọn vai trò và quyền cần gán.", ToastVariant.Warning);
+            return;
+        }
+
+        var departmentId = Guid.TryParse(_departmentId, out var parsedDepartmentId) ? parsedDepartmentId : (Guid?)null;
+        if (RequiresDepartment(_scopeType) && departmentId is null)
+        {
+            Toasts.Show("Thiếu khoa/phòng", "Phạm vi một khoa hoặc cây khoa/phòng phải chọn khoa/phòng.", ToastVariant.Warning);
+            return;
+        }
+        if (!RequiresDepartment(_scopeType))
+        {
+            departmentId = null;
+        }
+
+        var duplicate = Db.RolePermissions.Any(rp =>
+            rp.RoleId == _selectedRoleId.Value &&
+            rp.PermissionId == permissionId &&
+            rp.DepartmentScopeType == _scopeType &&
+            rp.DepartmentId == departmentId &&
+            rp.EffectiveTo == null);
+        if (duplicate)
+        {
+            Toasts.Show("Quyền đã tồn tại", "Vai trò đã có quyền này trong cùng phạm vi.", ToastVariant.Warning);
+            return;
+        }
+
+        Db.RolePermissions.Add(new RolePermission
+        {
+            RoleId = _selectedRoleId.Value,
+            PermissionId = permissionId,
+            EffectCode = _effectCode,
+            DepartmentScopeType = _scopeType,
+            DepartmentId = departmentId,
+            Priority = _priority,
+            Reason = string.IsNullOrWhiteSpace(_reason) ? null : _reason.Trim()
+        });
+        Db.SaveChanges();
+        LoadRolePermissions(_selectedRoleId.Value);
+        ResetPermissionForm();
+        Toasts.Show("Đã thêm quyền vai trò", _selectedRole?.Name ?? "", ToastVariant.Success);
+    }
+
+    private void RemoveRolePermission(Guid rolePermissionId)
+    {
+        var existing = Db.RolePermissions.FirstOrDefault(rp => rp.RolePermissionId == rolePermissionId);
+        if (existing is null) return;
+        Db.RolePermissions.Remove(existing);
+        Db.SaveChanges();
+        if (_selectedRoleId.HasValue)
+        {
+            LoadRolePermissions(_selectedRoleId.Value);
+        }
+        Toasts.Show("Đã xóa quyền vai trò", _selectedRole?.Name ?? "", ToastVariant.Info);
+    }
+
+    private void ResetPermissionForm()
+    {
+        _permissionId = "";
+        _effectCode = "allow";
+        _scopeType = "global";
+        _departmentId = "";
+        _priority = 100;
+        _reason = "";
+    }
+
+    private string GetDepartmentName(Guid? departmentId)
+        => departmentId.HasValue ? _departments.FirstOrDefault(d => d.DepartmentId == departmentId.Value)?.Name ?? "—" : "—";
+
+    private static string Lookup(IReadOnlyList<LookupEntry> entries, string? code)
+        => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
+
+    private static bool RequiresDepartment(string scopeType)
+        => scopeType is "department" or "department_tree";
+
     private sealed class RolePermissionView
     {
+        public Guid RolePermissionId { get; init; }
         public string ScreenName { get; init; } = "";
         public string PermissionCode { get; init; } = "";
         public string EffectCode { get; init; } = "allow";
         public string ScopeType { get; init; } = "global";
+        public Guid? DepartmentId { get; init; }
+        public int Priority { get; init; }
     }
 }

@@ -1,7 +1,8 @@
 @page "/admin/phac-do"
 @layout AdminLayout
-@using System.ComponentModel.DataAnnotations
-@inject IProtocolService ProtocolService
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@inject ICurrentUserContext UserContext
 @inject IToastService Toasts
 @implements IDisposable
 
@@ -12,38 +13,23 @@
         <div>
             <span class="admin-page-eyebrow">Phác đồ</span>
             <h1 class="admin-page-title">Phác đồ điều trị và chăm sóc</h1>
-            <p class="admin-page-subtitle">Tra cứu, cập nhật và ghi nhận các trường hợp áp dụng phác đồ lâm sàng tại bệnh viện.</p>
+            <p class="admin-page-subtitle">Quản lý phác đồ, phiên bản, quy trình liên kết, quy tắc áp dụng và lịch sử áp dụng cho bệnh nhân.</p>
         </div>
-        <div class="admin-page-actions">
-            <button type="button" class="admin-btn admin-btn-primary" @onclick="() => OpenCreate()">
-                <span aria-hidden="true">@AdminIconRender("plus")</span>
-                Tạo phác đồ mới
-            </button>
-        </div>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="OpenCreate">Tạo phác đồ mới</button>
     </header>
 
     <div class="admin-filter-bar is-compact">
         <div class="admin-filter-field">
-            <label class="admin-filter-label" for="pd-search">Tìm kiếm</label>
-            <input id="pd-search" class="admin-input" type="search" placeholder="Tìm theo tên hoặc mã" value="@_search" @oninput="OnSearchChanged" />
+            <label class="admin-filter-label" for="protocol-search">Tìm kiếm</label>
+            <input id="protocol-search" class="admin-input" type="search" placeholder="Mã hoặc tên phác đồ" @bind="_search" @bind:event="oninput" @bind:after="Recompute" />
         </div>
         <div class="admin-filter-field">
-            <label class="admin-filter-label" for="pd-type">Loại phác đồ</label>
-            <select id="pd-type" class="admin-select" value="@_typeKey" @onchange="OnTypeChanged">
+            <label class="admin-filter-label" for="protocol-type">Loại phác đồ</label>
+            <select id="protocol-type" class="admin-select" @bind="_typeFilter" @bind:after="Recompute">
                 <option value="">Tất cả</option>
-                @foreach (var t in (ProtocolType[])Enum.GetValues(typeof(ProtocolType)))
+                @foreach (var type in Sql.MedLookups.ProtocolTypes)
                 {
-                    <option value="@t">@AdminEnumLabels.GetLabel(t)</option>
-                }
-            </select>
-        </div>
-        <div class="admin-filter-field">
-            <label class="admin-filter-label" for="pd-spec">Chuyên khoa</label>
-            <select id="pd-spec" class="admin-select" value="@_specKey" @onchange="OnSpecChanged">
-                <option value="">Tất cả</option>
-                @foreach (var d in (Department[])Enum.GetValues(typeof(Department)))
-                {
-                    <option value="@d">@AdminEnumLabels.GetLabel(d)</option>
+                    <option value="@type.Code">@type.Name</option>
                 }
             </select>
         </div>
@@ -54,7 +40,7 @@
         <div class="admin-table-wrapper">
             <div class="admin-empty" style="padding:48px 16px;">
                 <div class="admin-empty-title">Không tìm thấy phác đồ phù hợp</div>
-                <div class="admin-empty-body">Hãy thử một từ khóa khác hoặc tạo phác đồ mới.</div>
+                <div class="admin-empty-body">Hãy thử từ khóa khác hoặc tạo phác đồ mới.</div>
             </div>
         </div>
     }
@@ -63,95 +49,180 @@
         <div class="admin-card-grid">
             @foreach (var protocol in _items)
             {
+                var latest = LatestVersion(protocol.ClinicalProtocolId);
                 <article class="admin-card" @onclick="() => OpenDetail(protocol)" style="cursor:pointer;">
                     <div class="admin-card-tags">
-                        <AdminBadge Tone="tone-primary">@AdminEnumLabels.GetLabel(protocol.ProtocolType)</AdminBadge>
-                        <AdminBadge Tone="tone-secondary">@AdminEnumLabels.GetLabel(protocol.Specialty)</AdminBadge>
-                        <AdminBadge Tone="@AdminEnumLabels.GetTone(protocol.Status)">@AdminEnumLabels.GetLabel(protocol.Status)</AdminBadge>
-                    </div>
-                    <h2 class="admin-card-title">@protocol.Name</h2>
-                    <p class="admin-card-meta">Mã @protocol.Code • Phiên bản @protocol.Version • Áp dụng @protocol.ApplicationCount lượt.</p>
-                    <div class="admin-card-tags">
-                        @foreach (var icd in protocol.IcdCodes)
+                        <AdminBadge Tone="tone-primary">@Lookup(Sql.MedLookups.ProtocolTypes, protocol.ProtocolType)</AdminBadge>
+                        <AdminBadge Tone="@StatusTone(protocol.Status)">@Lookup(Sql.MedLookups.RecordStatuses, protocol.Status)</AdminBadge>
+                        @if (latest is not null)
                         {
-                            <AdminBadge Tone="tone-muted">ICD @icd</AdminBadge>
+                            <AdminBadge Tone="tone-secondary">@($"v{latest.VersionNo}") • @Lookup(Sql.MedLookups.VersionStatuses, latest.StatusCode)</AdminBadge>
                         }
                     </div>
+                    <h2 class="admin-card-title">@protocol.Name</h2>
+                    <p class="admin-card-meta">@protocol.ProtocolCode • @GetDeptName(protocol.OwnerDepartmentId)</p>
+                    <p class="admin-card-meta">@protocol.Description</p>
                 </article>
             }
         </div>
     }
 </section>
 
-<AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="@(value => _drawerOpen = value)" SizeClass="admin-drawer-wide"
+<AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" SizeClass="admin-drawer-wide"
              Eyebrow="Phác đồ"
              Title="@(_selected?.Name ?? string.Empty)"
-             Subtitle="@(_selected is null ? null : $"Mã {_selected.Code} • {AdminEnumLabels.GetLabel(_selected.ProtocolType)}")">
+             Subtitle="@(_selected is null ? null : $"{_selected.ProtocolCode} • {Lookup(Sql.MedLookups.ProtocolTypes, _selected.ProtocolType)}")">
     <ChildContent>
-        @if (_selected is { } proto)
+        @if (_selected is not null && _selectedVersion is not null)
         {
             <dl class="admin-detail-grid">
-                <dt>Chuyên khoa</dt>
-                <dd>@AdminEnumLabels.GetLabel(proto.Specialty)</dd>
+                <dt>Khoa chủ quản</dt>
+                <dd>@GetDeptName(_selected.OwnerDepartmentId)</dd>
                 <dt>Phiên bản</dt>
-                <dd>@proto.Version</dd>
+                <dd>@($"v{_selectedVersion.VersionNo}") - @_selectedVersion.Title</dd>
+                <dt>Trạng thái phiên bản</dt>
+                <dd><AdminBadge Tone="@VersionTone(_selectedVersion.StatusCode)">@Lookup(Sql.MedLookups.VersionStatuses, _selectedVersion.StatusCode)</AdminBadge></dd>
                 <dt>Hiệu lực từ</dt>
-                <dd>@proto.EffectiveFrom.ToString("dd/MM/yyyy")</dd>
-                <dt>Số lượt áp dụng</dt>
-                <dd>@proto.ApplicationCount</dd>
-                <dt>Mã ICD</dt>
-                <dd>@(string.Join(", ", proto.IcdCodes))</dd>
-                <dt>Cập nhật lần cuối</dt>
-                <dd>@proto.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+                <dd>@(_selectedVersion.EffectiveFrom?.ToString("dd/MM/yyyy") ?? "—")</dd>
+                <dt>Tóm tắt</dt>
+                <dd>@(_selectedVersion.Summary ?? "—")</dd>
             </dl>
-            <div>
-                <h3 style="margin:0 0 6px;font-size:1rem;font-weight:700;">Chống chỉ định / lưu ý</h3>
-                <p class="admin-card-meta">@proto.Contraindications</p>
+
+            <div class="admin-tabs" role="tablist" aria-label="Chi tiết phác đồ">
+                <button type="button" class="@ProceduresTabClass" @onclick="ShowProcedures">Quy trình liên kết</button>
+                <button type="button" class="@RulesTabClass" @onclick="ShowRules">Quy tắc áp dụng</button>
+                <button type="button" class="@ApplicationsTabClass" @onclick="ShowApplications">Đã áp dụng</button>
             </div>
 
-            <div class="admin-panel" style="padding:14px;">
-                <h3 class="admin-panel-title">Ghi nhận áp dụng cho bệnh nhân</h3>
-                <EditForm Model="_application" OnValidSubmit="() => RecordApplication(proto)">
-                    <DataAnnotationsValidator />
-                    <div class="admin-form-grid">
-                        <div class="admin-form-field">
-                            <label class="admin-form-field-label">Tên bệnh nhân</label>
-                            <InputText class="admin-input" @bind-Value="_application.PatientName" placeholder="VD: Trần Hữu Bình" />
-                            <ValidationMessage For="() => _application.PatientName" class="admin-validation-message" />
-                        </div>
-                        <div class="admin-form-field">
-                            <label class="admin-form-field-label">Kết quả ghi nhận</label>
-                            <InputText class="admin-input" @bind-Value="_application.Outcome" placeholder="VD: Đáp ứng tốt sau 24 giờ" />
-                        </div>
+            @if (_activeTab == "procedures")
+            {
+                <div class="admin-panel" style="padding:14px;">
+                    <h3 class="admin-panel-title">Quy trình liên kết</h3>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead><tr><th>Quy trình phiên bản</th><th>Quan hệ</th><th>Thứ tự</th><th>Ghi chú</th><th></th></tr></thead>
+                            <tbody>
+                                @foreach (var link in Store.ClinicalProtocolProcedures.Where(p => p.ClinicalProtocolVersionId == _selectedVersion.ClinicalProtocolVersionId).OrderBy(p => p.SequenceNo))
+                                {
+                                    <tr>
+                                        <td>@GetProcedureVersionName(link.ProcedureVersionId)</td>
+                                        <td>@Lookup(Sql.MedLookups.ProtocolRelationTypes, link.RelationType)</td>
+                                        <td>@(link.SequenceNo?.ToString() ?? "—")</td>
+                                        <td>@(link.Note ?? "—")</td>
+                                        <td style="text-align:right;"><button type="button" class="admin-icon-btn is-danger" @onclick="() => RemoveProtocolProcedure(link)">×</button></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
-                    <div style="display:flex; justify-content:flex-end; margin-top:10px;">
-                        <button type="submit" class="admin-btn admin-btn-primary">Áp dụng cho bệnh nhân</button>
-                    </div>
-                </EditForm>
-            </div>
 
-            <div>
-                <h3 style="margin:0 0 6px;font-size:1rem;font-weight:700;">Lượt áp dụng gần nhất</h3>
-                @if (_history.Count == 0)
-                {
-                    <p class="admin-card-meta">Chưa có lượt áp dụng nào được ghi nhận trong phiên này.</p>
-                }
-                else
-                {
-                    <ul class="admin-step-list">
-                        @foreach (var entry in _history)
-                        {
-                            <li class="admin-step-card">
-                                <div class="admin-step-card-head">
-                                    <span class="admin-step-card-seq">@entry.AppliedAt.ToString("dd/MM HH:mm")</span>
-                                    <span class="admin-table-cell-muted">@entry.Outcome</span>
-                                </div>
-                                <div class="admin-table-cell-strong">@entry.PatientName</div>
-                            </li>
-                        }
-                    </ul>
-                }
-            </div>
+                    <div class="admin-form-grid" style="margin-top:14px;">
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Phiên bản quy trình</label>
+                            <select class="admin-select" @bind="_linkProcedureVersionId">
+                                <option value="">Chọn quy trình</option>
+                                @foreach (var version in Store.ProcedureVersions.OrderByDescending(v => v.CreatedAt))
+                                {
+                                    <option value="@version.ProcedureVersionId">@GetProcedureVersionName(version.ProcedureVersionId)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Quan hệ</label>
+                            <select class="admin-select" @bind="_linkRelationType">
+                                @foreach (var type in Sql.MedLookups.ProtocolRelationTypes)
+                                {
+                                    <option value="@type.Code">@type.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Thứ tự</label>
+                            <input class="admin-input" type="number" min="1" @bind="_linkSequence" />
+                        </div>
+                        <div class="admin-form-field admin-form-field-full">
+                            <label class="admin-form-field-label">Ghi chú</label>
+                            <input class="admin-input" @bind="_linkNote" />
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                        <button type="button" class="admin-btn admin-btn-primary" @onclick="AddProtocolProcedure">Thêm liên kết</button>
+                    </div>
+                </div>
+            }
+            else if (_activeTab == "rules")
+            {
+                <div class="admin-panel" style="padding:14px;">
+                    <h3 class="admin-panel-title">Quy tắc áp dụng</h3>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead><tr><th>Loại</th><th>JSON</th><th>Ưu tiên</th><th>Hoạt động</th><th></th></tr></thead>
+                            <tbody>
+                                @foreach (var rule in Store.ProtocolApplicabilityRules.Where(r => r.ClinicalProtocolVersionId == _selectedVersion.ClinicalProtocolVersionId).OrderByDescending(r => r.Priority))
+                                {
+                                    <tr>
+                                        <td>@Lookup(Sql.MedLookups.ProtocolRuleTypes, rule.RuleType)</td>
+                                        <td><code>@rule.RuleJson</code></td>
+                                        <td>@rule.Priority</td>
+                                        <td>@(rule.IsActive ? "Có" : "Không")</td>
+                                        <td style="text-align:right;"><button type="button" class="admin-icon-btn is-danger" @onclick="() => RemoveRule(rule)">×</button></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="admin-form-grid" style="margin-top:14px;">
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Loại rule</label>
+                            <select class="admin-select" @bind="_ruleType">
+                                @foreach (var type in Sql.MedLookups.ProtocolRuleTypes)
+                                {
+                                    <option value="@type.Code">@type.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Ưu tiên</label>
+                            <input class="admin-input" type="number" min="1" @bind="_rulePriority" />
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Hoạt động</label>
+                            <label class="admin-check-row"><input type="checkbox" @bind="_ruleActive" /> Có</label>
+                        </div>
+                        <div class="admin-form-field admin-form-field-full">
+                            <label class="admin-form-field-label">Rule JSON</label>
+                            <textarea class="admin-textarea" rows="4" @bind="_ruleJson"></textarea>
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                        <button type="button" class="admin-btn admin-btn-primary" @onclick="AddRule">Thêm rule</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="admin-panel" style="padding:14px;">
+                    <h3 class="admin-panel-title">Bệnh nhân đã áp dụng</h3>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead><tr><th>Bệnh nhân</th><th>Lượt khám</th><th>Chẩn đoán</th><th>Trạng thái</th><th>Thời điểm</th></tr></thead>
+                            <tbody>
+                                @foreach (var app in Store.PatientProtocolApplications.Where(a => a.ClinicalProtocolVersionId == _selectedVersion.ClinicalProtocolVersionId).OrderByDescending(a => a.AppliedAt))
+                                {
+                                    <tr>
+                                        <td>@GetPatientName(app.PatientRefId)</td>
+                                        <td>@GetEncounterCode(app.EncounterRefId)</td>
+                                        <td>@(app.DiagnosisCode ?? "—")</td>
+                                        <td><AdminBadge Tone="@ApplicationTone(app.ApplicationStatus)">@Lookup(Sql.MedLookups.ProtocolApplicationStatuses, app.ApplicationStatus)</AdminBadge></td>
+                                        <td>@app.AppliedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
         }
     </ChildContent>
     <FooterContent>
@@ -159,179 +230,309 @@
     </FooterContent>
 </AdminDrawer>
 
-<AdminModal IsOpen="_createOpen" IsOpenChanged="@(value => _createOpen = value)" Title="Tạo phác đồ mới">
+<AdminModal IsOpen="_createOpen" IsOpenChanged="v => _createOpen = v" Title="Tạo phác đồ mới">
     <ChildContent>
-        <EditForm Model="_create" OnValidSubmit="CreateAsync">
-            <DataAnnotationsValidator />
-            <div class="admin-form-grid">
-                <div class="admin-form-field">
-                    <label class="admin-form-field-label">Mã phác đồ</label>
-                    <InputText class="admin-input" @bind-Value="_create.Code" />
-                    <ValidationMessage For="() => _create.Code" class="admin-validation-message" />
-                </div>
-                <div class="admin-form-field">
-                    <label class="admin-form-field-label">Tên phác đồ</label>
-                    <InputText class="admin-input" @bind-Value="_create.Name" />
-                    <ValidationMessage For="() => _create.Name" class="admin-validation-message" />
-                </div>
-                <div class="admin-form-field">
-                    <label class="admin-form-field-label">Loại</label>
-                    <InputSelect class="admin-select" @bind-Value="_create.ProtocolType">
-                        @foreach (var t in (ProtocolType[])Enum.GetValues(typeof(ProtocolType)))
-                        {
-                            <option value="@t">@AdminEnumLabels.GetLabel(t)</option>
-                        }
-                    </InputSelect>
-                </div>
-                <div class="admin-form-field">
-                    <label class="admin-form-field-label">Chuyên khoa</label>
-                    <InputSelect class="admin-select" @bind-Value="_create.Specialty">
-                        @foreach (var d in (Department[])Enum.GetValues(typeof(Department)))
-                        {
-                            <option value="@d">@AdminEnumLabels.GetLabel(d)</option>
-                        }
-                    </InputSelect>
-                </div>
-                <div class="admin-form-field admin-form-field-full">
-                    <label class="admin-form-field-label">Mã ICD (cách nhau bằng dấu phẩy)</label>
-                    <InputText class="admin-input" @bind-Value="_create.IcdCsv" />
-                </div>
-                <div class="admin-form-field admin-form-field-full">
-                    <label class="admin-form-field-label">Chống chỉ định</label>
-                    <InputTextArea class="admin-textarea" @bind-Value="_create.Contraindications" />
-                </div>
+        <div class="admin-form-grid">
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Mã phác đồ</label>
+                <input class="admin-input" @bind="_createCode" />
             </div>
-            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
-                <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _createOpen = false">Hủy</button>
-                <button type="submit" class="admin-btn admin-btn-primary">Lưu phác đồ</button>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Tên phác đồ</label>
+                <input class="admin-input" @bind="_createName" />
             </div>
-        </EditForm>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Loại</label>
+                <select class="admin-select" @bind="_createType">
+                    @foreach (var type in Sql.MedLookups.ProtocolTypes)
+                    {
+                        <option value="@type.Code">@type.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Khoa chủ quản</label>
+                <select class="admin-select" @bind="_createDepartmentId">
+                    <option value="">Không chọn</option>
+                    @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Code))
+                    {
+                        <option value="@dept.DepartmentId">@dept.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field admin-form-field-full">
+                <label class="admin-form-field-label">Mô tả</label>
+                <textarea class="admin-textarea" rows="3" @bind="_createDescription"></textarea>
+            </div>
+            <div class="admin-form-field admin-form-field-full">
+                <label class="admin-form-field-label">Tóm tắt phiên bản đầu</label>
+                <textarea class="admin-textarea" rows="3" @bind="_createSummary"></textarea>
+            </div>
+        </div>
     </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _createOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="CreateProtocol">Lưu phác đồ</button>
+    </FooterContent>
 </AdminModal>
 
 @code {
     private string _search = string.Empty;
-    private string _typeKey = string.Empty;
-    private string _specKey = string.Empty;
-    private IReadOnlyList<ClinicalProtocolRecord> _items = Array.Empty<ClinicalProtocolRecord>();
+    private string _typeFilter = string.Empty;
+    private IReadOnlyList<Sql.ClinicalProtocol> _items = Array.Empty<Sql.ClinicalProtocol>();
 
     private bool _drawerOpen;
-    private ClinicalProtocolRecord? _selected;
-    private IReadOnlyList<ProtocolApplication> _history = Array.Empty<ProtocolApplication>();
-    private readonly ApplicationModel _application = new();
+    private Sql.ClinicalProtocol? _selected;
+    private Sql.ClinicalProtocolVersion? _selectedVersion;
+    private string _activeTab = "procedures";
 
     private bool _createOpen;
-    private CreateModel _create = new();
+    private string _createCode = string.Empty;
+    private string _createName = string.Empty;
+    private string _createType = "treatment_protocol";
+    private string _createDepartmentId = string.Empty;
+    private string _createDescription = string.Empty;
+    private string _createSummary = string.Empty;
+
+    private string _linkProcedureVersionId = string.Empty;
+    private string _linkRelationType = "references";
+    private int _linkSequence = 1;
+    private string _linkNote = string.Empty;
+
+    private string _ruleType = "icd";
+    private int _rulePriority = 100;
+    private bool _ruleActive = true;
+    private string _ruleJson = "{\"icd\":\"I10\"}";
+
+    private string ProceduresTabClass => _activeTab == "procedures" ? "admin-tab is-active" : "admin-tab";
+    private string RulesTabClass => _activeTab == "rules" ? "admin-tab is-active" : "admin-tab";
+    private string ApplicationsTabClass => _activeTab == "applications" ? "admin-tab is-active" : "admin-tab";
 
     protected override void OnInitialized()
     {
-        ProtocolService.StateChanged += OnChanged;
+        Store.StateChanged += OnChanged;
         Recompute();
     }
 
     private void OnChanged() => InvokeAsync(() =>
     {
-        Recompute();
-        if (_selected is { } sel)
+        if (_selected is not null)
         {
-            _selected = ProtocolService.GetById(sel.Id);
-            _history = sel is null ? Array.Empty<ProtocolApplication>() : ProtocolService.GetApplications(sel.Id);
+            _selected = Store.ClinicalProtocols.FirstOrDefault(p => p.ClinicalProtocolId == _selected.ClinicalProtocolId);
+            _selectedVersion = _selected is null ? null : LatestVersion(_selected.ClinicalProtocolId);
         }
+        Recompute();
         StateHasChanged();
     });
 
     private void Recompute()
     {
-        ProtocolType? typeFilter = Enum.TryParse<ProtocolType>(_typeKey, out var t) ? t : (ProtocolType?)null;
-        Department? specFilter = Enum.TryParse<Department>(_specKey, out var d) ? d : (Department?)null;
-        _items = ProtocolService.Search(_search, typeFilter, specFilter);
-    }
-
-    private void OnSearchChanged(ChangeEventArgs args)
-    {
-        _search = args.Value?.ToString() ?? string.Empty;
-        Recompute();
-    }
-
-    private void OnTypeChanged(ChangeEventArgs args)
-    {
-        _typeKey = args.Value?.ToString() ?? string.Empty;
-        Recompute();
-    }
-
-    private void OnSpecChanged(ChangeEventArgs args)
-    {
-        _specKey = args.Value?.ToString() ?? string.Empty;
-        Recompute();
-    }
-
-    private void OpenDetail(ClinicalProtocolRecord protocol)
-    {
-        _selected = protocol;
-        _history = ProtocolService.GetApplications(protocol.Id);
-        _application.PatientName = string.Empty;
-        _application.Outcome = string.Empty;
-        _drawerOpen = true;
-    }
-
-    private void RecordApplication(ClinicalProtocolRecord protocol)
-    {
-        ProtocolService.RecordPatientApplication(protocol.Id, _application.PatientName.Trim(), _application.Outcome.Trim());
-        Toasts.Show("Đã ghi nhận áp dụng phác đồ", _application.PatientName, ToastVariant.Success);
-        _application.PatientName = string.Empty;
-        _application.Outcome = string.Empty;
+        _items = Store.ClinicalProtocols
+            .Where(p => string.IsNullOrEmpty(_typeFilter) || p.ProtocolType == _typeFilter)
+            .Where(p => string.IsNullOrWhiteSpace(_search)
+                || p.ProtocolCode.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                || p.Name.Contains(_search, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(p => p.ProtocolCode)
+            .ToList();
     }
 
     private void OpenCreate()
     {
-        _create = new CreateModel();
+        _createCode = string.Empty;
+        _createName = string.Empty;
+        _createType = Sql.MedLookups.ProtocolTypes.First().Code;
+        _createDepartmentId = string.Empty;
+        _createDescription = string.Empty;
+        _createSummary = string.Empty;
         _createOpen = true;
     }
 
-    private void CreateAsync()
+    private void CreateProtocol()
     {
-        var record = new ClinicalProtocolRecord
+        if (string.IsNullOrWhiteSpace(_createCode) || string.IsNullOrWhiteSpace(_createName))
         {
-            Code = _create.Code.Trim(),
-            Name = _create.Name.Trim(),
-            ProtocolType = _create.ProtocolType,
-            Specialty = _create.Specialty,
-            Contraindications = string.IsNullOrWhiteSpace(_create.Contraindications) ? "Không có" : _create.Contraindications.Trim(),
-            IcdCodes = (_create.IcdCsv ?? string.Empty)
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToList(),
-            Status = CatalogStatus.HoatDong,
-            Version = "1.0",
-            EffectiveFrom = DateOnly.FromDateTime(DateTime.Today),
-        };
-        ProtocolService.Create(record);
-        Toasts.Show("Đã tạo phác đồ mới", record.Name, ToastVariant.Success);
-        _createOpen = false;
+            Toasts.Show("Thiếu thông tin", "Vui lòng nhập mã và tên phác đồ.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            var protocol = new Sql.ClinicalProtocol
+            {
+                ProtocolCode = _createCode.Trim(),
+                Name = _createName.Trim(),
+                ProtocolType = _createType,
+                OwnerDepartmentId = ParseGuid(_createDepartmentId),
+                Description = string.IsNullOrWhiteSpace(_createDescription) ? null : _createDescription.Trim(),
+                CreatedBy = UserContext.CurrentUser?.UserId
+            };
+            Store.AddClinicalProtocol(protocol);
+            Store.AddClinicalProtocolVersion(new Sql.ClinicalProtocolVersion
+            {
+                ClinicalProtocolId = protocol.ClinicalProtocolId,
+                VersionNo = 1,
+                StatusCode = "active",
+                Title = $"{protocol.Name} - Phiên bản 1",
+                Summary = string.IsNullOrWhiteSpace(_createSummary) ? null : _createSummary.Trim(),
+                ContentJson = "{}",
+                EffectiveFrom = DateTime.UtcNow,
+                CreatedBy = UserContext.CurrentUser?.UserId,
+                ApprovedBy = UserContext.CurrentUser?.UserId,
+                PublishedBy = UserContext.CurrentUser?.UserId,
+                ApprovedAt = DateTime.UtcNow,
+                PublishedAt = DateTime.UtcNow
+            });
+            Toasts.Show("Đã tạo phác đồ", protocol.Name, ToastVariant.Success);
+            _createOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể tạo phác đồ", ex.Message, ToastVariant.Error);
+        }
     }
 
-    private RenderFragment AdminIconRender(string name) => builder => AdminIcons.Render(builder, name);
-
-    public void Dispose()
+    private void OpenDetail(Sql.ClinicalProtocol protocol)
     {
-        ProtocolService.StateChanged -= OnChanged;
+        _selected = protocol;
+        _selectedVersion = LatestVersion(protocol.ClinicalProtocolId);
+        _activeTab = "procedures";
+        ResetLinkForm();
+        ResetRuleForm();
+        _drawerOpen = true;
     }
 
-    public sealed class ApplicationModel
+    private void AddProtocolProcedure()
     {
-        [Required(ErrorMessage = "Vui lòng nhập tên bệnh nhân.")]
-        public string PatientName { get; set; } = string.Empty;
-        public string Outcome { get; set; } = "Đang theo dõi";
+        if (_selectedVersion is null || !Guid.TryParse(_linkProcedureVersionId, out var procedureVersionId))
+        {
+            Toasts.Show("Thiếu quy trình", "Vui lòng chọn phiên bản quy trình.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            Store.AddClinicalProtocolProcedure(new Sql.ClinicalProtocolProcedure
+            {
+                ClinicalProtocolVersionId = _selectedVersion.ClinicalProtocolVersionId,
+                ProcedureVersionId = procedureVersionId,
+                RelationType = _linkRelationType,
+                SequenceNo = _linkSequence <= 0 ? null : _linkSequence,
+                Note = string.IsNullOrWhiteSpace(_linkNote) ? null : _linkNote.Trim()
+            });
+            Toasts.Show("Đã thêm liên kết quy trình", GetProcedureVersionName(procedureVersionId), ToastVariant.Success);
+            ResetLinkForm();
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể thêm liên kết", ex.Message, ToastVariant.Error);
+        }
     }
 
-    public sealed class CreateModel
+    private void RemoveProtocolProcedure(Sql.ClinicalProtocolProcedure link)
     {
-        [Required(ErrorMessage = "Vui lòng nhập mã phác đồ.")]
-        public string Code { get; set; } = string.Empty;
-        [Required(ErrorMessage = "Vui lòng nhập tên phác đồ.")]
-        public string Name { get; set; } = string.Empty;
-        public ProtocolType ProtocolType { get; set; } = ProtocolType.DieuTri;
-        public Department Specialty { get; set; } = Department.NoiTiet;
-        public string IcdCsv { get; set; } = string.Empty;
-        public string Contraindications { get; set; } = string.Empty;
+        try
+        {
+            Store.RemoveClinicalProtocolProcedure(link.ClinicalProtocolProcedureId);
+            Toasts.Show("Đã xóa liên kết", GetProcedureVersionName(link.ProcedureVersionId), ToastVariant.Info);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể xóa liên kết", ex.Message, ToastVariant.Error);
+        }
     }
+
+    private void AddRule()
+    {
+        if (_selectedVersion is null || string.IsNullOrWhiteSpace(_ruleJson))
+        {
+            Toasts.Show("Thiếu rule", "Vui lòng nhập JSON rule.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            Store.AddProtocolApplicabilityRule(new Sql.ProtocolApplicabilityRule
+            {
+                ClinicalProtocolVersionId = _selectedVersion.ClinicalProtocolVersionId,
+                RuleType = _ruleType,
+                RuleJson = _ruleJson.Trim(),
+                Priority = _rulePriority,
+                IsActive = _ruleActive
+            });
+            Toasts.Show("Đã thêm rule", Lookup(Sql.MedLookups.ProtocolRuleTypes, _ruleType), ToastVariant.Success);
+            ResetRuleForm();
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể thêm rule", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void RemoveRule(Sql.ProtocolApplicabilityRule rule)
+    {
+        try
+        {
+            Store.RemoveProtocolApplicabilityRule(rule.ProtocolApplicabilityRuleId);
+            Toasts.Show("Đã xóa rule", Lookup(Sql.MedLookups.ProtocolRuleTypes, rule.RuleType), ToastVariant.Info);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể xóa rule", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void ResetLinkForm()
+    {
+        _linkProcedureVersionId = string.Empty;
+        _linkRelationType = "references";
+        _linkSequence = 1;
+        _linkNote = string.Empty;
+    }
+
+    private void ResetRuleForm()
+    {
+        _ruleType = "icd";
+        _rulePriority = 100;
+        _ruleActive = true;
+        _ruleJson = "{\"icd\":\"I10\"}";
+    }
+
+    private void ShowProcedures() => _activeTab = "procedures";
+    private void ShowRules() => _activeTab = "rules";
+    private void ShowApplications() => _activeTab = "applications";
+
+    private Sql.ClinicalProtocolVersion? LatestVersion(Guid protocolId)
+        => Store.ClinicalProtocolVersions.Where(v => v.ClinicalProtocolId == protocolId).OrderByDescending(v => v.VersionNo).FirstOrDefault();
+
+    private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+    private string GetPatientName(Guid patientId) => Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == patientId)?.DisplayName ?? "—";
+    private string GetEncounterCode(Guid? encounterId) => encounterId.HasValue ? Store.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == encounterId.Value)?.ExternalEncounterId ?? "—" : "—";
+    private string GetProcedureVersionName(Guid versionId)
+    {
+        var version = Store.ProcedureVersions.FirstOrDefault(v => v.ProcedureVersionId == versionId);
+        if (version is null) return "—";
+        var proc = Store.Procedures.FirstOrDefault(p => p.ProcedureId == version.ProcedureId);
+        return $"{proc?.ProcedureCode ?? "QT"} v{version.VersionNo} - {version.Title}";
+    }
+
+    private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
+    private static string StatusTone(string status) => status == "active" ? "tone-success" : "tone-muted";
+    private static string VersionTone(string status) => status switch
+    {
+        "active" => "tone-success",
+        "pending_approval" => "tone-warning",
+        "rejected" => "tone-danger",
+        _ => "tone-muted"
+    };
+    private static string ApplicationTone(string status) => status switch
+    {
+        "applied" => "tone-success",
+        "suggested" => "tone-primary",
+        "skipped" => "tone-warning",
+        "cancelled" => "tone-danger",
+        _ => "tone-muted"
+    };
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
 }

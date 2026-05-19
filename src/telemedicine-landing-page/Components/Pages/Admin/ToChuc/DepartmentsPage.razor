@@ -1,6 +1,7 @@
 @page "/admin/to-chuc/khoa-phong"
 @layout AdminLayout
 @using TelemedicineLandingPage.Services.Admin.Sql
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @using Dept = TelemedicineLandingPage.Models.Admin.Sql.Department
 @inject IMedDataStore Store
 @inject IToastService Toast
@@ -18,20 +19,44 @@
         <button class="admin-btn admin-btn-primary" @onclick="OpenCreate">Thêm khoa/phòng</button>
     </header>
 
-    <div class="admin-panel">
-        <ul class="admin-tree" role="tree" aria-label="Cây tổ chức">
-            @foreach (var root in GetRoots())
-            {
-                <li role="treeitem" style="padding:0.5rem 0;">
-                    <div style="display:flex;align-items:center;gap:0.5rem;">
-                        <strong>@root.Name</strong>
-                        <code style="font-size:0.75rem;">@root.Code</code>
-                        <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => Archive(root.DepartmentId)">Lưu trữ</button>
-                    </div>
-                    @{ RenderChildren(root.DepartmentId, 1); }
-                </li>
-            }
-        </ul>
+    <div class="admin-panel" style="padding:16px;">
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Mã</th>
+                        <th>Khoa/phòng</th>
+                        <th>Đơn vị cha</th>
+                        <th>Cấp</th>
+                        <th>Trạng thái</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in FlattenDepartments())
+                    {
+                        <tr>
+                            <td class="admin-table-cell-muted">@row.Department.Code</td>
+                            <td class="admin-table-cell-strong">
+                                <span style="display:inline-block;width:@(row.Depth * 20)px"></span>@row.Department.Name
+                            </td>
+                            <td>@GetDeptName(row.Department.ParentDepartmentId)</td>
+                            <td>@row.Depth</td>
+                            <td><AdminBadge Tone="@(row.Department.Status == "active" ? "tone-success" : "tone-muted")">@LookupStatus(row.Department.Status)</AdminBadge></td>
+                            <td style="text-align:right;">
+                                <div class="admin-row-actions">
+                                    <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEdit(row.Department)">Sửa</button>
+                                    @if (row.Department.Status == "active")
+                                    {
+                                        <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => Archive(row.Department.DepartmentId)">Lưu trữ</button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" Title="@_drawerTitle">
@@ -48,7 +73,7 @@
                 <label class="admin-label">Đơn vị cha</label>
                 <select class="admin-select" @bind="_editParentId">
                     <option value="">— Gốc —</option>
-                    @foreach (var d in Store.Departments.Where(d => d.Status == "active"))
+                    @foreach (var d in GetAvailableParents())
                     {
                         <option value="@d.DepartmentId">@d.Name</option>
                     }
@@ -65,6 +90,7 @@
 @code {
     private bool _drawerOpen;
     private string _drawerTitle = "Thêm khoa/phòng";
+    private Guid? _editingDepartmentId;
     private string _editCode = "";
     private string _editName = "";
     private string _editParentId = "";
@@ -76,23 +102,47 @@
 
     private void OnChanged() => InvokeAsync(StateHasChanged);
 
-    private IEnumerable<Dept> GetRoots()
-        => Store.Departments.Where(d => d.ParentDepartmentId == null && d.Status == "active");
-
-    private IEnumerable<Dept> GetChildren(Guid parentId)
-        => Store.Departments.Where(d => d.ParentDepartmentId == parentId && d.Status == "active");
-
-    private void RenderChildren(Guid parentId, int depth)
+    private IEnumerable<DepartmentRow> FlattenDepartments()
     {
-        // Rendered inline via the tree markup
+        var all = Store.Departments.OrderBy(d => d.Code).ToList();
+        foreach (var root in all.Where(d => d.ParentDepartmentId is null))
+        {
+            foreach (var row in FlattenFrom(root, 0, all))
+            {
+                yield return row;
+            }
+        }
+    }
+
+    private static IEnumerable<DepartmentRow> FlattenFrom(Dept department, int depth, IReadOnlyList<Dept> all)
+    {
+        yield return new DepartmentRow(department, depth);
+        foreach (var child in all.Where(d => d.ParentDepartmentId == department.DepartmentId).OrderBy(d => d.Code))
+        {
+            foreach (var row in FlattenFrom(child, depth + 1, all))
+            {
+                yield return row;
+            }
+        }
     }
 
     private void OpenCreate()
     {
         _drawerTitle = "Thêm khoa/phòng";
+        _editingDepartmentId = null;
         _editCode = "";
         _editName = "";
         _editParentId = "";
+        _drawerOpen = true;
+    }
+
+    private void OpenEdit(Dept dept)
+    {
+        _drawerTitle = "Sửa khoa/phòng";
+        _editingDepartmentId = dept.DepartmentId;
+        _editCode = dept.Code;
+        _editName = dept.Name;
+        _editParentId = dept.ParentDepartmentId?.ToString() ?? "";
         _drawerOpen = true;
     }
 
@@ -111,23 +161,70 @@
 
     private void Save()
     {
+        if (string.IsNullOrWhiteSpace(_editCode) || string.IsNullOrWhiteSpace(_editName))
+        {
+            Toast.Show("Vui lòng nhập mã và tên khoa/phòng.", "warning");
+            return;
+        }
+
         try
         {
             Guid? parentId = string.IsNullOrEmpty(_editParentId) ? null : Guid.Parse(_editParentId);
-            Store.AddDepartment(new Dept
+            var dept = new Dept
             {
-                Code = _editCode,
-                Name = _editName,
+                DepartmentId = _editingDepartmentId ?? Guid.NewGuid(),
+                Code = _editCode.Trim(),
+                Name = _editName.Trim(),
                 ParentDepartmentId = parentId
-            });
+            };
+
+            if (_editingDepartmentId.HasValue)
+            {
+                var current = Store.Departments.First(d => d.DepartmentId == _editingDepartmentId.Value);
+                Store.UpdateDepartment(dept with
+                {
+                    Status = current.Status,
+                    CreatedAt = current.CreatedAt
+                });
+            }
+            else
+            {
+                Store.AddDepartment(dept);
+            }
             _drawerOpen = false;
-            Toast.Show("Đã thêm khoa/phòng thành công.", "success");
+            Toast.Show("Đã lưu khoa/phòng thành công.", "success");
         }
         catch (MedDomainException ex)
         {
             Toast.Show(ex.Message, "error");
         }
     }
+
+    private IEnumerable<Dept> GetAvailableParents()
+    {
+        var active = Store.Departments.Where(d => d.Status == "active");
+        if (!_editingDepartmentId.HasValue)
+        {
+            return active.OrderBy(d => d.Code);
+        }
+
+        var blocked = Store.DepartmentClosure
+            .Where(e => e.AncestorDepartmentId == _editingDepartmentId.Value)
+            .Select(e => e.DescendantDepartmentId)
+            .ToHashSet();
+
+        return active
+            .Where(d => !blocked.Contains(d.DepartmentId))
+            .OrderBy(d => d.Code);
+    }
+
+    private string GetDeptName(Guid? deptId)
+        => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+
+    private static string LookupStatus(string status)
+        => Sql.MedLookups.RecordStatuses.FirstOrDefault(s => s.Code == status)?.Name ?? status;
+
+    private sealed record DepartmentRow(Dept Department, int Depth);
 
     public void Dispose() => Store.StateChanged -= OnChanged;
 }

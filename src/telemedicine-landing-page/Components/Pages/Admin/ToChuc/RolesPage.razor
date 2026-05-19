@@ -20,7 +20,7 @@
 
     <AdminDataTable TItem="Role"
                     Items="_pagedItems"
-                    ColumnCount="5"
+                    ColumnCount="7"
                     CurrentPage="_page"
                     PageSize="_pageSize"
                     TotalItems="_total"
@@ -28,10 +28,12 @@
         <HeaderTemplate>
             <th>Mã</th>
             <th>Tên vai trò</th>
-            <th>Mô tả</th>
-            <th>Hệ thống</th>
-            <th>Số người dùng</th>
-        </HeaderTemplate>
+                    <th>Mô tả</th>
+                    <th>Hệ thống</th>
+                    <th>Số người dùng</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </HeaderTemplate>
         <RowTemplate Context="role">
             <tr>
                 <td>@role.Code</td>
@@ -43,11 +45,21 @@
                     </AdminBadge>
                 </td>
                 <td>@Store.UserRoles.Count(ur => ur.RoleId == role.RoleId)</td>
+                <td><AdminBadge Tone="@(role.Status == "active" ? "tone-success" : "tone-muted")">@LookupStatus(role.Status)</AdminBadge></td>
+                <td style="text-align:right;">
+                    <div class="admin-row-actions">
+                        <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEdit(role)">Sửa</button>
+                        @if (!role.IsSystem && role.Status == "active")
+                        {
+                            <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => Archive(role)">Lưu trữ</button>
+                        }
+                    </div>
+                </td>
             </tr>
         </RowTemplate>
     </AdminDataTable>
 
-    <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" Title="Thêm vai trò">
+    <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" Title="@_drawerTitle">
         <ChildContent>
             <div class="admin-form-group">
                 <label class="admin-label">Mã vai trò</label>
@@ -75,6 +87,8 @@
     private int _total;
     private IReadOnlyList<Role> _pagedItems = Array.Empty<Role>();
     private bool _drawerOpen;
+    private string _drawerTitle = "Thêm vai trò";
+    private Guid? _editingRoleId;
     private string _code = "", _name = "", _desc = "";
 
     protected override void OnInitialized()
@@ -94,20 +108,67 @@
 
     private void OpenCreate()
     {
+        _drawerTitle = "Thêm vai trò";
+        _editingRoleId = null;
         _code = _name = _desc = "";
+        _drawerOpen = true;
+    }
+
+    private void OpenEdit(Role role)
+    {
+        _drawerTitle = "Sửa vai trò";
+        _editingRoleId = role.RoleId;
+        _code = role.Code;
+        _name = role.Name;
+        _desc = role.Description ?? "";
         _drawerOpen = true;
     }
 
     private void SaveRole()
     {
+        if (string.IsNullOrWhiteSpace(_code) || string.IsNullOrWhiteSpace(_name))
+        {
+            Toast.Show("Vui lòng nhập mã và tên vai trò.", "warning");
+            return;
+        }
+
         try
         {
-            Store.AddRole(new Role { Code = _code, Name = _name, Description = _desc });
+            var role = new Role
+            {
+                RoleId = _editingRoleId ?? Guid.NewGuid(),
+                Code = _code.Trim(),
+                Name = _name.Trim(),
+                Description = string.IsNullOrWhiteSpace(_desc) ? null : _desc.Trim()
+            };
+            if (_editingRoleId.HasValue)
+            {
+                var current = Store.Roles.First(r => r.RoleId == _editingRoleId.Value);
+                Store.UpdateRole(role with { Status = current.Status, IsSystem = current.IsSystem, CreatedAt = current.CreatedAt });
+            }
+            else
+            {
+                Store.AddRole(role);
+            }
             _drawerOpen = false;
-            Toast.Show("Đã thêm vai trò thành công.", "success");
+            Toast.Show("Đã lưu vai trò thành công.", "success");
         }
         catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
+        catch (Exception ex) { Toast.Show(ex.Message, "error"); }
     }
+
+    private void Archive(Role role)
+    {
+        try
+        {
+            Store.ArchiveRole(role.RoleId);
+            Toast.Show($"Đã lưu trữ vai trò {role.Name}.", "success");
+        }
+        catch (Exception ex) { Toast.Show(ex.Message, "error"); }
+    }
+
+    private static string LookupStatus(string status)
+        => MedLookups.RecordStatuses.FirstOrDefault(s => s.Code == status)?.Name ?? status;
 
     public void Dispose() => Store.StateChanged -= OnChanged;
 }

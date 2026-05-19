@@ -122,6 +122,13 @@ public sealed class AdminNavigationState : IAdminNavigationState, IDisposable
         return new List<AdminNavItem>
         {
             new("Tổng quan", "/admin", "dashboard", "Alt+0"),
+            new("Tổ chức", "/admin/to-chuc", "team", null, new List<AdminNavItem>
+            {
+                new("Khoa/Phòng", "/admin/to-chuc/khoa-phong", "workflow", null),
+                new("Người dùng", "/admin/to-chuc/nguoi-dung", "user", null),
+                new("Vai trò", "/admin/to-chuc/vai-tro", "shield", null),
+                new("Nhóm", "/admin/to-chuc/nhom", "catalog", null),
+            }),
             new("Quy trình", "/admin/quy-trinh", "workflow", "Alt+1", new List<AdminNavItem>
             {
                 new("Quy trình kỹ thuật", "/admin/quy-trinh", "list", null),
@@ -137,6 +144,7 @@ public sealed class AdminNavigationState : IAdminNavigationState, IDisposable
                 new("Báo cáo tiêu thụ", "/admin/bao-cao/tieu-thu", "package", null),
             }),
             new("Lâm sàng", "/admin/lam-sang", "heart", null),
+            new("Nhật ký", "/admin/nhat-ky", "history", null),
             new("Cài đặt", "/admin/cai-dat", "settings", "Alt+6"),
         };
     }

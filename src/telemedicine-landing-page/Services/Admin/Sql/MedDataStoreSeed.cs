@@ -344,7 +344,7 @@ public static class MedDataStoreSeed
             ProcedureId = ProcNoiId,
             ProcedureCode = "QT-NOI-001",
             Name = "Quy trình khám bệnh nội khoa",
-            ProcedureType = "clinical",
+            ProcedureType = "technical",
             OwnerDepartmentId = DeptNoiId,
             Description = "Quy trình chuẩn khám bệnh tại Khoa Nội",
             CreatedBy = TruongKhoaNoiId
@@ -356,7 +356,7 @@ public static class MedDataStoreSeed
             ProcedureId = ProcNoiId,
             VersionNo = 1,
             VersionLabel = "v1.0",
-            StatusCode = "published",
+            StatusCode = "active",
             DepartmentId = DeptNoiId,
             Title = "Quy trình khám bệnh nội khoa - Phiên bản 1",
             Summary = "{\"note\":\"Phiên bản đầu tiên được phê duyệt\"}",
@@ -416,7 +416,7 @@ public static class MedDataStoreSeed
             ProcedureId = ProcXnId,
             ProcedureCode = "QT-XN-001",
             Name = "Quy trình xét nghiệm công thức máu",
-            ProcedureType = "laboratory",
+            ProcedureType = "technical",
             OwnerDepartmentId = DeptXetNghiemId,
             Description = "Quy trình chuẩn xét nghiệm công thức máu toàn phần",
             CreatedBy = BacSiXnId
@@ -486,7 +486,7 @@ public static class MedDataStoreSeed
             TechnicalServiceId = SvcXnCtmId,
             ServiceCode = "DV-XN-CTM",
             Name = "Xét nghiệm công thức máu",
-            ServiceType = "laboratory",
+            ServiceType = "lab",
             DepartmentId = DeptXetNghiemId,
             Description = "Xét nghiệm công thức máu toàn phần (CBC)",
             CreatedBy = BacSiXnId
@@ -496,20 +496,20 @@ public static class MedDataStoreSeed
         store.AddResourceCatalogItem(new ResourceCatalogItem
         {
             ResourceId = ResOngEdtaId,
-            ResourceType = "consumable",
+            ResourceType = "supply",
             ResourceCode = "VT-ONG-EDTA",
             Name = "Ống nghiệm EDTA",
-            DefaultUnitCode = "ống"
+            DefaultUnitCode = "ampoule"
         });
 
         // Nguồn lực: Kim lấy máu
         store.AddResourceCatalogItem(new ResourceCatalogItem
         {
             ResourceId = ResKimLayMauId,
-            ResourceType = "consumable",
+            ResourceType = "supply",
             ResourceCode = "VT-KIM-LAY-MAU",
             Name = "Kim lấy máu",
-            DefaultUnitCode = "cái"
+            DefaultUnitCode = "piece"
         });
 
         // Định mức: 2 ống EDTA cho mỗi lần xét nghiệm CTM
@@ -518,7 +518,7 @@ public static class MedDataStoreSeed
             TechnicalServiceId = SvcXnCtmId,
             ResourceId = ResOngEdtaId,
             StandardQuantity = 2,
-            UnitCode = "ống",
+            UnitCode = "ampoule",
             IsRequired = true,
             Note = "Mỗi lần xét nghiệm cần 2 ống EDTA"
         });
@@ -529,7 +529,7 @@ public static class MedDataStoreSeed
             TechnicalServiceId = SvcXnCtmId,
             ResourceId = ResKimLayMauId,
             StandardQuantity = 1,
-            UnitCode = "cái",
+            UnitCode = "piece",
             IsRequired = true,
             Note = "Mỗi lần lấy máu cần 1 kim"
         });
@@ -543,7 +543,7 @@ public static class MedDataStoreSeed
             ClinicalProtocolId = ProtocolThaId,
             ProtocolCode = "PD-NOI-THA",
             Name = "Phác đồ điều trị tăng huyết áp",
-            ProtocolType = "treatment",
+            ProtocolType = "treatment_protocol",
             OwnerDepartmentId = DeptNoiId,
             Description = "Phác đồ chuẩn điều trị tăng huyết áp theo khuyến cáo",
             CreatedBy = TruongKhoaNoiId
@@ -554,7 +554,7 @@ public static class MedDataStoreSeed
             ClinicalProtocolVersionId = ProtocolThaVersionId,
             ClinicalProtocolId = ProtocolThaId,
             VersionNo = 1,
-            StatusCode = "published",
+            StatusCode = "active",
             Title = "Phác đồ điều trị tăng huyết áp - Phiên bản 1",
             Summary = "Áp dụng cho bệnh nhân tăng huyết áp nguyên phát",
             CreatedBy = TruongKhoaNoiId,
@@ -569,7 +569,7 @@ public static class MedDataStoreSeed
         store.AddProtocolApplicabilityRule(new ProtocolApplicabilityRule
         {
             ClinicalProtocolVersionId = ProtocolThaVersionId,
-            RuleType = "icd_range",
+            RuleType = "icd",
             RuleJson = "{\"icdFrom\":\"I10\",\"icdTo\":\"I15\",\"description\":\"Tăng huyết áp nguyên phát và thứ phát\"}",
             Priority = 100,
             IsActive = true
@@ -623,7 +623,7 @@ public static class MedDataStoreSeed
             TechnicalOrderId = OrderCtmId,
             ResourceId = ResOngEdtaId,
             ActualQuantity = 2,
-            UnitCode = "ống",
+            UnitCode = "ampoule",
             IsFinal = true,
             CapturedBy = BacSiXnId
         });

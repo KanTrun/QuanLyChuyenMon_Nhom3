@@ -85,7 +85,12 @@
     protected override void OnInitialized()
     {
         _logs = Db.AuditLogs
-            .Where(a => a.TargetType == "role_permission" || a.TargetType == "user_role")
+            .Where(a => a.TargetType == "role_permission" ||
+                        a.TargetType == "group_permission" ||
+                        a.TargetType == "user_permission_override" ||
+                        a.TargetType == "user_role" ||
+                        a.TargetType == "permission_change_request" ||
+                        a.TargetType == "permission_change_item")
             .OrderByDescending(a => a.OccurredAt)
             .Take(50)
             .ToList();
@@ -100,6 +105,9 @@
         "delete" => "Xóa",
         "assign_role" => "Gán vai trò",
         "remove_role" => "Hủy vai trò",
+        "assign_permission" => "Gán quyền",
+        "remove_permission" => "Hủy quyền",
+        "revoke" => "Thu hồi",
         "approve" => "Phê duyệt",
         "reject" => "Từ chối",
         "submit" => "Gửi duyệt",
@@ -117,6 +125,10 @@
         "procedure_version" => "Phiên bản quy trình",
         "department" => "Khoa/Phòng",
         "role_permission" => "Quyền vai trò",
+        "group_permission" => "Quyền nhóm",
+        "user_permission_override" => "Ghi đè cá nhân",
+        "permission_change_request" => "Yêu cầu đổi quyền",
+        "permission_change_item" => "Chi tiết đổi quyền",
         _ => targetType
     };
 

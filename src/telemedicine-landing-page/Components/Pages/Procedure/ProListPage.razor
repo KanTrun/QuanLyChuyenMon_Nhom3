@@ -15,7 +15,7 @@
         <div>
             <span class="admin-page-eyebrow">Quy trình</span>
             <h1 class="admin-page-title">Danh sách quy trình chuyên môn</h1>
-            <p class="admin-page-subtitle">Quản lý vòng đời phiên bản: bản nháp → chờ duyệt → xuất bản.</p>
+            <p class="admin-page-subtitle">Quản lý vòng đời phiên bản: bản nháp → chờ duyệt → đang hiệu lực.</p>
         </div>
     </header>
 
@@ -106,7 +106,7 @@
 
     private static string GetStatusTone(string? status) => status switch
     {
-        "published" => "tone-success",
+        "active" => "tone-success",
         "draft" => "tone-muted",
         "pending_approval" => "tone-warning",
         "rejected" => "tone-danger",
@@ -115,12 +115,12 @@
 
     private static string GetStatusLabel(string? status) => status switch
     {
-        "published" => "Đã xuất bản",
+        "active" => "Đang hiệu lực",
         "draft" => "Bản nháp",
         "pending_approval" => "Chờ duyệt",
         "rejected" => "Bị từ chối",
         "superseded" => "Đã thay thế",
-        "withdrawn" => "Đã thu hồi",
+        "archived" => "Đã thu hồi",
         _ => "Chưa có phiên bản"
     };
 

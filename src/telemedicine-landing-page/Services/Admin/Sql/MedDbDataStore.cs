@@ -62,6 +62,14 @@ public sealed class MedDbDataStore : IMedDataStore
 
     // === Ghi dữ liệu — ghi trực tiếp vào SQL Server ===
     public void AddDepartment(Department dept) { _db.Departments.Add(dept); _db.SaveChanges(); RaiseStateChanged(); }
+    public void UpdateDepartment(Department dept)
+    {
+        var existing = _db.Departments.FirstOrDefault(d => d.DepartmentId == dept.DepartmentId)
+            ?? throw new InvalidOperationException("Khoa/phòng không tồn tại.");
+        _db.Departments.Entry(existing).CurrentValues.SetValues(dept with { UpdatedAt = DateTime.UtcNow });
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void UpdateDepartmentParent(Guid departmentId, Guid? newParentId)
     {
         var dept = _db.Departments.FirstOrDefault(d => d.DepartmentId == departmentId)
@@ -91,16 +99,93 @@ public sealed class MedDbDataStore : IMedDataStore
     }
 
     public void AddRole(Role role) { _db.Roles.Add(role); _db.SaveChanges(); RaiseStateChanged(); }
+    public void UpdateRole(Role role)
+    {
+        var existing = _db.Roles.FirstOrDefault(r => r.RoleId == role.RoleId)
+            ?? throw new InvalidOperationException("Vai trò không tồn tại.");
+        _db.Roles.Entry(existing).CurrentValues.SetValues(role with
+        {
+            IsSystem = existing.IsSystem,
+            CreatedAt = existing.CreatedAt,
+            UpdatedAt = DateTime.UtcNow
+        });
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void ArchiveRole(Guid roleId)
+    {
+        var existing = _db.Roles.FirstOrDefault(r => r.RoleId == roleId)
+            ?? throw new InvalidOperationException("Vai trò không tồn tại.");
+        if (existing.IsSystem)
+            throw new InvalidOperationException("Không thể lưu trữ vai trò hệ thống.");
+
+        _db.Roles.Entry(existing).CurrentValues.SetValues(existing with { Status = "archived", UpdatedAt = DateTime.UtcNow });
+        var activeAssignments = _db.UserRoles.Where(ur => ur.RoleId == roleId && ur.EffectiveTo == null).ToList();
+        foreach (var assignment in activeAssignments)
+        {
+            _db.UserRoles.Entry(assignment).CurrentValues.SetValues(assignment with { EffectiveTo = DateTime.UtcNow });
+        }
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void AddGroup(Group group) { _db.Groups.Add(group); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddUserRole(UserRole userRole) { _db.UserRoles.Add(userRole); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddUserGroupMember(UserGroupMember member) { _db.UserGroupMembers.Add(member); _db.SaveChanges(); RaiseStateChanged(); }
+    public void RemoveUserRole(Guid userRoleId)
+    {
+        var existing = _db.UserRoles.FirstOrDefault(r => r.UserRoleId == userRoleId)
+            ?? throw new InvalidOperationException("Gán vai trò không tồn tại.");
+        _db.UserRoles.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void RemoveUserGroupMember(Guid membershipId)
+    {
+        var existing = _db.UserGroupMembers.FirstOrDefault(m => m.UserGroupMemberId == membershipId)
+            ?? throw new InvalidOperationException("Thành viên nhóm không tồn tại.");
+        _db.UserGroupMembers.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
 
     public void AddScreen(ScreenCatalog screen) { _db.Screens.Add(screen); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddFeature(FeatureCatalog feature) { _db.Features.Add(feature); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddPermission(MedPermission permission) { _db.Permissions.Add(permission); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddRolePermission(RolePermission rp) { _db.RolePermissions.Add(rp); _db.SaveChanges(); RaiseStateChanged(); }
+    public void RemoveRolePermission(Guid rolePermissionId)
+    {
+        var existing = _db.RolePermissions.FirstOrDefault(p => p.RolePermissionId == rolePermissionId)
+            ?? throw new InvalidOperationException("Quyền vai trò không tồn tại.");
+        _db.RolePermissions.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void AddGroupPermission(GroupPermission gp) { _db.GroupPermissions.Add(gp); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddUserPermissionOverride(UserPermissionOverride upo) { _db.UserPermissionOverrides.Add(upo); _db.SaveChanges(); RaiseStateChanged(); }
+    public void RemoveGroupPermission(Guid groupPermissionId)
+    {
+        var existing = _db.GroupPermissions.FirstOrDefault(p => p.GroupPermissionId == groupPermissionId)
+            ?? throw new InvalidOperationException("Quyền nhóm không tồn tại.");
+        _db.GroupPermissions.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void UpdateUserPermissionOverride(UserPermissionOverride upo)
+    {
+        var existing = _db.UserPermissionOverrides.FirstOrDefault(p => p.UserPermissionOverrideId == upo.UserPermissionOverrideId)
+            ?? throw new InvalidOperationException("Ghi đè quyền không tồn tại.");
+        _db.UserPermissionOverrides.Entry(existing).CurrentValues.SetValues(upo);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void RemoveUserPermissionOverride(Guid userPermissionOverrideId)
+    {
+        var existing = _db.UserPermissionOverrides.FirstOrDefault(p => p.UserPermissionOverrideId == userPermissionOverrideId)
+            ?? throw new InvalidOperationException("Ghi đè quyền không tồn tại.");
+        _db.UserPermissionOverrides.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
 
     public void AppendAudit(AuditLog log) { _db.AuditLogs.Add(log); _db.SaveChanges(); }
 
@@ -126,9 +211,41 @@ public sealed class MedDbDataStore : IMedDataStore
     public void AddProcedureStep(ProcedureStep step) { _db.ProcedureSteps.Add(step); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProcedureAttachment(ProcedureAttachment att) { _db.ProcedureAttachments.Add(att); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProcedureScreenMapping(ProcedureScreenMapping mapping) { _db.ProcedureScreenMappings.Add(mapping); _db.SaveChanges(); RaiseStateChanged(); }
+    public void RemoveProcedureAttachment(Guid attachmentId)
+    {
+        var existing = _db.ProcedureAttachments.FirstOrDefault(a => a.ProcedureAttachmentId == attachmentId)
+            ?? throw new InvalidOperationException("Tệp đính kèm không tồn tại.");
+        _db.ProcedureAttachments.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void RemoveProcedureScreenMapping(Guid mappingId)
+    {
+        var existing = _db.ProcedureScreenMappings.FirstOrDefault(m => m.ProcedureScreenMappingId == mappingId)
+            ?? throw new InvalidOperationException("Ánh xạ màn hình không tồn tại.");
+        _db.ProcedureScreenMappings.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
 
     public void AddPatientRef(PatientRef patient) { _db.PatientRefs.Add(patient); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddEncounterRef(EncounterRef encounter) { _db.EncounterRefs.Add(encounter); _db.SaveChanges(); RaiseStateChanged(); }
+    public void UpdatePatientRef(PatientRef patient)
+    {
+        var existing = _db.PatientRefs.FirstOrDefault(p => p.PatientRefId == patient.PatientRefId)
+            ?? throw new InvalidOperationException("Bệnh nhân không tồn tại.");
+        _db.PatientRefs.Entry(existing).CurrentValues.SetValues(patient);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void UpdateEncounterRef(EncounterRef encounter)
+    {
+        var existing = _db.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == encounter.EncounterRefId)
+            ?? throw new InvalidOperationException("Lượt khám không tồn tại.");
+        _db.EncounterRefs.Entry(existing).CurrentValues.SetValues(encounter);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
 
     public void AddTechnicalService(TechnicalService svc) { _db.TechnicalServices.Add(svc); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddResourceCatalogItem(ResourceCatalogItem item) { _db.ResourceCatalog.Add(item); _db.SaveChanges(); RaiseStateChanged(); }
@@ -137,14 +254,126 @@ public sealed class MedDbDataStore : IMedDataStore
     public void AddTechnicalOrder(TechnicalOrder order) { _db.TechnicalOrders.Add(order); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddResourceAvailabilitySnapshot(ResourceAvailabilitySnapshot snap) { _db.ResourceAvailabilitySnapshots.Add(snap); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddActualResourceUsage(ActualResourceUsage usage) { _db.ActualResourceUsages.Add(usage); _db.SaveChanges(); RaiseStateChanged(); }
+    public void UpdateTechnicalService(TechnicalService svc)
+    {
+        var existing = _db.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == svc.TechnicalServiceId)
+            ?? throw new InvalidOperationException("Dịch vụ kỹ thuật không tồn tại.");
+        _db.TechnicalServices.Entry(existing).CurrentValues.SetValues(svc);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void RemoveTechnicalService(Guid technicalServiceId)
+    {
+        var existing = _db.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == technicalServiceId)
+            ?? throw new InvalidOperationException("Dịch vụ kỹ thuật không tồn tại.");
+        _db.TechnicalServices.Entry(existing).CurrentValues.SetValues(existing with { Status = "archived", UpdatedAt = DateTime.UtcNow });
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void UpdateResourceCatalogItem(ResourceCatalogItem item)
+    {
+        var existing = _db.ResourceCatalog.FirstOrDefault(r => r.ResourceId == item.ResourceId)
+            ?? throw new InvalidOperationException("Tài nguyên không tồn tại.");
+        _db.ResourceCatalog.Entry(existing).CurrentValues.SetValues(item);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void RemoveResourceCatalogItem(Guid resourceId)
+    {
+        var existing = _db.ResourceCatalog.FirstOrDefault(r => r.ResourceId == resourceId)
+            ?? throw new InvalidOperationException("Tài nguyên không tồn tại.");
+        _db.ResourceCatalog.Entry(existing).CurrentValues.SetValues(existing with { Status = "archived", UpdatedAt = DateTime.UtcNow });
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void RemoveTechnicalResourceNorm(Guid normId)
+    {
+        var existing = _db.TechnicalResourceNorms.FirstOrDefault(n => n.TechnicalResourceNormId == normId)
+            ?? throw new InvalidOperationException("Định mức dịch vụ không tồn tại.");
+        _db.TechnicalResourceNorms.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void RemoveProcedureVersionResourceNorm(Guid normId)
+    {
+        var existing = _db.ProcedureVersionResourceNorms.FirstOrDefault(n => n.ProcedureVersionResourceNormId == normId)
+            ?? throw new InvalidOperationException("Định mức phiên bản quy trình không tồn tại.");
+        _db.ProcedureVersionResourceNorms.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void UpdateTechnicalOrder(TechnicalOrder order)
+    {
+        var existing = _db.TechnicalOrders.FirstOrDefault(o => o.TechnicalOrderId == order.TechnicalOrderId)
+            ?? throw new InvalidOperationException("Chỉ định kỹ thuật không tồn tại.");
+        _db.TechnicalOrders.Entry(existing).CurrentValues.SetValues(order);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void RemoveActualResourceUsage(Guid usageId)
+    {
+        var existing = _db.ActualResourceUsages.FirstOrDefault(u => u.ActualResourceUsageId == usageId)
+            ?? throw new InvalidOperationException("Ghi nhận sử dụng thực tế không tồn tại.");
+        _db.ActualResourceUsages.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
 
     public void AddClinicalProtocol(ClinicalProtocol protocol) { _db.ClinicalProtocols.Add(protocol); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddClinicalProtocolVersion(ClinicalProtocolVersion ver) { _db.ClinicalProtocolVersions.Add(ver); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddClinicalProtocolProcedure(ClinicalProtocolProcedure cpp) { _db.ClinicalProtocolProcedures.Add(cpp); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProtocolApplicabilityRule(ProtocolApplicabilityRule rule) { _db.ProtocolApplicabilityRules.Add(rule); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddPatientProtocolApplication(PatientProtocolApplication app) { _db.PatientProtocolApplications.Add(app); _db.SaveChanges(); RaiseStateChanged(); }
+    public void UpdateClinicalProtocolVersion(ClinicalProtocolVersion ver)
+    {
+        var existing = _db.ClinicalProtocolVersions.FirstOrDefault(v => v.ClinicalProtocolVersionId == ver.ClinicalProtocolVersionId)
+            ?? throw new InvalidOperationException("Phiên bản phác đồ không tồn tại.");
+        _db.ClinicalProtocolVersions.Entry(existing).CurrentValues.SetValues(ver);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void RemoveClinicalProtocolProcedure(Guid clinicalProtocolProcedureId)
+    {
+        var existing = _db.ClinicalProtocolProcedures.FirstOrDefault(p => p.ClinicalProtocolProcedureId == clinicalProtocolProcedureId)
+            ?? throw new InvalidOperationException("Liên kết phác đồ - quy trình không tồn tại.");
+        _db.ClinicalProtocolProcedures.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void RemoveProtocolApplicabilityRule(Guid ruleId)
+    {
+        var existing = _db.ProtocolApplicabilityRules.FirstOrDefault(r => r.ProtocolApplicabilityRuleId == ruleId)
+            ?? throw new InvalidOperationException("Quy tắc áp dụng không tồn tại.");
+        _db.ProtocolApplicabilityRules.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
 
     public void AddNotificationPreference(NotificationPreference pref) { _db.NotificationPreferences.Add(pref); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddNotification(MedNotification notification) { _db.Notifications.Add(notification); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddNotificationDeliveryAttempt(NotificationDeliveryAttempt attempt) { _db.NotificationDeliveryAttempts.Add(attempt); _db.SaveChanges(); RaiseStateChanged(); }
+    public void UpdateNotificationPreference(NotificationPreference pref)
+    {
+        var existing = _db.NotificationPreferences.FirstOrDefault(p => p.NotificationPreferenceId == pref.NotificationPreferenceId)
+            ?? throw new InvalidOperationException("Cài đặt thông báo không tồn tại.");
+        _db.NotificationPreferences.Entry(existing).CurrentValues.SetValues(pref);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void RemoveNotificationPreference(Guid prefId)
+    {
+        var existing = _db.NotificationPreferences.FirstOrDefault(p => p.NotificationPreferenceId == prefId)
+            ?? throw new InvalidOperationException("Cài đặt thông báo không tồn tại.");
+        _db.NotificationPreferences.Remove(existing);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void UpdateNotificationReadAt(Guid notificationId, DateTime readAt)
+    {
+        var existing = _db.Notifications.FirstOrDefault(n => n.NotificationId == notificationId)
+            ?? throw new InvalidOperationException("Thông báo không tồn tại.");
+        _db.Notifications.Entry(existing).CurrentValues.SetValues(existing with { ReadAt = readAt });
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
 }
