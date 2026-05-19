@@ -25,6 +25,8 @@
 | Notification center | Trung tâm thông báo hỗ trợ lọc mức độ, đánh dấu đã đọc, xem lần gửi và cấu hình preference |
 | Profile and lookup hardening | Sửa lỗi lưu hồ sơ với bảng SQL có trigger, làm lại UI hồ sơ theo admin style, thêm seed chuẩn hóa lookup và mở rộng unit catalog |
 
+| SQL Server alignment | Dong bo file SQL chinh voi database that `MedicalProcedureManagement`: bo sung `med.users.password_hash` va doi map dieu huong sang permission code dang co trong `med.permissions` |
+
 ### Verification
 | Command | Result |
 |---|---|

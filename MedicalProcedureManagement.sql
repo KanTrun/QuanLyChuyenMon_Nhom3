@@ -717,6 +717,7 @@ CREATE TABLE med.users (
     updated_at DATETIME2(3) NOT NULL CONSTRAINT DF_users_updated_at DEFAULT SYSUTCDATETIME(),
     deleted_at DATETIME2(3) NULL,
     row_version ROWVERSION NOT NULL,
+    password_hash NVARCHAR(500) NULL,
     CONSTRAINT PK_users PRIMARY KEY (user_id),
     CONSTRAINT UQ_users_username UNIQUE (username),
     CONSTRAINT FK_users_primary_department FOREIGN KEY (primary_department_id) REFERENCES med.departments(department_id),

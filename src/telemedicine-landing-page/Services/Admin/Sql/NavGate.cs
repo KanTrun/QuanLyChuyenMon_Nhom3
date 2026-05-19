@@ -14,23 +14,22 @@ public sealed class NavGate
     /// <summary>Ánh xạ tiền tố route → mã quyền cần thiết.</summary>
     private static readonly Dictionary<string, string> RoutePermissionMap = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["/admin"] = "PERM_VIEW_DASHBOARD",
-        ["/admin/to-chuc"] = "PERM_MANAGE_PERM",
-        ["/admin/quy-trinh"] = "PERM_MANAGE_PROC",
-        ["/admin/phan-quyen"] = "PERM_MANAGE_PERM",
-        ["/admin/bao-cao"] = "PERM_VIEW_REPORT",
-        ["/admin/danh-muc"] = "PERM_MANAGE_PROC",
-        ["/admin/phac-do"] = "PERM_MANAGE_PROC",
-        ["/admin/lam-sang"] = "PERM_CREATE_ORDER",
-        ["/admin/nhat-ky"] = "PERM_MANAGE_PERM",
-        ["/admin/cai-dat"] = "PERM_VIEW_DASHBOARD",
-        ["/phe-duyet"] = "PERM_APPROVE_PROC",
-        ["/quy-trinh-pro"] = "PERM_MANAGE_PROC",
-        ["/tai-nguyen"] = "PERM_MANAGE_PROC",
-        ["/dieu-phoi"] = "PERM_CREATE_ORDER",
-        ["/phac-do-pro"] = "PERM_MANAGE_PROC",
-        ["/lam-sang"] = "PERM_CREATE_ORDER",
-        ["/thong-bao"] = "PERM_VIEW_DASHBOARD",
+        ["/admin/to-chuc"] = "PERM_PERMISSIONS_view",
+        ["/admin/quy-trinh/tao"] = "PERM_PROCEDURES_create",
+        ["/admin/quy-trinh/phe-duyet"] = "PERM_PROCEDURES_approve",
+        ["/admin/quy-trinh"] = "PERM_PROCEDURES_view",
+        ["/admin/phan-quyen"] = "PERM_PERMISSIONS_view",
+        ["/admin/bao-cao"] = "REPORTS:VIEW",
+        ["/admin/danh-muc"] = "PERM_CATALOG_view",
+        ["/admin/phac-do"] = "PERM_PROTOCOLS_view",
+        ["/admin/lam-sang"] = "PERM_CLINICAL_view",
+        ["/admin/nhat-ky"] = "PERM_PERMISSIONS_view",
+        ["/phe-duyet"] = "PERM_PERMISSIONS_approve",
+        ["/quy-trinh-pro"] = "PROCEDURE_MANAGEMENT:VIEW",
+        ["/tai-nguyen"] = "PERM_RESOURCES_view",
+        ["/dieu-phoi"] = "PERM_ORDERS_view",
+        ["/phac-do-pro"] = "CLINICAL_PROTOCOLS:VIEW",
+        ["/lam-sang"] = "PERM_CLINICAL_view",
     };
 
     public NavGate(ICurrentUserContext userContext)
@@ -98,7 +97,7 @@ public sealed class NavGate
     {
         // Kiểm tra qua effective permissions trước
         var perms = _userContext.GetEffectivePermissions();
-        if (perms.Any(p => p.PermissionCode == "PERM_MANAGE_PERM" && p.EffectCode == "allow"))
+        if (perms.Any(p => p.PermissionCode == "PERM_PERMISSIONS_delete" && p.EffectCode == "allow"))
             return true;
 
         // Fallback: nếu không có permissions data, kiểm tra username
