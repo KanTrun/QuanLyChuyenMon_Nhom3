@@ -2260,11 +2260,31 @@ GO
 
 INSERT INTO med.screen_catalog (screen_code, name, route, module_code)
 VALUES
-(N'ADMIN_PERMISSIONS', N'Quản trị phân quyền', N'/admin/permissions', N'ADMIN'),
-(N'PROCEDURE_MANAGEMENT', N'Quản lý quy trình', N'/procedures', N'PROCEDURE'),
-(N'TECHNICAL_CATALOG', N'Danh mục kỹ thuật', N'/technical-catalog', N'TECHNICAL'),
-(N'CLINICAL_PROTOCOLS', N'Phác đồ lâm sàng', N'/clinical-protocols', N'CLINICAL'),
-(N'REPORTS', N'Báo cáo', N'/reports', N'REPORT');
+(N'SCR_DASHBOARD', N'Tổng quan', N'/admin', N'CORE'),
+(N'SCR_ORG_DEPARTMENTS', N'Khoa/phòng', N'/admin/to-chuc/khoa-phong', N'ORG'),
+(N'SCR_ORG_USERS', N'Người dùng', N'/admin/to-chuc/nguoi-dung', N'ORG'),
+(N'SCR_ORG_ROLES', N'Vai trò', N'/admin/to-chuc/vai-tro', N'ORG'),
+(N'SCR_ORG_GROUPS', N'Nhóm người dùng', N'/admin/to-chuc/nhom', N'ORG'),
+(N'SCR_PERMISSIONS', N'Phân quyền', N'/admin/phan-quyen', N'PERM'),
+(N'SCR_PERMISSION_APPROVAL', N'Phê duyệt quyền', N'/phe-duyet', N'PERM'),
+(N'SCR_AUDIT', N'Nhật ký kiểm toán', N'/admin/nhat-ky', N'PERM'),
+(N'SCR_SYSTEM_SCREENS', N'Màn hình và tính năng', N'/admin/he-thong/man-hinh', N'SYSTEM'),
+(N'SCR_SETTINGS', N'Cài đặt', N'/admin/cai-dat', N'CORE'),
+(N'SCR_PROFILE', N'Hồ sơ cá nhân', N'/admin/ho-so', N'CORE'),
+(N'SCR_PROCEDURES', N'Quy trình kỹ thuật', N'/admin/quy-trinh', N'PROC'),
+(N'SCR_PROCEDURE_CREATE', N'Tạo quy trình', N'/admin/quy-trinh/tao', N'PROC'),
+(N'SCR_PROCEDURE_APPROVAL', N'Phê duyệt quy trình', N'/admin/quy-trinh/phe-duyet', N'PROC'),
+(N'SCR_PROCEDURES_WORKSPACE', N'Không gian quy trình chuyên môn', N'/quy-trinh-pro', N'PROC'),
+(N'SCR_CATALOG', N'Danh mục kỹ thuật', N'/admin/danh-muc', N'CAT'),
+(N'SCR_RESOURCES', N'Tài nguyên', N'/tai-nguyen', N'TECH'),
+(N'SCR_ORDERS', N'Chỉ định kỹ thuật', N'/dieu-phoi', N'TECH'),
+(N'SCR_PROTOCOLS', N'Phác đồ', N'/admin/phac-do', N'CLINICAL'),
+(N'SCR_PROTOCOLS_WORKSPACE', N'Không gian phác đồ', N'/phac-do-pro', N'CLINICAL'),
+(N'SCR_CLINICAL', N'Lâm sàng', N'/lam-sang', N'CLINICAL'),
+(N'SCR_CLINICAL_ADMIN', N'Quản trị lâm sàng', N'/admin/lam-sang', N'CLINICAL'),
+(N'SCR_REPORTS', N'Báo cáo tổng hợp', N'/admin/bao-cao', N'REPORT'),
+(N'SCR_REPORT_CONSUMPTION', N'Báo cáo tiêu thụ', N'/admin/bao-cao/tieu-thu', N'REPORT'),
+(N'SCR_NOTIFICATIONS', N'Thông báo', N'/thong-bao', N'CORE');
 GO
 
 INSERT INTO med.feature_catalog (screen_id, feature_code, name)
@@ -2272,17 +2292,42 @@ SELECT screen_id, CONCAT(screen_code, N'_MAIN'), name
 FROM med.screen_catalog;
 GO
 
+;WITH screen_actions AS (
+    SELECT screen_code, action_code
+    FROM (VALUES
+        (N'SCR_DASHBOARD', N'view'),
+        (N'SCR_ORG_DEPARTMENTS', N'view'), (N'SCR_ORG_DEPARTMENTS', N'create'), (N'SCR_ORG_DEPARTMENTS', N'update'), (N'SCR_ORG_DEPARTMENTS', N'delete'),
+        (N'SCR_ORG_USERS', N'view'), (N'SCR_ORG_USERS', N'create'), (N'SCR_ORG_USERS', N'update'), (N'SCR_ORG_USERS', N'delete'),
+        (N'SCR_ORG_ROLES', N'view'), (N'SCR_ORG_ROLES', N'create'), (N'SCR_ORG_ROLES', N'update'), (N'SCR_ORG_ROLES', N'delete'), (N'SCR_ORG_ROLES', N'configure'),
+        (N'SCR_ORG_GROUPS', N'view'), (N'SCR_ORG_GROUPS', N'create'), (N'SCR_ORG_GROUPS', N'update'), (N'SCR_ORG_GROUPS', N'delete'), (N'SCR_ORG_GROUPS', N'configure'),
+        (N'SCR_PERMISSIONS', N'view'), (N'SCR_PERMISSIONS', N'create'), (N'SCR_PERMISSIONS', N'update'), (N'SCR_PERMISSIONS', N'delete'), (N'SCR_PERMISSIONS', N'approve'), (N'SCR_PERMISSIONS', N'configure'),
+        (N'SCR_PERMISSION_APPROVAL', N'view'), (N'SCR_PERMISSION_APPROVAL', N'approve'),
+        (N'SCR_AUDIT', N'view'), (N'SCR_AUDIT', N'export'),
+        (N'SCR_SYSTEM_SCREENS', N'view'), (N'SCR_SYSTEM_SCREENS', N'create'), (N'SCR_SYSTEM_SCREENS', N'update'), (N'SCR_SYSTEM_SCREENS', N'delete'), (N'SCR_SYSTEM_SCREENS', N'configure'),
+        (N'SCR_SETTINGS', N'view'), (N'SCR_SETTINGS', N'update'), (N'SCR_SETTINGS', N'configure'),
+        (N'SCR_PROFILE', N'view'), (N'SCR_PROFILE', N'update'),
+        (N'SCR_PROCEDURES', N'view'), (N'SCR_PROCEDURES', N'create'), (N'SCR_PROCEDURES', N'update'), (N'SCR_PROCEDURES', N'delete'), (N'SCR_PROCEDURES', N'approve'), (N'SCR_PROCEDURES', N'publish'),
+        (N'SCR_PROCEDURE_CREATE', N'view'), (N'SCR_PROCEDURE_CREATE', N'create'),
+        (N'SCR_PROCEDURE_APPROVAL', N'view'), (N'SCR_PROCEDURE_APPROVAL', N'approve'), (N'SCR_PROCEDURE_APPROVAL', N'publish'),
+        (N'SCR_PROCEDURES_WORKSPACE', N'view'), (N'SCR_PROCEDURES_WORKSPACE', N'approve'), (N'SCR_PROCEDURES_WORKSPACE', N'publish'),
+        (N'SCR_CATALOG', N'view'), (N'SCR_CATALOG', N'create'), (N'SCR_CATALOG', N'update'), (N'SCR_CATALOG', N'delete'), (N'SCR_CATALOG', N'configure'),
+        (N'SCR_RESOURCES', N'view'), (N'SCR_RESOURCES', N'create'), (N'SCR_RESOURCES', N'update'), (N'SCR_RESOURCES', N'delete'), (N'SCR_RESOURCES', N'configure'),
+        (N'SCR_ORDERS', N'view'), (N'SCR_ORDERS', N'create'), (N'SCR_ORDERS', N'update'), (N'SCR_ORDERS', N'delete'), (N'SCR_ORDERS', N'approve'), (N'SCR_ORDERS', N'execute'),
+        (N'SCR_PROTOCOLS', N'view'), (N'SCR_PROTOCOLS', N'create'), (N'SCR_PROTOCOLS', N'update'), (N'SCR_PROTOCOLS', N'delete'), (N'SCR_PROTOCOLS', N'approve'), (N'SCR_PROTOCOLS', N'publish'),
+        (N'SCR_PROTOCOLS_WORKSPACE', N'view'), (N'SCR_PROTOCOLS_WORKSPACE', N'execute'),
+        (N'SCR_CLINICAL', N'view'), (N'SCR_CLINICAL', N'create'), (N'SCR_CLINICAL', N'update'), (N'SCR_CLINICAL', N'approve'), (N'SCR_CLINICAL', N'execute'),
+        (N'SCR_CLINICAL_ADMIN', N'view'), (N'SCR_CLINICAL_ADMIN', N'create'), (N'SCR_CLINICAL_ADMIN', N'update'), (N'SCR_CLINICAL_ADMIN', N'approve'), (N'SCR_CLINICAL_ADMIN', N'execute'),
+        (N'SCR_REPORTS', N'view'), (N'SCR_REPORTS', N'export'),
+        (N'SCR_REPORT_CONSUMPTION', N'view'), (N'SCR_REPORT_CONSUMPTION', N'export'),
+        (N'SCR_NOTIFICATIONS', N'view'), (N'SCR_NOTIFICATIONS', N'create'), (N'SCR_NOTIFICATIONS', N'update'), (N'SCR_NOTIFICATIONS', N'delete'), (N'SCR_NOTIFICATIONS', N'configure')
+    ) v(screen_code, action_code)
+)
 INSERT INTO med.permissions (permission_code, screen_id, feature_id, action_code, description)
-SELECT CONCAT(sc.screen_code, N':VIEW'), sc.screen_id, fc.feature_id, N'view', N'Xem màn hình'
-FROM med.screen_catalog sc
-JOIN med.feature_catalog fc ON fc.screen_id = sc.screen_id AND fc.feature_code = CONCAT(sc.screen_code, N'_MAIN');
-GO
-
-INSERT INTO med.permissions (permission_code, screen_id, feature_id, action_code, description)
-SELECT CONCAT(sc.screen_code, N':CONFIGURE'), sc.screen_id, fc.feature_id, N'configure', N'Cấu hình dữ liệu'
-FROM med.screen_catalog sc
+SELECT CONCAT(sa.screen_code, N':', UPPER(sa.action_code)), sc.screen_id, fc.feature_id, sa.action_code, lac.name
+FROM screen_actions sa
+JOIN med.screen_catalog sc ON sc.screen_code = sa.screen_code
 JOIN med.feature_catalog fc ON fc.screen_id = sc.screen_id AND fc.feature_code = CONCAT(sc.screen_code, N'_MAIN')
-WHERE sc.screen_code IN (N'ADMIN_PERMISSIONS', N'PROCEDURE_MANAGEMENT', N'TECHNICAL_CATALOG', N'CLINICAL_PROTOCOLS');
+JOIN med.lookup_action_codes lac ON lac.action_code = sa.action_code;
 GO
 
 /* ============================================================
@@ -2293,8 +2338,71 @@ INSERT INTO med.roles (code, name, description, is_system)
 VALUES
 (N'SYSTEM_ADMIN', N'Quản trị hệ thống', N'Toàn quyền quản trị hệ thống', 1),
 (N'DEPARTMENT_ADMIN', N'Quản trị khoa/phòng', N'Quản trị trong phạm vi khoa/phòng', 1),
+(N'DOCTOR', N'Bác sĩ', N'Bác sĩ chỉ định, áp dụng phác đồ và theo dõi điều trị', 1),
+(N'NURSE', N'Điều dưỡng', N'Điều dưỡng thực hiện và cập nhật hoạt động lâm sàng', 1),
+(N'TECHNICIAN', N'Kỹ thuật viên', N'Kỹ thuật viên thực hiện dịch vụ kỹ thuật', 1),
+(N'PHARMACIST', N'Dược sĩ', N'Quản lý thuốc, vật tư và định mức liên quan dược', 1),
 (N'CLINICAL_USER', N'Người dùng lâm sàng', N'Người dùng lâm sàng', 1),
 (N'REPORT_VIEWER', N'Người xem báo cáo', N'Người xem báo cáo', 1);
+GO
+
+INSERT INTO med.role_permissions (role_id, permission_id, effect_code, department_scope_type, priority, reason)
+SELECT r.role_id, p.permission_id, N'allow', N'global', 900, N'Base system administrator permission'
+FROM med.roles r
+CROSS JOIN med.permissions p
+WHERE r.code = N'SYSTEM_ADMIN';
+GO
+
+INSERT INTO med.role_permissions (role_id, permission_id, effect_code, department_scope_type, priority, reason)
+SELECT r.role_id, p.permission_id, N'allow', N'own_department', 500, N'Base department administrator permission'
+FROM med.roles r
+JOIN med.permissions p ON p.permission_code IN (
+    N'SCR_DASHBOARD:VIEW',
+    N'SCR_ORG_DEPARTMENTS:VIEW', N'SCR_ORG_USERS:VIEW', N'SCR_ORG_ROLES:VIEW', N'SCR_ORG_GROUPS:VIEW',
+    N'SCR_PROCEDURES:VIEW', N'SCR_PROCEDURES:CREATE', N'SCR_PROCEDURES:UPDATE', N'SCR_PROCEDURES:APPROVE',
+    N'SCR_PROCEDURE_CREATE:VIEW', N'SCR_PROCEDURE_CREATE:CREATE',
+    N'SCR_PROCEDURE_APPROVAL:VIEW', N'SCR_PROCEDURE_APPROVAL:APPROVE',
+    N'SCR_CATALOG:VIEW', N'SCR_CATALOG:CREATE', N'SCR_CATALOG:UPDATE',
+    N'SCR_RESOURCES:VIEW', N'SCR_RESOURCES:CREATE', N'SCR_RESOURCES:UPDATE',
+    N'SCR_ORDERS:VIEW', N'SCR_ORDERS:CREATE', N'SCR_ORDERS:UPDATE', N'SCR_ORDERS:APPROVE',
+    N'SCR_PROTOCOLS:VIEW', N'SCR_PROTOCOLS:CREATE', N'SCR_PROTOCOLS:UPDATE', N'SCR_PROTOCOLS:APPROVE',
+    N'SCR_CLINICAL:VIEW', N'SCR_CLINICAL:CREATE', N'SCR_CLINICAL:UPDATE', N'SCR_CLINICAL:EXECUTE',
+    N'SCR_REPORTS:VIEW', N'SCR_REPORT_CONSUMPTION:VIEW', N'SCR_NOTIFICATIONS:VIEW'
+)
+WHERE r.code = N'DEPARTMENT_ADMIN';
+GO
+
+INSERT INTO med.role_permissions (role_id, permission_id, effect_code, department_scope_type, priority, reason)
+SELECT r.role_id, p.permission_id, N'allow', N'own_department', 300, N'Base clinical permission'
+FROM med.roles r
+JOIN med.permissions p ON p.permission_code IN (
+    N'SCR_DASHBOARD:VIEW', N'SCR_PROCEDURES_WORKSPACE:VIEW',
+    N'SCR_ORDERS:VIEW', N'SCR_ORDERS:CREATE',
+    N'SCR_PROTOCOLS_WORKSPACE:VIEW', N'SCR_PROTOCOLS_WORKSPACE:EXECUTE',
+    N'SCR_CLINICAL:VIEW', N'SCR_CLINICAL:CREATE', N'SCR_CLINICAL:UPDATE', N'SCR_CLINICAL:EXECUTE',
+    N'SCR_NOTIFICATIONS:VIEW', N'SCR_NOTIFICATIONS:UPDATE', N'SCR_PROFILE:VIEW', N'SCR_PROFILE:UPDATE'
+)
+WHERE r.code IN (N'CLINICAL_USER', N'DOCTOR', N'NURSE');
+GO
+
+INSERT INTO med.role_permissions (role_id, permission_id, effect_code, department_scope_type, priority, reason)
+SELECT r.role_id, p.permission_id, N'allow', N'own_department', 300, N'Base technical or pharmacy permission'
+FROM med.roles r
+JOIN med.permissions p ON p.permission_code IN (
+    N'SCR_DASHBOARD:VIEW', N'SCR_RESOURCES:VIEW', N'SCR_ORDERS:VIEW', N'SCR_ORDERS:UPDATE', N'SCR_ORDERS:EXECUTE',
+    N'SCR_CATALOG:VIEW', N'SCR_NOTIFICATIONS:VIEW', N'SCR_PROFILE:VIEW', N'SCR_PROFILE:UPDATE'
+)
+WHERE r.code IN (N'TECHNICIAN', N'PHARMACIST');
+GO
+
+INSERT INTO med.role_permissions (role_id, permission_id, effect_code, department_scope_type, priority, reason)
+SELECT r.role_id, p.permission_id, N'allow', N'global', 300, N'Base report viewer permission'
+FROM med.roles r
+JOIN med.permissions p ON p.permission_code IN (
+    N'SCR_DASHBOARD:VIEW', N'SCR_REPORTS:VIEW', N'SCR_REPORTS:EXPORT',
+    N'SCR_REPORT_CONSUMPTION:VIEW', N'SCR_REPORT_CONSUMPTION:EXPORT'
+)
+WHERE r.code = N'REPORT_VIEWER';
 GO
 
 /* ============================================================

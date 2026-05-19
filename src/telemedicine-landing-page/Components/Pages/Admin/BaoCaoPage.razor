@@ -1,8 +1,8 @@
 @page "/admin/bao-cao"
 @layout AdminLayout
+@using TelemedicineLandingPage.Services.Admin.Sql
 @inject IReportService ReportService
-@inject IPermissionService PermissionService
-@inject IProtocolService ProtocolService
+@inject IMedDataStore Store
 
 <PageTitle>Báo cáo tổng hợp | QLCM Pro</PageTitle>
 
@@ -75,12 +75,11 @@
         {
             _compliancePercent = pct;
         }
-        _changeLogCount = PermissionService.GetChangeLog().Count;
-        _roleCount = PermissionService.ListRoles().Count;
-        var protocols = ProtocolService.Search();
-        _protocolCount = protocols.Count;
-        _protocolApplications = protocols.Sum(p => p.ApplicationCount);
-        _complianceApproved = (int)Math.Round(_compliancePercent / 100d * _protocolCount + _protocolCount);
-        _complianceTotal = _protocolCount + 4; // procedures + protocols rough roll-up for the card
+        _changeLogCount = Store.AuditLogs.Count(a => a.TargetType.Contains("permission", StringComparison.OrdinalIgnoreCase) || a.TargetType.Contains("role", StringComparison.OrdinalIgnoreCase));
+        _roleCount = Store.Roles.Count;
+        _protocolCount = Store.ClinicalProtocols.Count;
+        _protocolApplications = Store.PatientProtocolApplications.Count;
+        _complianceTotal = Math.Max(1, Store.Procedures.Count);
+        _complianceApproved = Store.ProcedureVersions.Count(v => v.StatusCode == "active");
     }
 }

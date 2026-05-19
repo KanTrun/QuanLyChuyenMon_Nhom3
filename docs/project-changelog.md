@@ -26,6 +26,9 @@
 | Profile and lookup hardening | Sửa lỗi lưu hồ sơ với bảng SQL có trigger, làm lại UI hồ sơ theo admin style, thêm seed chuẩn hóa lookup và mở rộng unit catalog |
 
 | SQL Server alignment | Dong bo file SQL chinh voi database that `MedicalProcedureManagement`: bo sung `med.users.password_hash` va doi map dieu huong sang permission code dang co trong `med.permissions` |
+| Full SQL permission catalog | Mo rong `MedicalProcedureManagement.sql` de seed day du screen/feature/permission cho 25 route nghiep vu, them base roles va role-permission cho SYSTEM_ADMIN, quan tri khoa, lam sang, ky thuat/duoc va bao cao |
+| SQL-backed reports | Chuyen `IReportService` sang `SqlReportService` de bao cao tieu thu, KPI va activity feed doc tu bang SQL that thay vi service demo in-memory |
+| SQL-backed admin routes | Gan route admin chinh cua Quy trinh va Lam sang vao cac page doc `IMedDataStore`, chuyen page demo cu sang route `-legacy` |
 
 ### Verification
 | Command | Result |

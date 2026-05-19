@@ -31,7 +31,7 @@ builder.Services.AddSingleton<IProtocolService, ProtocolService>();
 builder.Services.AddSingleton<INotificationService, NotificationService>();
 builder.Services.AddSingleton<IClinicService, ClinicService>();
 builder.Services.AddSingleton<IUserPreferencesService, UserPreferencesService>();
-builder.Services.AddSingleton<IReportService, ReportService>();
+builder.Services.AddScoped<IReportService, SqlReportService>();
 
 // Per-circuit shell state.
 builder.Services.AddScoped<LoadingService>();
