@@ -65,6 +65,18 @@ Ngay 2026-05-21, app co lop security validation cho password flow va route guard
 | Admin route guard | `Components/Pages/Admin/_Imports.razor` applies `AdminAccess`; `CurrentUserAuthenticationStateProvider` maps current SQL user permissions into Blazor auth state |
 | Guard helper | `AuthorizedComponentBase` provides policy checks and access-denied redirect for guarded components |
 
+## Workflow and Jobs Architecture
+Ngay 2026-05-21, app co workflow guard va Hangfire foundation cho production jobs.
+
+| Area | Decision |
+|---|---|
+| Workflow abstraction | `IWorkflowGuard<TEntity,TState>` and `WorkflowDefinition<TState>` define transition checks and post-transition side effects |
+| Procedure version guard | `ProcedureVersionWorkflowGuard` protects draft, pending approval, active, rejected, archived and superseded transitions |
+| Technical order guard | `TechnicalOrderWorkflowGuard` protects ordered, scheduled, in-progress, completed and cancelled transitions |
+| Service extraction | `TechnicalOrderWorkflowService` owns order status mutations and audit writes; `OrderPage` delegates status changes to it |
+| Hangfire | `QlcmHangfireExtensions` configures SQL Server storage, worker queues and protected `/hangfire` dashboard |
+| Job wrapper | `IJobService` wraps enqueue, schedule, continuation and recurring job calls so application code does not depend directly on Hangfire static APIs |
+
 ## Procedure Module Architecture
 Kiến trúc dưới đây là logic đang được hiện thực trong module QLCM Pro của Blazor app.
 

@@ -1,6 +1,21 @@
 # Project Changelog
 
 ## 2026-05-21
+### Workflow and Jobs Foundation
+| Item | Description |
+|---|---|
+| Workflow guard | Added generic workflow guard/definition abstractions plus procedure-version and technical-order transition tables |
+| Procedure lifecycle | Procedure version submit/publish/reject/archive/restore/withdraw now run through workflow transition guard and audit side effects |
+| Order workflow service | Technical order status transitions moved from `OrderPage` into `TechnicalOrderWorkflowService` |
+| Hangfire | Added Hangfire SQL Server storage, worker queues, `/hangfire` dashboard authorization and `IJobService` wrapper |
+| Dependency security | Added direct `Newtonsoft.Json` 13.0.4 override to remove Hangfire transitive vulnerability |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 121 tests |
+| `dotnet list .\telemedicine-landing-page.sln package --vulnerable --include-transitive` | No vulnerable packages |
+
 ### Security Validation and Admin Guard
 | Item | Description |
 |---|---|

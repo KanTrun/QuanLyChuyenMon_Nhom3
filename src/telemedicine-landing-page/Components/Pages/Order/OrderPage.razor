@@ -6,6 +6,7 @@
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
 @inject AuditTrailService Audit
+@inject ITechnicalOrderWorkflowService OrderWorkflow
 @implements IDisposable
 
 <PageTitle>Điều phối kỹ thuật | QLCM Pro</PageTitle>
@@ -482,17 +483,7 @@
 
         try
         {
-            Store.UpdateTechnicalOrder(order with
-            {
-                OrderStatus = status,
-                CompletedAt = status == "completed" ? DateTime.UtcNow : order.CompletedAt
-            });
-            AppendOrderAudit(order, status switch
-            {
-                "completed" => "complete_order",
-                "cancelled" => "cancel_order",
-                _ => "update"
-            });
+            OrderWorkflow.TransitionStatus(order, status, UserContext.CurrentUser?.UserId);
             Toasts.Show("Đã cập nhật trạng thái", Lookup(Sql.MedLookups.OrderStatuses, status), ToastVariant.Success);
         }
         catch (Exception ex)

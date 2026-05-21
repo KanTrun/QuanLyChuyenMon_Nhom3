@@ -372,20 +372,34 @@
 
     private void ArchiveVersion(ApprovalRow row)
     {
-        if (!Guard.CanDo("SCR_PROCEDURES:DELETE", "lưu trữ phiên bản")) return;
-        Store.UpdateProcedureVersion(row.Version with { StatusCode = "archived", EffectiveTo = DateTime.UtcNow });
-        Recompute();
-        RefreshSelected(row.Version.ProcedureVersionId);
-        Toasts.Show("Đã lưu trữ phiên bản", row.Version.Title, ToastVariant.Info);
+        if (!Guard.CanDo("SCR_PROCEDURES:DELETE", "luu tru phien ban")) return;
+        try
+        {
+            Lifecycle.Archive(row.Version.ProcedureVersionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
+            Recompute();
+            RefreshSelected(row.Version.ProcedureVersionId);
+            Toasts.Show("Da luu tru phien ban", row.Version.Title, ToastVariant.Info);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Khong the luu tru", ex.Message, ToastVariant.Error);
+        }
     }
 
     private void RestoreVersion(ApprovalRow row)
     {
-        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "khôi phục phiên bản")) return;
-        Store.UpdateProcedureVersion(row.Version with { StatusCode = "draft", EffectiveTo = null });
-        Recompute();
-        RefreshSelected(row.Version.ProcedureVersionId);
-        Toasts.Show("Đã khôi phục về bản nháp", row.Version.Title, ToastVariant.Success);
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "khoi phuc phien ban")) return;
+        try
+        {
+            Lifecycle.RestoreDraft(row.Version.ProcedureVersionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
+            Recompute();
+            RefreshSelected(row.Version.ProcedureVersionId);
+            Toasts.Show("Da khoi phuc ve ban nhap", row.Version.Title, ToastVariant.Success);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Khong the khoi phuc", ex.Message, ToastVariant.Error);
+        }
     }
 
     private void RefreshSelected(Guid versionId)

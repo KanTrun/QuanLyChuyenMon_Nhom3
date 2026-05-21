@@ -1,6 +1,7 @@
 using FluentValidation;
 using System.Net;
 using TelemedicineLandingPage.Application.Validation;
+using TelemedicineLandingPage.Application.Workflow;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -16,6 +17,7 @@ using Serilog.Formatting.Json;
 using Serilog.Sinks.SystemConsole.Themes;
 using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Auth;
+using TelemedicineLandingPage.Models.Admin.Sql;
 using TelemedicineLandingPage.Models.Chatbot;
 using TelemedicineLandingPage.Services.Admin;
 using TelemedicineLandingPage.Services.Admin.Sql;
@@ -130,8 +132,11 @@ public static class QlcmServiceCollectionExtensions
         services.AddScoped<IMedDataStore, MedDbDataStore>();
         services.AddScoped<EffectivePermissionResolver>();
         services.AddScoped<AuditTrailService>();
+        services.AddScoped<IWorkflowGuard<ProcedureVersion, string>, ProcedureVersionWorkflowGuard>();
+        services.AddScoped<IWorkflowGuard<TechnicalOrder, string>, TechnicalOrderWorkflowGuard>();
         services.AddScoped<PermissionChangeRequestService>();
         services.AddScoped<ProcedureLifecycleService>();
+        services.AddScoped<ITechnicalOrderWorkflowService, TechnicalOrderWorkflowService>();
         services.AddScoped<ICurrentUserContext, CurrentUserContext>();
         services.AddScoped<AdminActionGuard>();
         services.AddScoped<BrowserSessionService>();

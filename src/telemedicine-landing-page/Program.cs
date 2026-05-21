@@ -18,6 +18,7 @@ builder.Services.AddSingleton<ILandingPageContentService, LandingPageContentServ
 builder.Services.AddQlcmDatabase(medDbConnectionString);
 builder.Services.AddQlcmIdentityAndAuthorization();
 builder.Services.AddQlcmAdminServices();
+builder.Services.AddQlcmHangfire(medDbConnectionString);
 builder.Services.AddQlcmChatbot(builder.Configuration);
 
 builder.Services.AddOptions<LandingPageLinksOptions>()
@@ -41,6 +42,7 @@ if (!app.Environment.IsDevelopment())
 app.UseSerilogRequestLogging();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseQlcmHangfireDashboard();
 app.UseAntiforgery();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
