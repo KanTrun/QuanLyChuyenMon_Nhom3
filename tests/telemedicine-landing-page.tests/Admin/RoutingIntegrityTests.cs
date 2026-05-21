@@ -16,7 +16,7 @@ public sealed class RoutingIntegrityTests
         Assert.DoesNotContain("@page \"/admin/quy-trinh\"", workspacePage);
         Assert.DoesNotContain("@page \"/admin/quy-trinh/phe-duyet\"", workspacePage);
         Assert.DoesNotContain("@layout AdminLayout", workspacePage);
-        Assert.DoesNotContain("@layout AdminLayout", protocolWorkspacePage);
+        Assert.Contains("@layout AdminLayout", protocolWorkspacePage);
     }
 
     [Fact]

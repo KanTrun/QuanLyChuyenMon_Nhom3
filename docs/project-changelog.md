@@ -1,5 +1,11 @@
 # Project Changelog
 
+## 2026-05-22
+### Fixed
+| Item | Description |
+|---|---|
+| Protocol workspace navigation | `/phac-do-pro` now stays inside the admin shell and keeps the Phác đồ sidebar group open when selected |
+
 ## 2026-05-21
 ### Fixed
 | Item | Description |

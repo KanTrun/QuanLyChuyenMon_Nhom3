@@ -23,7 +23,7 @@
         {
             if (item.Children is { Count: > 0 } children)
             {
-                var isOpen = CurrentPath.StartsWith(item.Url, StringComparison.OrdinalIgnoreCase);
+                var isOpen = IsGroupOpen(item, children);
                 <details class="admin-nav-group" open="@isOpen">
                     <summary class="admin-nav-summary">
                         <span class="admin-nav-icon" aria-hidden="true">@RenderIcon(item.Icon)</span>
@@ -112,6 +112,13 @@
 
     private static NavLinkMatch GetMatchFor(string url)
         => string.Equals(url, "/admin", StringComparison.OrdinalIgnoreCase) ? NavLinkMatch.All : NavLinkMatch.Prefix;
+
+    private bool IsGroupOpen(AdminNavItem item, IReadOnlyList<AdminNavItem> children)
+        => IsRouteInGroup(item.Url) || children.Any(child => IsRouteInGroup(child.Url));
+
+    private bool IsRouteInGroup(string url)
+        => CurrentPath.Equals(url, StringComparison.OrdinalIgnoreCase)
+            || CurrentPath.StartsWith($"{url.TrimEnd('/')}/", StringComparison.OrdinalIgnoreCase);
 
     private string ToRelative(string uri)
     {
