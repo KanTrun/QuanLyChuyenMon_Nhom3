@@ -1,6 +1,11 @@
 # Project Changelog
 
 ## 2026-05-21
+### Fixed
+| Item | Description |
+|---|---|
+| Login circuit crash | Removed duplicate `/admin/lam-sang` route ownership from the clinical workspace page so Blazor Router no longer terminates the circuit on `/login`; added a duplicate-route regression test |
+
 ### Changed
 | Item | Description |
 |---|---|
@@ -19,7 +24,7 @@
 | Command | Result |
 |---|---|
 | `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
-| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 106 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 107 tests |
 | `docker compose build web` | Passed |
 | `docker compose up -d web` + `/admin` check | Passed, container healthy and HTTP 200 |
 
