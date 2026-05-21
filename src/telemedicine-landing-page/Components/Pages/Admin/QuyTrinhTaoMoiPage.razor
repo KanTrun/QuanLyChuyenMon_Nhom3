@@ -23,15 +23,15 @@
         <h2 class="admin-panel-title">Thông tin chung</h2>
         <div class="admin-form-grid">
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Mã quy trình</label>
+                <label class="admin-form-field-label is-required">Mã quy trình</label>
                 <input class="admin-input" @bind="_code" placeholder="VD: QT-XN-CTM-02" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Tên quy trình</label>
+                <label class="admin-form-field-label is-required">Tên quy trình</label>
                 <input class="admin-input" @bind="_name" placeholder="VD: Quy trình xét nghiệm công thức máu" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Loại quy trình</label>
+                <label class="admin-form-field-label is-required">Loại quy trình</label>
                 <select class="admin-select" @bind="_procedureType">
                     @foreach (var type in Sql.MedLookups.ProcedureTypes)
                     {
@@ -50,7 +50,7 @@
                 </select>
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Nhãn phiên bản</label>
+                <label class="admin-form-field-label is-required">Nhãn phiên bản</label>
                 <input class="admin-input" @bind="_versionLabel" />
             </div>
             <div class="admin-form-field admin-form-field-full">

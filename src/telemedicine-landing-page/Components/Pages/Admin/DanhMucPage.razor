@@ -187,15 +187,15 @@
     <ChildContent>
         <div class="admin-form-grid">
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Mã dịch vụ</label>
+                <label class="admin-form-field-label is-required">Mã dịch vụ</label>
                 <input class="admin-input" @bind="_draftCode" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Tên dịch vụ</label>
+                <label class="admin-form-field-label is-required">Tên dịch vụ</label>
                 <input class="admin-input" @bind="_draftName" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Loại</label>
+                <label class="admin-form-field-label is-required">Loại</label>
                 <select class="admin-select" @bind="_draftType">
                     @foreach (var type in Sql.MedLookups.ServiceTypes)
                     {

@@ -270,15 +270,15 @@
     <ChildContent>
         <div class="admin-form-grid">
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Mã phác đồ</label>
+                <label class="admin-form-field-label is-required">Mã phác đồ</label>
                 <input class="admin-input" @bind="_createCode" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Tên phác đồ</label>
+                <label class="admin-form-field-label is-required">Tên phác đồ</label>
                 <input class="admin-input" @bind="_createName" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Loại</label>
+                <label class="admin-form-field-label is-required">Loại</label>
                 <select class="admin-select" @bind="_createType">
                     @foreach (var type in Sql.MedLookups.ProtocolTypes)
                     {

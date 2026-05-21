@@ -106,11 +106,11 @@
         <ChildContent>
             <div class="admin-form-grid">
                 <div class="admin-form-field">
-                    <label class="admin-form-field-label">Họ tên</label>
+                    <label class="admin-form-field-label is-required">Họ tên</label>
                     <input class="admin-input" @bind="_fullName" disabled="@IsReadonly" />
                 </div>
                 <div class="admin-form-field">
-                    <label class="admin-form-field-label">Tên đăng nhập</label>
+                    <label class="admin-form-field-label is-required">Tên đăng nhập</label>
                     <input class="admin-input" @bind="_username" disabled="@(_mode != FormMode.Create)" />
                 </div>
                 <div class="admin-form-field">
@@ -128,7 +128,7 @@
                     </select>
                 </div>
                 <div class="admin-form-field">
-                    <label class="admin-form-field-label">Trạng thái</label>
+                    <label class="admin-form-field-label is-required">Trạng thái</label>
                     <select class="admin-select" @bind="_status" disabled="@IsReadonly">
                         <option value="active">Đang hoạt động</option>
                         <option value="inactive">Lưu trữ/vô hiệu</option>

@@ -732,6 +732,14 @@
     font-size: 0.86rem;
 }
 
+.admin-required::after,
+.admin-form-field-label.is-required::after,
+.admin-label.is-required::after {
+    content: " *";
+    color: var(--color-danger, #dc2626);
+    font-weight: 700;
+}
+
 .admin-form-field-hint {
     color: var(--color-muted);
     font-size: 0.78rem;

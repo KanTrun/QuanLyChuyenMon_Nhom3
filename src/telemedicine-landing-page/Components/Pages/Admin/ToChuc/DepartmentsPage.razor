@@ -74,11 +74,11 @@
     <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" Title="@_drawerTitle">
         <ChildContent>
             <div class="admin-form-group">
-                <label class="admin-label">Mã khoa/phòng</label>
+                <label class="admin-label is-required">Mã khoa/phòng</label>
                 <input class="admin-input" @bind="_editCode" placeholder="VD: KHOA-TIM" />
             </div>
             <div class="admin-form-group">
-                <label class="admin-label">Tên khoa/phòng</label>
+                <label class="admin-label is-required">Tên khoa/phòng</label>
                 <input class="admin-input" @bind="_editName" placeholder="VD: Khoa Tim mạch" />
             </div>
             <div class="admin-form-group">
