@@ -10,8 +10,9 @@ Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-
 | Procedure lifecycle | Complete | Version dùng lookup SQL `draft`, `pending_approval`, `active`, `superseded`, `archived` |
 | Admin workflows | Complete | Quy trình, tổ chức/khoa/phòng, người dùng, vai trò, nhóm, phân quyền, danh mục, tài nguyên, phác đồ, thông báo |
 | Clinical workflows | Complete | Bệnh nhân, lượt khám, phác đồ áp dụng, chỉ định kỹ thuật, snapshot nguồn lực và tiêu hao thực tế |
+| Audit remediation | Complete | Action guard, session restore, protocol draft/submit/publish, confirm/reject reason, audit history, dashboard/report/audit UX fixes |
 | Seed data | Complete | `scripts/seed-realistic-data.sql` nạp dữ liệu mẫu thực tế cho demo/QA |
-| Verification | Complete | Release build/test passed, 109 tests passed; Docker web build and `/login` HTTP check passed |
+| Verification | Complete | Release build/test passed, 109 tests passed; audit remediation phase commits pushed to `feat/qlcm-pro-admin-shell-v2` |
 
 ## Telemedicine Landing Page Track
 | Item | Status | Output |
@@ -42,7 +43,7 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này �
 | Architecture blueprint | 100% |
 | Implementation plan | 100% |
 | Code implementation | 100% for implementation-plan scope |
-| Test automation | Release build/test passed, 109 tests |
+| Test automation | Release build/test passed, 109 tests after audit remediation |
 | Deployment readiness | Docker Compose web/sql/db-init verified locally; target DB execution/config remains deployment task |
 
 ## Dependencies

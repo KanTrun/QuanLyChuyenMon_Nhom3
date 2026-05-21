@@ -1,6 +1,16 @@
 # Project Changelog
 
 ## 2026-05-21
+### Audit Remediation
+| Item | Description |
+|---|---|
+| Action-level permission guard | Added centralized `AdminActionGuard` and applied mutation checks across procedures, protocols, catalog, resources, orders, clinical, organization and permission approval pages |
+| Session persistence | Login now persists the current user in browser session storage and admin/persona layouts restore the user before route denial after refresh |
+| Approval workflows | Clinical protocols now start as draft and require submit then approve/publish; procedure/protocol archive/restore and order actions write explicit audit events |
+| Confirmation and rejection UX | Added confirmation for destructive/logout/status operations and replaced hardcoded permission rejection reason with reviewer-entered reason |
+| Admin data correctness | Dashboard/report/audit pages now use real active-version counts, resolved target labels, friendly protocol rule summaries and no placeholder chart |
+| Account administration | Added reset-password action, registration notification to admins and basic login lockout for repeated failed attempts |
+
 ### Fixed
 | Item | Description |
 |---|---|
@@ -28,6 +38,8 @@
 | `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 109 tests |
 | `docker compose build web` | Passed |
 | `docker compose up -d web` + `/admin` check | Passed, container healthy and HTTP 200 |
+| `dotnet build .\telemedicine-landing-page.sln -c Release --no-restore` | Passed after audit remediation, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed after audit remediation, 109 tests |
 
 ### Unresolved Questions
 None.

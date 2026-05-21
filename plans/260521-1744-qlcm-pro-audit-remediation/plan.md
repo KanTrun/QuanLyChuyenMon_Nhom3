@@ -8,10 +8,10 @@
 ## Phases
 | Phase | Status | Goal |
 |---|---|---|
-| 01 | Pending | Persist login across refresh and add action-level permission guard for dangerous mutations |
-| 02 | Pending | Repair approval/business workflows: procedure/protocol publish, reject reason, archive confirmation, audit and reset password |
-| 03 | Pending | Improve UX/data correctness: toast variants, filters, dashboard/report counts, audit target names, friendly rule JSON, pagination, social login |
-| 04 | Pending | Update docs, build/test, commit by phase and push branch |
+| 01 | Complete | Persist login across refresh and add action-level permission guard for dangerous mutations |
+| 02 | Complete | Repair approval/business workflows: procedure/protocol publish, reject reason, archive confirmation, audit and reset password |
+| 03 | Complete | Improve UX/data correctness: toast variants, filters, dashboard/report counts, audit target names, friendly rule JSON, pagination, social login |
+| 04 | Complete | Update docs, build/test, commit by phase and push branch |
 
 ## Related Files
 - `src/telemedicine-landing-page/Services/Admin/Sql/CurrentUserContext.cs`
@@ -25,12 +25,12 @@
 - `docs/project-changelog.md`
 
 ## Success Criteria
-- Critical audit items C1-C4 have concrete code changes.
-- Dangerous CRUD/publish/archive/status changes fail closed when user lacks permission.
-- Protocol create starts as draft and needs submit/approve/publish.
-- Refresh after login restores current user from browser session storage.
-- Build and tests run fresh before final push.
-- Each phase has a focused conventional commit and branch is pushed.
+- Critical audit items C1-C4 have concrete code changes. Complete.
+- Dangerous CRUD/publish/archive/status changes fail closed when user lacks permission. Complete.
+- Protocol create starts as draft and needs submit/approve/publish. Complete.
+- Refresh after login restores current user from browser session storage. Complete.
+- Build and tests run fresh before final push. Complete.
+- Each phase has a focused conventional commit and branch is pushed. Complete.
 
 ## Risks
 - Existing SQL seed uses `SCR_*:ACTION`; older tests/in-memory seed use legacy `PERM_*` codes. Guard must support aliases.

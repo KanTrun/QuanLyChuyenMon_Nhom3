@@ -21,6 +21,8 @@ Ngày 2026-05-19, module quản lý quy trình kỹ thuật chuyên môn đã đ
 |---|---|
 | UI | Razor Components trong `Components/Pages`, tổ chức theo Admin, Procedure, Resource, Order, Clinical, Notification |
 | Application services | Các service admin dùng `IMedDataStore`, `IProcedureLifecycleService`, `ICurrentUserContext`, `IToastService` |
+| Action authorization | `AdminActionGuard` checks `SCR_*:ACTION` permissions plus legacy aliases before dangerous UI mutations |
+| Circuit session restore | Login writes current SQL user id to browser `sessionStorage`; admin/persona layouts restore it before route checks |
 | Persistence | Entity Framework Core `MedDbContext` map schema `MedicalProcedureManagement` |
 | SQL facade | `IMedDataStore` che chi tiết query/mutation cho identity, permissions, procedures, catalog, patients, orders, protocols, notifications |
 | Seed data | `scripts/seed-realistic-data.sql` nạp dữ liệu demo/QA có lookup hợp lệ |
@@ -117,8 +119,9 @@ Các tích hợp kho/dược/thiết bị và auth production vẫn đi qua boun
 1. Mọi mutation qua `MedDbContext.SaveChanges` được quét từ ChangeTracker.
 2. Entity nghiệp vụ ở trạng thái Added/Modified/Deleted sinh audit log tự động với `target_type`, `target_id`, `before_json`, `after_json`.
 3. Các nghiệp vụ có ý nghĩa riêng như đăng nhập, gửi duyệt, phê duyệt, ban hành, từ chối vẫn ghi thêm action nghiệp vụ chuyên biệt.
-4. `audit_logs` là append-only; trigger SQL chặn UPDATE/DELETE.
-5. UI `/admin/nhat-ky` hiển thị toàn bộ log và JSON trước/sau, còn tab lịch sử phân quyền lọc các target liên quan quyền.
+4. Chỉ định kỹ thuật và phác đồ có thêm audit history theo đối tượng để người dùng xem ngay trong drawer nghiệp vụ.
+5. `audit_logs` là append-only; trigger SQL chặn UPDATE/DELETE.
+6. UI `/admin/nhat-ky` hiển thị toàn bộ log và JSON trước/sau, còn tab lịch sử phân quyền lọc các target liên quan quyền.
 
 ## Procedure Versioning Flow
 1. Tạo version draft từ quy trình mới hoặc copy version active.
@@ -128,6 +131,13 @@ Các tích hợp kho/dược/thiết bị và auth production vẫn đi qua boun
 5. Version cũ chuyển `superseded` khi cùng scope và còn hiệu lực.
 6. Các thao tác sau thời điểm hiệu lực dùng version mới.
 7. Lịch sử thao tác cũ vẫn tham chiếu version đã dùng tại thời điểm đó.
+
+## Clinical Protocol Versioning Flow
+1. Tạo phác đồ mới sinh phiên bản `draft`; không tự phê duyệt hoặc ban hành.
+2. Người soạn gửi phiên bản sang `pending_approval`.
+3. Người có quyền approve/publish phê duyệt và ban hành phiên bản.
+4. Phiên bản mới chuyển `active`, ghi `approved_by`, `published_by`, `effective_from`.
+5. Phiên bản active cũ cùng phác đồ chuyển `superseded`.
 
 ## Permission Change Flow
 1. Admin tạo change request gồm target, before, after, reason, effectiveAt.
