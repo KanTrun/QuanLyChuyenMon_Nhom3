@@ -73,6 +73,12 @@ docker compose up --build
 
 Sau khi container sẵn sàng, mở `http://localhost:8080`. Compose gồm:
 
+Tài khoản bootstrap local sau khi seed/migration:
+
+| Tên đăng nhập | Mật khẩu |
+|---|---|
+| `admin` | `Admin@2026` |
+
 | Service | Vai trò |
 |---|---|
 | `web` | ASP.NET Core Blazor app `net9.0` |

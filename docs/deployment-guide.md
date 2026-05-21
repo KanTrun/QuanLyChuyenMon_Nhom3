@@ -17,6 +17,13 @@ docker compose up --build
 
 Open `http://localhost:8080`.
 
+### Local Bootstrap Admin
+| Username | Password |
+|---|---|
+| `admin` | `Admin@2026` |
+
+The bootstrap migration reactivates this local admin account when an older Docker volume was locked by the null-password migration.
+
 ### Configuration
 | Variable | Default | Purpose |
 |---|---|---|

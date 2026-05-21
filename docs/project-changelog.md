@@ -1,6 +1,11 @@
 # Project Changelog
 
 ## 2026-05-21
+### Fixed
+| Item | Description |
+|---|---|
+| Docker admin login | Added bootstrap migration for local `admin` so older Docker volumes locked by null-password migration are reactivated with a password |
+
 ### Realtime Notifications
 | Item | Description |
 |---|---|

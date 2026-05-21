@@ -178,7 +178,8 @@ public static class MedDataStoreSeed
             Username = "admin",
             FullName = "Quản trị viên hệ thống",
             Email = "admin@bv.vn",
-            PrimaryDepartmentId = RootDeptId
+            PrimaryDepartmentId = RootDeptId,
+            PasswordHash = BootstrapAdminDefaults.PasswordHash
         });
         store.AddUserRole(new UserRole { UserId = AdminUserId, RoleId = RoleSysAdminId });
 

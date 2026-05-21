@@ -58,7 +58,8 @@ public static class TestDbHelper
             Username = "admin",
             FullName = "Quản trị viên hệ thống",
             Email = "admin@bv.vn",
-            PrimaryDepartmentId = MedDataStoreSeed.RootDeptId
+            PrimaryDepartmentId = MedDataStoreSeed.RootDeptId,
+            PasswordHash = BootstrapAdminDefaults.PasswordHash
         });
         db.UserRoles.Add(new UserRole { UserId = MedDataStoreSeed.AdminUserId, RoleId = MedDataStoreSeed.RoleSysAdminId });
 

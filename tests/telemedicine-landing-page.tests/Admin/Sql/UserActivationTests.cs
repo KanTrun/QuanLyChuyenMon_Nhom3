@@ -6,6 +6,21 @@ namespace TelemedicineLandingPage.Tests.Admin.Sql;
 public sealed class UserActivationTests
 {
     [Fact]
+    public void SeededAdmin_CanLoginWithBootstrapPassword()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+
+        var result = context.LoginByUsernameDetailed(
+            BootstrapAdminDefaults.Username,
+            BootstrapAdminDefaults.LocalDevelopmentPassword);
+
+        Assert.Equal(LoginAttemptStatus.Success, result.Status);
+        Assert.Equal(BootstrapAdminDefaults.Username, result.User?.Username);
+        Assert.Equal(result.User?.UserId, context.CurrentUser?.UserId);
+    }
+
+    [Fact]
     public void InactiveUser_CanBeReactivatedAndLoadedIntoCurrentContext()
     {
         using var db = TestDbHelper.CreateSeededContext();
