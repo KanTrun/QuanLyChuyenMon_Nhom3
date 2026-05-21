@@ -4,12 +4,14 @@
 @using TelemedicineLandingPage.Application.Validation
 @using TelemedicineLandingPage.Models.Admin.Sql
 @using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Services.Notifications
 @inject MedDbContext Db
 @inject NavigationManager Navigation
 @inject IToastService Toast
 @inject EffectivePermissionResolver Resolver
 @inject IValidationService Validation
 @inject IPasswordStrengthService PasswordStrengthService
+@inject TelemedicineLandingPage.Services.Notifications.INotificationService Notifications
 
 <PageTitle>Đăng ký | QLCM Pro</PageTitle>
 
@@ -193,7 +195,7 @@
                 TargetId = newUser.UserId.ToString(),
                 AfterJson = JsonSerializer.Serialize(new { newUser.Username, newUser.FullName })
             });
-            NotifyAdministrators(newUser);
+            await NotifyAdministrators(newUser);
             Db.SaveChanges();
 
             _successMessage = $"Đã ghi nhận đăng ký. Tên đăng nhập của bạn là: {username}. Tài khoản cần quản trị viên kích hoạt trước khi sử dụng.";
@@ -214,7 +216,7 @@
         }
     }
 
-    private void NotifyAdministrators(AppUser newUser)
+    private async Task NotifyAdministrators(AppUser newUser)
     {
         var activeUsers = Db.Users
             .Where(u => u.Status == "active" && u.DeletedAt == null)
@@ -227,17 +229,14 @@
 
         foreach (var admin in recipients)
         {
-            Db.Notifications.Add(new MedNotification
-            {
-                RecipientUserId = admin.UserId,
-                NotificationType = "user_registration_pending",
-                Title = "Tài khoản mới chờ kích hoạt",
-                Body = $"Tài khoản {newUser.FullName} ({newUser.Username}) vừa đăng ký và cần quản trị viên kích hoạt.",
-                Severity = "warning",
-                SourceType = "user",
-                SourceId = newUser.UserId.ToString(),
-                PayloadJson = JsonSerializer.Serialize(new { newUser.UserId, newUser.Username, newUser.Email })
-            });
+            await Notifications.SendToUserAsync(admin.UserId, new NotificationMessage(
+                "user_registration_pending",
+                "Tài khoản mới chờ kích hoạt",
+                $"Tài khoản {newUser.FullName} ({newUser.Username}) vừa đăng ký và cần quản trị viên kích hoạt.",
+                "warning",
+                "user",
+                newUser.UserId.ToString(),
+                JsonSerializer.Serialize(new { newUser.UserId, newUser.Username, newUser.Email })));
         }
     }
 }

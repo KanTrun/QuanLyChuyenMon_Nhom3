@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using TelemedicineLandingPage.Components;
+using TelemedicineLandingPage.Hubs;
 using TelemedicineLandingPage.Infrastructure;
 using TelemedicineLandingPage.Models;
 using TelemedicineLandingPage.Services;
@@ -14,6 +15,7 @@ var medDbConnectionString = QlcmServiceCollectionExtensions.BuildResilientSqlCon
 builder.Host.UseQlcmSerilog();
 
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+builder.Services.AddSignalR();
 builder.Services.AddSingleton<ILandingPageContentService, LandingPageContentService>();
 builder.Services.AddQlcmDatabase(medDbConnectionString);
 builder.Services.AddQlcmIdentityAndAuthorization();
@@ -50,6 +52,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     ResponseWriter = HealthCheckJsonResponseWriter.WriteAsync
 });
 app.MapStaticAssets();
+app.MapHub<NotificationHub>("/hubs/notification");
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 app.Run();

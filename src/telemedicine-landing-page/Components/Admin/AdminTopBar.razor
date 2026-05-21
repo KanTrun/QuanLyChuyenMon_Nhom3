@@ -1,5 +1,7 @@
+@using Microsoft.AspNetCore.SignalR.Client
 @using TelemedicineLandingPage.Services.Admin.Sql
 @using TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Notifications
 @inject IAdminNavigationState NavState
 @inject IThemeBus ThemeBus
 @inject IUserPreferencesService Preferences
@@ -7,7 +9,8 @@
 @inject IJSRuntime JS
 @inject ICurrentUserContext UserContext
 @inject BrowserSessionService BrowserSession
-@implements IDisposable
+@inject IToastService Toasts
+@implements IAsyncDisposable
 
 <header class="admin-topbar" role="banner">
     <div class="admin-topbar-left">
@@ -140,6 +143,8 @@
     private string _breadcrumbCurrent = "Bảng điều khiển";
     private string _currentUserName = "Đang tải...";
     private string _userInitials = "..";
+    private HubConnection? _notificationHub;
+    private Guid? _notificationUserId;
 
     private static readonly Dictionary<string, (string Parent, string Current)> BreadcrumbMap = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -196,6 +201,11 @@
             {
                 // Defaults already set.
             }
+        }
+
+        if (firstRender)
+        {
+            await EnsureNotificationHubAsync();
         }
     }
 
@@ -363,9 +373,10 @@
         Navigation.NavigateTo("/login", forceLoad: false);
     }
 
-    private void OnUserChanged() => InvokeAsync(() =>
+    private void OnUserChanged() => _ = InvokeAsync(async () =>
     {
         RefreshUserDisplay();
+        await EnsureNotificationHubAsync();
         StateHasChanged();
     });
 
@@ -387,7 +398,72 @@
         }
     }
 
-    public void Dispose()
+    private async Task EnsureNotificationHubAsync()
+    {
+        var user = UserContext.CurrentUser;
+        if (user is null)
+        {
+            return;
+        }
+
+        _notificationHub ??= BuildNotificationHub();
+
+        try
+        {
+            if (_notificationHub.State == HubConnectionState.Disconnected)
+            {
+                _notificationUserId = null;
+                await _notificationHub.StartAsync();
+            }
+
+            if (_notificationHub.State == HubConnectionState.Connected && _notificationUserId != user.UserId)
+            {
+                if (_notificationUserId is Guid previousUserId)
+                {
+                    await _notificationHub.InvokeAsync("LeaveUserGroup", previousUserId.ToString("D"));
+                }
+
+                await _notificationHub.InvokeAsync("JoinUserGroup", user.UserId.ToString("D"));
+                _notificationUserId = user.UserId;
+            }
+        }
+        catch (Exception)
+        {
+            _notificationUserId = null;
+        }
+    }
+
+    private HubConnection BuildNotificationHub()
+    {
+        var hub = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/hubs/notification"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hub.On<NotificationEnvelope>("ReceiveNotification", notification =>
+        {
+            _ = InvokeAsync(() =>
+            {
+                Toasts.Show(notification.Title, notification.Body, ToastVariant.Info);
+                StateHasChanged();
+            });
+        });
+
+        hub.Reconnected += async _ =>
+        {
+            var current = UserContext.CurrentUser;
+            _notificationUserId = null;
+            if (current is not null)
+            {
+                await hub.InvokeAsync("JoinUserGroup", current.UserId.ToString("D"));
+                _notificationUserId = current.UserId;
+            }
+        };
+
+        return hub;
+    }
+
+    public async ValueTask DisposeAsync()
     {
         Navigation.LocationChanged -= OnLocationChanged;
         NavState.StateChanged -= OnNavStateChanged;
@@ -396,5 +472,10 @@
         ThemeBus.MotionChanged -= OnMotionChanged;
         ThemeBus.ExportConsumptionRequested -= OnExportConsumptionRequested;
         UserContext.StateChanged -= OnUserChanged;
+
+        if (_notificationHub is not null)
+        {
+            await _notificationHub.DisposeAsync();
+        }
     }
 }

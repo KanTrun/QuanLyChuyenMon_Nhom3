@@ -23,6 +23,7 @@ using TelemedicineLandingPage.Services.Admin;
 using TelemedicineLandingPage.Services.Admin.Sql;
 using TelemedicineLandingPage.Services.Auth;
 using TelemedicineLandingPage.Services.Chatbot;
+using TelemedicineLandingPage.Services.Notifications;
 
 namespace TelemedicineLandingPage.Infrastructure;
 
@@ -148,6 +149,8 @@ public static class QlcmServiceCollectionExtensions
         services.AddScoped<IThemeBus, ThemeBus>();
         services.AddScoped<IToastService, ToastService>();
         services.AddScoped<IConfirmDialogService, ConfirmDialogService>();
+        services.AddScoped<INotificationRealtimePublisher, SignalRNotificationRealtimePublisher>();
+        services.AddScoped<Services.Notifications.INotificationService, SignalRNotificationService>();
         return services;
     }
 

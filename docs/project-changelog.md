@@ -1,6 +1,21 @@
 # Project Changelog
 
 ## 2026-05-21
+### Realtime Notifications
+| Item | Description |
+|---|---|
+| SignalR hub | Added `/hubs/notification` with user/group subscription methods and record presence hooks |
+| Notification service | Added persisted user, group and broadcast notification service over existing `med.notifications` |
+| Admin bell realtime | Admin top bar now subscribes to SignalR, joins the current user group and shows toast updates without refresh |
+| Registration alerts | Public registration now sends persisted realtime notifications to administrators with user-management permission |
+| Tests | Added notification service tests for direct user send, active-user broadcast and active group membership targeting |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 124 tests |
+
 ### Workflow and Jobs Foundation
 | Item | Description |
 |---|---|
