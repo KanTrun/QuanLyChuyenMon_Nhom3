@@ -1,5 +1,6 @@
 @page "/thong-bao"
-@layout PersonaLayout
+@layout AdminLayout
+@using Microsoft.AspNetCore.Components
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
@@ -121,9 +122,7 @@
                 <dt>Loại</dt>
                 <dd>@_selected.NotificationType</dd>
                 <dt>Nguồn</dt>
-                <dd>@(_selected.SourceType ?? "—")</dd>
-                <dt>Source ID</dt>
-                <dd>@(_selected.SourceId ?? "—")</dd>
+                <dd>@DescribeSource(_selected)</dd>
                 <dt>Đã đọc lúc</dt>
                 <dd>@(_selected.ReadAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa đọc")</dd>
             </dl>
@@ -174,15 +173,23 @@
 
     private bool _drawerOpen;
     private Sql.MedNotification? _selected;
+    private Guid? _openedNotificationIdFromQuery;
 
-    private Guid? CurrentUserId => UserContext.CurrentUser?.UserId ?? Store.Users.FirstOrDefault()?.UserId;
+    [SupplyParameterFromQuery(Name = "notificationId")]
+    public Guid? NotificationId { get; set; }
+
+    private Guid? CurrentUserId => UserContext.CurrentUser?.UserId;
 
     protected override void OnInitialized()
     {
         Store.StateChanged += OnChanged;
+        UserContext.StateChanged += OnChanged;
         BuildTabs();
         Paginate();
+        TryOpenNotificationFromQuery();
     }
+
+    protected override void OnParametersSet() => TryOpenNotificationFromQuery();
 
     private void OnChanged() => InvokeAsync(() =>
     {
@@ -192,6 +199,7 @@
         }
         BuildTabs();
         Paginate();
+        TryOpenNotificationFromQuery();
         StateHasChanged();
     });
 
@@ -210,7 +218,7 @@
         _tabs = new[]
         {
             new AdminTabs.TabItem("notifications", "Thông báo", unread),
-            new AdminTabs.TabItem("preferences", "Cài đặt", Store.NotificationPreferences.Count(p => !userId.HasValue || p.UserId == userId.Value))
+            new AdminTabs.TabItem("preferences", "Cài đặt", userId.HasValue ? Store.NotificationPreferences.Count(p => p.UserId == userId.Value) : 0)
         };
     }
 
@@ -230,17 +238,35 @@
 
     private void OpenNotification(Sql.MedNotification notif)
     {
+        var userId = CurrentUserId;
+        if (!userId.HasValue || notif.RecipientUserId != userId.Value)
+        {
+            return;
+        }
+
         _selected = notif;
         _drawerOpen = true;
+        if (!notif.ReadAt.HasValue)
+        {
+            MarkRead(notif, showToast: false);
+        }
     }
 
-    private void MarkRead(Sql.MedNotification notif)
+    private void MarkRead(Sql.MedNotification notif, bool showToast = true)
     {
-        if (notif.ReadAt.HasValue) return;
+        var userId = CurrentUserId;
+        if (!userId.HasValue || notif.RecipientUserId != userId.Value || notif.ReadAt.HasValue)
+        {
+            return;
+        }
+
         try
         {
             Store.UpdateNotificationReadAt(notif.NotificationId, DateTime.UtcNow);
-            Toasts.Show("Đã đánh dấu đã đọc", notif.Title, ToastVariant.Success);
+            if (showToast)
+            {
+                Toasts.Show("Đã đánh dấu đã đọc", notif.Title, ToastVariant.Success);
+            }
         }
         catch (Exception ex)
         {
@@ -261,8 +287,13 @@
 
     private IEnumerable<string> NotificationTypes()
     {
-        var fromNotifications = Store.Notifications.Select(n => n.NotificationType);
-        var fromPrefs = Store.NotificationPreferences.Select(p => p.NotificationType);
+        var userId = CurrentUserId;
+        var fromNotifications = Store.Notifications
+            .Where(n => userId.HasValue && n.RecipientUserId == userId.Value)
+            .Select(n => n.NotificationType);
+        var fromPrefs = Store.NotificationPreferences
+            .Where(p => userId.HasValue && p.UserId == userId.Value)
+            .Select(p => p.NotificationType);
         return fromNotifications.Concat(fromPrefs)
             .Concat(new[] { "procedure_approval", "procedure_submitted", "order_status" })
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -309,6 +340,74 @@
         }
     }
 
+    private void TryOpenNotificationFromQuery()
+    {
+        if (!NotificationId.HasValue || _openedNotificationIdFromQuery == NotificationId)
+        {
+            return;
+        }
+
+        var userId = CurrentUserId;
+        if (!userId.HasValue)
+        {
+            return;
+        }
+
+        var notification = Store.Notifications.FirstOrDefault(n =>
+            n.NotificationId == NotificationId.Value && n.RecipientUserId == userId.Value);
+        if (notification is null)
+        {
+            return;
+        }
+
+        _openedNotificationIdFromQuery = NotificationId;
+        _activeTab = "notifications";
+        OpenNotification(notification);
+    }
+
+    private string DescribeSource(Sql.MedNotification notification)
+    {
+        if (string.IsNullOrWhiteSpace(notification.SourceType))
+        {
+            return "Hệ thống";
+        }
+
+        if (Guid.TryParse(notification.SourceId, out var id))
+        {
+            if (notification.SourceType.Contains("procedure", StringComparison.OrdinalIgnoreCase))
+            {
+                var version = Store.ProcedureVersions.FirstOrDefault(v => v.ProcedureVersionId == id);
+                if (version is not null)
+                {
+                    return Store.Procedures.FirstOrDefault(p => p.ProcedureId == version.ProcedureId)?.Name ?? version.Title;
+                }
+            }
+
+            if (notification.SourceType.Contains("order", StringComparison.OrdinalIgnoreCase))
+            {
+                var order = Store.TechnicalOrders.FirstOrDefault(o => o.TechnicalOrderId == id);
+                return order is null ? "Chỉ định kỹ thuật" : GetOrderSourceName(order);
+            }
+        }
+
+        return notification.SourceType switch
+        {
+            "permission_change" => "Yêu cầu thay đổi quyền",
+            "procedure_approval" => "Quy trình cần phê duyệt",
+            "order_status" => "Chỉ định kỹ thuật",
+            _ => notification.SourceType
+        };
+    }
+
+    private string GetOrderSourceName(Sql.TechnicalOrder order)
+    {
+        var serviceName = Store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == order.TechnicalServiceId)?.Name ?? "Dịch vụ kỹ thuật";
+        var patientName = order.PatientRefId.HasValue
+            ? Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == order.PatientRefId.Value)?.DisplayName
+            : null;
+        return string.IsNullOrWhiteSpace(patientName) ? serviceName : $"{serviceName} - {patientName}";
+    }
+
     private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code)
         => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
 
@@ -328,5 +427,9 @@
         _ => "tone-muted"
     };
 
-    public void Dispose() => Store.StateChanged -= OnChanged;
+    public void Dispose()
+    {
+        Store.StateChanged -= OnChanged;
+        UserContext.StateChanged -= OnChanged;
+    }
 }

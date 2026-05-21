@@ -1,7 +1,6 @@
 @using TelemedicineLandingPage.Services.Admin.Sql
 @using TelemedicineLandingPage.Models.Admin.Sql
 @inject IAdminNavigationState NavState
-@inject INotificationService Notifications
 @inject IThemeBus ThemeBus
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
@@ -32,14 +31,14 @@
 
         <div class="admin-topbar-flyout-host">
             <button type="button" class="admin-topbar-icon-button"
-                    aria-label="Thông báo (@Notifications.UnreadCount chưa đọc)"
+                    aria-label="Thông báo (@NavState.UnreadNotifications chưa đọc)"
                     title="Thông báo"
                     @onclick="ToggleNotifications"
                     @onclick:stopPropagation="true">
                 <span aria-hidden="true">@Icon("bell")</span>
-                @if (Notifications.UnreadCount > 0)
+                @if (NavState.UnreadNotifications > 0)
                 {
-                    <span class="admin-topbar-badge" aria-hidden="true">@Notifications.UnreadCount</span>
+                    <span class="admin-topbar-badge" aria-hidden="true">@NavState.UnreadNotifications</span>
                 }
             </button>
             @if (_isNotificationsOpen)
@@ -47,21 +46,34 @@
                 <div class="admin-flyout admin-flyout-notifications" id="admin-flyout-notifications" role="dialog" aria-label="Thông báo gần đây">
                     <div class="admin-flyout-header">
                         <span class="admin-flyout-title">Thông báo gần đây</span>
-                        <span class="admin-flyout-meta">@Notifications.UnreadCount chưa đọc</span>
+                        <span class="admin-flyout-meta">@NavState.UnreadNotifications chưa đọc</span>
                     </div>
                     <ul class="admin-flyout-list">
-                        @foreach (var note in NavState.NotificationPreviews)
+                        @if (NavState.NotificationPreviews.Count == 0)
                         {
-                            <li class="admin-flyout-item">
-                                <span class="admin-flyout-item-title">@note.Title</span>
-                                <span class="admin-flyout-item-body">@note.Body</span>
-                                <span class="admin-flyout-item-meta">@note.Timestamp</span>
+                            <li class="admin-flyout-item is-empty">
+                                <span class="admin-flyout-item-body">Không có thông báo gần đây.</span>
                             </li>
+                        }
+                        else
+                        {
+                            @foreach (var note in NavState.NotificationPreviews)
+                            {
+                                <li>
+                                    <button type="button"
+                                            class="@($"admin-flyout-item admin-flyout-item-button{(note.IsUnread ? " is-unread" : string.Empty)}")"
+                                            @onclick="() => OpenNotification(note)">
+                                        <span class="admin-flyout-item-title">@note.Title</span>
+                                        <span class="admin-flyout-item-body">@note.Body</span>
+                                        <span class="admin-flyout-item-meta">@note.Timestamp</span>
+                                    </button>
+                                </li>
+                            }
                         }
                     </ul>
                     <div class="admin-flyout-footer-actions">
                         <button type="button" class="admin-flyout-action" @onclick="OnMarkAllRead">Đánh dấu tất cả đã đọc</button>
-                        <a class="admin-flyout-footer-link" href="/admin/cai-dat#thong-bao" @onclick="CloseFlyouts">Xem tất cả thông báo</a>
+                        <a class="admin-flyout-footer-link" href="/thong-bao" @onclick="CloseFlyouts">Xem tất cả thông báo</a>
                     </div>
                 </div>
             }
@@ -140,12 +152,20 @@
         ["/admin/bao-cao/tieu-thu"] = ("Báo cáo", "Tiêu thụ vật tư"),
         ["/admin/lam-sang"] = ("Lâm sàng", "Bảng điều phối"),
         ["/admin/cai-dat"] = ("Cài đặt", "Tài khoản"),
+        ["/phe-duyet"] = ("Phê duyệt quyền", "Hộp yêu cầu"),
+        ["/tai-nguyen"] = ("Tài nguyên", "Danh mục và định mức"),
+        ["/dieu-phoi"] = ("Điều phối", "Chỉ định kỹ thuật"),
+        ["/phac-do-pro"] = ("Phác đồ", "Không gian phác đồ"),
+        ["/lam-sang"] = ("Lâm sàng", "Bệnh nhân và phác đồ"),
+        ["/thong-bao"] = ("Thông báo", "Trung tâm thông báo"),
+        ["/admin/he-thong/man-hinh"] = ("Hệ thống", "Màn hình"),
+        ["/admin/ho-so"] = ("Hồ sơ", "Cá nhân"),
     };
 
     protected override void OnInitialized()
     {
         Navigation.LocationChanged += OnLocationChanged;
-        Notifications.StateChanged += OnNotificationsChanged;
+        NavState.StateChanged += OnNavStateChanged;
         ThemeBus.ToggleRequested += OnThemeToggleRequested;
         ThemeBus.ExportConsumptionRequested += OnExportConsumptionRequested;
         UserContext.StateChanged += OnUserChanged;
@@ -184,7 +204,7 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnNotificationsChanged() => InvokeAsync(StateHasChanged);
+    private void OnNavStateChanged() => InvokeAsync(StateHasChanged);
 
     private async void OnThemeToggleRequested()
     {
@@ -262,8 +282,15 @@
 
     private void OnMarkAllRead()
     {
-        Notifications.MarkAllRead();
+        NavState.MarkAllNotificationsRead();
         _isNotificationsOpen = false;
+    }
+
+    private void OpenNotification(AdminNotificationStub note)
+    {
+        NavState.MarkNotificationRead(note.NotificationId);
+        CloseFlyouts();
+        Navigation.NavigateTo($"/thong-bao?notificationId={note.NotificationId:D}");
     }
 
     private async Task OnToggleTheme()
@@ -334,7 +361,7 @@
     public void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
-        Notifications.StateChanged -= OnNotificationsChanged;
+        NavState.StateChanged -= OnNavStateChanged;
         ThemeBus.ToggleRequested -= OnThemeToggleRequested;
         ThemeBus.ExportConsumptionRequested -= OnExportConsumptionRequested;
         UserContext.StateChanged -= OnUserChanged;

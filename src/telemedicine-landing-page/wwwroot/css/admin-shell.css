@@ -575,8 +575,39 @@
     transition: background var(--motion-subtle);
 }
 
-.admin-flyout-item:hover {
+.admin-flyout-item:hover,
+.admin-flyout-item:focus-visible {
     background: var(--color-primary-soft);
+}
+
+.admin-flyout-item-button {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-flyout-item-button:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.admin-flyout-item.is-empty {
+    cursor: default;
+}
+
+.admin-flyout-item-button.is-unread .admin-flyout-item-title::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 6px;
+    border-radius: 999px;
+    background: var(--color-danger);
+    vertical-align: middle;
 }
 
 .admin-flyout-item-title {

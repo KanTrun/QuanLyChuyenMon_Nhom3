@@ -26,6 +26,9 @@ public sealed record PaletteCommand(
 /// Lightweight notification preview shown inside the top-bar bell flyout.
 /// </summary>
 public sealed record AdminNotificationStub(
+    Guid NotificationId,
     string Title,
     string Body,
-    string Timestamp);
+    string Timestamp,
+    bool IsUnread,
+    string Severity);

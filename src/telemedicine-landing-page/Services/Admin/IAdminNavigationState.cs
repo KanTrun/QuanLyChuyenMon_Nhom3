@@ -25,6 +25,8 @@ public interface IAdminNavigationState
     void OpenChatbot();
     void CloseChatbot();
     void ToggleChatbot();
+    void MarkNotificationRead(Guid notificationId);
+    void MarkAllNotificationsRead();
 
     event Action? StateChanged;
 }
