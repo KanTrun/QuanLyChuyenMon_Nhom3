@@ -1,6 +1,22 @@
 # Project Changelog
 
 ## 2026-05-21
+### Production Architecture Foundation
+| Item | Description |
+|---|---|
+| Identity foundation | Added ASP.NET Core Identity entities/tables under `auth` schema while preserving `med.users` and dynamic RBAC as source of truth |
+| Permission claims | Added custom `permission` claims transformation, permission service, authorization requirement/handler and starter policies |
+| Password login guard | Active accounts without password hash no longer sign in through the manual SQL context |
+| Database resilience | Configured SQL retry, command timeout, pool defaults and `/health` JSON endpoint |
+| Observability | Added Serilog structured logging with console, daily JSON file and optional Seq sink; enabled request logging |
+| Docker migrations | `db-init` now runs SQL scripts from `scripts/migrations` even when the database already exists |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release --no-restore` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 112 tests |
+
 ### Audit Remediation
 | Item | Description |
 |---|---|

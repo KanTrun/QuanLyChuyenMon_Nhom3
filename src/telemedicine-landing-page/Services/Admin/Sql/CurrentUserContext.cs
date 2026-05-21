@@ -46,15 +46,14 @@ public sealed class CurrentUserContext : ICurrentUserContext
         var candidate = user ?? inactiveUser;
         if (candidate is null) return new LoginAttemptResult(LoginAttemptStatus.InvalidCredentials);
 
-        // Nếu chưa đặt mật khẩu (NULL hoặc rỗng) → cho đăng nhập theo username.
+        // Production guard: active accounts without a password must set one
+        // through a verified reset/setup flow before they can sign in.
         if (string.IsNullOrEmpty(candidate.PasswordHash))
         {
             if (inactiveUser is not null)
                 return new LoginAttemptResult(LoginAttemptStatus.Inactive);
 
-            CurrentUser = candidate;
-            StateChanged?.Invoke();
-            return new LoginAttemptResult(LoginAttemptStatus.Success, candidate);
+            return new LoginAttemptResult(LoginAttemptStatus.PasswordNotSet);
         }
 
         // Kiểm tra mật khẩu (SHA256)
@@ -73,15 +72,7 @@ public sealed class CurrentUserContext : ICurrentUserContext
     /// <summary>Đăng nhập chỉ bằng username (dùng cho lần đầu khi chưa đặt mật khẩu).</summary>
     public AppUser? LoginByUsernameOnly(string username)
     {
-        var user = _db.Users.FirstOrDefault(u => u.Username == username && u.Status == "active");
-        if (user is null) return null;
-
-        // Chỉ cho phép nếu chưa có password_hash
-        if (!string.IsNullOrEmpty(user.PasswordHash)) return null;
-
-        CurrentUser = user;
-        StateChanged?.Invoke();
-        return user;
+        return null;
     }
 
     public void SignOut()

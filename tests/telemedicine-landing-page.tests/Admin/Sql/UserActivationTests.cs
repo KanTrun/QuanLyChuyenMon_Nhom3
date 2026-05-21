@@ -78,4 +78,25 @@ public sealed class UserActivationTests
         Assert.Null(result.User);
         Assert.Null(context.CurrentUser);
     }
+
+    [Fact]
+    public void LoginByUsernameDetailed_BlocksActiveAccountWithoutPassword()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        db.Users.Add(new AppUser
+        {
+            Username = "active_without_password",
+            FullName = "Nguoi dung thieu mat khau",
+            Status = "active"
+        });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+
+        var result = context.LoginByUsernameDetailed("active_without_password", "anything");
+
+        Assert.Equal(LoginAttemptStatus.PasswordNotSet, result.Status);
+        Assert.Null(result.User);
+        Assert.Null(context.CurrentUser);
+    }
 }

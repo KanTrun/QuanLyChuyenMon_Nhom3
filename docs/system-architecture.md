@@ -39,6 +39,20 @@ Ngày 2026-05-21, repo có Docker Compose full stack để chạy app, database 
 
 App container không dùng connection string cục bộ trong `appsettings.json`; Compose override qua `ConnectionStrings__MedDb` trỏ đến host nội bộ `sqlserver,1433`.
 
+## Production Foundation Architecture
+Ngày 2026-05-21, app có lớp production foundation đầu tiên cho auth, resilience và observability.
+
+| Area | Decision |
+|---|---|
+| Identity foundation | `ApplicationUser`/`ApplicationRole` use ASP.NET Core Identity tables in schema `auth`, linked to domain user `med.users` by `MedUserId` |
+| Dynamic RBAC bridge | `DynamicPermissionClaimsTransformation` loads effective permissions from `EffectivePermissionResolver`, caches for 5 minutes and emits `permission` claims |
+| Authorization policy | `PermissionRequirement`/`PermissionAuthorizationHandler` support policies such as `CanManageUsers`, `CanViewReports`, `CanApproveProcedures` |
+| Null password guard | `CurrentUserContext` no longer allows active accounts with `PasswordHash = NULL` to sign in |
+| SQL resilience | `MedDbContext` uses retry-on-failure, 60-second command timeout and connection pool defaults |
+| Health endpoint | `/health` returns JSON for DB context and SQL Server dependency state |
+| Structured logging | Serilog writes console and daily JSON files, with optional Seq via `Serilog:SeqServerUrl` |
+| Docker migration runner | `db-init` applies `scripts/migrations/*.sql` even when the database is already initialized |
+
 ## Procedure Module Architecture
 Kiến trúc dưới đây là logic đang được hiện thực trong module QLCM Pro của Blazor app.
 

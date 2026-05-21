@@ -13,7 +13,7 @@
 ## Phases
 | Phase | Status | Goal |
 |---|---|---|
-| 01 | In Progress | Production foundation: Identity-compatible auth bridge, custom permission claims, DB resiliency/health, Serilog |
+| 01 | Complete | Production foundation: Identity-compatible auth bridge, custom permission claims, DB resiliency/health, Serilog |
 | 02 | Planned | Security and validation: strong passwords, null password block, FluentValidation, admin route guards |
 | 03 | Planned | Architecture/business guards: workflow state machine, service extraction, Hangfire wrapper |
 | 04 | Planned | Realtime: SignalR notification hub, persisted realtime bell, collaboration presence hooks |
@@ -31,9 +31,9 @@
 
 ## Definition of Done
 - Build passes with 0 new warnings.
-- Tests pass and new critical logic has unit/integration coverage.
-- Docs updated: changelog, roadmap, architecture.
-- Phase commits are focused and conventional.
+- Tests pass and new critical logic has unit/integration coverage. Phase 01: 112 tests passed.
+- Docs updated: changelog, roadmap, architecture. Phase 01 complete.
+- Phase commits are focused and conventional. Phase 01 pending commit.
 - Branch pushed after verified phase completion.
 
 ## Unresolved Questions

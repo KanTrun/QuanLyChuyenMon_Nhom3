@@ -2,7 +2,7 @@
 
 ## Overview
 - Priority: Critical
-- Status: In Progress
+- Status: Complete
 - Goal: Add production-grade foundations that do not break the existing SQL-backed QLCM workflows.
 
 ## Requirements
@@ -36,6 +36,8 @@
 - Authorization services can check dynamic permissions through claims.
 - `/health` reports app and DB health.
 - Build/test pass.
+- Release build passed with 0 warnings and 0 errors.
+- Test suite passed with 112 tests.
 
 ## Security Considerations
 - Do not hardcode secrets.

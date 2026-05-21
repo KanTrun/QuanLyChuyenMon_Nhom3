@@ -143,13 +143,13 @@
                 return;
             }
 
-            var user = loginResult.User;
-
-            // Nếu thất bại, thử đăng nhập không mật khẩu (tài khoản chưa đặt password)
-            if (user is null)
+            if (loginResult.Status == LoginAttemptStatus.PasswordNotSet)
             {
-                user = UserContext.LoginByUsernameOnly(_username.Trim());
+                _errorMessage = "Tài khoản chưa có mật khẩu. Vui lòng liên hệ quản trị viên để nhận liên kết thiết lập mật khẩu.";
+                return;
             }
+
+            var user = loginResult.User;
 
             if (user is null)
             {
