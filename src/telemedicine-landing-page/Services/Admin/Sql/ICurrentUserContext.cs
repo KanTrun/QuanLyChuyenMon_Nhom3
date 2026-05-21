@@ -17,11 +17,11 @@ public interface ICurrentUserContext
     /// <summary>Đặt người dùng hiện tại theo UserId.</summary>
     void SetCurrentUser(Guid userId);
 
-    /// <summary>Đăng nhập bằng username + password. Trả về null nếu thất bại.</summary>
-    AppUser? LoginByUsername(string username, string password);
+    /// <summary>Đăng nhập bằng tên đăng nhập hoặc email + mật khẩu. Trả về null nếu thất bại.</summary>
+    AppUser? Login(string identifier, string password);
 
-    /// <summary>Đăng nhập chỉ bằng username (tài khoản chưa đặt mật khẩu).</summary>
-    AppUser? LoginByUsernameOnly(string username);
+    /// <summary>Đăng nhập chỉ bằng tên đăng nhập hoặc email (tài khoản chưa đặt mật khẩu).</summary>
+    AppUser? LoginWithoutPassword(string identifier);
 
     /// <summary>Đăng xuất người dùng hiện tại.</summary>
     void SignOut();

@@ -11,6 +11,7 @@ namespace TelemedicineLandingPage.Services.Admin;
 public sealed class AdminNavigationState : IAdminNavigationState, IDisposable
 {
     private static readonly IReadOnlyList<AdminNavItem> SeededNavItems = BuildNavItems();
+    private const string AccessRequestUrl = "/admin/yeu-cau-quyen";
     private static readonly IReadOnlyDictionary<int, string> SeededHotkeyMap = new Dictionary<int, string>
     {
         [0] = "/admin",
@@ -25,13 +26,14 @@ public sealed class AdminNavigationState : IAdminNavigationState, IDisposable
     private readonly IMedDataStore _store;
     private readonly ICurrentUserContext _userContext;
     private readonly IThemeBus _themeBus;
+    private readonly IReadOnlyList<PaletteCommand> _allCommands;
 
     public AdminNavigationState(IMedDataStore store, ICurrentUserContext userContext, IThemeBus themeBus)
     {
         _store = store;
         _userContext = userContext;
         _themeBus = themeBus;
-        Commands = BuildCommands(this);
+        _allCommands = BuildCommands(this);
         _store.StateChanged += OnStoreChanged;
         _userContext.StateChanged += OnStoreChanged;
     }
@@ -39,8 +41,14 @@ public sealed class AdminNavigationState : IAdminNavigationState, IDisposable
     public bool IsSidebarCollapsed { get; private set; }
     public bool IsPaletteOpen { get; private set; }
     public bool IsChatbotOpen { get; private set; }
-    public IReadOnlyList<AdminNavItem> NavItems => SeededNavItems;
-    public IReadOnlyList<PaletteCommand> Commands { get; }
+    public IReadOnlyList<AdminNavItem> NavItems
+        => IsPrivilegedAdmin()
+            ? SeededNavItems.Where(item => !string.Equals(item.Url, AccessRequestUrl, StringComparison.OrdinalIgnoreCase)).ToList()
+            : SeededNavItems;
+    public IReadOnlyList<PaletteCommand> Commands
+        => IsPrivilegedAdmin()
+            ? _allCommands.Where(command => !string.Equals(command.NavigateTo, AccessRequestUrl, StringComparison.OrdinalIgnoreCase)).ToList()
+            : _allCommands;
     public IReadOnlyDictionary<int, string> HotkeyMap => SeededHotkeyMap;
 
     public int UnreadNotifications
@@ -134,6 +142,19 @@ public sealed class AdminNavigationState : IAdminNavigationState, IDisposable
     private void OnStoreChanged() => Raise();
     private void Raise() => StateChanged?.Invoke();
 
+    private bool IsPrivilegedAdmin()
+    {
+        var user = _userContext.CurrentUser;
+        if (user is null)
+        {
+            return false;
+        }
+
+        return string.Equals(user.Username, "admin", StringComparison.OrdinalIgnoreCase) ||
+               _userContext.HasPermission("SCR_PERMISSIONS:DELETE") ||
+               _userContext.HasPermission("PERM_PERMISSIONS_delete");
+    }
+
     private static string FormatRelative(DateTime when)
     {
         var delta = DateTime.Now - when.ToLocalTime();
@@ -162,6 +183,7 @@ public sealed class AdminNavigationState : IAdminNavigationState, IDisposable
                 new("Tạo mới", "/admin/quy-trinh/tao", "plus", null),
                 new("Phê duyệt quy trình", "/admin/quy-trinh/phe-duyet", "check", null),
             }),
+            new("Yêu cầu quyền", "/admin/yeu-cau-quyen", "plus", null),
             new("Phân quyền", "/admin/phan-quyen", "shield", null),
             new("Phê duyệt quyền", "/phe-duyet", "check", "Alt+2"),
             new("Danh mục", "/admin/danh-muc", "catalog", null),
@@ -199,6 +221,7 @@ public sealed class AdminNavigationState : IAdminNavigationState, IDisposable
         }
 
         commands.Add(new PaletteCommand("Hành động nhanh", "Tạo quy trình mới", "Mở biểu mẫu tạo quy trình kỹ thuật", null, "/admin/quy-trinh/tao", null));
+        commands.Add(new PaletteCommand("Hành động nhanh", "Gửi yêu cầu quyền truy cập", "Tạo yêu cầu để admin cấp quyền truy cập màn hình/chức năng", null, "/admin/yeu-cau-quyen", null));
         commands.Add(new PaletteCommand("Hành động nhanh", "Phê duyệt quy trình", "Mở danh sách quy trình chờ duyệt", null, "/admin/quy-trinh/phe-duyet", null));
         commands.Add(new PaletteCommand("Hành động nhanh", "Đánh dấu tất cả thông báo đã đọc", "Cập nhật thông báo của người dùng hiện tại", null, null, () => { state.MarkAllNotificationsRead(); return Task.CompletedTask; }));
         commands.Add(new PaletteCommand("Hành động nhanh", "Xuất báo cáo tiêu thụ", "Mở trang xuất báo cáo tiêu thụ vật tư", null, "/admin/bao-cao/tieu-thu?xuat=1", null));

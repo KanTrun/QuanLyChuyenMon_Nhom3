@@ -21,7 +21,7 @@
 
     <AdminDataTable TItem="PermissionChangeRequest"
                     Items="_pending"
-                    ColumnCount="5"
+                    ColumnCount="6"
                     CurrentPage="1"
                     PageSize="50"
                     TotalItems="_pending.Count"
@@ -29,7 +29,8 @@
                     EmptyBody="Hiện tại không có yêu cầu nào đang chờ phê duyệt.">
         <HeaderTemplate>
             <th>Người yêu cầu</th>
-            <th>Loại đối tượng</th>
+            <th>Đối tượng</th>
+            <th>Quyền yêu cầu</th>
             <th>Lý do</th>
             <th>Ngày yêu cầu</th>
             <th>Thao tác</th>
@@ -38,8 +39,9 @@
             <tr>
                 <td>@GetUserName(req.RequestedBy)</td>
                 <td>
-                    <AdminBadge Tone="tone-secondary">@req.TargetType</AdminBadge>
+                    <AdminBadge Tone="tone-secondary">@GetTargetLabel(req)</AdminBadge>
                 </td>
+                <td>@GetRequestedPermissions(req.PermissionChangeRequestId)</td>
                 <td>@req.Reason</td>
                 <td>@req.RequestedAt.ToString("dd/MM/yyyy HH:mm")</td>
                 <td style="display:flex;gap:0.5rem;">
@@ -74,12 +76,45 @@
     private string GetUserName(Guid userId)
         => Store.Users.FirstOrDefault(u => u.UserId == userId)?.FullName ?? "Không xác định";
 
+    private string GetTargetLabel(PermissionChangeRequest req)
+    {
+        if (req.TargetUserId is { } userId)
+        {
+            return $"Người dùng: {GetUserName(userId)}";
+        }
+
+        if (req.TargetRoleId is { } roleId)
+        {
+            return $"Vai trò: {Store.Roles.FirstOrDefault(r => r.RoleId == roleId)?.Name ?? "Không xác định"}";
+        }
+
+        if (req.TargetGroupId is { } groupId)
+        {
+            return $"Nhóm: {Store.Groups.FirstOrDefault(g => g.GroupId == groupId)?.Name ?? "Không xác định"}";
+        }
+
+        return req.TargetType;
+    }
+
+    private string GetRequestedPermissions(Guid requestId)
+    {
+        var names = Store.PermissionChangeItems
+            .Where(i => i.PermissionChangeRequestId == requestId)
+            .Select(i => Store.Permissions.FirstOrDefault(p => p.PermissionId == i.PermissionId)?.PermissionCode)
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Distinct()
+            .ToList();
+
+        return names.Count == 0 ? "—" : string.Join(", ", names);
+    }
+
     private void Approve(Guid requestId)
     {
         try
         {
             var actor = UserContext.CurrentUser?.UserId ?? Guid.Empty;
             RequestService.Approve(requestId, actor);
+            Refresh();
             Toast.Show("Đã phê duyệt yêu cầu thành công.", "success");
         }
         catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
@@ -91,6 +126,7 @@
         {
             var actor = UserContext.CurrentUser?.UserId ?? Guid.Empty;
             RequestService.Reject(requestId, actor, "Từ chối bởi người phê duyệt");
+            Refresh();
             Toast.Show("Đã từ chối yêu cầu.", "warning");
         }
         catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }

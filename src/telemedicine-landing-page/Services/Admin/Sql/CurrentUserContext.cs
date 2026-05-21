@@ -7,7 +7,7 @@ namespace TelemedicineLandingPage.Services.Admin.Sql;
 
 /// <summary>
 /// Triển khai ngữ cảnh người dùng hiện tại (scoped per-circuit).
-/// Đăng nhập bằng username + password (SHA256 hash).
+/// Đăng nhập bằng tên đăng nhập hoặc email + password (SHA256 hash).
 /// </summary>
 public sealed class CurrentUserContext : ICurrentUserContext
 {
@@ -32,10 +32,10 @@ public sealed class CurrentUserContext : ICurrentUserContext
         StateChanged?.Invoke();
     }
 
-    /// <summary>Đăng nhập bằng username + password. Trả về null nếu thất bại.</summary>
-    public AppUser? LoginByUsername(string username, string password)
+    /// <summary>Đăng nhập bằng tên đăng nhập hoặc email + password. Trả về null nếu thất bại.</summary>
+    public AppUser? Login(string identifier, string password)
     {
-        var user = _db.Users.FirstOrDefault(u => u.Username == username && u.Status == "active");
+        var user = FindActiveUserByIdentifier(identifier);
         if (user is null) return null;
 
         // Nếu chưa đặt mật khẩu (NULL hoặc rỗng) → cho đăng nhập luôn
@@ -56,10 +56,10 @@ public sealed class CurrentUserContext : ICurrentUserContext
         return user;
     }
 
-    /// <summary>Đăng nhập chỉ bằng username (dùng cho lần đầu khi chưa đặt mật khẩu).</summary>
-    public AppUser? LoginByUsernameOnly(string username)
+    /// <summary>Đăng nhập chỉ bằng tên đăng nhập hoặc email (dùng cho lần đầu khi chưa đặt mật khẩu).</summary>
+    public AppUser? LoginWithoutPassword(string identifier)
     {
-        var user = _db.Users.FirstOrDefault(u => u.Username == username && u.Status == "active");
+        var user = FindActiveUserByIdentifier(identifier);
         if (user is null) return null;
 
         // Chỉ cho phép nếu chưa có password_hash
@@ -68,6 +68,16 @@ public sealed class CurrentUserContext : ICurrentUserContext
         CurrentUser = user;
         StateChanged?.Invoke();
         return user;
+    }
+
+    private AppUser? FindActiveUserByIdentifier(string identifier)
+    {
+        var normalizedIdentifier = identifier.Trim().ToLowerInvariant();
+
+        return _db.Users.FirstOrDefault(u =>
+            u.Status == "active" &&
+            (u.Username.ToLower() == normalizedIdentifier ||
+             (u.Email != null && u.Email.ToLower() == normalizedIdentifier)));
     }
 
     public void SignOut()

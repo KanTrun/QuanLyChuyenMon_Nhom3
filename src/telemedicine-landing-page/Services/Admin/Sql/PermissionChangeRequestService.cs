@@ -1,5 +1,6 @@
 using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Admin.Sql;
+using Microsoft.EntityFrameworkCore;
 
 namespace TelemedicineLandingPage.Services.Admin.Sql;
 
@@ -66,6 +67,8 @@ public sealed class PermissionChangeRequestService
         _db.PermissionChangeRequests.Entry(req).CurrentValues.SetValues(updated);
         _db.SaveChanges();
 
+        NotifyApprovers(requestId, req.RequestedBy);
+
         _audit.Append(new AuditLog
         {
             CorrelationId = Guid.NewGuid(),
@@ -84,17 +87,43 @@ public sealed class PermissionChangeRequestService
             throw MedDomainException.Constraint("CK_permission_change_approve", 50014,
                 "Chỉ có thể phê duyệt yêu cầu đang chờ phê duyệt.");
 
-        var newStatus = schedule ? "scheduled" : "applied";
+        var effectiveAt = schedule
+            ? req.EffectiveAt
+            : (req.EffectiveAt > DateTime.UtcNow ? DateTime.UtcNow : req.EffectiveAt);
         var updated = req with
         {
-            ChangeStatus = newStatus,
+            ChangeStatus = "scheduled",
             ApprovedBy = approverUserId,
             ApprovedAt = DateTime.UtcNow,
-            AppliedAt = schedule ? null : DateTime.UtcNow,
-            AppliedBy = schedule ? null : approverUserId
+            AppliedAt = null,
+            AppliedBy = approverUserId,
+            EffectiveAt = effectiveAt,
+            ErrorMessage = null
         };
         _db.PermissionChangeRequests.Entry(req).CurrentValues.SetValues(updated);
         _db.SaveChanges();
+
+        if (!schedule)
+        {
+            _db.Database.ExecuteSqlRaw("EXEC med.sp_apply_due_permission_changes");
+
+            var applied = GetRequestOrThrow(requestId);
+            if (applied.ChangeStatus == "failed")
+            {
+                throw MedDomainException.Constraint("CK_permission_change_apply_failed", 50018,
+                    applied.ErrorMessage ?? "Không thể áp dụng quyền sau khi phê duyệt.");
+            }
+
+            if (applied.ChangeStatus != "applied")
+            {
+                throw MedDomainException.Constraint("CK_permission_change_apply_pending", 50019,
+                    "Yêu cầu đã được duyệt nhưng chưa được áp dụng vào quyền truy cập.");
+            }
+        }
+
+        NotifyRequester(requestId, "permission_change", schedule
+            ? "Yêu cầu quyền đã được phê duyệt và lên lịch áp dụng."
+            : "Yêu cầu quyền đã được phê duyệt và áp dụng.");
 
         _audit.Append(new AuditLog
         {
@@ -117,6 +146,8 @@ public sealed class PermissionChangeRequestService
         var updated = req with { ChangeStatus = "rejected" };
         _db.PermissionChangeRequests.Entry(req).CurrentValues.SetValues(updated);
         _db.SaveChanges();
+
+        NotifyRequester(requestId, "permission_change", $"Yêu cầu quyền bị từ chối: {reason}");
 
         _audit.Append(new AuditLog
         {
@@ -177,5 +208,63 @@ public sealed class PermissionChangeRequestService
                    .FirstOrDefault(r => r.PermissionChangeRequestId == requestId)
                ?? throw MedDomainException.Constraint("FK_permission_change_request", 547,
                    "Yêu cầu thay đổi quyền không tồn tại.");
+    }
+
+    private void NotifyApprovers(Guid requestId, Guid requestedByUserId)
+    {
+        var approverRoleIds = _db.Roles
+            .Where(r => r.Status == "active" && r.Code == "SYSTEM_ADMIN")
+            .Select(r => r.RoleId)
+            .ToHashSet();
+
+        var approverUserIds = _db.UserRoles
+            .Where(ur => approverRoleIds.Contains(ur.RoleId) && ur.EffectiveTo == null)
+            .Select(ur => ur.UserId)
+            .ToHashSet();
+
+        foreach (var adminUserId in _db.Users
+                     .Where(u => u.Status == "active" && u.Username == "admin")
+                     .Select(u => u.UserId))
+        {
+            approverUserIds.Add(adminUserId);
+        }
+
+        var requesterName = _db.Users
+            .Where(u => u.UserId == requestedByUserId)
+            .Select(u => u.FullName)
+            .FirstOrDefault() ?? "Người dùng";
+
+        foreach (var approverUserId in approverUserIds)
+        {
+            _db.Notifications.Add(new MedNotification
+            {
+                RecipientUserId = approverUserId,
+                NotificationType = "in_app",
+                Title = "Có yêu cầu quyền truy cập mới",
+                Body = $"{requesterName} vừa gửi yêu cầu cấp quyền truy cập cần bạn phê duyệt.",
+                Severity = "info",
+                SourceType = "permission_change",
+                SourceId = requestId.ToString()
+            });
+        }
+
+        _db.SaveChanges();
+    }
+
+    private void NotifyRequester(Guid requestId, string sourceType, string body)
+    {
+        var req = GetRequestOrThrow(requestId);
+
+        _db.Notifications.Add(new MedNotification
+        {
+            RecipientUserId = req.RequestedBy,
+            NotificationType = "in_app",
+            Title = "Cập nhật yêu cầu quyền truy cập",
+            Body = body,
+            Severity = req.ChangeStatus == "rejected" ? "warning" : "info",
+            SourceType = sourceType,
+            SourceId = requestId.ToString()
+        });
+        _db.SaveChanges();
     }
 }

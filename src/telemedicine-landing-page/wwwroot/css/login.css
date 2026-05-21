@@ -248,6 +248,54 @@
     color: #64748b;
 }
 
+.password-input-wrapper {
+    position: relative;
+}
+
+.password-input-wrapper input {
+    padding-right: 3.5rem;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+    border-radius: 999px;
+    transition: color var(--motion-fast), background-color var(--motion-fast);
+}
+
+.password-toggle:hover {
+    color: #0d9488;
+    background: rgba(13, 148, 136, 0.08);
+}
+
+.password-toggle:focus-visible {
+    outline: none;
+    color: #0d9488;
+    background: rgba(13, 148, 136, 0.12);
+}
+
+[data-theme="dark"] .password-toggle {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .password-toggle:hover,
+[data-theme="dark"] .password-toggle:focus-visible {
+    color: #5eead4;
+    background: rgba(94, 234, 212, 0.12);
+}
+
 .form-options {
     display: flex;
     justify-content: space-between;
