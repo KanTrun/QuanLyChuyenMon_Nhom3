@@ -136,8 +136,15 @@
                 return;
             }
 
-            // Thử đăng nhập với mật khẩu
-            var user = UserContext.LoginByUsername(_username.Trim(), _password);
+            // Thử đăng nhập với mật khẩu và báo rõ nếu tài khoản đang chờ kích hoạt.
+            var loginResult = UserContext.LoginByUsernameDetailed(_username.Trim(), _password);
+            if (loginResult.Status == LoginAttemptStatus.Inactive)
+            {
+                _errorMessage = "Tài khoản đã được ghi nhận trong hệ thống nhưng chưa được quản trị viên kích hoạt.";
+                return;
+            }
+
+            var user = loginResult.User;
 
             // Nếu thất bại, thử đăng nhập không mật khẩu (tài khoản chưa đặt password)
             if (user is null)

@@ -34,26 +34,40 @@ public sealed class CurrentUserContext : ICurrentUserContext
 
     /// <summary>Đăng nhập bằng username + password. Trả về null nếu thất bại.</summary>
     public AppUser? LoginByUsername(string username, string password)
+        => LoginByUsernameDetailed(username, password).User;
+
+    /// <summary>Đăng nhập bằng username + password và phân biệt tài khoản chưa kích hoạt.</summary>
+    public LoginAttemptResult LoginByUsernameDetailed(string username, string password)
     {
         var user = _db.Users.FirstOrDefault(u => u.Username == username && u.Status == "active");
-        if (user is null) return null;
+        var inactiveUser = user is null
+            ? _db.Users.FirstOrDefault(u => u.Username == username && u.Status != "active" && u.DeletedAt == null)
+            : null;
+        var candidate = user ?? inactiveUser;
+        if (candidate is null) return new LoginAttemptResult(LoginAttemptStatus.InvalidCredentials);
 
-        // Nếu chưa đặt mật khẩu (NULL hoặc rỗng) → cho đăng nhập luôn
-        if (string.IsNullOrEmpty(user.PasswordHash))
+        // Nếu chưa đặt mật khẩu (NULL hoặc rỗng) → cho đăng nhập theo username.
+        if (string.IsNullOrEmpty(candidate.PasswordHash))
         {
-            CurrentUser = user;
+            if (inactiveUser is not null)
+                return new LoginAttemptResult(LoginAttemptStatus.Inactive);
+
+            CurrentUser = candidate;
             StateChanged?.Invoke();
-            return user;
+            return new LoginAttemptResult(LoginAttemptStatus.Success, candidate);
         }
 
         // Kiểm tra mật khẩu (SHA256)
         var inputHash = HashPassword(password);
-        if (user.PasswordHash != inputHash)
-            return null;
+        if (candidate.PasswordHash != inputHash)
+            return new LoginAttemptResult(LoginAttemptStatus.InvalidCredentials);
 
-        CurrentUser = user;
+        if (inactiveUser is not null)
+            return new LoginAttemptResult(LoginAttemptStatus.Inactive);
+
+        CurrentUser = candidate;
         StateChanged?.Invoke();
-        return user;
+        return new LoginAttemptResult(LoginAttemptStatus.Success, candidate);
     }
 
     /// <summary>Đăng nhập chỉ bằng username (dùng cho lần đầu khi chưa đặt mật khẩu).</summary>

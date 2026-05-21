@@ -31,4 +31,51 @@ public sealed class UserActivationTests
         Assert.Equal(userId, context.CurrentUser?.UserId);
         Assert.Equal("active", context.CurrentUser?.Status);
     }
+
+    [Fact]
+    public void LoginByUsernameDetailed_ReturnsInactiveForRegisteredUserWaitingActivation()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var userId = Guid.NewGuid();
+        db.Users.Add(new AppUser
+        {
+            UserId = userId,
+            Username = "waiting_user",
+            FullName = "Người dùng chờ kích hoạt",
+            Email = "waiting@example.com",
+            PasswordHash = CurrentUserContext.HashPassword("secret123"),
+            Status = "inactive"
+        });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+
+        var result = context.LoginByUsernameDetailed("waiting_user", "secret123");
+
+        Assert.Equal(LoginAttemptStatus.Inactive, result.Status);
+        Assert.Null(result.User);
+        Assert.Null(context.CurrentUser);
+    }
+
+    [Fact]
+    public void LoginByUsernameDetailed_DoesNotRevealInactiveStatusForWrongPassword()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        db.Users.Add(new AppUser
+        {
+            Username = "waiting_wrong_password",
+            FullName = "Người dùng sai mật khẩu",
+            PasswordHash = CurrentUserContext.HashPassword("secret123"),
+            Status = "inactive"
+        });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+
+        var result = context.LoginByUsernameDetailed("waiting_wrong_password", "wrongpass");
+
+        Assert.Equal(LoginAttemptStatus.InvalidCredentials, result.Status);
+        Assert.Null(result.User);
+        Assert.Null(context.CurrentUser);
+    }
 }

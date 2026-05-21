@@ -5,6 +5,7 @@
 | Item | Description |
 |---|---|
 | Login circuit crash | Removed duplicate `/admin/lam-sang` route ownership from the clinical workspace page so Blazor Router no longer terminates the circuit on `/login`; added a duplicate-route regression test |
+| Registration activation UX | Login now distinguishes correctly saved-but-inactive registrations from invalid credentials, and user management defaults to showing all accounts so new registrations are visible to admins |
 
 ### Changed
 | Item | Description |
@@ -24,7 +25,7 @@
 | Command | Result |
 |---|---|
 | `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
-| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 107 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 109 tests |
 | `docker compose build web` | Passed |
 | `docker compose up -d web` + `/admin` check | Passed, container healthy and HTTP 200 |
 

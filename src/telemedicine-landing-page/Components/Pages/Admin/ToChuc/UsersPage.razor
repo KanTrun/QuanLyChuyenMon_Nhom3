@@ -27,9 +27,9 @@
         <div class="admin-filter-field">
             <label class="admin-filter-label">Trạng thái</label>
             <select class="admin-select" @bind="_statusFilter" @bind:after="ResetAndPaginate">
+                <option value="all">Tất cả</option>
                 <option value="active">Đang hoạt động</option>
                 <option value="inactive">Lưu trữ/vô hiệu</option>
-                <option value="all">Tất cả</option>
             </select>
         </div>
         <div class="admin-filter-field">
@@ -216,7 +216,7 @@
     private FormMode _mode = FormMode.Create;
     private AppUser? _selectedUser;
     private string _search = string.Empty;
-    private string _statusFilter = "active";
+    private string _statusFilter = "all";
     private string _departmentFilter = string.Empty;
     private string _fullName = string.Empty;
     private string _username = string.Empty;
