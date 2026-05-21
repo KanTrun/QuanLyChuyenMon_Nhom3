@@ -5,6 +5,8 @@
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@inject IConfirmDialogService Confirm
+@inject AuditTrailService Audit
 @implements IDisposable
 
 <PageTitle>Phác đồ lâm sàng | QLCM Pro</PageTitle>
@@ -246,6 +248,14 @@
         }
     </ChildContent>
     <FooterContent>
+        @if (_selectedVersion?.StatusCode == "draft")
+        {
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="SubmitProtocolVersion">Gửi phê duyệt</button>
+        }
+        @if (_selectedVersion?.StatusCode == "pending_approval")
+        {
+            <button type="button" class="admin-btn admin-btn-primary" @onclick="PublishProtocolVersion">Phê duyệt và ban hành</button>
+        }
         <button type="button" class="admin-btn admin-btn-primary" @onclick="() => _drawerOpen = false">Đóng</button>
     </FooterContent>
 </AdminDrawer>
@@ -440,16 +450,11 @@
             {
                 ClinicalProtocolId = protocol.ClinicalProtocolId,
                 VersionNo = 1,
-                StatusCode = "active",
+                StatusCode = "draft",
                 Title = $"{protocol.Name} - Phiên bản 1",
                 Summary = string.IsNullOrWhiteSpace(_createSummary) ? null : _createSummary.Trim(),
                 ContentJson = "{}",
-                EffectiveFrom = DateTime.UtcNow,
-                CreatedBy = UserContext.CurrentUser?.UserId,
-                ApprovedBy = UserContext.CurrentUser?.UserId,
-                PublishedBy = UserContext.CurrentUser?.UserId,
-                ApprovedAt = DateTime.UtcNow,
-                PublishedAt = DateTime.UtcNow
+                CreatedBy = UserContext.CurrentUser?.UserId
             });
             Toasts.Show("Đã tạo phác đồ", protocol.Name, ToastVariant.Success);
             _createOpen = false;
@@ -460,25 +465,46 @@
         }
     }
 
-    private void ArchiveProtocol(Sql.ClinicalProtocol protocol)
+    private async Task ArchiveProtocol(Sql.ClinicalProtocol protocol)
     {
         if (!Guard.CanDo("SCR_PROTOCOLS:DELETE", "lưu trữ phác đồ"))
         {
             return;
         }
 
+        var ok = await Confirm.ShowAsync(
+            "Lưu trữ phác đồ",
+            $"Lưu trữ phác đồ \"{protocol.Name}\"?",
+            confirmText: "Lưu trữ",
+            isDanger: true);
+        if (!ok)
+        {
+            return;
+        }
+
         Store.UpdateClinicalProtocol(protocol with { Status = "archived" });
+        AppendAudit("archive", "clinical_protocol", protocol.ClinicalProtocolId.ToString(), protocol.OwnerDepartmentId);
         Toasts.Show("Đã lưu trữ phác đồ", protocol.Name, ToastVariant.Info);
     }
 
-    private void RestoreProtocol(Sql.ClinicalProtocol protocol)
+    private async Task RestoreProtocol(Sql.ClinicalProtocol protocol)
     {
         if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "khôi phục phác đồ"))
         {
             return;
         }
 
+        var ok = await Confirm.ShowAsync(
+            "Khôi phục phác đồ",
+            $"Khôi phục phác đồ \"{protocol.Name}\"?",
+            confirmText: "Khôi phục");
+        if (!ok)
+        {
+            return;
+        }
+
         Store.UpdateClinicalProtocol(protocol with { Status = "active" });
+        AppendAudit("restore", "clinical_protocol", protocol.ClinicalProtocolId.ToString(), protocol.OwnerDepartmentId);
         Toasts.Show("Đã khôi phục phác đồ", protocol.Name, ToastVariant.Success);
     }
 
@@ -592,6 +618,89 @@
         }
     }
 
+    private async Task SubmitProtocolVersion()
+    {
+        if (_selectedVersion is null)
+        {
+            return;
+        }
+
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "gửi phê duyệt phác đồ"))
+        {
+            return;
+        }
+
+        if (_selectedVersion.StatusCode != "draft")
+        {
+            Toasts.Show("Không thể gửi phê duyệt", "Chỉ phiên bản nháp mới được gửi phê duyệt.", ToastVariant.Warning);
+            return;
+        }
+
+        var ok = await Confirm.ShowAsync(
+            "Gửi phê duyệt",
+            $"Gửi phiên bản \"{_selectedVersion.Title}\" để phê duyệt?",
+            confirmText: "Gửi");
+        if (!ok)
+        {
+            return;
+        }
+
+        Store.UpdateClinicalProtocolVersion(_selectedVersion with { StatusCode = "pending_approval" });
+        AppendAudit("submit", "clinical_protocol_version", _selectedVersion.ClinicalProtocolVersionId.ToString(), _selected?.OwnerDepartmentId);
+        Toasts.Show("Đã gửi phê duyệt", _selectedVersion.Title, ToastVariant.Success);
+    }
+
+    private async Task PublishProtocolVersion()
+    {
+        if (_selectedVersion is null || _selected is null)
+        {
+            return;
+        }
+
+        if (!Guard.CanDo("SCR_PROTOCOLS:APPROVE", "ban hành phác đồ"))
+        {
+            return;
+        }
+
+        if (_selectedVersion.StatusCode != "pending_approval")
+        {
+            Toasts.Show("Không thể ban hành", "Chỉ phiên bản đang chờ phê duyệt mới được ban hành.", ToastVariant.Warning);
+            return;
+        }
+
+        var ok = await Confirm.ShowAsync(
+            "Ban hành phác đồ",
+            $"Phê duyệt và ban hành \"{_selectedVersion.Title}\"?",
+            confirmText: "Ban hành");
+        if (!ok)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        foreach (var active in Store.ClinicalProtocolVersions
+            .Where(v => v.ClinicalProtocolId == _selectedVersion.ClinicalProtocolId
+                && v.ClinicalProtocolVersionId != _selectedVersion.ClinicalProtocolVersionId
+                && v.StatusCode == "active")
+            .ToList())
+        {
+            Store.UpdateClinicalProtocolVersion(active with { StatusCode = "superseded", EffectiveTo = now });
+        }
+
+        Store.UpdateClinicalProtocolVersion(_selectedVersion with
+        {
+            StatusCode = "active",
+            ApprovedBy = UserContext.CurrentUser?.UserId,
+            PublishedBy = UserContext.CurrentUser?.UserId,
+            ApprovedAt = now,
+            PublishedAt = now,
+            EffectiveFrom = now,
+            EffectiveTo = null
+        });
+        AppendAudit("publish", "clinical_protocol_version", _selectedVersion.ClinicalProtocolVersionId.ToString(), _selected.OwnerDepartmentId);
+        Toasts.Show("Đã ban hành phác đồ", _selectedVersion.Title, ToastVariant.Success);
+    }
+
     private void ResetLinkForm()
     {
         _linkProcedureVersionId = string.Empty;
@@ -644,6 +753,20 @@
         "cancelled" => "tone-danger",
         _ => "tone-muted"
     };
+
+    private void AppendAudit(string actionCode, string targetType, string targetId, Guid? departmentId)
+    {
+        Audit.Append(new Sql.AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = UserContext.CurrentUser?.UserId,
+            ActorUsername = UserContext.CurrentUser?.Username,
+            ActionCode = actionCode,
+            TargetType = targetType,
+            TargetId = targetId,
+            DepartmentId = departmentId
+        });
+    }
 
     public void Dispose() => Store.StateChanged -= OnChanged;
 }

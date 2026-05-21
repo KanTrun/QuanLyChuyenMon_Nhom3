@@ -5,6 +5,7 @@
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@inject AuditTrailService Audit
 @implements IDisposable
 
 <PageTitle>Điều phối kỹ thuật | QLCM Pro</PageTitle>
@@ -235,6 +236,29 @@
                     </table>
                 </div>
             </div>
+
+            <div class="admin-panel" style="padding:14px;">
+                <h3 class="admin-panel-title">Lịch sử chỉ định</h3>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead><tr><th>Thời điểm</th><th>Hành động</th><th>Người thực hiện</th></tr></thead>
+                        <tbody>
+                            @foreach (var log in OrderAuditLogs())
+                            {
+                                <tr>
+                                    <td>@AdminDateTimeDisplay.ShortDateTime(log.OccurredAt)</td>
+                                    <td>@OrderAuditLabel(log.ActionCode)</td>
+                                    <td>@(log.ActorUsername ?? "—")</td>
+                                </tr>
+                            }
+                            @if (!OrderAuditLogs().Any())
+                            {
+                                <tr class="admin-table-empty-row"><td colspan="3"><div class="admin-empty"><div class="admin-empty-title">Chưa có lịch sử</div><div class="admin-empty-body">Các thay đổi chỉ định sẽ xuất hiện tại đây.</div></div></td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         }
     </ChildContent>
     <FooterContent>
@@ -432,6 +456,7 @@
                 OrderedAt = DateTime.UtcNow
             };
             Store.AddTechnicalOrder(order);
+            AppendOrderAudit(order, "create_order");
             Toasts.Show("Đã tạo chỉ định", GetServiceName(serviceId), ToastVariant.Success);
             _createOpen = false;
         }
@@ -461,6 +486,12 @@
             {
                 OrderStatus = status,
                 CompletedAt = status == "completed" ? DateTime.UtcNow : order.CompletedAt
+            });
+            AppendOrderAudit(order, status switch
+            {
+                "completed" => "complete_order",
+                "cancelled" => "cancel_order",
+                _ => "update"
             });
             Toasts.Show("Đã cập nhật trạng thái", Lookup(Sql.MedLookups.OrderStatuses, status), ToastVariant.Success);
         }
@@ -507,6 +538,10 @@
             });
             added++;
         }
+        if (added > 0)
+        {
+            AppendOrderAudit(_selected, "update");
+        }
         Toasts.Show("Đã tạo snapshot cần xác minh", $"{added} dòng định mức mới.", ToastVariant.Info);
     }
 
@@ -535,6 +570,7 @@
                 IsFinal = _usageFinal,
                 CapturedBy = UserContext.CurrentUser?.UserId
             });
+            AppendOrderAudit(_selected, "update");
             Toasts.Show("Đã ghi nhận sử dụng thực tế", GetResourceName(resourceId), ToastVariant.Success);
             ResetUsageForm();
         }
@@ -554,6 +590,10 @@
         try
         {
             Store.RemoveActualResourceUsage(usage.ActualResourceUsageId);
+            if (_selected is not null)
+            {
+                AppendOrderAudit(_selected, "delete");
+            }
             Toasts.Show("Đã xóa sử dụng thực tế", GetResourceName(usage.ResourceId), ToastVariant.Info);
         }
         catch (Exception ex)
@@ -629,6 +669,40 @@
         "insufficient" => "tone-danger",
         "adapter_error" => "tone-warning",
         _ => "tone-muted"
+    };
+
+    private IReadOnlyList<Sql.AuditLog> OrderAuditLogs()
+        => _selected is null
+            ? Array.Empty<Sql.AuditLog>()
+            : Store.AuditLogs
+                .Where(a => a.TargetId == _selected.TechnicalOrderId.ToString()
+                    && string.Equals(a.TargetType, "technical_order", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(a => a.OccurredAt)
+                .Take(20)
+                .ToList();
+
+    private void AppendOrderAudit(Sql.TechnicalOrder order, string actionCode)
+    {
+        Audit.Append(new Sql.AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = UserContext.CurrentUser?.UserId,
+            ActorUsername = UserContext.CurrentUser?.Username,
+            ActionCode = actionCode,
+            TargetType = "technical_order",
+            TargetId = order.TechnicalOrderId.ToString(),
+            DepartmentId = order.OrderingDepartmentId
+        });
+    }
+
+    private static string OrderAuditLabel(string actionCode) => actionCode switch
+    {
+        "create_order" => "Tạo chỉ định",
+        "complete_order" => "Hoàn thành chỉ định",
+        "cancel_order" => "Hủy chỉ định",
+        "update" => "Cập nhật",
+        "delete" => "Xóa dữ liệu liên quan",
+        _ => actionCode
     };
 
     public void Dispose() => Store.StateChanged -= OnChanged;

@@ -5,6 +5,7 @@
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@inject IConfirmDialogService Confirm
 @implements IDisposable
 
 <PageTitle>Danh mục kỹ thuật chuyên môn | QLCM Pro</PageTitle>
@@ -383,9 +384,19 @@
         }
     }
 
-    private void Archive(Sql.TechnicalService svc)
+    private async Task Archive(Sql.TechnicalService svc)
     {
         if (!Guard.CanDo("SCR_CATALOG:DELETE", "lưu trữ dịch vụ kỹ thuật"))
+        {
+            return;
+        }
+
+        var ok = await Confirm.ShowAsync(
+            "Lưu trữ dịch vụ",
+            $"Lưu trữ dịch vụ \"{svc.Name}\"?",
+            confirmText: "Lưu trữ",
+            isDanger: true);
+        if (!ok)
         {
             return;
         }

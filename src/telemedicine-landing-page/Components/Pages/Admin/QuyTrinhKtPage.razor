@@ -7,6 +7,7 @@
 @inject IConfirmDialogService Confirm
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@inject AuditTrailService Audit
 @implements IDisposable
 
 <PageTitle>Quy trình kỹ thuật | QLCM Pro</PageTitle>
@@ -378,6 +379,7 @@
         var ok = await Confirm.ShowAsync("Lưu trữ quy trình", $"Lưu trữ quy trình \"{row.Procedure.Name}\"?", confirmText: "Lưu trữ", isDanger: true);
         if (!ok) return;
         Store.UpdateProcedure(row.Procedure with { Status = "archived" });
+        AppendProcedureAudit("archive", row.Procedure);
         Toasts.Show("Đã lưu trữ quy trình", row.Procedure.Name, ToastVariant.Success);
     }
 
@@ -387,7 +389,22 @@
         var ok = await Confirm.ShowAsync("Khôi phục quy trình", $"Khôi phục quy trình \"{row.Procedure.Name}\"?", confirmText: "Khôi phục");
         if (!ok) return;
         Store.UpdateProcedure(row.Procedure with { Status = "active" });
+        AppendProcedureAudit("restore", row.Procedure);
         Toasts.Show("Đã khôi phục quy trình", row.Procedure.Name, ToastVariant.Success);
+    }
+
+    private void AppendProcedureAudit(string actionCode, Sql.ProfessionalProcedure procedure)
+    {
+        Audit.Append(new Sql.AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = UserContext.CurrentUser?.UserId,
+            ActorUsername = UserContext.CurrentUser?.Username,
+            ActionCode = actionCode,
+            TargetType = "professional_procedure",
+            TargetId = procedure.ProcedureId.ToString(),
+            DepartmentId = procedure.OwnerDepartmentId
+        });
     }
 
     private async Task SubmitAsync(Sql.ProcedureVersion version)

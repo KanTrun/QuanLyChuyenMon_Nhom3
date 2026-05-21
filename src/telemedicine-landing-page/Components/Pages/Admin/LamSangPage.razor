@@ -5,6 +5,7 @@
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@inject IConfirmDialogService Confirm
 @implements IDisposable
 
 <PageTitle>Lâm sàng | QLCM Pro</PageTitle>
@@ -394,9 +395,18 @@
         _patientCode = patient?.PatientCode ?? string.Empty;
     }
 
-    private void SetStatus(ClinicalRow row, string status)
+    private async Task SetStatus(ClinicalRow row, string status)
     {
         if (!Guard.CanDo("SCR_CLINICAL_ADMIN:EXECUTE", "cập nhật trạng thái áp dụng phác đồ"))
+        {
+            return;
+        }
+
+        var ok = await Confirm.ShowAsync(
+            "Cập nhật trạng thái",
+            $"Chuyển áp dụng phác đồ sang \"{Lookup(Sql.MedLookups.ProtocolApplicationStatuses, status)}\"?",
+            confirmText: "Cập nhật");
+        if (!ok)
         {
             return;
         }

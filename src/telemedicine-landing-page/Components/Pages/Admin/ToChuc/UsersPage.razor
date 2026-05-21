@@ -6,6 +6,7 @@
 @inject ICurrentUserContext UserContext
 @inject IToastService Toast
 @inject AdminActionGuard Guard
+@inject IConfirmDialogService Confirm
 @implements IDisposable
 
 <PageTitle>Người dùng | QLCM Pro</PageTitle>
@@ -197,6 +198,10 @@
             }
         </ChildContent>
         <FooterContent>
+            @if (_selectedUser is not null && !IsCurrentUser(_selectedUser))
+            {
+                <button class="admin-btn admin-btn-ghost" @onclick="() => ResetPassword(_selectedUser)">Đặt lại mật khẩu</button>
+            }
             @if (!IsReadonly)
             {
                 <button class="admin-btn admin-btn-primary" @onclick="SaveUser">Lưu</button>
@@ -372,7 +377,7 @@
         }
     }
 
-    private void ArchiveUser(AppUser user)
+    private async Task ArchiveUser(AppUser user)
     {
         if (!Guard.CanDo("SCR_ORG_USERS:DELETE", "lưu trữ người dùng"))
         {
@@ -385,6 +390,16 @@
             return;
         }
 
+        var ok = await Confirm.ShowAsync(
+            "Lưu trữ tài khoản",
+            $"Lưu trữ/vô hiệu hóa tài khoản \"{user.FullName}\"?",
+            confirmText: "Lưu trữ",
+            isDanger: true);
+        if (!ok)
+        {
+            return;
+        }
+
         try
         {
             Store.UpdateUser(user with { Status = "inactive", DeletedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
@@ -393,9 +408,18 @@
         catch (Exception ex) { Toast.Show("Không thể lưu trữ", ex.Message, ToastVariant.Error); }
     }
 
-    private void RestoreUser(AppUser user)
+    private async Task RestoreUser(AppUser user)
     {
         if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "khôi phục người dùng"))
+        {
+            return;
+        }
+
+        var ok = await Confirm.ShowAsync(
+            "Khôi phục tài khoản",
+            $"Khôi phục tài khoản \"{user.FullName}\"?",
+            confirmText: "Khôi phục");
+        if (!ok)
         {
             return;
         }
@@ -406,6 +430,40 @@
             Toast.Show("Đã khôi phục tài khoản", user.FullName, ToastVariant.Success);
         }
         catch (Exception ex) { Toast.Show("Không thể khôi phục", ex.Message, ToastVariant.Error); }
+    }
+
+    private async Task ResetPassword(AppUser user)
+    {
+        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "đặt lại mật khẩu người dùng"))
+        {
+            return;
+        }
+
+        if (IsCurrentUser(user))
+        {
+            Toast.Show("Không thể đặt lại", "Không đặt lại mật khẩu của chính tài khoản đang dùng tại đây.", ToastVariant.Warning);
+            return;
+        }
+
+        var ok = await Confirm.ShowAsync(
+            "Đặt lại mật khẩu",
+            $"Xóa mật khẩu hiện tại của \"{user.FullName}\"? Người dùng sẽ cần thiết lập lại mật khẩu.",
+            confirmText: "Đặt lại",
+            isDanger: true);
+        if (!ok)
+        {
+            return;
+        }
+
+        try
+        {
+            Store.UpdateUser(user with { PasswordHash = null, UpdatedAt = DateTime.UtcNow });
+            Toast.Show("Đã đặt lại mật khẩu", user.FullName, ToastVariant.Success);
+        }
+        catch (Exception ex)
+        {
+            Toast.Show("Không thể đặt lại mật khẩu", ex.Message, ToastVariant.Error);
+        }
     }
 
     private void AddRole()

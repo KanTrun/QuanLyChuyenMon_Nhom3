@@ -1,10 +1,12 @@
 @page "/register"
+@using System.Text.Json
 @using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Models.Admin.Sql
 @using TelemedicineLandingPage.Services.Admin.Sql
 @inject MedDbContext Db
 @inject NavigationManager Navigation
 @inject IToastService Toast
+@inject EffectivePermissionResolver Resolver
 
 <PageTitle>Đăng ký | QLCM Pro</PageTitle>
 
@@ -204,8 +206,9 @@
                 ActionCode = "create",
                 TargetType = "user",
                 TargetId = newUser.UserId.ToString(),
-                AfterJson = $"{{\"username\":\"{newUser.Username}\",\"fullName\":\"{newUser.FullName}\"}}"
+                AfterJson = JsonSerializer.Serialize(new { newUser.Username, newUser.FullName })
             });
+            NotifyAdministrators(newUser);
             Db.SaveChanges();
 
             _successMessage = $"Đã ghi nhận đăng ký. Tên đăng nhập của bạn là: {username}. Tài khoản cần quản trị viên kích hoạt trước khi sử dụng.";
@@ -223,6 +226,33 @@
         finally
         {
             _isLoading = false;
+        }
+    }
+
+    private void NotifyAdministrators(AppUser newUser)
+    {
+        var activeUsers = Db.Users
+            .Where(u => u.Status == "active" && u.DeletedAt == null)
+            .ToList();
+        var recipients = activeUsers
+            .Where(u => string.Equals(u.Username, "admin", StringComparison.OrdinalIgnoreCase)
+                || Resolver.HasPermission(u.UserId, "SCR_ORG_USERS:VIEW")
+                || Resolver.HasPermission(u.UserId, "SCR_ORG_USERS:UPDATE"))
+            .ToList();
+
+        foreach (var admin in recipients)
+        {
+            Db.Notifications.Add(new MedNotification
+            {
+                RecipientUserId = admin.UserId,
+                NotificationType = "user_registration_pending",
+                Title = "Tài khoản mới chờ kích hoạt",
+                Body = $"Tài khoản {newUser.FullName} ({newUser.Username}) vừa đăng ký và cần quản trị viên kích hoạt.",
+                Severity = "warning",
+                SourceType = "user",
+                SourceId = newUser.UserId.ToString(),
+                PayloadJson = JsonSerializer.Serialize(new { newUser.UserId, newUser.Username, newUser.Email })
+            });
         }
     }
 }

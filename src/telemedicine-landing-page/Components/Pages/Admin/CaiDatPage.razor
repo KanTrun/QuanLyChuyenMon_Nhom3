@@ -8,6 +8,7 @@
 @inject IThemeBus ThemeBus
 @inject IToastService Toasts
 @inject BrowserSessionService BrowserSession
+@inject IConfirmDialogService Confirm
 @inject NavigationManager Navigation
 @implements IDisposable
 
@@ -268,6 +269,16 @@
 
     private async Task OnLogout()
     {
+        var ok = await Confirm.ShowAsync(
+            "Đăng xuất",
+            "Bạn có chắc muốn đăng xuất khỏi phiên làm việc hiện tại?",
+            confirmText: "Đăng xuất",
+            isDanger: true);
+        if (!ok)
+        {
+            return;
+        }
+
         await BrowserSession.SignOutAsync();
         Navigation.NavigateTo("/login", forceLoad: false);
     }

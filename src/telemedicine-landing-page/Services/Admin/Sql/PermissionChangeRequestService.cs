@@ -1,3 +1,4 @@
+using System.Text.Json;
 using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Admin.Sql;
 
@@ -125,7 +126,7 @@ public sealed class PermissionChangeRequestService
             ActionCode = "reject",
             TargetType = "permission_change_request",
             TargetId = requestId.ToString(),
-            MetadataJson = $"{{\"reason\":\"{reason}\"}}"
+            MetadataJson = JsonSerializer.Serialize(new { reason })
         });
     }
 

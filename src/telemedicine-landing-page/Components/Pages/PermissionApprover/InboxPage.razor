@@ -56,8 +56,24 @@
     </AdminDataTable>
 </section>
 
+<AdminModal IsOpen="_rejectModalOpen" IsOpenChanged="v => _rejectModalOpen = v" Title="Từ chối yêu cầu">
+    <ChildContent>
+        <div class="admin-form-field">
+            <label class="admin-form-field-label">Lý do từ chối</label>
+            <textarea class="admin-textarea" rows="4" @bind="_rejectReason"></textarea>
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <button class="admin-btn admin-btn-ghost" @onclick="() => _rejectModalOpen = false">Hủy</button>
+        <button class="admin-btn admin-btn-danger" @onclick="ConfirmReject">Từ chối</button>
+    </FooterContent>
+</AdminModal>
+
 @code {
     private IReadOnlyList<PermissionChangeRequest> _pending = Array.Empty<PermissionChangeRequest>();
+    private bool _rejectModalOpen;
+    private Guid? _rejectRequestId;
+    private string _rejectReason = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -98,10 +114,36 @@
             return;
         }
 
+        _rejectRequestId = requestId;
+        _rejectReason = string.Empty;
+        _rejectModalOpen = true;
+    }
+
+    private void ConfirmReject()
+    {
+        if (_rejectRequestId is null)
+        {
+            return;
+        }
+
+        if (!Guard.CanDo("SCR_PERMISSION_APPROVAL:APPROVE", "từ chối yêu cầu quyền"))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_rejectReason))
+        {
+            Toast.Show("Thiếu lý do", "Vui lòng nhập lý do từ chối.", ToastVariant.Warning);
+            return;
+        }
+
         try
         {
             var actor = UserContext.CurrentUser?.UserId ?? Guid.Empty;
-            RequestService.Reject(requestId, actor, "Từ chối bởi người phê duyệt");
+            RequestService.Reject(_rejectRequestId.Value, actor, _rejectReason.Trim());
+            _rejectModalOpen = false;
+            _rejectRequestId = null;
+            _rejectReason = string.Empty;
             Toast.Show("Đã từ chối yêu cầu", "Yêu cầu đã được chuyển sang trạng thái từ chối.", ToastVariant.Warning);
         }
         catch (MedDomainException ex) { Toast.Show("Không thể từ chối", ex.Message, ToastVariant.Error); }
