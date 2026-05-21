@@ -53,6 +53,18 @@ Ngày 2026-05-21, app có lớp production foundation đầu tiên cho auth, res
 | Structured logging | Serilog writes console and daily JSON files, with optional Seq via `Serilog:SeqServerUrl` |
 | Docker migration runner | `db-init` applies `scripts/migrations/*.sql` even when the database is already initialized |
 
+## Security Validation Guard Architecture
+Ngay 2026-05-21, app co lop security validation cho password flow va route guard.
+
+| Area | Decision |
+|---|---|
+| Password strength | `IPasswordStrengthService` centralizes minimum length, character class, unique character, username, common-password and current-hash checks |
+| FluentValidation | Register/profile password commands are validated through `IValidationService`, keeping password rules out of Razor event handlers |
+| Identity validator | `PasswordStrengthValidator` implements `IPasswordValidator<ApplicationUser>` so Identity and UI flows share the same policy |
+| Null password guard | `NullPasswordGuardSignInManager` and `CurrentUserContext` fail sign-in when `PasswordHash` is missing |
+| Admin route guard | `Components/Pages/Admin/_Imports.razor` applies `AdminAccess`; `CurrentUserAuthenticationStateProvider` maps current SQL user permissions into Blazor auth state |
+| Guard helper | `AuthorizedComponentBase` provides policy checks and access-denied redirect for guarded components |
+
 ## Procedure Module Architecture
 Kiến trúc dưới đây là logic đang được hiện thực trong module QLCM Pro của Blazor app.
 

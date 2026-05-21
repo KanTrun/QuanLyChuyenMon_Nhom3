@@ -1,6 +1,19 @@
 # Project Changelog
 
 ## 2026-05-21
+### Security Validation and Admin Guard
+| Item | Description |
+|---|---|
+| Password policy | Added shared password strength service, common-password list, FluentValidation validators and Identity password validator |
+| Null-password lock | Added Identity sign-in guard and SQL migration that locks active users without password hash |
+| Password UI | Register and profile password forms now show realtime strength meter and use server-side validators |
+| Admin route guard | Added current-user `AuthenticationStateProvider`, admin folder `AdminAccess` policy import and `AuthorizedComponentBase` helper |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 116 tests |
+
 ### Production Architecture Foundation
 | Item | Description |
 |---|---|

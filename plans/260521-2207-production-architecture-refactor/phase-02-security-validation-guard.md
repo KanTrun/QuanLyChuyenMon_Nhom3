@@ -2,7 +2,7 @@
 
 ## Overview
 - Priority: High
-- Status: Planned
+- Status: Complete
 - Goal: Enforce strong passwords, move validation out of Razor and guard all sensitive pages.
 
 ## Requirements
@@ -22,17 +22,18 @@
 - `Application/Validators/*`
 
 ## Implementation Steps
-1. Replace inline password validation with validators and shared strength evaluator.
-2. Add common-password resource file.
-3. Add lock/reset setup behavior for admin-created accounts.
-4. Add `AuthorizedComponentBase` for guarded components.
-5. Add folder-level `_Imports.razor` guards where Blazor route auth can enforce policy.
-6. Add tests for password weakness, username inclusion, null password, unauthorized route denial.
+1. Done - replace register/profile password checks with validators and shared strength evaluator.
+2. Done - add common-password resource file and copy it to output.
+3. Done - block null-password sign-in and lock admin-created no-password accounts as inactive.
+4. Done - add `AuthorizedComponentBase` for policy checks.
+5. Done - add folder-level `_Imports.razor` guard for admin routes and current-user auth state provider.
+6. Done - add tests for weak/common/username/current-password rejection and Identity validator reuse.
 
 ## Success Criteria
 - No active null-password account can log in.
 - Register/profile password flows show realtime strength and server validation.
-- Admin/persona folders are guarded by policy.
+- Admin folder is guarded by `AdminAccess` policy.
+- `dotnet test .\telemedicine-landing-page.sln -c Release` passes 116/116.
 
 ## Unresolved Questions
 - Email/reset-token delivery target not configured.

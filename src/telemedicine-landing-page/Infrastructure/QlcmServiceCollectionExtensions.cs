@@ -1,6 +1,9 @@
+using FluentValidation;
 using System.Net;
+using TelemedicineLandingPage.Application.Validation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -91,7 +94,8 @@ public static class QlcmServiceCollectionExtensions
             })
             .AddRoles<ApplicationRole>()
             .AddEntityFrameworkStores<MedDbContext>()
-            .AddSignInManager()
+            .AddPasswordValidator<PasswordStrengthValidator>()
+            .AddSignInManager<NullPasswordGuardSignInManager>()
             .AddDefaultTokenProviders();
 
         services
@@ -113,7 +117,11 @@ public static class QlcmServiceCollectionExtensions
         services.AddAuthorization(PermissionPolicyCatalog.Register);
         services.AddScoped<IClaimsTransformation, DynamicPermissionClaimsTransformation>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddScoped<AuthenticationStateProvider, CurrentUserAuthenticationStateProvider>();
         services.AddScoped<Services.Auth.IPermissionService, ClaimsPermissionService>();
+        services.AddScoped<IPasswordStrengthService, PasswordStrengthService>();
+        services.AddScoped<IValidationService, ValidationService>();
+        services.AddValidatorsFromAssemblyContaining<RegisterAccountValidator>();
         return services;
     }
 

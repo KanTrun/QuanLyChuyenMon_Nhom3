@@ -351,7 +351,7 @@
                     FullName = _fullName.Trim(),
                     Email = string.IsNullOrWhiteSpace(_email) ? null : _email.Trim(),
                     PrimaryDepartmentId = dept,
-                    Status = _status
+                    Status = "inactive"
                 });
                 Toast.Show("Đã thêm người dùng", _fullName.Trim(), ToastVariant.Success);
             }
