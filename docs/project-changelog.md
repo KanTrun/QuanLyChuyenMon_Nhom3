@@ -1,5 +1,59 @@
 # Project Changelog
 
+## 2026-05-21
+### Changed
+| Item | Description |
+|---|---|
+| Admin route ownership | `/admin/quy-trinh`, `/admin/quy-trinh/phe-duyet`, `/admin/phac-do` and `/admin/lam-sang` now render SQL-backed admin pages; `/quy-trinh-pro` and `/phac-do-pro` remain workspace routes |
+| Preferences sync | Theme and motion preferences now use explicit `ThemeBus` events and shell JS state so header/settings stay synchronized |
+| Admin CRUD filters | Added soft-archive aware filters and CRUD flows for procedures, approvals, protocols, orders, users, reports and clinical applications |
+| Audit log UX | Audit page now shows Vietnamese business descriptions by default, with raw JSON hidden inside technical details |
+| Time display | Added shared Vietnam-time formatter for admin timestamps |
+
+### Added
+| Item | Description |
+|---|---|
+| Routing and preference tests | Added route ownership, unknown admin route denial and ThemeBus set-theme/motion tests |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 106 tests |
+| `docker compose build web` | Passed |
+| `docker compose up -d web` + `/admin` check | Passed, container healthy and HTTP 200 |
+
+### Unresolved Questions
+None.
+
+## 2026-05-20
+### Changed
+| Item | Description |
+|---|---|
+| User activation recovery | Trang Người dùng có nút kích hoạt lại tài khoản đã vô hiệu hóa và chặn tự vô hiệu hóa tài khoản đang đăng nhập |
+| Settings SQL sync | Trang Cài đặt đọc/ghi hồ sơ từ user SQL hiện tại, dùng khoa/phòng thật và lưu kênh thông báo vào `notification_preferences` |
+| Unified guarded navigation | Added SQL permission route guard for admin/persona routes, command palette and hotkeys; expanded nav to resources, orders, notifications, approval, screens and profile |
+| SQL notification shell | Top-bar badge/previews now read `med.notifications` for current user only; legacy in-memory notification service removed from production DI |
+| Legacy route cleanup | Removed routable legacy mock routes `/admin/lam-sang-legacy`, `/admin/quy-trinh-legacy`, `/admin/quy-trinh/phe-duyet-legacy`; removed production DI for legacy in-memory procedure/clinic/catalog/permission/protocol services |
+| Consumption report filter | `SqlReportService` now filters by SQL `department_id` and department closure tree, using `actual_resource_usages` plus resource norms |
+| No fake availability | Order resource snapshots no longer invent available stock; status is `unknown` until real inventory source exists |
+| Notification and protocol UI | Notification detail resolves business source names instead of raw source ID; protocol type uses lookup names |
+| Register hardening | Public register creates inactive users that require admin activation |
+
+### Added
+| Item | Description |
+|---|---|
+| Guard/report tests | Added tests for direct route denial, case-insensitive SQL permission, nav filtering, notification ownership, department report filter and no legacy routes |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release --no-restore` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-restore` | Passed, 97 tests |
+
+### Unresolved Questions
+None.
+
 ## 2026-05-19
 ### Added
 | Item | Description |

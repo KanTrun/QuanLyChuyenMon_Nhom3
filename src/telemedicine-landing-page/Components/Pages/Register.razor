@@ -189,7 +189,7 @@
                 FullName = fullName,
                 Email = _email.Trim(),
                 PasswordHash = passwordHash,
-                Status = "active"
+                Status = "inactive"
             };
 
             Db.Users.Add(newUser);
@@ -208,7 +208,7 @@
             });
             Db.SaveChanges();
 
-            _successMessage = $"Đăng ký thành công! Tên đăng nhập của bạn là: {username}";
+            _successMessage = $"Đã ghi nhận đăng ký. Tên đăng nhập của bạn là: {username}. Tài khoản cần quản trị viên kích hoạt trước khi sử dụng.";
 
             // Redirect sang trang đăng nhập sau 2 giây
             _ = Task.Delay(2000).ContinueWith(_ =>

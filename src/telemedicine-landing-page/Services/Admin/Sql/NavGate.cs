@@ -13,13 +13,14 @@ public sealed class NavGate
 
     private static readonly Dictionary<string, string[]> RoutePermissionMap = new(StringComparer.OrdinalIgnoreCase)
     {
+        ["/admin"] = new[] { "SCR_DASHBOARD:VIEW", "PERM_VIEW_DASHBOARD" },
         ["/admin/to-chuc/khoa-phong"] = new[] { "SCR_ORG_DEPARTMENTS:VIEW", "PERM_PERMISSIONS_view" },
         ["/admin/to-chuc/nguoi-dung"] = new[] { "SCR_ORG_USERS:VIEW", "PERM_PERMISSIONS_view" },
         ["/admin/to-chuc/vai-tro"] = new[] { "SCR_ORG_ROLES:VIEW", "PERM_PERMISSIONS_view" },
         ["/admin/to-chuc/nhom"] = new[] { "SCR_ORG_GROUPS:VIEW", "PERM_PERMISSIONS_view" },
         ["/admin/to-chuc"] = new[] { "SCR_ORG_USERS:VIEW", "PERM_PERMISSIONS_view" },
-        ["/admin/quy-trinh/tao"] = new[] { "SCR_PROCEDURE_CREATE:CREATE", "PERM_PROCEDURES_create" },
-        ["/admin/quy-trinh/phe-duyet"] = new[] { "SCR_PROCEDURE_APPROVAL:APPROVE", "PERM_PROCEDURES_approve" },
+        ["/admin/quy-trinh/tao"] = new[] { "SCR_PROCEDURES:CREATE", "PERM_PROCEDURES_create" },
+        ["/admin/quy-trinh/phe-duyet"] = new[] { "SCR_PROCEDURES:APPROVE", "PERM_PROCEDURES_approve" },
         ["/admin/quy-trinh"] = new[] { "SCR_PROCEDURES:VIEW", "PERM_PROCEDURES_view" },
         ["/admin/phan-quyen"] = new[] { "SCR_PERMISSIONS:VIEW", "PERM_PERMISSIONS_view" },
         ["/admin/bao-cao/tieu-thu"] = new[] { "SCR_REPORT_CONSUMPTION:VIEW", "REPORTS:VIEW" },
@@ -53,18 +54,17 @@ public sealed class NavGate
         var result = new List<AdminNavItem>();
         foreach (var item in items)
         {
-            if (!CanAccess(item.Url))
-                continue;
+            var canAccessParent = CanAccess(item.Url);
 
             if (item.Children is { Count: > 0 } children)
             {
                 var filteredChildren = children.Where(c => CanAccess(c.Url)).ToList();
-                if (filteredChildren.Count > 0)
+                if (canAccessParent || filteredChildren.Count > 0)
                 {
                     result.Add(item with { Children = filteredChildren });
                 }
             }
-            else
+            else if (canAccessParent)
             {
                 result.Add(item);
             }
@@ -78,29 +78,68 @@ public sealed class NavGate
         if (_userContext.CurrentUser is null) return false;
         if (IsSystemAdmin()) return true;
 
+        var normalizedRoute = NormalizeRoute(route);
+        var matchedPermissions = GetRoutePermissionCodes(normalizedRoute);
+        if (matchedPermissions.Count == 0)
+        {
+            return !normalizedRoute.StartsWith("/admin", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return matchedPermissions.Any(_userContext.HasPermission);
+    }
+
+    public IReadOnlyList<string> GetRoutePermissionCodes(string route)
+    {
+        var normalizedRoute = NormalizeRoute(route);
         string[]? matchedPermissions = null;
         var matchLength = 0;
 
         foreach (var (prefix, permissionCodes) in RoutePermissionMap)
         {
-            if (route.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && prefix.Length > matchLength)
+            if (IsRouteMatch(normalizedRoute, prefix) && prefix.Length > matchLength)
             {
                 matchedPermissions = permissionCodes;
                 matchLength = prefix.Length;
             }
         }
 
-        if (matchedPermissions is null) return true;
-        return matchedPermissions.Any(_userContext.HasPermission);
+        return matchedPermissions ?? Array.Empty<string>();
     }
 
     private bool IsSystemAdmin()
     {
         var perms = _userContext.GetEffectivePermissions();
-        if (perms.Any(p => p.PermissionCode is "SCR_PERMISSIONS:DELETE" or "PERM_PERMISSIONS_delete" &&
-                           p.EffectCode == "allow"))
+        if (perms.Any(p =>
+                (string.Equals(p.PermissionCode, "SCR_PERMISSIONS:DELETE", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(p.PermissionCode, "PERM_PERMISSIONS_delete", StringComparison.OrdinalIgnoreCase)) &&
+                string.Equals(p.EffectCode, "allow", StringComparison.OrdinalIgnoreCase)))
             return true;
 
-        return _userContext.CurrentUser?.Username == "admin";
+        return string.Equals(_userContext.CurrentUser?.Username, "admin", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeRoute(string route)
+    {
+        if (string.IsNullOrWhiteSpace(route))
+        {
+            return "/";
+        }
+
+        var withoutQuery = route.Split('?', '#')[0];
+        if (Uri.TryCreate(withoutQuery, UriKind.Absolute, out var absolute))
+        {
+            withoutQuery = absolute.AbsolutePath;
+        }
+
+        var normalized = withoutQuery.StartsWith('/') ? withoutQuery : "/" + withoutQuery;
+        return normalized.Length > 1 ? normalized.TrimEnd('/') : normalized;
+    }
+
+    private static bool IsRouteMatch(string route, string prefix)
+    {
+        if (!route.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        return route.Length == prefix.Length || route[prefix.Length] == '/';
     }
 }

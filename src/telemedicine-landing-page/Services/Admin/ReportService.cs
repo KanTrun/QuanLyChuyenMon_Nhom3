@@ -48,6 +48,9 @@ public sealed class ReportService : IReportService
         return rows;
     }
 
+    public IReadOnlyList<ConsumptionReportRow> GenerateConsumptionReportForDepartment(DateOnly from, DateOnly to, Guid? departmentId)
+        => GenerateConsumptionReport(from, to, null);
+
     public IReadOnlyList<DashboardKpi> GetDashboardKpis()
     {
         var protocols = _protocolService.Search();

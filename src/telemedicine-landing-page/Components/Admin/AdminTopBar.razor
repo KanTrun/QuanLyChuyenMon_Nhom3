@@ -2,6 +2,7 @@
 @using TelemedicineLandingPage.Models.Admin.Sql
 @inject IAdminNavigationState NavState
 @inject IThemeBus ThemeBus
+@inject IUserPreferencesService Preferences
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject ICurrentUserContext UserContext
@@ -167,6 +168,8 @@
         Navigation.LocationChanged += OnLocationChanged;
         NavState.StateChanged += OnNavStateChanged;
         ThemeBus.ToggleRequested += OnThemeToggleRequested;
+        ThemeBus.ThemeChanged += OnThemeChanged;
+        ThemeBus.MotionChanged += OnMotionChanged;
         ThemeBus.ExportConsumptionRequested += OnExportConsumptionRequested;
         UserContext.StateChanged += OnUserChanged;
         UpdateBreadcrumb(Navigation.Uri);
@@ -211,7 +214,31 @@
         try
         {
             _theme = await JS.InvokeAsync<string>("qlcmShell.toggleTheme");
+            Preferences.Update(Preferences.Current with { Theme = _theme });
             await InvokeAsync(StateHasChanged);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
+    }
+
+    private async void OnThemeChanged(string theme)
+    {
+        try
+        {
+            _theme = await JS.InvokeAsync<string>("qlcmShell.setTheme", theme);
+            Preferences.Update(Preferences.Current with { Theme = _theme });
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
+    }
+
+    private async void OnMotionChanged(bool enabled)
+    {
+        try
+        {
+            await JS.InvokeAsync<string>("qlcmShell.setMotionPreference", enabled);
+            Preferences.Update(Preferences.Current with { AnimationsEnabled = enabled });
         }
         catch (JSDisconnectedException) { }
         catch (Exception) { }
@@ -298,6 +325,7 @@
         try
         {
             _theme = await JS.InvokeAsync<string>("qlcmShell.toggleTheme");
+            Preferences.Update(Preferences.Current with { Theme = _theme });
         }
         catch (JSDisconnectedException) { }
         catch (Exception) { }
@@ -363,6 +391,8 @@
         Navigation.LocationChanged -= OnLocationChanged;
         NavState.StateChanged -= OnNavStateChanged;
         ThemeBus.ToggleRequested -= OnThemeToggleRequested;
+        ThemeBus.ThemeChanged -= OnThemeChanged;
+        ThemeBus.MotionChanged -= OnMotionChanged;
         ThemeBus.ExportConsumptionRequested -= OnExportConsumptionRequested;
         UserContext.StateChanged -= OnUserChanged;
     }

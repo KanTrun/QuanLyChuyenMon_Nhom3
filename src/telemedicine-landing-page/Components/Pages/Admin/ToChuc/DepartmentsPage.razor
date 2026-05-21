@@ -19,6 +19,17 @@
         <button class="admin-btn admin-btn-primary" @onclick="OpenCreate">Thêm khoa/phòng</button>
     </header>
 
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Trạng thái</label>
+            <select class="admin-select" @bind="_statusFilter">
+                <option value="active">Đang hoạt động</option>
+                <option value="archived">Lưu trữ</option>
+                <option value="all">Tất cả</option>
+            </select>
+        </div>
+    </div>
+
     <div class="admin-panel" style="padding:16px;">
         <div class="admin-table-wrapper">
             <table class="admin-table">
@@ -94,6 +105,7 @@
     private string _editCode = "";
     private string _editName = "";
     private string _editParentId = "";
+    private string _statusFilter = "active";
 
     protected override void OnInitialized()
     {
@@ -104,7 +116,10 @@
 
     private IEnumerable<DepartmentRow> FlattenDepartments()
     {
-        var all = Store.Departments.OrderBy(d => d.Code).ToList();
+        var all = Store.Departments
+            .Where(d => _statusFilter == "all" || (_statusFilter == "archived" ? d.Status != "active" : d.Status == "active"))
+            .OrderBy(d => d.Code)
+            .ToList();
         foreach (var root in all.Where(d => d.ParentDepartmentId is null))
         {
             foreach (var row in FlattenFrom(root, 0, all))

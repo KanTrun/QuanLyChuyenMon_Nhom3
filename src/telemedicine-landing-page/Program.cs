@@ -24,12 +24,6 @@ builder.Services.AddScoped<PermissionChangeRequestService>();
 builder.Services.AddScoped<ProcedureLifecycleService>();
 builder.Services.AddScoped<ICurrentUserContext, CurrentUserContext>();
 builder.Services.AddScoped<NavGate>();
-builder.Services.AddSingleton<IProcedureService, ProcedureService>();
-builder.Services.AddSingleton<IPermissionService, PermissionService>();
-builder.Services.AddSingleton<ICatalogService, CatalogService>();
-builder.Services.AddSingleton<IProtocolService, ProtocolService>();
-builder.Services.AddSingleton<INotificationService, NotificationService>();
-builder.Services.AddSingleton<IClinicService, ClinicService>();
 builder.Services.AddSingleton<IUserPreferencesService, UserPreferencesService>();
 builder.Services.AddScoped<IReportService, SqlReportService>();
 

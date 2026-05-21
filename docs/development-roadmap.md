@@ -11,7 +11,7 @@ Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-
 | Admin workflows | Complete | Quy trình, tổ chức/khoa/phòng, người dùng, vai trò, nhóm, phân quyền, danh mục, tài nguyên, phác đồ, thông báo |
 | Clinical workflows | Complete | Bệnh nhân, lượt khám, phác đồ áp dụng, chỉ định kỹ thuật, snapshot nguồn lực và tiêu hao thực tế |
 | Seed data | Complete | `scripts/seed-realistic-data.sql` nạp dữ liệu mẫu thực tế cho demo/QA |
-| Verification | Complete | Release build passed, 91 tests passed |
+| Verification | Complete | Release build/test passed, 106 tests passed; Docker web build and `/admin` HTTP check passed |
 
 ## Telemedicine Landing Page Track
 | Item | Status | Output |
@@ -42,8 +42,8 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này �
 | Architecture blueprint | 100% |
 | Implementation plan | 100% |
 | Code implementation | 100% for implementation-plan scope |
-| Test automation | Release build/test passed, 91 tests |
-| Deployment readiness | Seed script ready; target DB execution/config remains deployment task |
+| Test automation | Release build/test passed, 106 tests |
+| Deployment readiness | Docker Compose web/sql/db-init verified locally; target DB execution/config remains deployment task |
 
 ## Dependencies
 | Dependency | Needed For |
@@ -55,7 +55,7 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này �
 | Patient/diagnosis data model | Protocol suggestions |
 
 ## Next Milestone
-Run `scripts/seed-realistic-data.sql` on the target SQL Server database, then perform browser QA against the deployed admin workflows with real connection settings.
+Run browser QA by role on target SQL Server: `SYSTEM_ADMIN`, `DEPARTMENT_ADMIN`, clinical user, technician/pharmacist and report viewer.
 
 ## Unresolved Questions
 None.

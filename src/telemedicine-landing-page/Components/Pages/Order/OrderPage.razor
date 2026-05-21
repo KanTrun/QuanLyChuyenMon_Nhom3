@@ -1,5 +1,5 @@
 @page "/dieu-phoi"
-@layout PersonaLayout
+@layout AdminLayout
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
@@ -17,6 +17,51 @@
         </div>
         <button type="button" class="admin-btn admin-btn-primary" @onclick="OpenCreate">Tạo chỉ định mới</button>
     </header>
+
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Tìm kiếm</label>
+            <input class="admin-input" placeholder="Dịch vụ, bệnh nhân, mã lượt khám..." @bind="_search" @bind:after="ResetAndPaginate" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Trạng thái</label>
+            <select class="admin-select" @bind="_statusFilter" @bind:after="ResetAndPaginate">
+                <option value="">Tất cả</option>
+                @foreach (var status in Sql.MedLookups.OrderStatuses)
+                {
+                    <option value="@status.Code">@status.Name</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Khoa</label>
+            <select class="admin-select" @bind="_departmentFilter" @bind:after="ResetAndPaginate">
+                <option value="">Tất cả</option>
+                @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
+                {
+                    <option value="@dept.DepartmentId">@dept.Name</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Dịch vụ</label>
+            <select class="admin-select" @bind="_serviceFilter" @bind:after="ResetAndPaginate">
+                <option value="">Tất cả</option>
+                @foreach (var service in Store.TechnicalServices.Where(s => s.Status == "active").OrderBy(s => s.Name))
+                {
+                    <option value="@service.TechnicalServiceId">@service.Name</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Từ ngày</label>
+            <input class="admin-input" type="date" value="@_fromIso" @onchange="OnFromChanged" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Đến ngày</label>
+            <input class="admin-input" type="date" value="@_toIso" @onchange="OnToChanged" />
+        </div>
+    </div>
 
     <AdminDataTable TItem="Sql.TechnicalOrder"
                     Items="_pagedItems"
@@ -41,7 +86,7 @@
                 <td>@GetEncounterCode(order.EncounterRefId)</td>
                 <td>@GetDeptName(order.OrderingDepartmentId)</td>
                 <td><AdminBadge Tone="@OrderTone(order.OrderStatus)">@Lookup(Sql.MedLookups.OrderStatuses, order.OrderStatus)</AdminBadge></td>
-                <td>@order.OrderedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@AdminDateTimeDisplay.DateTime(order.OrderedAt)</td>
                 <td style="text-align:right;" @onclick:stopPropagation="true">
                     <div class="admin-row-actions">
                         <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ScheduleOrder(order)">Lên lịch</button>
@@ -94,7 +139,7 @@
                                     <td>@(snap.AvailableQuantity?.ToString("0.##") ?? "—")</td>
                                     <td>@LookupUnit(snap.UnitCode)</td>
                                     <td><AdminBadge Tone="@AvailabilityTone(snap.AvailabilityStatus)">@Lookup(Sql.MedLookups.AvailabilityStatuses, snap.AvailabilityStatus)</AdminBadge></td>
-                                    <td>@snap.CheckedAt.ToString("dd/MM HH:mm")</td>
+                                    <td>@AdminDateTimeDisplay.ShortDateTime(snap.CheckedAt)</td>
                                 </tr>
                             }
                             @if (!Store.ResourceAvailabilitySnapshots.Any(s => s.TechnicalOrderId == _selected.TechnicalOrderId))
@@ -252,6 +297,12 @@
     private int _page = 1;
     private int _total;
     private IReadOnlyList<Sql.TechnicalOrder> _pagedItems = Array.Empty<Sql.TechnicalOrder>();
+    private string _search = string.Empty;
+    private string _statusFilter = string.Empty;
+    private string _departmentFilter = string.Empty;
+    private string _serviceFilter = string.Empty;
+    private string _fromIso = DateOnly.FromDateTime(DateTime.Today.AddDays(-30)).ToString("yyyy-MM-dd");
+    private string _toIso = DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd");
 
     private bool _drawerOpen;
     private Sql.TechnicalOrder? _selected;
@@ -286,11 +337,52 @@
 
     private void Paginate()
     {
-        var all = Store.TechnicalOrders.OrderByDescending(o => o.OrderedAt).ToList();
+        var deptId = ParseGuid(_departmentFilter);
+        var serviceId = ParseGuid(_serviceFilter);
+        var from = DateOnly.TryParse(_fromIso, out var parsedFrom) ? parsedFrom : (DateOnly?)null;
+        var to = DateOnly.TryParse(_toIso, out var parsedTo) ? parsedTo : (DateOnly?)null;
+
+        var all = Store.TechnicalOrders
+            .Where(o => string.IsNullOrEmpty(_statusFilter) || o.OrderStatus == _statusFilter)
+            .Where(o => !deptId.HasValue || o.OrderingDepartmentId == deptId.Value)
+            .Where(o => !serviceId.HasValue || o.TechnicalServiceId == serviceId.Value)
+            .Where(o => !from.HasValue || AdminDateTimeDisplay.ToDisplayTime(o.OrderedAt).Date >= from.Value.ToDateTime(TimeOnly.MinValue).Date)
+            .Where(o => !to.HasValue || AdminDateTimeDisplay.ToDisplayTime(o.OrderedAt).Date <= to.Value.ToDateTime(TimeOnly.MinValue).Date)
+            .Where(MatchesSearch)
+            .OrderByDescending(o => o.OrderedAt)
+            .ToList();
         _total = all.Count;
         var totalPages = Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
         _page = Math.Clamp(_page, 1, totalPages);
         _pagedItems = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void ResetAndPaginate()
+    {
+        _page = 1;
+        Paginate();
+    }
+
+    private void OnFromChanged(ChangeEventArgs args)
+    {
+        _fromIso = args.Value?.ToString() ?? string.Empty;
+        ResetAndPaginate();
+    }
+
+    private void OnToChanged(ChangeEventArgs args)
+    {
+        _toIso = args.Value?.ToString() ?? string.Empty;
+        ResetAndPaginate();
+    }
+
+    private bool MatchesSearch(Sql.TechnicalOrder order)
+    {
+        if (string.IsNullOrWhiteSpace(_search)) return true;
+        var key = _search.Trim();
+        return GetServiceName(order.TechnicalServiceId).Contains(key, StringComparison.OrdinalIgnoreCase)
+            || GetPatientName(order.PatientRefId).Contains(key, StringComparison.OrdinalIgnoreCase)
+            || GetEncounterCode(order.EncounterRefId).Contains(key, StringComparison.OrdinalIgnoreCase)
+            || GetDeptName(order.OrderingDepartmentId).Contains(key, StringComparison.OrdinalIgnoreCase);
     }
 
     private void OpenCreate()
@@ -387,14 +479,14 @@
                 TechnicalOrderId = _selected.TechnicalOrderId,
                 ResourceId = norm.ResourceId,
                 RequiredQuantity = norm.StandardQuantity,
-                AvailableQuantity = norm.StandardQuantity + 10,
+                AvailableQuantity = null,
                 UnitCode = norm.UnitCode,
-                AvailabilityStatus = "available",
-                ExternalPayloadJson = "{\"source\":\"manual_check\"}"
+                AvailabilityStatus = "unknown",
+                ExternalPayloadJson = "{\"source\":\"inventory_not_connected\"}"
             });
             added++;
         }
-        Toasts.Show("Đã kiểm tra nguồn lực", $"{added} snapshot mới.", ToastVariant.Success);
+        Toasts.Show("Đã tạo snapshot cần xác minh", $"{added} dòng định mức mới.", ToastVariant.Info);
     }
 
     private void AddUsage()

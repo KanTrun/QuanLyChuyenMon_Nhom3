@@ -3,6 +3,7 @@
 @using TelemedicineLandingPage.Services.Admin.Sql
 @using TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
+@inject ICurrentUserContext UserContext
 @inject IToastService Toast
 @implements IDisposable
 
@@ -13,14 +14,42 @@
         <div>
             <span class="admin-page-eyebrow">Tổ chức</span>
             <h1 class="admin-page-title">Quản lý người dùng</h1>
-            <p class="admin-page-subtitle">Tạo, chỉnh sửa và vô hiệu hóa tài khoản người dùng.</p>
+            <p class="admin-page-subtitle">Tạo, xem chi tiết, chỉnh sửa, gán vai trò/nhóm và lưu trữ mềm tài khoản.</p>
         </div>
         <button class="admin-btn admin-btn-primary" @onclick="OpenCreate">Thêm người dùng</button>
     </header>
 
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Tìm kiếm</label>
+            <input class="admin-input" placeholder="Tên, username, email..." @bind="_search" @bind:after="ResetAndPaginate" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Trạng thái</label>
+            <select class="admin-select" @bind="_statusFilter" @bind:after="ResetAndPaginate">
+                <option value="active">Đang hoạt động</option>
+                <option value="inactive">Lưu trữ/vô hiệu</option>
+                <option value="all">Tất cả</option>
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Khoa/phòng</label>
+            <select class="admin-select" @bind="_departmentFilter" @bind:after="ResetAndPaginate">
+                <option value="">Tất cả</option>
+                @foreach (var d in Store.Departments.OrderBy(d => d.Name))
+                {
+                    <option value="@d.DepartmentId">@d.Name</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field" style="align-self:end;">
+            <span class="admin-table-cell-muted">@_total tài khoản</span>
+        </div>
+    </div>
+
     <AdminDataTable TItem="AppUser"
                     Items="_pagedItems"
-                    ColumnCount="5"
+                    ColumnCount="7"
                     CurrentPage="_page"
                     PageSize="_pageSize"
                     TotalItems="_total"
@@ -29,70 +58,175 @@
             <th>Họ tên</th>
             <th>Tên đăng nhập</th>
             <th>Email</th>
+            <th>Khoa/phòng</th>
+            <th>Vai trò</th>
             <th>Trạng thái</th>
             <th>Thao tác</th>
         </HeaderTemplate>
         <RowTemplate Context="user">
             <tr>
-                <td>@user.FullName</td>
-                <td>@user.Username</td>
-                <td>@user.Email</td>
                 <td>
-                    <AdminBadge Tone="@(user.Status == "active" ? "tone-success" : "tone-muted")">
-                        @(user.Status == "active" ? "Hoạt động" : "Vô hiệu")
-                    </AdminBadge>
+                    <div class="admin-table-cell-strong">@user.FullName</div>
+                    <div class="admin-table-cell-muted">@AdminDateTimeDisplay.ShortDateTime(user.UpdatedAt)</div>
                 </td>
+                <td>@user.Username</td>
+                <td>@(user.Email ?? "—")</td>
+                <td>@GetDeptName(user.PrimaryDepartmentId)</td>
+                <td>@RoleSummary(user.UserId)</td>
+                <td><AdminBadge Tone="@StatusTone(user.Status)">@StatusLabel(user.Status)</AdminBadge></td>
                 <td>
-                    @if (user.Status == "active")
-                    {
-                        <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => Deactivate(user)">
-                            Vô hiệu hóa
-                        </button>
-                    }
+                    <div class="admin-row-actions">
+                        <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenDetails(user)">Xem</button>
+                        <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEdit(user)">Sửa</button>
+                        @if (user.Status == "active")
+                        {
+                            <button class="admin-btn admin-btn-sm admin-btn-ghost"
+                                    disabled="@IsCurrentUser(user)"
+                                    title="@(IsCurrentUser(user) ? "Không thể tự vô hiệu hóa tài khoản đang dùng" : "Lưu trữ/vô hiệu hóa")"
+                                    @onclick="() => ArchiveUser(user)">
+                                Lưu trữ
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => RestoreUser(user)">Khôi phục</button>
+                        }
+                    </div>
                 </td>
             </tr>
         </RowTemplate>
     </AdminDataTable>
 
-    <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" Title="Thêm người dùng">
+    <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" SizeClass="admin-drawer-wide"
+                 Eyebrow="Người dùng"
+                 Title="@(_mode == FormMode.Create ? "Thêm người dùng" : _fullName)"
+                 Subtitle="@(_selectedUser is null ? null : $"{_selectedUser.Username} • {StatusLabel(_selectedUser.Status)}")">
         <ChildContent>
-            <div class="admin-form-group">
-                <label class="admin-label">Họ tên</label>
-                <input class="admin-input" @bind="_fullName" />
+            <div class="admin-form-grid">
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label">Họ tên</label>
+                    <input class="admin-input" @bind="_fullName" disabled="@IsReadonly" />
+                </div>
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label">Tên đăng nhập</label>
+                    <input class="admin-input" @bind="_username" disabled="@(_mode != FormMode.Create)" />
+                </div>
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label">Email</label>
+                    <input class="admin-input" type="email" @bind="_email" disabled="@IsReadonly" />
+                </div>
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label">Khoa/phòng chính</label>
+                    <select class="admin-select" @bind="_deptId" disabled="@IsReadonly">
+                        <option value="">Không chọn</option>
+                        @foreach (var d in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
+                        {
+                            <option value="@d.DepartmentId">@d.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="admin-form-field">
+                    <label class="admin-form-field-label">Trạng thái</label>
+                    <select class="admin-select" @bind="_status" disabled="@IsReadonly">
+                        <option value="active">Đang hoạt động</option>
+                        <option value="inactive">Lưu trữ/vô hiệu</option>
+                    </select>
+                </div>
             </div>
-            <div class="admin-form-group">
-                <label class="admin-label">Tên đăng nhập</label>
-                <input class="admin-input" @bind="_username" />
-            </div>
-            <div class="admin-form-group">
-                <label class="admin-label">Email</label>
-                <input class="admin-input" type="email" @bind="_email" />
-            </div>
-            <div class="admin-form-group">
-                <label class="admin-label">Khoa/phòng chính</label>
-                <select class="admin-select" @bind="_deptId">
-                    <option value="">— Chọn —</option>
-                    @foreach (var d in Store.Departments.Where(d => d.Status == "active"))
-                    {
-                        <option value="@d.DepartmentId">@d.Name</option>
-                    }
-                </select>
-            </div>
+
+            @if (_selectedUser is not null)
+            {
+                <div class="admin-panel" style="padding:14px;margin-top:14px;">
+                    <header class="admin-panel-head">
+                        <h3 class="admin-panel-title">Vai trò</h3>
+                        <div style="display:flex;gap:8px;">
+                            <select class="admin-select" style="min-width:220px;" @bind="_roleToAdd">
+                                <option value="">Chọn vai trò</option>
+                                @foreach (var role in Store.Roles.Where(r => r.Status == "active").OrderBy(r => r.Name))
+                                {
+                                    <option value="@role.RoleId">@role.Name</option>
+                                }
+                            </select>
+                            <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddRole" disabled="@IsReadonly">Gán</button>
+                        </div>
+                    </header>
+                    <div class="admin-row-actions">
+                        @foreach (var ur in ActiveRoles(_selectedUser.UserId))
+                        {
+                            var role = Store.Roles.FirstOrDefault(r => r.RoleId == ur.RoleId);
+                            <span class="admin-filter-chip">
+                                @(role?.Name ?? "Vai trò không còn tồn tại")
+                                @if (!IsReadonly)
+                                {
+                                    <button type="button" class="admin-icon-btn" title="Gỡ vai trò" @onclick="() => RemoveRole(ur)">×</button>
+                                }
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <div class="admin-panel" style="padding:14px;margin-top:14px;">
+                    <header class="admin-panel-head">
+                        <h3 class="admin-panel-title">Nhóm</h3>
+                        <div style="display:flex;gap:8px;">
+                            <select class="admin-select" style="min-width:220px;" @bind="_groupToAdd">
+                                <option value="">Chọn nhóm</option>
+                                @foreach (var group in Store.Groups.Where(g => g.Status == "active").OrderBy(g => g.Name))
+                                {
+                                    <option value="@group.GroupId">@group.Name</option>
+                                }
+                            </select>
+                            <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddGroup" disabled="@IsReadonly">Gán</button>
+                        </div>
+                    </header>
+                    <div class="admin-row-actions">
+                        @foreach (var member in ActiveGroups(_selectedUser.UserId))
+                        {
+                            var group = Store.Groups.FirstOrDefault(g => g.GroupId == member.GroupId);
+                            <span class="admin-filter-chip">
+                                @(group?.Name ?? "Nhóm không còn tồn tại")
+                                @if (!IsReadonly)
+                                {
+                                    <button type="button" class="admin-icon-btn" title="Gỡ nhóm" @onclick="() => RemoveGroup(member)">×</button>
+                                }
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
         </ChildContent>
         <FooterContent>
-            <button class="admin-btn admin-btn-primary" @onclick="SaveUser">Lưu</button>
-            <button class="admin-btn admin-btn-ghost" @onclick="() => _drawerOpen = false">Hủy</button>
+            @if (!IsReadonly)
+            {
+                <button class="admin-btn admin-btn-primary" @onclick="SaveUser">Lưu</button>
+            }
+            <button class="admin-btn admin-btn-ghost" @onclick="() => _drawerOpen = false">Đóng</button>
         </FooterContent>
     </AdminDrawer>
 </section>
 
 @code {
+    private enum FormMode { Create, View, Edit }
+
     private int _page = 1;
     private const int _pageSize = 10;
     private int _total;
     private IReadOnlyList<AppUser> _pagedItems = Array.Empty<AppUser>();
     private bool _drawerOpen;
-    private string _fullName = "", _username = "", _email = "", _deptId = "";
+    private FormMode _mode = FormMode.Create;
+    private AppUser? _selectedUser;
+    private string _search = string.Empty;
+    private string _statusFilter = "active";
+    private string _departmentFilter = string.Empty;
+    private string _fullName = string.Empty;
+    private string _username = string.Empty;
+    private string _email = string.Empty;
+    private string _deptId = string.Empty;
+    private string _status = "active";
+    private string _roleToAdd = string.Empty;
+    private string _groupToAdd = string.Empty;
+
+    private bool IsReadonly => _mode == FormMode.View;
 
     protected override void OnInitialized()
     {
@@ -100,48 +234,213 @@
         Paginate();
     }
 
-    private void OnChanged() => InvokeAsync(() => { Paginate(); StateHasChanged(); });
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        RefreshSelected();
+        Paginate();
+        StateHasChanged();
+    });
+
+    private void ResetAndPaginate()
+    {
+        _page = 1;
+        Paginate();
+    }
 
     private void Paginate()
     {
-        var all = Store.Users.OrderBy(u => u.FullName).ToList();
+        var deptId = ParseGuid(_departmentFilter);
+        var all = Store.Users
+            .Where(u => _statusFilter == "all" || u.Status == _statusFilter)
+            .Where(u => !deptId.HasValue || u.PrimaryDepartmentId == deptId.Value)
+            .Where(MatchesSearch)
+            .OrderBy(u => u.FullName)
+            .ToList();
         _total = all.Count;
+        var totalPages = Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
+        _page = Math.Clamp(_page, 1, totalPages);
         _pagedItems = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private bool MatchesSearch(AppUser user)
+    {
+        if (string.IsNullOrWhiteSpace(_search)) return true;
+        var key = _search.Trim();
+        return user.FullName.Contains(key, StringComparison.OrdinalIgnoreCase)
+            || user.Username.Contains(key, StringComparison.OrdinalIgnoreCase)
+            || (user.Email?.Contains(key, StringComparison.OrdinalIgnoreCase) ?? false);
     }
 
     private void OpenCreate()
     {
-        _fullName = _username = _email = _deptId = "";
+        _mode = FormMode.Create;
+        _selectedUser = null;
+        _fullName = _username = _email = _deptId = _roleToAdd = _groupToAdd = string.Empty;
+        _status = "active";
+        _drawerOpen = true;
+    }
+
+    private void OpenDetails(AppUser user)
+    {
+        LoadUser(user, FormMode.View);
+    }
+
+    private void OpenEdit(AppUser user)
+    {
+        LoadUser(user, FormMode.Edit);
+    }
+
+    private void LoadUser(AppUser user, FormMode mode)
+    {
+        _mode = mode;
+        _selectedUser = user;
+        _fullName = user.FullName;
+        _username = user.Username;
+        _email = user.Email ?? string.Empty;
+        _deptId = user.PrimaryDepartmentId?.ToString() ?? string.Empty;
+        _status = user.Status;
+        _roleToAdd = _groupToAdd = string.Empty;
         _drawerOpen = true;
     }
 
     private void SaveUser()
     {
+        if (string.IsNullOrWhiteSpace(_fullName) || string.IsNullOrWhiteSpace(_username))
+        {
+            Toast.Show("Thiếu thông tin", "Vui lòng nhập họ tên và tên đăng nhập.", ToastVariant.Warning);
+            return;
+        }
+
+        if (_selectedUser is not null && IsCurrentUser(_selectedUser) && _status != "active")
+        {
+            Toast.Show("Không thể tự vô hiệu hóa", "Bạn đang dùng tài khoản này.", ToastVariant.Warning);
+            return;
+        }
+
         try
         {
-            Guid? dept = string.IsNullOrEmpty(_deptId) ? null : Guid.Parse(_deptId);
-            Store.AddUser(new AppUser
+            var dept = ParseGuid(_deptId);
+            if (_mode == FormMode.Create)
             {
-                Username = _username,
-                FullName = _fullName,
-                Email = _email,
-                PrimaryDepartmentId = dept
-            });
+                Store.AddUser(new AppUser
+                {
+                    Username = _username.Trim(),
+                    FullName = _fullName.Trim(),
+                    Email = string.IsNullOrWhiteSpace(_email) ? null : _email.Trim(),
+                    PrimaryDepartmentId = dept,
+                    Status = _status
+                });
+                Toast.Show("Đã thêm người dùng", _fullName.Trim(), ToastVariant.Success);
+            }
+            else if (_selectedUser is not null)
+            {
+                Store.UpdateUser(_selectedUser with
+                {
+                    FullName = _fullName.Trim(),
+                    Email = string.IsNullOrWhiteSpace(_email) ? null : _email.Trim(),
+                    PrimaryDepartmentId = dept,
+                    Status = _status,
+                    DeletedAt = _status == "active" ? null : (_selectedUser.DeletedAt ?? DateTime.UtcNow),
+                    UpdatedAt = DateTime.UtcNow
+                });
+                Toast.Show("Đã cập nhật người dùng", _fullName.Trim(), ToastVariant.Success);
+            }
+
             _drawerOpen = false;
-            Toast.Show("Đã thêm người dùng thành công.", "success");
         }
-        catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
+        catch (Exception ex)
+        {
+            Toast.Show("Không thể lưu người dùng", ex.Message, ToastVariant.Error);
+        }
     }
 
-    private void Deactivate(AppUser user)
+    private void ArchiveUser(AppUser user)
+    {
+        if (IsCurrentUser(user))
+        {
+            Toast.Show("Không thể tự vô hiệu hóa", "Bạn đang dùng tài khoản này. Hãy dùng tài khoản quản trị khác nếu cần khóa.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            Store.UpdateUser(user with { Status = "inactive", DeletedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
+            Toast.Show("Đã lưu trữ tài khoản", user.FullName, ToastVariant.Success);
+        }
+        catch (Exception ex) { Toast.Show("Không thể lưu trữ", ex.Message, ToastVariant.Error); }
+    }
+
+    private void RestoreUser(AppUser user)
     {
         try
         {
-            Store.UpdateUser(user with { Status = "inactive" });
-            Toast.Show($"Đã vô hiệu hóa tài khoản {user.FullName}.", "success");
+            Store.UpdateUser(user with { Status = "active", DeletedAt = null, UpdatedAt = DateTime.UtcNow });
+            Toast.Show("Đã khôi phục tài khoản", user.FullName, ToastVariant.Success);
         }
-        catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
+        catch (Exception ex) { Toast.Show("Không thể khôi phục", ex.Message, ToastVariant.Error); }
     }
+
+    private void AddRole()
+    {
+        if (_selectedUser is null || !Guid.TryParse(_roleToAdd, out var roleId)) return;
+        if (ActiveRoles(_selectedUser.UserId).Any(r => r.RoleId == roleId))
+        {
+            Toast.Show("Vai trò đã tồn tại", "Người dùng đã có vai trò này.", ToastVariant.Warning);
+            return;
+        }
+
+        Store.AddUserRole(new UserRole { UserId = _selectedUser.UserId, RoleId = roleId, DepartmentId = ParseGuid(_deptId) });
+        _roleToAdd = string.Empty;
+    }
+
+    private void RemoveRole(UserRole role)
+    {
+        Store.RemoveUserRole(role.UserRoleId);
+    }
+
+    private void AddGroup()
+    {
+        if (_selectedUser is null || !Guid.TryParse(_groupToAdd, out var groupId)) return;
+        if (ActiveGroups(_selectedUser.UserId).Any(g => g.GroupId == groupId))
+        {
+            Toast.Show("Nhóm đã tồn tại", "Người dùng đã thuộc nhóm này.", ToastVariant.Warning);
+            return;
+        }
+
+        Store.AddUserGroupMember(new UserGroupMember { UserId = _selectedUser.UserId, GroupId = groupId });
+        _groupToAdd = string.Empty;
+    }
+
+    private void RemoveGroup(UserGroupMember member)
+    {
+        Store.RemoveUserGroupMember(member.UserGroupMemberId);
+    }
+
+    private void RefreshSelected()
+    {
+        if (_selectedUser is null) return;
+        _selectedUser = Store.Users.FirstOrDefault(u => u.UserId == _selectedUser.UserId);
+    }
+
+    private IReadOnlyList<UserRole> ActiveRoles(Guid userId)
+        => Store.UserRoles.Where(r => r.UserId == userId && r.EffectiveTo is null).OrderBy(r => RoleName(r.RoleId)).ToList();
+
+    private IReadOnlyList<UserGroupMember> ActiveGroups(Guid userId)
+        => Store.UserGroupMembers.Where(g => g.UserId == userId && g.EffectiveTo is null).OrderBy(g => GroupName(g.GroupId)).ToList();
+
+    private string RoleSummary(Guid userId)
+    {
+        var names = ActiveRoles(userId).Select(r => RoleName(r.RoleId)).Where(n => !string.IsNullOrWhiteSpace(n)).Take(2).ToList();
+        return names.Count == 0 ? "—" : string.Join(", ", names) + (ActiveRoles(userId).Count > 2 ? "..." : string.Empty);
+    }
+
+    private string RoleName(Guid roleId) => Store.Roles.FirstOrDefault(r => r.RoleId == roleId)?.Name ?? string.Empty;
+    private string GroupName(Guid groupId) => Store.Groups.FirstOrDefault(g => g.GroupId == groupId)?.Name ?? string.Empty;
+    private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+    private bool IsCurrentUser(AppUser user) => UserContext.CurrentUser?.UserId == user.UserId;
+    private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    private static string StatusTone(string status) => status == "active" ? "tone-success" : "tone-muted";
+    private static string StatusLabel(string status) => status == "active" ? "Hoạt động" : "Lưu trữ/vô hiệu";
 
     public void Dispose() => Store.StateChanged -= OnChanged;
 }

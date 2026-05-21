@@ -117,6 +117,24 @@
         return setTheme(current === 'dark' ? 'light' : 'dark');
     }
 
+    function setMotionPreference(enabled) {
+        var next = enabled === false ? 'off' : 'on';
+        document.documentElement.setAttribute('data-motion', next);
+        try {
+            window.localStorage.setItem('qlcm.motion', next);
+        } catch (_) { /* ignore */ }
+        return next;
+    }
+
+    function getMotionPreference() {
+        try {
+            var stored = window.localStorage.getItem('qlcm.motion');
+            if (stored === 'off') return false;
+            if (stored === 'on') return true;
+        } catch (_) { /* ignore */ }
+        return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+
     function enterFullscreen() {
         var el = document.documentElement;
         if (el.requestFullscreen) {
@@ -256,6 +274,7 @@
     try {
         var initial = getThemePreference();
         document.documentElement.setAttribute('data-theme', initial);
+        setMotionPreference(getMotionPreference());
     } catch (_) { /* ignore */ }
 
     root.qlcmShell = {
@@ -264,6 +283,8 @@
         getThemePreference: getThemePreference,
         setTheme: setTheme,
         toggleTheme: toggleTheme,
+        setMotionPreference: setMotionPreference,
+        getMotionPreference: getMotionPreference,
         enterFullscreen: enterFullscreen,
         exitFullscreen: exitFullscreen,
         isFullscreen: isFullscreen,

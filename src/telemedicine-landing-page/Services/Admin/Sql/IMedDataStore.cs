@@ -87,6 +87,7 @@ public interface IMedDataStore
     void AddPermissionChangeItem(PermissionChangeItem item);
 
     void AddProcedure(ProfessionalProcedure proc);
+    void UpdateProcedure(ProfessionalProcedure proc);
     void AddProcedureVersion(ProcedureVersion ver);
     void UpdateProcedureVersion(ProcedureVersion updated);
     void AddProcedureStep(ProcedureStep step);
@@ -117,6 +118,7 @@ public interface IMedDataStore
     void RemoveActualResourceUsage(Guid usageId);
 
     void AddClinicalProtocol(ClinicalProtocol protocol);
+    void UpdateClinicalProtocol(ClinicalProtocol protocol);
     void AddClinicalProtocolVersion(ClinicalProtocolVersion ver);
     void UpdateClinicalProtocolVersion(ClinicalProtocolVersion ver);
     void AddClinicalProtocolProcedure(ClinicalProtocolProcedure cpp);
@@ -124,6 +126,7 @@ public interface IMedDataStore
     void AddProtocolApplicabilityRule(ProtocolApplicabilityRule rule);
     void RemoveProtocolApplicabilityRule(Guid ruleId);
     void AddPatientProtocolApplication(PatientProtocolApplication app);
+    void UpdatePatientProtocolApplication(PatientProtocolApplication app);
 
     void AddNotificationPreference(NotificationPreference pref);
     void UpdateNotificationPreference(NotificationPreference pref);

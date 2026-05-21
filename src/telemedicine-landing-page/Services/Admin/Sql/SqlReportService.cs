@@ -4,8 +4,8 @@ using TelemedicineLandingPage.Models.Admin;
 namespace TelemedicineLandingPage.Services.Admin.Sql;
 
 /// <summary>
-/// SQL-backed report service. Keeps the existing report UI contract while reading
-/// operational tables from MedicalProcedureManagement instead of in-memory seeds.
+/// SQL-backed report service. Consumption reports are computed from actual
+/// usages plus service/procedure norms in MedicalProcedureManagement.
 /// </summary>
 public sealed class SqlReportService : IReportService
 {
@@ -17,14 +17,21 @@ public sealed class SqlReportService : IReportService
     }
 
     public IReadOnlyList<ConsumptionReportRow> GenerateConsumptionReport(DateOnly from, DateOnly to, Department? department)
+        => GenerateConsumptionReportForDepartment(from, to, null);
+
+    public IReadOnlyList<ConsumptionReportRow> GenerateConsumptionReportForDepartment(DateOnly from, DateOnly to, Guid? departmentId)
     {
         var fromUtc = from.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         var toUtc = to.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         var period = $"{from:dd/MM/yyyy} - {to:dd/MM/yyyy}";
+        var departmentScope = ResolveDepartmentScope(departmentId);
 
         var services = _db.TechnicalServices.ToDictionary(s => s.TechnicalServiceId);
         var resources = _db.ResourceCatalog.ToDictionary(r => r.ResourceId);
-        var orders = _db.TechnicalOrders.ToDictionary(o => o.TechnicalOrderId);
+        var orders = _db.TechnicalOrders
+            .AsEnumerable()
+            .Where(order => DepartmentMatches(order.OrderingDepartmentId, departmentScope))
+            .ToDictionary(o => o.TechnicalOrderId);
         var serviceNorms = _db.TechnicalResourceNorms
             .AsEnumerable()
             .GroupBy(n => (n.TechnicalServiceId, n.ResourceId))
@@ -46,9 +53,15 @@ public sealed class SqlReportService : IReportService
                     return null;
                 }
 
-                var standard = ResolveStandardQuantity(order.ProcedureVersionId, service.TechnicalServiceId, u.ResourceId, procedureNorms, serviceNorms);
+                var standard = ResolveStandardQuantity(
+                    order.ProcedureVersionId,
+                    service.TechnicalServiceId,
+                    u.ResourceId,
+                    procedureNorms,
+                    serviceNorms);
                 var variance = u.ActualQuantity - standard;
-                var variancePercent = standard == 0 ? 0 : variance * 100 / standard;
+                var variancePercent = standard == 0 ? 0 : Math.Round(variance * 100 / standard, 2, MidpointRounding.AwayFromZero);
+
                 return new ConsumptionReportRow(
                     service.ServiceCode,
                     service.Name,
@@ -74,20 +87,25 @@ public sealed class SqlReportService : IReportService
         var protocolCount = _db.ClinicalProtocols.Count(p => p.Status == "active");
         var unreadNotifications = _db.Notifications.Count(n => n.ReadAt == null);
         var activeUsers = _db.Users.Count(u => u.Status == "active" && u.DeletedAt == null);
-        var compliance = procedureTotal == 0 ? 0 : Math.Round(activeVersions * 100d / procedureTotal, 1, MidpointRounding.AwayFromZero);
+        var compliance = procedureTotal == 0
+            ? 0
+            : Math.Round(activeVersions * 100d / procedureTotal, 1, MidpointRounding.AwayFromZero);
 
         return new List<DashboardKpi>
         {
-            new("PhÃ¡c Ä‘á»“ lÃ¢m sÃ ng", protocolCount.ToString(), 0, TrendDirection.Up, "tone-primary", "stethoscope", new[] { 0, 0, 0, 0, 0, 0, protocolCount }),
-            new("ThÃ´ng bÃ¡o chÆ°a Ä‘á»c", unreadNotifications.ToString(), 0, TrendDirection.Down, "tone-warning", "bell", new[] { 0, 0, 0, 0, 0, 0, unreadNotifications }),
-            new("NhÃ¢n viÃªn hoáº¡t Ä‘á»™ng", activeUsers.ToString(), 0, TrendDirection.Up, "tone-success", "team", new[] { 0, 0, 0, 0, 0, 0, activeUsers }),
-            new("TuÃ¢n thá»§ quy trÃ¬nh", $"{compliance.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}%", 0, TrendDirection.Up, "tone-secondary", "check", new[] { 0, 0, 0, 0, 0, 0, (int)Math.Round(compliance) }),
+            new("Phác đồ lâm sàng", protocolCount.ToString(), 0, TrendDirection.Up, "tone-primary", "stethoscope", new[] { 0, 0, 0, 0, 0, 0, protocolCount }),
+            new("Thông báo chưa đọc", unreadNotifications.ToString(), 0, TrendDirection.Down, "tone-warning", "bell", new[] { 0, 0, 0, 0, 0, 0, unreadNotifications }),
+            new("Nhân viên hoạt động", activeUsers.ToString(), 0, TrendDirection.Up, "tone-success", "team", new[] { 0, 0, 0, 0, 0, 0, activeUsers }),
+            new("Tuân thủ quy trình", $"{compliance.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}%", 0, TrendDirection.Up, "tone-secondary", "check", new[] { 0, 0, 0, 0, 0, 0, (int)Math.Round(compliance) }),
         };
     }
 
     public IReadOnlyList<ActivityEntry> GetActivityFeed(int take)
     {
-        if (take <= 0) take = 6;
+        if (take <= 0)
+        {
+            take = 6;
+        }
 
         return _db.AuditLogs
             .OrderByDescending(log => log.OccurredAt)
@@ -95,16 +113,20 @@ public sealed class SqlReportService : IReportService
             .AsEnumerable()
             .Select(log => new ActivityEntry(
                 log.OccurredAt,
-                log.ActorUsername ?? "Há»‡ thá»‘ng",
+                log.ActorUsername ?? "Hệ thống",
                 log.ActionCode,
-                string.IsNullOrWhiteSpace(log.TargetType) ? "Dá»¯ liá»‡u há»‡ thá»‘ng" : log.TargetType,
+                string.IsNullOrWhiteSpace(log.TargetType) ? "Dữ liệu hệ thống" : log.TargetType,
                 log.ActionCode is "delete" or "reject" ? ActivitySeverity.Warning : ActivitySeverity.Info))
             .ToList();
     }
 
     public IReadOnlyList<(DateOnly Day, int Count)> GetActivityTrend(int days)
     {
-        if (days <= 0) days = 7;
+        if (days <= 0)
+        {
+            days = 7;
+        }
+
         var today = DateOnly.FromDateTime(DateTime.Today);
         var start = today.AddDays(-(days - 1));
         var startUtc = start.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
@@ -141,4 +163,22 @@ public sealed class SqlReportService : IReportService
             ? serviceNorm.StandardQuantity
             : 0;
     }
+
+    private HashSet<Guid>? ResolveDepartmentScope(Guid? departmentId)
+    {
+        if (!departmentId.HasValue)
+        {
+            return null;
+        }
+
+        var ids = _db.DepartmentClosure
+            .Where(edge => edge.AncestorDepartmentId == departmentId.Value)
+            .Select(edge => edge.DescendantDepartmentId)
+            .ToHashSet();
+        ids.Add(departmentId.Value);
+        return ids;
+    }
+
+    private static bool DepartmentMatches(Guid? orderDepartmentId, HashSet<Guid>? departmentScope)
+        => departmentScope is null || (orderDepartmentId.HasValue && departmentScope.Contains(orderDepartmentId.Value));
 }

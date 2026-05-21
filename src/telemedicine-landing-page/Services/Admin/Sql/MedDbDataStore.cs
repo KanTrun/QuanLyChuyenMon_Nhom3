@@ -200,6 +200,20 @@ public sealed class MedDbDataStore : IMedDataStore
     public void AddPermissionChangeItem(PermissionChangeItem item) { _db.PermissionChangeItems.Add(item); _db.SaveChanges(); RaiseStateChanged(); }
 
     public void AddProcedure(ProfessionalProcedure proc) { _db.Procedures.Add(proc); _db.SaveChanges(); RaiseStateChanged(); }
+    public void UpdateProcedure(ProfessionalProcedure proc)
+    {
+        var existing = _db.Procedures.FirstOrDefault(p => p.ProcedureId == proc.ProcedureId)
+            ?? throw new InvalidOperationException("Quy trình không tồn tại.");
+        _db.Procedures.Entry(existing).CurrentValues.SetValues(proc with
+        {
+            CreatedAt = existing.CreatedAt,
+            CreatedBy = existing.CreatedBy,
+            UpdatedAt = DateTime.UtcNow
+        });
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+
     public void AddProcedureVersion(ProcedureVersion ver) { _db.ProcedureVersions.Add(ver); _db.SaveChanges(); RaiseStateChanged(); }
     public void UpdateProcedureVersion(ProcedureVersion updated)
     {
@@ -320,10 +334,32 @@ public sealed class MedDbDataStore : IMedDataStore
     }
 
     public void AddClinicalProtocol(ClinicalProtocol protocol) { _db.ClinicalProtocols.Add(protocol); _db.SaveChanges(); RaiseStateChanged(); }
+    public void UpdateClinicalProtocol(ClinicalProtocol protocol)
+    {
+        var existing = _db.ClinicalProtocols.FirstOrDefault(p => p.ClinicalProtocolId == protocol.ClinicalProtocolId)
+            ?? throw new InvalidOperationException("Phác đồ không tồn tại.");
+        _db.ClinicalProtocols.Entry(existing).CurrentValues.SetValues(protocol with
+        {
+            CreatedAt = existing.CreatedAt,
+            CreatedBy = existing.CreatedBy,
+            UpdatedAt = DateTime.UtcNow
+        });
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+
     public void AddClinicalProtocolVersion(ClinicalProtocolVersion ver) { _db.ClinicalProtocolVersions.Add(ver); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddClinicalProtocolProcedure(ClinicalProtocolProcedure cpp) { _db.ClinicalProtocolProcedures.Add(cpp); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProtocolApplicabilityRule(ProtocolApplicabilityRule rule) { _db.ProtocolApplicabilityRules.Add(rule); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddPatientProtocolApplication(PatientProtocolApplication app) { _db.PatientProtocolApplications.Add(app); _db.SaveChanges(); RaiseStateChanged(); }
+    public void UpdatePatientProtocolApplication(PatientProtocolApplication app)
+    {
+        var existing = _db.PatientProtocolApplications.FirstOrDefault(a => a.PatientProtocolApplicationId == app.PatientProtocolApplicationId)
+            ?? throw new InvalidOperationException("Áp dụng phác đồ không tồn tại.");
+        _db.PatientProtocolApplications.Entry(existing).CurrentValues.SetValues(app);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void UpdateClinicalProtocolVersion(ClinicalProtocolVersion ver)
     {
         var existing = _db.ClinicalProtocolVersions.FirstOrDefault(v => v.ClinicalProtocolVersionId == ver.ClinicalProtocolVersionId)

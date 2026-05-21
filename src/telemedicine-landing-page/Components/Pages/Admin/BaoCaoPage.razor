@@ -67,7 +67,7 @@
     {
         var to = DateOnly.FromDateTime(DateTime.Today);
         var from = to.AddDays(-30);
-        _consumptionCount = ReportService.GenerateConsumptionReport(from, to, null).Count;
+        _consumptionCount = ReportService.GenerateConsumptionReportForDepartment(from, to, null).Count;
 
         var kpis = ReportService.GetDashboardKpis();
         var compliance = kpis.FirstOrDefault(k => k.Label == "Tuân thủ quy trình");

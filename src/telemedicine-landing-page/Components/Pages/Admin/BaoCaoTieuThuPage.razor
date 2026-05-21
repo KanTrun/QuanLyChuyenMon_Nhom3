@@ -1,6 +1,8 @@
 @page "/admin/bao-cao/tieu-thu"
 @layout AdminLayout
+@using TelemedicineLandingPage.Services.Admin.Sql
 @inject IReportService ReportService
+@inject IMedDataStore Store
 @inject IToastService Toasts
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
@@ -36,13 +38,41 @@
             <label class="admin-filter-label" for="bc-dept">Khoa</label>
             <select id="bc-dept" class="admin-select" value="@_deptKey" @onchange="OnDeptChanged">
                 <option value="">Toàn bệnh viện</option>
-                @foreach (var d in (Department[])Enum.GetValues(typeof(Department)))
+                @foreach (var d in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
                 {
-                    <option value="@d">@AdminEnumLabels.GetLabel(d)</option>
+                    <option value="@d.DepartmentId">@d.Name</option>
                 }
             </select>
         </div>
-        <div class="admin-filter-field"></div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Dịch vụ</label>
+            <select class="admin-select" @bind="_serviceKey" @bind:after="Recompute">
+                <option value="">Tất cả</option>
+                @foreach (var svc in Store.TechnicalServices.OrderBy(s => s.Name))
+                {
+                    <option value="@svc.ServiceCode">@svc.Name</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Tài nguyên</label>
+            <select class="admin-select" @bind="_resourceKey" @bind:after="Recompute">
+                <option value="">Tất cả</option>
+                @foreach (var resource in Store.ResourceCatalog.OrderBy(r => r.Name))
+                {
+                    <option value="@resource.ResourceCode">@resource.Name</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Chênh lệch</label>
+            <select class="admin-select" @bind="_varianceFilter" @bind:after="Recompute">
+                <option value="">Tất cả</option>
+                <option value="over">Vượt định mức</option>
+                <option value="under">Dưới định mức</option>
+                <option value="equal">Đúng định mức</option>
+            </select>
+        </div>
         <div class="admin-filter-field" style="align-self:end; justify-self:end;">
             <span class="admin-table-cell-muted">@_rows.Count dòng</span>
         </div>
@@ -126,7 +156,10 @@
     private string _fromIso = string.Empty;
     private string _toIso = string.Empty;
     private string _deptKey = string.Empty;
-    private Department? _dept;
+    private string _serviceKey = string.Empty;
+    private string _resourceKey = string.Empty;
+    private string _varianceFilter = string.Empty;
+    private Guid? _deptId;
     private IReadOnlyList<ConsumptionReportRow> _rows = Array.Empty<ConsumptionReportRow>();
     private IReadOnlyList<ConsumptionReportRow> _pagedRows = Array.Empty<ConsumptionReportRow>();
     private IReadOnlyList<ConsumptionReportRow> _topVariance = Array.Empty<ConsumptionReportRow>();
@@ -173,13 +206,17 @@
     private void OnDeptChanged(ChangeEventArgs args)
     {
         _deptKey = args.Value?.ToString() ?? string.Empty;
-        _dept = Enum.TryParse<Department>(_deptKey, out var d) ? d : null;
+        _deptId = Guid.TryParse(_deptKey, out var departmentId) ? departmentId : null;
         Recompute();
     }
 
     private void Recompute()
     {
-        _rows = ReportService.GenerateConsumptionReport(_from, _to, _dept);
+        _rows = ReportService.GenerateConsumptionReportForDepartment(_from, _to, _deptId)
+            .Where(r => string.IsNullOrEmpty(_serviceKey) || r.TechnicalServiceCode == _serviceKey)
+            .Where(r => string.IsNullOrEmpty(_resourceKey) || r.ResourceCode == _resourceKey)
+            .Where(MatchesVarianceFilter)
+            .ToList();
         _topVariance = _rows
             .OrderByDescending(r => Math.Abs(r.VariancePercent))
             .Take(8)
@@ -187,6 +224,14 @@
         _currentPage = Math.Clamp(_currentPage, 1, Math.Max(1, (int)Math.Ceiling(_rows.Count / (double)_pageSize)));
         _pagedRows = _rows.Skip((_currentPage - 1) * _pageSize).Take(_pageSize).ToList();
     }
+
+    private bool MatchesVarianceFilter(ConsumptionReportRow row) => _varianceFilter switch
+    {
+        "over" => row.Variance > 0,
+        "under" => row.Variance < 0,
+        "equal" => row.Variance == 0,
+        _ => true
+    };
 
     private void OnPageChanged(int page)
     {

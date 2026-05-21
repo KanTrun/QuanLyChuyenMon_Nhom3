@@ -18,6 +18,17 @@
         <button class="admin-btn admin-btn-primary" @onclick="OpenCreate">Thêm vai trò</button>
     </header>
 
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Trạng thái</label>
+            <select class="admin-select" @bind="_statusFilter" @bind:after="ResetAndPaginate">
+                <option value="active">Đang hoạt động</option>
+                <option value="archived">Lưu trữ</option>
+                <option value="all">Tất cả</option>
+            </select>
+        </div>
+    </div>
+
     <AdminDataTable TItem="Role"
                     Items="_pagedItems"
                     ColumnCount="7"
@@ -90,6 +101,7 @@
     private string _drawerTitle = "Thêm vai trò";
     private Guid? _editingRoleId;
     private string _code = "", _name = "", _desc = "";
+    private string _statusFilter = "active";
 
     protected override void OnInitialized()
     {
@@ -101,9 +113,18 @@
 
     private void Paginate()
     {
-        var all = Store.Roles.OrderBy(r => r.Name).ToList();
+        var all = Store.Roles
+            .Where(r => _statusFilter == "all" || (_statusFilter == "archived" ? r.Status != "active" : r.Status == "active"))
+            .OrderBy(r => r.Name)
+            .ToList();
         _total = all.Count;
         _pagedItems = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void ResetAndPaginate()
+    {
+        _page = 1;
+        Paginate();
     }
 
     private void OpenCreate()

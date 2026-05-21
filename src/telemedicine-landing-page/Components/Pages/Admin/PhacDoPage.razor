@@ -33,6 +33,14 @@
                 }
             </select>
         </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Trạng thái</label>
+            <select class="admin-select" @bind="_statusFilter" @bind:after="Recompute">
+                <option value="active">Đang hoạt động</option>
+                <option value="archived">Lưu trữ</option>
+                <option value="all">Tất cả</option>
+            </select>
+        </div>
     </div>
 
     @if (_items.Count == 0)
@@ -62,6 +70,17 @@
                     <h2 class="admin-card-title">@protocol.Name</h2>
                     <p class="admin-card-meta">@protocol.ProtocolCode • @GetDeptName(protocol.OwnerDepartmentId)</p>
                     <p class="admin-card-meta">@protocol.Description</p>
+                    <div class="admin-row-actions" @onclick:stopPropagation="true">
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEditProtocol(protocol)">Sửa</button>
+                        @if (protocol.Status == "active")
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ArchiveProtocol(protocol)">Lưu trữ</button>
+                        }
+                        else
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => RestoreProtocol(protocol)">Khôi phục</button>
+                        }
+                    </div>
                 </article>
             }
         </div>
@@ -279,6 +298,7 @@
 @code {
     private string _search = string.Empty;
     private string _typeFilter = string.Empty;
+    private string _statusFilter = "active";
     private IReadOnlyList<Sql.ClinicalProtocol> _items = Array.Empty<Sql.ClinicalProtocol>();
 
     private bool _drawerOpen;
@@ -287,6 +307,7 @@
     private string _activeTab = "procedures";
 
     private bool _createOpen;
+    private Guid? _editingProtocolId;
     private string _createCode = string.Empty;
     private string _createName = string.Empty;
     private string _createType = "treatment_protocol";
@@ -329,6 +350,7 @@
     {
         _items = Store.ClinicalProtocols
             .Where(p => string.IsNullOrEmpty(_typeFilter) || p.ProtocolType == _typeFilter)
+            .Where(p => _statusFilter == "all" || (_statusFilter == "archived" ? p.Status != "active" : p.Status == "active"))
             .Where(p => string.IsNullOrWhiteSpace(_search)
                 || p.ProtocolCode.Contains(_search, StringComparison.OrdinalIgnoreCase)
                 || p.Name.Contains(_search, StringComparison.OrdinalIgnoreCase))
@@ -338,12 +360,25 @@
 
     private void OpenCreate()
     {
+        _editingProtocolId = null;
         _createCode = string.Empty;
         _createName = string.Empty;
         _createType = Sql.MedLookups.ProtocolTypes.First().Code;
         _createDepartmentId = string.Empty;
         _createDescription = string.Empty;
         _createSummary = string.Empty;
+        _createOpen = true;
+    }
+
+    private void OpenEditProtocol(Sql.ClinicalProtocol protocol)
+    {
+        _editingProtocolId = protocol.ClinicalProtocolId;
+        _createCode = protocol.ProtocolCode;
+        _createName = protocol.Name;
+        _createType = protocol.ProtocolType;
+        _createDepartmentId = protocol.OwnerDepartmentId?.ToString() ?? string.Empty;
+        _createDescription = protocol.Description ?? string.Empty;
+        _createSummary = LatestVersion(protocol.ClinicalProtocolId)?.Summary ?? string.Empty;
         _createOpen = true;
     }
 
@@ -357,6 +392,22 @@
 
         try
         {
+            if (_editingProtocolId.HasValue)
+            {
+                var current = Store.ClinicalProtocols.First(p => p.ClinicalProtocolId == _editingProtocolId.Value);
+                Store.UpdateClinicalProtocol(current with
+                {
+                    ProtocolCode = _createCode.Trim(),
+                    Name = _createName.Trim(),
+                    ProtocolType = _createType,
+                    OwnerDepartmentId = ParseGuid(_createDepartmentId),
+                    Description = string.IsNullOrWhiteSpace(_createDescription) ? null : _createDescription.Trim()
+                });
+                Toasts.Show("Đã cập nhật phác đồ", _createName.Trim(), ToastVariant.Success);
+                _createOpen = false;
+                return;
+            }
+
             var protocol = new Sql.ClinicalProtocol
             {
                 ProtocolCode = _createCode.Trim(),
@@ -389,6 +440,18 @@
         {
             Toasts.Show("Không thể tạo phác đồ", ex.Message, ToastVariant.Error);
         }
+    }
+
+    private void ArchiveProtocol(Sql.ClinicalProtocol protocol)
+    {
+        Store.UpdateClinicalProtocol(protocol with { Status = "archived" });
+        Toasts.Show("Đã lưu trữ phác đồ", protocol.Name, ToastVariant.Info);
+    }
+
+    private void RestoreProtocol(Sql.ClinicalProtocol protocol)
+    {
+        Store.UpdateClinicalProtocol(protocol with { Status = "active" });
+        Toasts.Show("Đã khôi phục phác đồ", protocol.Name, ToastVariant.Success);
     }
 
     private void OpenDetail(Sql.ClinicalProtocol protocol)

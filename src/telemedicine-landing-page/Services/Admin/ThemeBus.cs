@@ -9,17 +9,25 @@ namespace TelemedicineLandingPage.Services.Admin;
 public interface IThemeBus
 {
     event Action? ToggleRequested;
+    event Action<string>? ThemeChanged;
+    event Action<bool>? MotionChanged;
     event Action? ExportConsumptionRequested;
 
     void RequestToggle();
+    void SetTheme(string theme);
+    void SetMotion(bool enabled);
     void RequestExportConsumption();
 }
 
 public sealed class ThemeBus : IThemeBus
 {
     public event Action? ToggleRequested;
+    public event Action<string>? ThemeChanged;
+    public event Action<bool>? MotionChanged;
     public event Action? ExportConsumptionRequested;
 
     public void RequestToggle() => ToggleRequested?.Invoke();
+    public void SetTheme(string theme) => ThemeChanged?.Invoke(theme == "dark" ? "dark" : "light");
+    public void SetMotion(bool enabled) => MotionChanged?.Invoke(enabled);
     public void RequestExportConsumption() => ExportConsumptionRequested?.Invoke();
 }
