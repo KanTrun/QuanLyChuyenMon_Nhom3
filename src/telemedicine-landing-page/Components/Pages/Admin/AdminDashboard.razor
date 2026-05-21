@@ -63,8 +63,23 @@
                     <p class="admin-panel-subtitle">Dữ liệu tổng hợp từ hệ thống.</p>
                 </div>
             </header>
-            <div class="admin-trend-chart" style="display:flex;align-items:center;justify-content:center;min-height:160px;">
-                <p style="color:var(--color-muted);font-size:0.95rem;">Chưa có dữ liệu thống kê</p>
+            <div class="admin-trend-chart" style="display:grid;gap:14px;min-height:160px;">
+                <div style="display:grid;grid-template-columns:repeat(6,minmax(42px,1fr));gap:10px;align-items:end;height:150px;">
+                    @foreach (var point in _procedureTrend)
+                    {
+                        var height = Math.Max(10, point.Percent);
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:end;">
+                            <div title="@($"{point.Label}: {point.Count}")" style="width:100%;max-width:44px;height:@height%;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--color-primary),var(--color-primary-deep));"></div>
+                            <span class="admin-table-cell-muted" style="font-size:0.78rem;">@point.Label</span>
+                        </div>
+                    }
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    @foreach (var segment in _versionStatusSegments)
+                    {
+                        <span class="admin-filter-chip">@segment.Label: @segment.Count</span>
+                    }
+                </div>
             </div>
         </section>
 
@@ -135,6 +150,8 @@
     private int _activeDepartmentCount;
 
     private IReadOnlyList<Models.Admin.Sql.AuditLog> _recentAuditLogs = Array.Empty<Models.Admin.Sql.AuditLog>();
+    private IReadOnlyList<TrendPoint> _procedureTrend = Array.Empty<TrendPoint>();
+    private IReadOnlyList<StatusSegment> _versionStatusSegments = Array.Empty<StatusSegment>();
 
     private readonly List<QuickTileViewModel> _quickTiles =
     [
@@ -178,7 +195,7 @@
     {
         _procedureCount = DataStore.Procedures.Count;
         _publishedVersionCount = DataStore.ProcedureVersions
-            .Count(v => v.StatusCode is "published" or "active");
+            .Count(v => v.StatusCode == "active");
         _activeUserCount = DataStore.Users
             .Count(u => u.Status == "active");
         _activeDepartmentCount = DataStore.Departments
@@ -187,6 +204,27 @@
         _recentAuditLogs = DataStore.AuditLogs
             .OrderByDescending(a => a.OccurredAt)
             .Take(8)
+            .ToList();
+
+        var monthStarts = Enumerable.Range(0, 6)
+            .Select(i => new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(i - 5))
+            .ToList();
+        var monthlyCounts = monthStarts
+            .Select(month => new
+            {
+                Label = month.ToString("MM/yy"),
+                Count = DataStore.Procedures.Count(p => p.CreatedAt >= month && p.CreatedAt < month.AddMonths(1))
+            })
+            .ToList();
+        var maxMonthlyCount = Math.Max(1, monthlyCounts.Max(p => p.Count));
+        _procedureTrend = monthlyCounts
+            .Select(p => new TrendPoint(p.Label, p.Count, (int)Math.Round(p.Count * 100.0 / maxMonthlyCount)))
+            .ToList();
+
+        _versionStatusSegments = DataStore.ProcedureVersions
+            .GroupBy(v => v.StatusCode)
+            .Select(g => new StatusSegment(FormatVersionStatus(g.Key), g.Count()))
+            .OrderByDescending(s => s.Count)
             .ToList();
     }
 
@@ -227,6 +265,16 @@
         "department" => "khoa/phòng",
         "role_permission" => "quyền vai trò",
         _ => targetType
+    };
+
+    private static string FormatVersionStatus(string status) => status switch
+    {
+        "active" => "Đang hiệu lực",
+        "pending_approval" => "Chờ duyệt",
+        "draft" => "Nháp",
+        "rejected" => "Từ chối",
+        "superseded" => "Thay thế",
+        _ => status
     };
 
     private static string ExtractDetails(Models.Admin.Sql.AuditLog log)
@@ -273,4 +321,6 @@
     }
 
     private sealed record QuickTileViewModel(string Title, string Subtitle, string Url, string Icon, string Tone);
+    private sealed record TrendPoint(string Label, int Count, int Percent);
+    private sealed record StatusSegment(string Label, int Count);
 }

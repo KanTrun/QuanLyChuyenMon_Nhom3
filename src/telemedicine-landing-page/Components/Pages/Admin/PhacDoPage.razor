@@ -1,5 +1,6 @@
 @page "/admin/phac-do"
 @layout AdminLayout
+@using System.Text.Json
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
@@ -184,7 +185,12 @@
                                 {
                                     <tr>
                                         <td>@Lookup(Sql.MedLookups.ProtocolRuleTypes, rule.RuleType)</td>
-                                        <td><code>@rule.RuleJson</code></td>
+                                        <td>
+                                            <details>
+                                                <summary style="cursor:pointer;">@FormatRule(rule)</summary>
+                                                <code>@rule.RuleJson</code>
+                                            </details>
+                                        </td>
                                         <td>@rule.Priority</td>
                                         <td>@(rule.IsActive ? "Có" : "Không")</td>
                                         <td style="text-align:right;"><button type="button" class="admin-icon-btn is-danger" @onclick="() => RemoveRule(rule)">×</button></td>
@@ -734,6 +740,60 @@
         var proc = Store.Procedures.FirstOrDefault(p => p.ProcedureId == version.ProcedureId);
         return $"{proc?.ProcedureCode ?? "QT"} v{version.VersionNo} - {version.Title}";
     }
+
+    private static string FormatRule(Sql.ProtocolApplicabilityRule rule)
+    {
+        if (string.IsNullOrWhiteSpace(rule.RuleJson))
+        {
+            return Lookup(Sql.MedLookups.ProtocolRuleTypes, rule.RuleType);
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(rule.RuleJson);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return Lookup(Sql.MedLookups.ProtocolRuleTypes, rule.RuleType);
+            }
+
+            var parts = new List<string>();
+            foreach (var prop in doc.RootElement.EnumerateObject())
+            {
+                if (prop.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+                {
+                    continue;
+                }
+
+                parts.Add($"{RuleFieldLabel(prop.Name)}: {JsonValueText(prop.Value)}");
+            }
+
+            return parts.Count == 0
+                ? Lookup(Sql.MedLookups.ProtocolRuleTypes, rule.RuleType)
+                : string.Join("; ", parts);
+        }
+        catch (JsonException)
+        {
+            return "Rule JSON chưa hợp lệ";
+        }
+    }
+
+    private static string RuleFieldLabel(string field) => field switch
+    {
+        "icd" or "diagnosisCode" => "ICD",
+        "ageFrom" => "Tuổi từ",
+        "ageTo" => "Tuổi đến",
+        "gender" => "Giới tính",
+        "department" or "departmentCode" => "Khoa",
+        "description" or "note" => "Mô tả",
+        _ => field
+    };
+
+    private static string JsonValueText(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.String => value.GetString() ?? string.Empty,
+        JsonValueKind.Array => string.Join(", ", value.EnumerateArray().Select(JsonValueText)),
+        _ => value.ToString()
+    };
 
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
     private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";

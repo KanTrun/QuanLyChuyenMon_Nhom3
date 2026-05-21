@@ -69,17 +69,20 @@
         var from = to.AddDays(-30);
         _consumptionCount = ReportService.GenerateConsumptionReportForDepartment(from, to, null).Count;
 
-        var kpis = ReportService.GetDashboardKpis();
-        var compliance = kpis.FirstOrDefault(k => k.Label == "Tuân thủ quy trình");
-        if (compliance is not null && double.TryParse(compliance.Value.TrimEnd('%'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var pct))
-        {
-            _compliancePercent = pct;
-        }
         _changeLogCount = Store.AuditLogs.Count(a => a.TargetType.Contains("permission", StringComparison.OrdinalIgnoreCase) || a.TargetType.Contains("role", StringComparison.OrdinalIgnoreCase));
         _roleCount = Store.Roles.Count;
         _protocolCount = Store.ClinicalProtocols.Count;
         _protocolApplications = Store.PatientProtocolApplications.Count;
-        _complianceTotal = Math.Max(1, Store.Procedures.Count);
-        _complianceApproved = Store.ProcedureVersions.Count(v => v.StatusCode == "active");
+        var activeProcedureIds = Store.Procedures
+            .Where(p => p.Status == "active")
+            .Select(p => p.ProcedureId)
+            .ToHashSet();
+        _complianceTotal = activeProcedureIds.Count;
+        _complianceApproved = Store.ProcedureVersions
+            .Where(v => activeProcedureIds.Contains(v.ProcedureId) && v.StatusCode == "active")
+            .Select(v => v.ProcedureId)
+            .Distinct()
+            .Count();
+        _compliancePercent = _complianceTotal == 0 ? 0 : _complianceApproved * 100.0 / _complianceTotal;
     }
 }

@@ -25,29 +25,16 @@
 
     <article class="admin-settings-section" id="ho-so">
         <h2>Hồ sơ cá nhân</h2>
-        <div class="admin-form-grid">
-            <div class="admin-form-field">
-                <label class="admin-form-field-label" for="cd-name">Họ và tên</label>
-                <input id="cd-name" class="admin-input" @bind="_fullName" />
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label" for="cd-email">Email công vụ</label>
-                <input id="cd-email" class="admin-input" type="email" @bind="_email" />
-            </div>
-            <div class="admin-form-field admin-form-field-full">
-                <label class="admin-form-field-label" for="cd-dept">Khoa/phòng chính</label>
-                <select id="cd-dept" class="admin-select" @bind="_departmentId">
-                    <option value="">Không gán khoa/phòng</option>
-                    @foreach (var d in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
-                    {
-                        <option value="@d.DepartmentId">@d.Name</option>
-                    }
-                </select>
-            </div>
-        </div>
+        <dl class="admin-detail-grid">
+            <dt>Họ và tên</dt>
+            <dd>@(_fullName == string.Empty ? "—" : _fullName)</dd>
+            <dt>Email công vụ</dt>
+            <dd>@(_email == string.Empty ? "—" : _email)</dd>
+            <dt>Khoa/phòng chính</dt>
+            <dd>@CurrentDepartmentName()</dd>
+        </dl>
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
-            <button type="button" class="admin-btn admin-btn-ghost" @onclick="LoadDraft">Hoàn tác</button>
-            <button type="button" class="admin-btn admin-btn-primary" @onclick="SaveProfile">Lưu hồ sơ</button>
+            <a class="admin-btn admin-btn-primary" href="/admin/ho-so">Mở hồ sơ cá nhân</a>
         </div>
     </article>
 
@@ -177,6 +164,11 @@
         _aiModel = Preferences.Current.AiModel;
         _aiPrompt = Preferences.Current.AiSystemPrompt;
     }
+
+    private string CurrentDepartmentName()
+        => Guid.TryParse(_departmentId, out var departmentId)
+            ? Store.Departments.FirstOrDefault(d => d.DepartmentId == departmentId)?.Name ?? "—"
+            : "—";
 
     private void SaveProfile()
     {

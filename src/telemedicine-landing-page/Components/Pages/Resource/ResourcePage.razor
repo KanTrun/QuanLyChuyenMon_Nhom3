@@ -21,17 +21,20 @@
     <div class="admin-filter-bar is-compact">
         <div class="admin-filter-field">
             <label class="admin-filter-label" for="resource-search">Tìm kiếm</label>
-            <input id="resource-search" class="admin-input" type="search" placeholder="Mã hoặc tên tài nguyên" @bind="_search" @bind:event="oninput" @bind:after="Paginate" />
+            <input id="resource-search" class="admin-input" type="search" placeholder="Mã hoặc tên tài nguyên" @bind="_search" @bind:event="oninput" @bind:after="ResetAndPaginate" />
         </div>
         <div class="admin-filter-field">
             <label class="admin-filter-label" for="resource-type">Loại</label>
-            <select id="resource-type" class="admin-select" @bind="_typeFilter" @bind:after="Paginate">
+            <select id="resource-type" class="admin-select" @bind="_typeFilter" @bind:after="ResetAndPaginate">
                 <option value="">Tất cả</option>
                 @foreach (var type in Sql.MedLookups.ResourceTypes)
                 {
                     <option value="@type.Code">@type.Name</option>
                 }
             </select>
+        </div>
+        <div class="admin-filter-field" style="align-self:end;">
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="ResetFilters">Đặt lại</button>
         </div>
     </div>
 
@@ -206,6 +209,19 @@
         var totalPages = Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
         _page = Math.Clamp(_page, 1, totalPages);
         _pagedItems = query.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void ResetAndPaginate()
+    {
+        _page = 1;
+        Paginate();
+    }
+
+    private void ResetFilters()
+    {
+        _search = string.Empty;
+        _typeFilter = string.Empty;
+        ResetAndPaginate();
     }
 
     private void OpenCreate()

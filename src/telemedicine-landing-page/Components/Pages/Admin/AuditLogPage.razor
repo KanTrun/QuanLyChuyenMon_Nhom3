@@ -85,7 +85,7 @@
                 <td><AdminBadge Tone="@GetActionTone(log.ActionCode)">@ActionLabel(log.ActionCode)</AdminBadge></td>
                 <td>
                     <div class="admin-table-cell-strong">@TargetLabel(log.TargetType)</div>
-                    <div class="admin-table-cell-muted">@(log.TargetId ?? "—")</div>
+                    <div class="admin-table-cell-muted">@ResolveTargetName(log)</div>
                 </td>
                 <td>@DescribeLog(log)</td>
                 <td>
@@ -205,6 +205,62 @@
             ?? "Không xác định";
     }
 
+    private string ResolveTargetName(AuditLog log)
+    {
+        if (string.IsNullOrWhiteSpace(log.TargetId))
+        {
+            return "—";
+        }
+
+        if (!Guid.TryParse(log.TargetId, out var id))
+        {
+            return log.TargetId;
+        }
+
+        return log.TargetType.ToLowerInvariant() switch
+        {
+            "procedure" or "professionalprocedure" or "professional_procedure" =>
+                Store.Procedures.FirstOrDefault(p => p.ProcedureId == id) is { } p ? $"{p.ProcedureCode} - {p.Name}" : ShortId(log.TargetId),
+            "procedureversion" or "procedure_version" =>
+                Store.ProcedureVersions.FirstOrDefault(v => v.ProcedureVersionId == id) is { } v ? $"{v.VersionLabel} - {v.Title}" : ShortId(log.TargetId),
+            "clinicalprotocol" or "clinical_protocol" =>
+                Store.ClinicalProtocols.FirstOrDefault(p => p.ClinicalProtocolId == id) is { } cp ? $"{cp.ProtocolCode} - {cp.Name}" : ShortId(log.TargetId),
+            "clinicalprotocolversion" or "clinical_protocol_version" =>
+                Store.ClinicalProtocolVersions.FirstOrDefault(v => v.ClinicalProtocolVersionId == id) is { } cv ? $"v{cv.VersionNo} - {cv.Title}" : ShortId(log.TargetId),
+            "technicalorder" or "technical_order" =>
+                Store.TechnicalOrders.FirstOrDefault(o => o.TechnicalOrderId == id) is { } o ? GetOrderName(o) : ShortId(log.TargetId),
+            "technicalservice" or "technical_service" =>
+                Store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == id) is { } svc ? $"{svc.ServiceCode} - {svc.Name}" : ShortId(log.TargetId),
+            "resourcecatalogitem" or "resource_catalog_item" =>
+                Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == id) is { } r ? $"{r.ResourceCode} - {r.Name}" : ShortId(log.TargetId),
+            "patientref" or "patient" or "patient_ref" =>
+                Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == id) is { } pt ? $"{pt.PatientCode} - {pt.DisplayName}" : ShortId(log.TargetId),
+            "encounterref" or "encounter" or "encounter_ref" =>
+                Store.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == id)?.ExternalEncounterId ?? ShortId(log.TargetId),
+            "appuser" or "user" =>
+                Store.Users.FirstOrDefault(u => u.UserId == id) is { } u ? $"{u.Username} - {u.FullName}" : ShortId(log.TargetId),
+            "role" =>
+                Store.Roles.FirstOrDefault(r => r.RoleId == id)?.Name ?? ShortId(log.TargetId),
+            "group" =>
+                Store.Groups.FirstOrDefault(g => g.GroupId == id)?.Name ?? ShortId(log.TargetId),
+            "department" =>
+                Store.Departments.FirstOrDefault(d => d.DepartmentId == id)?.Name ?? ShortId(log.TargetId),
+            _ => ShortId(log.TargetId)
+        };
+    }
+
+    private string GetOrderName(TechnicalOrder order)
+    {
+        var service = Store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == order.TechnicalServiceId)?.Name ?? "Chỉ định";
+        var patient = order.PatientRefId.HasValue
+            ? Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == order.PatientRefId.Value)?.DisplayName
+            : null;
+        return string.IsNullOrWhiteSpace(patient) ? service : $"{service} - {patient}";
+    }
+
+    private static string ShortId(string value)
+        => value.Length <= 8 ? value : value[..8];
+
     private static string DescribeLog(AuditLog log)
     {
         var subject = TargetLabel(log.TargetType);
@@ -268,6 +324,9 @@
         "submit" => "Gửi phê duyệt",
         "approve" => "Phê duyệt",
         "publish" => "Ban hành",
+        "complete_order" => "Hoàn thành chỉ định",
+        "cancel_order" => "Hủy chỉ định",
+        "create_order" => "Tạo chỉ định",
         "reject" => "Từ chối",
         "revoke" or "withdraw" => "Thu hồi",
         "login" => "Đăng nhập",
@@ -286,6 +345,10 @@
         "encounterref" or "encounter" => "Lượt khám",
         "appuser" or "user" => "Người dùng",
         "role" => "Vai trò",
+        "rolepermission" or "role_permission" => "Quyền vai trò",
+        "userrole" or "user_role" => "Vai trò người dùng",
+        "userpermissionoverride" or "user_permission_override" => "Ghi đè quyền người dùng",
+        "permission_change_request" => "Yêu cầu thay đổi quyền",
         "group" => "Nhóm",
         "department" => "Khoa/phòng",
         _ => target
@@ -300,6 +363,7 @@
         "pending_approval" => "chờ phê duyệt",
         "rejected" => "bị từ chối",
         "published" => "đã ban hành",
+        "superseded" => "đã thay thế",
         _ => status
     };
 

@@ -1,10 +1,9 @@
-@using Microsoft.EntityFrameworkCore
-@using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Models.Admin.Sql
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
-@inject MedDbContext Db
+@inject IMedDataStore Store
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@implements IDisposable
 
 <article class="admin-panel">
     <header class="admin-panel-head">
@@ -205,12 +204,27 @@
 
     protected override void OnInitialized()
     {
-        _roles = Db.Roles.OrderBy(r => r.Name).ToList();
-        _permissions = Db.Permissions.Where(p => p.Status == "active").OrderBy(p => p.PermissionCode).ToList();
-        _departments = Db.Departments.Where(d => d.Status == "active").OrderBy(d => d.Code).ToList();
+        Store.StateChanged += OnStoreChanged;
+        LoadLookups();
+    }
 
-        // Đếm thành viên cho mỗi vai trò (chỉ tính user_role còn hiệu lực)
-        _memberCounts = Db.UserRoles
+    private void OnStoreChanged() => InvokeAsync(() =>
+    {
+        LoadLookups();
+        if (_selectedRoleId.HasValue)
+        {
+            _selectedRole = _roles.FirstOrDefault(r => r.RoleId == _selectedRoleId.Value);
+            LoadRolePermissions(_selectedRoleId.Value);
+        }
+        StateHasChanged();
+    });
+
+    private void LoadLookups()
+    {
+        _roles = Store.Roles.OrderBy(r => r.Name).ToList();
+        _permissions = Store.Permissions.Where(p => p.Status == "active").OrderBy(p => p.PermissionCode).ToList();
+        _departments = Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Code).ToList();
+        _memberCounts = Store.UserRoles
             .Where(ur => ur.EffectiveTo == null)
             .GroupBy(ur => ur.RoleId)
             .ToDictionary(g => g.Key, g => g.Count());
@@ -238,20 +252,28 @@
 
     private void LoadRolePermissions(Guid roleId)
     {
-        _rolePermissions = (from rp in Db.RolePermissions
-                            join p in Db.Permissions on rp.PermissionId equals p.PermissionId
-                            join s in Db.Screens on p.ScreenId equals s.ScreenId
-                            where rp.RoleId == roleId && rp.EffectiveTo == null
-                            select new RolePermissionView
-                            {
-                                RolePermissionId = rp.RolePermissionId,
-                                ScreenName = s.Name,
-                                PermissionCode = p.PermissionCode,
-                                EffectCode = rp.EffectCode,
-                                ScopeType = rp.DepartmentScopeType,
-                                DepartmentId = rp.DepartmentId,
-                                Priority = rp.Priority
-                            }).ToList();
+        _rolePermissions = Store.RolePermissions
+            .Where(rp => rp.RoleId == roleId && rp.EffectiveTo == null)
+            .Select(rp =>
+            {
+                var permission = Store.Permissions.FirstOrDefault(p => p.PermissionId == rp.PermissionId);
+                var screen = permission is null ? null : Store.Screens.FirstOrDefault(s => s.ScreenId == permission.ScreenId);
+                return permission is null
+                    ? null
+                    : new RolePermissionView
+                    {
+                        RolePermissionId = rp.RolePermissionId,
+                        ScreenName = screen?.Name ?? "—",
+                        PermissionCode = permission.PermissionCode,
+                        EffectCode = rp.EffectCode,
+                        ScopeType = rp.DepartmentScopeType,
+                        DepartmentId = rp.DepartmentId,
+                        Priority = rp.Priority
+                    };
+            })
+            .Where(rp => rp is not null)
+            .Cast<RolePermissionView>()
+            .ToList();
     }
 
     private void AddRolePermission()
@@ -274,7 +296,7 @@
             departmentId = null;
         }
 
-        var duplicate = Db.RolePermissions.Any(rp =>
+        var duplicate = Store.RolePermissions.Any(rp =>
             rp.RoleId == _selectedRoleId.Value &&
             rp.PermissionId == permissionId &&
             rp.DepartmentScopeType == _scopeType &&
@@ -286,7 +308,7 @@
             return;
         }
 
-        Db.RolePermissions.Add(new RolePermission
+        Store.AddRolePermission(new RolePermission
         {
             RoleId = _selectedRoleId.Value,
             PermissionId = permissionId,
@@ -296,7 +318,6 @@
             Priority = _priority,
             Reason = string.IsNullOrWhiteSpace(_reason) ? null : _reason.Trim()
         });
-        Db.SaveChanges();
         LoadRolePermissions(_selectedRoleId.Value);
         ResetPermissionForm();
         Toasts.Show("Đã thêm quyền vai trò", _selectedRole?.Name ?? "", ToastVariant.Success);
@@ -305,10 +326,9 @@
     private void RemoveRolePermission(Guid rolePermissionId)
     {
         if (!Guard.CanDo("SCR_PERMISSIONS:DELETE", "xóa quyền vai trò")) return;
-        var existing = Db.RolePermissions.FirstOrDefault(rp => rp.RolePermissionId == rolePermissionId);
+        var existing = Store.RolePermissions.FirstOrDefault(rp => rp.RolePermissionId == rolePermissionId);
         if (existing is null) return;
-        Db.RolePermissions.Remove(existing);
-        Db.SaveChanges();
+        Store.RemoveRolePermission(rolePermissionId);
         if (_selectedRoleId.HasValue)
         {
             LoadRolePermissions(_selectedRoleId.Value);
@@ -345,4 +365,6 @@
         public Guid? DepartmentId { get; init; }
         public int Priority { get; init; }
     }
+
+    public void Dispose() => Store.StateChanged -= OnStoreChanged;
 }
