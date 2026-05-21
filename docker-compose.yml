@@ -1,0 +1,92 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: src/telemedicine-landing-page/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__MedDb: "Server=sqlserver,1433;Database=MedicalProcedureManagement;User Id=sa;Password=${MSSQL_SA_PASSWORD:-QlcmDev_ChangeMe_2026!};TrustServerCertificate=True;Encrypt=False;"
+      Chatbot__ApiKey: ${CHATBOT_API_KEY:-}
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    ports:
+      - "${APP_HTTP_PORT:-8080}:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    networks:
+      - qlcm-network
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-QlcmDev_ChangeMe_2026!}
+    ports:
+      - "${DB_PORT:-14333}:1433"
+    volumes:
+      - qlcm-sqlserver-data:/var/opt/mssql
+    restart: unless-stopped
+    networks:
+      - qlcm-network
+
+  db-init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    environment:
+      SQLSERVER_HOST: sqlserver
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-QlcmDev_ChangeMe_2026!}
+    depends_on:
+      sqlserver:
+        condition: service_started
+    volumes:
+      - ./MedicalProcedureManagement.sql:/scripts/01-schema.sql:ro
+      - ./scripts/seed-lookup-catalogs.sql:/scripts/02-seed-lookup-catalogs.sql:ro
+      - ./scripts/seed-realistic-data.sql:/scripts/03-seed-realistic-data.sql:ro
+      - ./scripts/seed-hospital-data.sql:/scripts/04-seed-hospital-data.sql:ro
+    command:
+      - /bin/bash
+      - -c
+      - |
+        set -euo pipefail
+        SQLCMD=/opt/mssql-tools18/bin/sqlcmd
+        if [ ! -x "$$SQLCMD" ]; then SQLCMD=/opt/mssql-tools/bin/sqlcmd; fi
+
+        echo "Waiting for SQL Server..."
+        for attempt in {1..90}; do
+          if "$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" >/dev/null 2>&1; then
+            break
+          fi
+          sleep 2
+        done
+
+        "$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" >/dev/null
+
+        INITIALIZED=$$("$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -h -1 -W -Q "SET NOCOUNT ON; IF DB_ID(N'MedicalProcedureManagement') IS NULL SELECT 0 ELSE IF EXISTS (SELECT 1 FROM MedicalProcedureManagement.sys.tables t JOIN MedicalProcedureManagement.sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = N'med' AND t.name = N'departments') SELECT 1 ELSE SELECT 0")
+        if [ "$$INITIALIZED" = "1" ]; then
+          echo "MedicalProcedureManagement already initialized; skipping schema and seed scripts."
+          exit 0
+        fi
+
+        echo "Initializing MedicalProcedureManagement..."
+        "$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -I -b -i /scripts/01-schema.sql
+        "$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -I -b -i /scripts/02-seed-lookup-catalogs.sql
+        "$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -I -b -i /scripts/03-seed-realistic-data.sql
+        "$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -I -b -i /scripts/04-seed-hospital-data.sql
+        echo "Database initialization completed."
+    networks:
+      - qlcm-network
+    restart: "no"
+
+volumes:
+  qlcm-sqlserver-data:
+
+networks:
+  qlcm-network:
+    driver: bridge

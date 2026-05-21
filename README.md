@@ -64,6 +64,39 @@ dotnet run --project .\src\telemedicine-landing-page\telemedicine-landing-page.c
 
 Sau khi chạy, mở trình duyệt tại địa chỉ in ra trong terminal (mặc định `http://localhost:5xxx`), trang quản trị nội bộ ở `/admin`.
 
+## Chạy full stack bằng Docker
+Dự án có thể chạy trọn bộ web app, SQL Server và database seed bằng Docker Compose:
+
+```powershell
+docker compose up --build
+```
+
+Sau khi container sẵn sàng, mở `http://localhost:8080`. Compose gồm:
+
+| Service | Vai trò |
+|---|---|
+| `web` | ASP.NET Core Blazor app `net9.0` |
+| `sqlserver` | SQL Server 2022 Developer, lưu dữ liệu trong named volume |
+| `db-init` | Chạy `MedicalProcedureManagement.sql` và seed scripts một lần khi DB chưa khởi tạo |
+
+Có thể đổi cấu hình qua biến môi trường hoặc file `.env` cục bộ:
+
+| Biến | Mặc định | Mô tả |
+|---|---|---|
+| `APP_HTTP_PORT` | `8080` | Port web trên máy host |
+| `DB_PORT` | `14333` | Port SQL Server trên máy host |
+| `MSSQL_SA_PASSWORD` | `QlcmDev_ChangeMe_2026!` | Mật khẩu SA cho SQL Server local |
+| `CHATBOT_API_KEY` | rỗng | API key Gemini tuỳ chọn |
+
+Muốn tạo lại DB sạch:
+
+```powershell
+docker compose down --volumes
+docker compose up --build
+```
+
+Xem chi tiết trong `docs/deployment-guide.md`.
+
 ## Dữ liệu mẫu QLCM Pro
 Sau khi có SQL Server database đúng schema, có thể nạp dữ liệu demo/QA:
 

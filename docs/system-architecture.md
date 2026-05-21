@@ -26,6 +26,17 @@ Ngày 2026-05-19, module quản lý quy trình kỹ thuật chuyên môn đã đ
 | Seed data | `scripts/seed-realistic-data.sql` nạp dữ liệu demo/QA có lookup hợp lệ |
 | Version lifecycle | `procedure_versions.status_code` dùng `draft`, `pending_approval`, `active`, `superseded`, `archived` |
 
+## Docker Runtime Architecture
+Ngày 2026-05-21, repo có Docker Compose full stack để chạy app, database và seed dữ liệu từ một lệnh.
+
+| Service | Responsibility |
+|---|---|
+| `web` | Build/publish Blazor app bằng Dockerfile multi-stage và chạy `TelemedicineLandingPage.dll` trên port container `8080` |
+| `sqlserver` | SQL Server 2022 Developer, dữ liệu lưu trong volume `qlcm-sqlserver-data` |
+| `db-init` | One-shot sqlcmd runner, đợi SQL Server sẵn sàng, kiểm tra DB đã khởi tạo, chạy schema/seed scripts nếu cần |
+
+App container không dùng connection string cục bộ trong `appsettings.json`; Compose override qua `ConnectionStrings__MedDb` trỏ đến host nội bộ `sqlserver,1433`.
+
 ## Procedure Module Architecture
 Kiến trúc dưới đây là logic đang được hiện thực trong module QLCM Pro của Blazor app.
 
