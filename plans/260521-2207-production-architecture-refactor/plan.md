@@ -33,8 +33,8 @@
 - Build passes with 0 new warnings.
 - Tests pass and new critical logic has unit/integration coverage. Phase 02: 116 tests passed.
 - Docs updated: changelog, roadmap, architecture. Phase 02 complete.
-- Phase commits are focused and conventional. Phase 01 committed as `a2d78e9`; Phase 02 pending commit.
-- Branch pushed after verified phase completion. Phase 01 pushed to `feat/qlcm-pro-admin-shell-v2`; Phase 02 pending push.
+- Phase commits are focused and conventional. Phase 01 committed as `a2d78e9`; Phase 02 committed as `a5eaf6d`.
+- Branch pushed after verified phase completion. Phase 01 and Phase 02 pushed to `feat/qlcm-pro-admin-shell-v2`.
 
 ## Unresolved Questions
 - Target merge branch says `develop` in prompt, but current working branch is `feat/qlcm-pro-admin-shell-v2`; merge to `develop` needs explicit instruction.
