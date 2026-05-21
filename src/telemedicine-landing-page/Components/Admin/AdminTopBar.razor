@@ -6,6 +6,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject ICurrentUserContext UserContext
+@inject BrowserSessionService BrowserSession
 @implements IDisposable
 
 <header class="admin-topbar" role="banner">
@@ -355,9 +356,9 @@
 
     private RenderFragment Icon(string name) => builder => AdminIcons.Render(builder, name);
 
-    private void HandleLogout()
+    private async Task HandleLogout()
     {
-        UserContext.SignOut();
+        await BrowserSession.SignOutAsync();
         CloseFlyouts();
         Navigation.NavigateTo("/login", forceLoad: false);
     }

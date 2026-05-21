@@ -5,6 +5,7 @@
 @using Dept = TelemedicineLandingPage.Models.Admin.Sql.Department
 @inject IMedDataStore Store
 @inject IToastService Toast
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Khoa/Phòng | QLCM Pro</PageTitle>
@@ -22,7 +23,7 @@
     <div class="admin-filter-bar">
         <div class="admin-filter-field">
             <label class="admin-filter-label">Trạng thái</label>
-            <select class="admin-select" @bind="_statusFilter">
+            <select class="admin-select" @bind="_statusFilter" @bind:after="StateHasChanged">
                 <option value="active">Đang hoạt động</option>
                 <option value="archived">Lưu trữ</option>
                 <option value="all">Tất cả</option>
@@ -143,6 +144,11 @@
 
     private void OpenCreate()
     {
+        if (!Guard.CanDo("SCR_ORG_DEPARTMENTS:CREATE", "thêm khoa/phòng"))
+        {
+            return;
+        }
+
         _drawerTitle = "Thêm khoa/phòng";
         _editingDepartmentId = null;
         _editCode = "";
@@ -153,6 +159,11 @@
 
     private void OpenEdit(Dept dept)
     {
+        if (!Guard.CanDo("SCR_ORG_DEPARTMENTS:UPDATE", "sửa khoa/phòng"))
+        {
+            return;
+        }
+
         _drawerTitle = "Sửa khoa/phòng";
         _editingDepartmentId = dept.DepartmentId;
         _editCode = dept.Code;
@@ -163,22 +174,34 @@
 
     private void Archive(Guid deptId)
     {
+        if (!Guard.CanDo("SCR_ORG_DEPARTMENTS:DELETE", "lưu trữ khoa/phòng"))
+        {
+            return;
+        }
+
         try
         {
             Store.ArchiveDepartment(deptId);
-            Toast.Show("Đã lưu trữ khoa/phòng thành công.", "success");
+            Toast.Show("Đã lưu trữ khoa/phòng", "Đơn vị đã được cập nhật.", ToastVariant.Success);
         }
         catch (MedDomainException ex)
         {
-            Toast.Show(ex.Message, "error");
+            Toast.Show("Không thể lưu trữ khoa/phòng", ex.Message, ToastVariant.Error);
         }
     }
 
     private void Save()
     {
+        var permission = _editingDepartmentId.HasValue ? "SCR_ORG_DEPARTMENTS:UPDATE" : "SCR_ORG_DEPARTMENTS:CREATE";
+        var action = _editingDepartmentId.HasValue ? "sửa khoa/phòng" : "thêm khoa/phòng";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_editCode) || string.IsNullOrWhiteSpace(_editName))
         {
-            Toast.Show("Vui lòng nhập mã và tên khoa/phòng.", "warning");
+            Toast.Show("Thiếu thông tin", "Vui lòng nhập mã và tên khoa/phòng.", ToastVariant.Warning);
             return;
         }
 
@@ -207,11 +230,11 @@
                 Store.AddDepartment(dept);
             }
             _drawerOpen = false;
-            Toast.Show("Đã lưu khoa/phòng thành công.", "success");
+            Toast.Show("Đã lưu khoa/phòng", "Thay đổi đã được cập nhật.", ToastVariant.Success);
         }
         catch (MedDomainException ex)
         {
-            Toast.Show(ex.Message, "error");
+            Toast.Show("Không thể lưu khoa/phòng", ex.Message, ToastVariant.Error);
         }
     }
 

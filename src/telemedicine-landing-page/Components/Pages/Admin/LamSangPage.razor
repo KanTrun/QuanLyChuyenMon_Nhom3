@@ -4,6 +4,7 @@
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Lâm sàng | QLCM Pro</PageTitle>
@@ -252,6 +253,11 @@
 
     private void OpenCreate()
     {
+        if (!Guard.CanDo("SCR_CLINICAL_ADMIN:CREATE", "tạo áp dụng phác đồ"))
+        {
+            return;
+        }
+
         _editingApplicationId = null;
         _patientId = _patientName = _patientCode = _encounterCode = _encounterDepartmentId = _protocolVersionId = _diagnosisCode = _skippedReason = string.Empty;
         _applicationStatus = "suggested";
@@ -260,6 +266,11 @@
 
     private void OpenEdit(ClinicalRow row)
     {
+        if (!Guard.CanDo("SCR_CLINICAL_ADMIN:UPDATE", "sửa áp dụng phác đồ"))
+        {
+            return;
+        }
+
         _editingApplicationId = row.Application.PatientProtocolApplicationId;
         _patientId = row.Application.PatientRefId.ToString();
         _patientName = row.Patient?.DisplayName ?? string.Empty;
@@ -275,6 +286,13 @@
 
     private void SaveClinical()
     {
+        var permission = _editingApplicationId.HasValue ? "SCR_CLINICAL_ADMIN:UPDATE" : "SCR_CLINICAL_ADMIN:CREATE";
+        var action = _editingApplicationId.HasValue ? "sửa dữ liệu lâm sàng" : "tạo dữ liệu lâm sàng";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
         if (!Guid.TryParse(_protocolVersionId, out var protocolVersionId))
         {
             Toasts.Show("Thiếu phác đồ", "Vui lòng chọn phiên bản phác đồ.", ToastVariant.Warning);
@@ -378,6 +396,11 @@
 
     private void SetStatus(ClinicalRow row, string status)
     {
+        if (!Guard.CanDo("SCR_CLINICAL_ADMIN:EXECUTE", "cập nhật trạng thái áp dụng phác đồ"))
+        {
+            return;
+        }
+
         Store.UpdatePatientProtocolApplication(row.Application with
         {
             ApplicationStatus = status,

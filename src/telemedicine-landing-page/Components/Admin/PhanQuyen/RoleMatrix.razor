@@ -4,6 +4,7 @@
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject MedDbContext Db
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 
 <article class="admin-panel">
     <header class="admin-panel-head">
@@ -255,6 +256,7 @@
 
     private void AddRolePermission()
     {
+        if (!Guard.CanDo("SCR_PERMISSIONS:UPDATE", "thêm quyền vai trò")) return;
         if (_selectedRoleId is null || !Guid.TryParse(_permissionId, out var permissionId))
         {
             Toasts.Show("Thiếu quyền", "Chọn vai trò và quyền cần gán.", ToastVariant.Warning);
@@ -302,6 +304,7 @@
 
     private void RemoveRolePermission(Guid rolePermissionId)
     {
+        if (!Guard.CanDo("SCR_PERMISSIONS:DELETE", "xóa quyền vai trò")) return;
         var existing = Db.RolePermissions.FirstOrDefault(rp => rp.RolePermissionId == rolePermissionId);
         if (existing is null) return;
         Db.RolePermissions.Remove(existing);

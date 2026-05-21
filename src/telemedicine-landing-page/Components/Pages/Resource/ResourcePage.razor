@@ -3,6 +3,7 @@
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Tài nguyên | QLCM Pro</PageTitle>
@@ -209,6 +210,11 @@
 
     private void OpenCreate()
     {
+        if (!Guard.CanDo("SCR_RESOURCES:CREATE", "thêm tài nguyên"))
+        {
+            return;
+        }
+
         _editingId = null;
         _draftCode = string.Empty;
         _draftName = string.Empty;
@@ -219,6 +225,11 @@
 
     private void OpenEdit(Sql.ResourceCatalogItem item)
     {
+        if (!Guard.CanDo("SCR_RESOURCES:UPDATE", "sửa tài nguyên"))
+        {
+            return;
+        }
+
         _editingId = item.ResourceId;
         _draftCode = item.ResourceCode;
         _draftName = item.Name;
@@ -235,6 +246,13 @@
 
     private void Save()
     {
+        var permission = _editingId.HasValue ? "SCR_RESOURCES:UPDATE" : "SCR_RESOURCES:CREATE";
+        var action = _editingId.HasValue ? "sửa tài nguyên" : "thêm tài nguyên";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_draftCode) || string.IsNullOrWhiteSpace(_draftName))
         {
             Toasts.Show("Thiếu thông tin", "Vui lòng nhập mã và tên tài nguyên.", ToastVariant.Warning);
@@ -275,6 +293,11 @@
 
     private void Archive(Sql.ResourceCatalogItem item)
     {
+        if (!Guard.CanDo("SCR_RESOURCES:DELETE", "lưu trữ tài nguyên"))
+        {
+            return;
+        }
+
         try
         {
             Store.RemoveResourceCatalogItem(item.ResourceId);

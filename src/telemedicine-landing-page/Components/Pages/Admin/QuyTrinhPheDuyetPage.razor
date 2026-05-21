@@ -6,6 +6,7 @@
 @inject ICurrentUserContext UserContext
 @inject IConfirmDialogService Confirm
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Phê duyệt quy trình | QLCM Pro</PageTitle>
@@ -298,6 +299,7 @@
 
     private void SaveEdit()
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "cập nhật metadata phiên bản")) return;
         if (!_editVersionId.HasValue) return;
         var version = Store.ProcedureVersions.FirstOrDefault(v => v.ProcedureVersionId == _editVersionId.Value);
         if (version is null) return;
@@ -325,6 +327,7 @@
 
     private async Task ApproveAsync(ApprovalRow row)
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "phê duyệt quy trình")) return;
         var ok = await Confirm.ShowAsync("Phê duyệt quy trình", $"Phê duyệt và ban hành \"{row.Version.Title}\"?", confirmText: "Phê duyệt");
         if (!ok) return;
         try
@@ -342,6 +345,7 @@
 
     private Task RejectAsync(ApprovalRow row)
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "từ chối quy trình")) return Task.CompletedTask;
         _rejectTarget = row;
         _rejectReason = string.Empty;
         _rejectOpen = true;
@@ -350,6 +354,7 @@
 
     private void ConfirmReject()
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "từ chối quy trình")) return;
         if (_rejectTarget is null || string.IsNullOrWhiteSpace(_rejectReason)) return;
         try
         {
@@ -367,6 +372,7 @@
 
     private void ArchiveVersion(ApprovalRow row)
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:DELETE", "lưu trữ phiên bản")) return;
         Store.UpdateProcedureVersion(row.Version with { StatusCode = "archived", EffectiveTo = DateTime.UtcNow });
         Recompute();
         RefreshSelected(row.Version.ProcedureVersionId);
@@ -375,6 +381,7 @@
 
     private void RestoreVersion(ApprovalRow row)
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "khôi phục phiên bản")) return;
         Store.UpdateProcedureVersion(row.Version with { StatusCode = "draft", EffectiveTo = null });
         Recompute();
         RefreshSelected(row.Version.ProcedureVersionId);

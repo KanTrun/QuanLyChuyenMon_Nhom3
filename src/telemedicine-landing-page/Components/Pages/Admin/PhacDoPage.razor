@@ -4,6 +4,7 @@
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Phác đồ lâm sàng | QLCM Pro</PageTitle>
@@ -360,6 +361,11 @@
 
     private void OpenCreate()
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:CREATE", "tạo phác đồ"))
+        {
+            return;
+        }
+
         _editingProtocolId = null;
         _createCode = string.Empty;
         _createName = string.Empty;
@@ -372,6 +378,11 @@
 
     private void OpenEditProtocol(Sql.ClinicalProtocol protocol)
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "sửa phác đồ"))
+        {
+            return;
+        }
+
         _editingProtocolId = protocol.ClinicalProtocolId;
         _createCode = protocol.ProtocolCode;
         _createName = protocol.Name;
@@ -384,6 +395,13 @@
 
     private void CreateProtocol()
     {
+        var permission = _editingProtocolId.HasValue ? "SCR_PROTOCOLS:UPDATE" : "SCR_PROTOCOLS:CREATE";
+        var action = _editingProtocolId.HasValue ? "sửa phác đồ" : "tạo phác đồ";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_createCode) || string.IsNullOrWhiteSpace(_createName))
         {
             Toasts.Show("Thiếu thông tin", "Vui lòng nhập mã và tên phác đồ.", ToastVariant.Warning);
@@ -444,12 +462,22 @@
 
     private void ArchiveProtocol(Sql.ClinicalProtocol protocol)
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:DELETE", "lưu trữ phác đồ"))
+        {
+            return;
+        }
+
         Store.UpdateClinicalProtocol(protocol with { Status = "archived" });
         Toasts.Show("Đã lưu trữ phác đồ", protocol.Name, ToastVariant.Info);
     }
 
     private void RestoreProtocol(Sql.ClinicalProtocol protocol)
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "khôi phục phác đồ"))
+        {
+            return;
+        }
+
         Store.UpdateClinicalProtocol(protocol with { Status = "active" });
         Toasts.Show("Đã khôi phục phác đồ", protocol.Name, ToastVariant.Success);
     }
@@ -466,6 +494,11 @@
 
     private void AddProtocolProcedure()
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "thêm liên kết quy trình"))
+        {
+            return;
+        }
+
         if (_selectedVersion is null || !Guid.TryParse(_linkProcedureVersionId, out var procedureVersionId))
         {
             Toasts.Show("Thiếu quy trình", "Vui lòng chọn phiên bản quy trình.", ToastVariant.Warning);
@@ -493,6 +526,11 @@
 
     private void RemoveProtocolProcedure(Sql.ClinicalProtocolProcedure link)
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "xóa liên kết quy trình"))
+        {
+            return;
+        }
+
         try
         {
             Store.RemoveClinicalProtocolProcedure(link.ClinicalProtocolProcedureId);
@@ -506,6 +544,11 @@
 
     private void AddRule()
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "thêm rule phác đồ"))
+        {
+            return;
+        }
+
         if (_selectedVersion is null || string.IsNullOrWhiteSpace(_ruleJson))
         {
             Toasts.Show("Thiếu rule", "Vui lòng nhập JSON rule.", ToastVariant.Warning);
@@ -533,6 +576,11 @@
 
     private void RemoveRule(Sql.ProtocolApplicabilityRule rule)
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "xóa rule phác đồ"))
+        {
+            return;
+        }
+
         try
         {
             Store.RemoveProtocolApplicabilityRule(rule.ProtocolApplicabilityRuleId);

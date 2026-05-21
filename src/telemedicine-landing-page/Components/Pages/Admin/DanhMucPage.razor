@@ -4,6 +4,7 @@
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Danh mục kỹ thuật chuyên môn | QLCM Pro</PageTitle>
@@ -292,6 +293,11 @@
 
     private void OpenCreate()
     {
+        if (!Guard.CanDo("SCR_CATALOG:CREATE", "thêm dịch vụ kỹ thuật"))
+        {
+            return;
+        }
+
         _editingId = null;
         _draftCode = string.Empty;
         _draftName = string.Empty;
@@ -304,6 +310,11 @@
 
     private void OpenEdit(Sql.TechnicalService svc)
     {
+        if (!Guard.CanDo("SCR_CATALOG:UPDATE", "sửa dịch vụ kỹ thuật"))
+        {
+            return;
+        }
+
         _editingId = svc.TechnicalServiceId;
         _draftCode = svc.ServiceCode;
         _draftName = svc.Name;
@@ -323,6 +334,13 @@
 
     private void SaveService()
     {
+        var permission = _editingId.HasValue ? "SCR_CATALOG:UPDATE" : "SCR_CATALOG:CREATE";
+        var action = _editingId.HasValue ? "sửa dịch vụ kỹ thuật" : "thêm dịch vụ kỹ thuật";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_draftCode) || string.IsNullOrWhiteSpace(_draftName))
         {
             Toasts.Show("Thiếu thông tin", "Vui lòng nhập mã và tên dịch vụ.", ToastVariant.Warning);
@@ -367,6 +385,11 @@
 
     private void Archive(Sql.TechnicalService svc)
     {
+        if (!Guard.CanDo("SCR_CATALOG:DELETE", "lưu trữ dịch vụ kỹ thuật"))
+        {
+            return;
+        }
+
         try
         {
             Store.RemoveTechnicalService(svc.TechnicalServiceId);
@@ -380,6 +403,11 @@
 
     private void AddNorm()
     {
+        if (!Guard.CanDo("SCR_CATALOG:UPDATE", "thêm định mức dịch vụ"))
+        {
+            return;
+        }
+
         if (_selected is null || !Guid.TryParse(_normResourceId, out var resourceId) || _normQuantity < 0)
         {
             Toasts.Show("Định mức chưa hợp lệ", "Chọn tài nguyên và nhập số lượng không âm.", ToastVariant.Warning);
@@ -408,6 +436,11 @@
 
     private void RemoveNorm(Sql.TechnicalResourceNorm norm)
     {
+        if (!Guard.CanDo("SCR_CATALOG:UPDATE", "xóa định mức dịch vụ"))
+        {
+            return;
+        }
+
         try
         {
             Store.RemoveTechnicalResourceNorm(norm.TechnicalResourceNormId);

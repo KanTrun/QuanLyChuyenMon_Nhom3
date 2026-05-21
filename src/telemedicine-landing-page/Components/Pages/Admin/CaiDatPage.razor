@@ -7,6 +7,7 @@
 @inject IMedDataStore Store
 @inject IThemeBus ThemeBus
 @inject IToastService Toasts
+@inject BrowserSessionService BrowserSession
 @inject NavigationManager Navigation
 @implements IDisposable
 
@@ -265,9 +266,9 @@
         Toasts.Show("Đã lưu cấu hình", "Giao diện và trợ lý AI đã cập nhật cho phiên hiện tại.", ToastVariant.Success);
     }
 
-    private void OnLogout()
+    private async Task OnLogout()
     {
-        UserContext.SignOut();
+        await BrowserSession.SignOutAsync();
         Navigation.NavigateTo("/login", forceLoad: false);
     }
 

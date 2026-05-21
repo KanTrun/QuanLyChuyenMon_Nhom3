@@ -7,6 +7,7 @@
 @inject ICurrentUserContext UserContext
 @inject NavGate Gate
 @inject LoadingService Loading
+@inject BrowserSessionService BrowserSession
 
 @if (UserContext.CurrentUser is null)
 {
@@ -66,6 +67,7 @@ else
     private DotNetObjectReference<AdminLayout>? _dotnetRef;
     private int _hotkeyHandle = -1;
     private bool _hotkeysRegistered;
+    private bool _sessionRestoreAttempted;
     private bool _isAuthorized = true;
     private string _currentPath = "/admin";
 
@@ -75,12 +77,43 @@ else
         Loading.StateChanged += OnLoadingChanged;
         Navigation.LocationChanged += OnLocationChanged;
         UserContext.StateChanged += OnUserChanged;
-        EvaluateRouteAccess();
+        if (UserContext.CurrentUser is not null)
+        {
+            _sessionRestoreAttempted = true;
+            EvaluateRouteAccess();
+        }
+        else
+        {
+            _isAuthorized = false;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _hotkeysRegistered)
+        if (firstRender && !_sessionRestoreAttempted)
+        {
+            _sessionRestoreAttempted = true;
+            try
+            {
+                var restored = await BrowserSession.RestoreCurrentUserAsync();
+                EvaluateRouteAccess();
+                if (!restored && UserContext.CurrentUser is null)
+                {
+                    Navigation.NavigateTo("/login", forceLoad: false);
+                    return;
+                }
+
+                StateHasChanged();
+            }
+            catch (JSDisconnectedException) { return; }
+            catch (Exception)
+            {
+                Navigation.NavigateTo("/login", forceLoad: false);
+                return;
+            }
+        }
+
+        if (_hotkeysRegistered || UserContext.CurrentUser is null)
         {
             return;
         }
@@ -149,7 +182,10 @@ else
         if (UserContext.CurrentUser is null)
         {
             _isAuthorized = false;
-            Navigation.NavigateTo("/login", forceLoad: false);
+            if (_sessionRestoreAttempted)
+            {
+                Navigation.NavigateTo("/login", forceLoad: false);
+            }
             return;
         }
 

@@ -4,6 +4,7 @@
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Điều phối kỹ thuật | QLCM Pro</PageTitle>
@@ -387,6 +388,11 @@
 
     private void OpenCreate()
     {
+        if (!Guard.CanDo("SCR_ORDERS:CREATE", "tạo chỉ định"))
+        {
+            return;
+        }
+
         _newServiceId = string.Empty;
         _newPatientId = string.Empty;
         _newEncounterId = string.Empty;
@@ -396,6 +402,11 @@
 
     private void CreateOrder()
     {
+        if (!Guard.CanDo("SCR_ORDERS:CREATE", "tạo chỉ định"))
+        {
+            return;
+        }
+
         if (!Guid.TryParse(_newServiceId, out var serviceId))
         {
             Toasts.Show("Thiếu dịch vụ", "Vui lòng chọn dịch vụ kỹ thuật.", ToastVariant.Warning);
@@ -439,6 +450,11 @@
 
     private void SetStatus(Sql.TechnicalOrder order, string status)
     {
+        if (!Guard.CanDo("SCR_ORDERS:EXECUTE", "cập nhật trạng thái chỉ định"))
+        {
+            return;
+        }
+
         try
         {
             Store.UpdateTechnicalOrder(order with
@@ -461,6 +477,11 @@
 
     private void GenerateSnapshots()
     {
+        if (!Guard.CanDo("SCR_ORDERS:UPDATE", "tạo kiểm tra nguồn lực"))
+        {
+            return;
+        }
+
         if (_selected is null) return;
         var norms = Store.TechnicalResourceNorms.Where(n => n.TechnicalServiceId == _selected.TechnicalServiceId).ToList();
         if (norms.Count == 0)
@@ -491,6 +512,11 @@
 
     private void AddUsage()
     {
+        if (!Guard.CanDo("SCR_ORDERS:UPDATE", "ghi nhận sử dụng thực tế"))
+        {
+            return;
+        }
+
         if (_selected is null || !Guid.TryParse(_usageResourceId, out var resourceId) || _usageQuantity < 0)
         {
             Toasts.Show("Sử dụng thực tế chưa hợp lệ", "Chọn tài nguyên và nhập số lượng không âm.", ToastVariant.Warning);
@@ -520,6 +546,11 @@
 
     private void RemoveUsage(Sql.ActualResourceUsage usage)
     {
+        if (!Guard.CanDo("SCR_ORDERS:DELETE", "xóa sử dụng thực tế"))
+        {
+            return;
+        }
+
         try
         {
             Store.RemoveActualResourceUsage(usage.ActualResourceUsageId);

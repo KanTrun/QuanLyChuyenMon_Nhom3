@@ -4,6 +4,7 @@
 @inject ICurrentUserContext UserContext
 @inject NavigationManager Navigation
 @inject LoadingService Loading
+@inject BrowserSessionService BrowserSession
 @implements IDisposable
 
 @if (UserContext.CurrentUser is null)
@@ -81,6 +82,7 @@ else
 
 @code {
     private string _currentUserName = "";
+    private bool _sessionRestoreAttempted;
 
     private record NavLink(string Label, string Url);
 
@@ -100,14 +102,38 @@ else
         UserContext.StateChanged += OnUserChanged;
         Loading.StateChanged += OnLoadingChanged;
 
-        // Bảo vệ: nếu chưa đăng nhập → chuyển hướng đến /login
-        if (UserContext.CurrentUser is null)
+        if (UserContext.CurrentUser is not null)
         {
-            Navigation.NavigateTo("/login", forceLoad: false);
+            _sessionRestoreAttempted = true;
+            RefreshUser();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _sessionRestoreAttempted)
+        {
             return;
         }
 
-        RefreshUser();
+        _sessionRestoreAttempted = true;
+        try
+        {
+            var restored = await BrowserSession.RestoreCurrentUserAsync();
+            if (!restored && UserContext.CurrentUser is null)
+            {
+                Navigation.NavigateTo("/login", forceLoad: false);
+                return;
+            }
+
+            RefreshUser();
+            StateHasChanged();
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception)
+        {
+            Navigation.NavigateTo("/login", forceLoad: false);
+        }
     }
 
     private void OnUserChanged() => InvokeAsync(() => { RefreshUser(); StateHasChanged(); });
@@ -120,9 +146,9 @@ else
         _currentUserName = user?.FullName ?? "Chưa đăng nhập";
     }
 
-    private void HandleLogout()
+    private async Task HandleLogout()
     {
-        UserContext.SignOut();
+        await BrowserSession.SignOutAsync();
         Navigation.NavigateTo("/login", forceLoad: false);
     }
 

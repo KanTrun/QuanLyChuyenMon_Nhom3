@@ -8,6 +8,7 @@
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 
 <PageTitle>Phân quyền | QLCM Pro</PageTitle>
 
@@ -255,6 +256,7 @@
 
     private void SaveOverride()
     {
+        if (!Guard.CanDo("SCR_PERMISSIONS:UPDATE", "lưu ghi đè quyền")) return;
         if (!Guid.TryParse(_overrideUserId, out var userId) || !Guid.TryParse(_overridePermissionId, out var permissionId) || string.IsNullOrWhiteSpace(_overrideReason))
         {
             Toasts.Show("Thiếu thông tin ghi đè", "Chọn người dùng, quyền và nhập lý do.", ToastVariant.Warning);
@@ -320,6 +322,7 @@
 
     private void RemoveOverride(UserPermissionOverride item)
     {
+        if (!Guard.CanDo("SCR_PERMISSIONS:DELETE", "xóa ghi đè quyền")) return;
         try
         {
             Store.RemoveUserPermissionOverride(item.UserPermissionOverrideId);

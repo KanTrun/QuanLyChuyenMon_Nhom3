@@ -23,6 +23,8 @@ builder.Services.AddScoped<AuditTrailService>();
 builder.Services.AddScoped<PermissionChangeRequestService>();
 builder.Services.AddScoped<ProcedureLifecycleService>();
 builder.Services.AddScoped<ICurrentUserContext, CurrentUserContext>();
+builder.Services.AddScoped<AdminActionGuard>();
+builder.Services.AddScoped<BrowserSessionService>();
 builder.Services.AddScoped<NavGate>();
 builder.Services.AddSingleton<IUserPreferencesService, UserPreferencesService>();
 builder.Services.AddScoped<IReportService, SqlReportService>();

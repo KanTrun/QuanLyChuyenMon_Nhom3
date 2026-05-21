@@ -5,6 +5,7 @@
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toast
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Người dùng | QLCM Pro</PageTitle>
@@ -273,6 +274,11 @@
 
     private void OpenCreate()
     {
+        if (!Guard.CanDo("SCR_ORG_USERS:CREATE", "thêm người dùng"))
+        {
+            return;
+        }
+
         _mode = FormMode.Create;
         _selectedUser = null;
         _fullName = _username = _email = _deptId = _roleToAdd = _groupToAdd = string.Empty;
@@ -287,6 +293,11 @@
 
     private void OpenEdit(AppUser user)
     {
+        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "sửa người dùng"))
+        {
+            return;
+        }
+
         LoadUser(user, FormMode.Edit);
     }
 
@@ -305,6 +316,13 @@
 
     private void SaveUser()
     {
+        var permission = _mode == FormMode.Create ? "SCR_ORG_USERS:CREATE" : "SCR_ORG_USERS:UPDATE";
+        var action = _mode == FormMode.Create ? "thêm người dùng" : "sửa người dùng";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_fullName) || string.IsNullOrWhiteSpace(_username))
         {
             Toast.Show("Thiếu thông tin", "Vui lòng nhập họ tên và tên đăng nhập.", ToastVariant.Warning);
@@ -356,6 +374,11 @@
 
     private void ArchiveUser(AppUser user)
     {
+        if (!Guard.CanDo("SCR_ORG_USERS:DELETE", "lưu trữ người dùng"))
+        {
+            return;
+        }
+
         if (IsCurrentUser(user))
         {
             Toast.Show("Không thể tự vô hiệu hóa", "Bạn đang dùng tài khoản này. Hãy dùng tài khoản quản trị khác nếu cần khóa.", ToastVariant.Warning);
@@ -372,6 +395,11 @@
 
     private void RestoreUser(AppUser user)
     {
+        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "khôi phục người dùng"))
+        {
+            return;
+        }
+
         try
         {
             Store.UpdateUser(user with { Status = "active", DeletedAt = null, UpdatedAt = DateTime.UtcNow });
@@ -383,6 +411,11 @@
     private void AddRole()
     {
         if (_selectedUser is null || !Guid.TryParse(_roleToAdd, out var roleId)) return;
+        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "gán vai trò người dùng"))
+        {
+            return;
+        }
+
         if (ActiveRoles(_selectedUser.UserId).Any(r => r.RoleId == roleId))
         {
             Toast.Show("Vai trò đã tồn tại", "Người dùng đã có vai trò này.", ToastVariant.Warning);
@@ -395,12 +428,22 @@
 
     private void RemoveRole(UserRole role)
     {
+        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "gỡ vai trò người dùng"))
+        {
+            return;
+        }
+
         Store.RemoveUserRole(role.UserRoleId);
     }
 
     private void AddGroup()
     {
         if (_selectedUser is null || !Guid.TryParse(_groupToAdd, out var groupId)) return;
+        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "gán nhóm người dùng"))
+        {
+            return;
+        }
+
         if (ActiveGroups(_selectedUser.UserId).Any(g => g.GroupId == groupId))
         {
             Toast.Show("Nhóm đã tồn tại", "Người dùng đã thuộc nhóm này.", ToastVariant.Warning);
@@ -413,6 +456,11 @@
 
     private void RemoveGroup(UserGroupMember member)
     {
+        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "gỡ nhóm người dùng"))
+        {
+            return;
+        }
+
         Store.RemoveUserGroupMember(member.UserGroupMemberId);
     }
 

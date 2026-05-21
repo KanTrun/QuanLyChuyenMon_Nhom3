@@ -4,6 +4,7 @@
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @inject NavigationManager Navigation
 
 <PageTitle>Tạo quy trình mới | QLCM Pro</PageTitle>
@@ -274,7 +275,7 @@
     private string _departmentId = string.Empty;
     private string _versionLabel = "v1.0";
     private string _description = string.Empty;
-    private string _summary = "{\"note\":\"Phiên bản khởi tạo\"}";
+    private string _summary = string.Empty;
 
     private readonly List<StepDraft> _steps = new()
     {
@@ -376,6 +377,11 @@
 
     private void SaveProcedure(string status)
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:CREATE", "tạo quy trình"))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_code) || string.IsNullOrWhiteSpace(_name))
         {
             Toasts.Show("Thiếu thông tin quy trình", "Vui lòng nhập mã và tên quy trình.", ToastVariant.Warning);
@@ -409,7 +415,7 @@
                 StatusCode = status,
                 DepartmentId = ParseGuid(_departmentId),
                 Title = $"{proc.Name} - {_versionLabel.Trim()}",
-                Summary = string.IsNullOrWhiteSpace(_summary) ? "{}" : _summary.Trim(),
+                Summary = string.IsNullOrWhiteSpace(_summary) ? "Phiên bản khởi tạo" : _summary.Trim(),
                 CreatedBy = UserContext.CurrentUser?.UserId,
                 SubmittedBy = status == "pending_approval" ? UserContext.CurrentUser?.UserId : null,
                 SubmittedAt = status == "pending_approval" ? now : null,

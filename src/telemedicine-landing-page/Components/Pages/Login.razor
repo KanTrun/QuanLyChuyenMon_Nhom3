@@ -3,6 +3,7 @@
 @using TelemedicineLandingPage.Models.Admin.Sql
 @using TelemedicineLandingPage.Services.Admin.Sql
 @inject ICurrentUserContext UserContext
+@inject BrowserSessionService BrowserSession
 @inject NavigationManager Navigation
 @inject MedDbContext Db
 
@@ -169,6 +170,8 @@
                 TargetId = user.UserId.ToString()
             });
             Db.SaveChanges();
+
+            await BrowserSession.PersistCurrentUserAsync();
 
             // Đăng nhập thành công
             Navigation.NavigateTo("/admin", forceLoad: false);

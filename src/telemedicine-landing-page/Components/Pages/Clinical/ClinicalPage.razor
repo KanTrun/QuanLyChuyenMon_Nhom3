@@ -4,6 +4,7 @@
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Lâm sàng | QLCM Pro</PageTitle>
@@ -311,6 +312,11 @@
 
     private void OpenCreatePatient()
     {
+        if (!Guard.CanDo("SCR_CLINICAL:CREATE", "thêm bệnh nhân"))
+        {
+            return;
+        }
+
         _editingPatientId = null;
         _patientExternalId = string.Empty;
         _patientCode = string.Empty;
@@ -322,6 +328,11 @@
 
     private void OpenEditPatient(Sql.PatientRef patient)
     {
+        if (!Guard.CanDo("SCR_CLINICAL:UPDATE", "sửa bệnh nhân"))
+        {
+            return;
+        }
+
         _editingPatientId = patient.PatientRefId;
         _patientExternalId = patient.ExternalPatientId;
         _patientCode = patient.PatientCode ?? string.Empty;
@@ -333,6 +344,13 @@
 
     private void SavePatient()
     {
+        var permission = _editingPatientId.HasValue ? "SCR_CLINICAL:UPDATE" : "SCR_CLINICAL:CREATE";
+        var action = _editingPatientId.HasValue ? "sửa bệnh nhân" : "thêm bệnh nhân";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_patientExternalId))
         {
             Toasts.Show("Thiếu External ID", "Vui lòng nhập mã tham chiếu bệnh nhân.", ToastVariant.Warning);
@@ -381,6 +399,11 @@
 
     private void AddEncounter()
     {
+        if (!Guard.CanDo("SCR_CLINICAL:CREATE", "tạo lượt khám"))
+        {
+            return;
+        }
+
         if (_selected is null || string.IsNullOrWhiteSpace(_encounterExternalId))
         {
             Toasts.Show("Thiếu mã lượt khám", "Vui lòng nhập External Encounter ID.", ToastVariant.Warning);
@@ -408,6 +431,11 @@
 
     private void ApplyProtocol()
     {
+        if (!Guard.CanDo("SCR_CLINICAL:EXECUTE", "áp dụng phác đồ"))
+        {
+            return;
+        }
+
         if (_selected is null || !Guid.TryParse(_appProtocolVersionId, out var versionId))
         {
             Toasts.Show("Thiếu phác đồ", "Vui lòng chọn phiên bản phác đồ.", ToastVariant.Warning);

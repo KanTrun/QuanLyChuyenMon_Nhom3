@@ -6,6 +6,7 @@
 @inject ICurrentUserContext UserContext
 @inject IConfirmDialogService Confirm
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Quy trình kỹ thuật | QLCM Pro</PageTitle>
@@ -342,6 +343,7 @@
 
     private void SaveEdit()
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "cập nhật quy trình")) return;
         if (!_editingId.HasValue) return;
         var current = Store.Procedures.FirstOrDefault(p => p.ProcedureId == _editingId.Value);
         if (current is null) return;
@@ -372,6 +374,7 @@
 
     private async Task ArchiveAsync(ProcedureRow row)
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:DELETE", "lưu trữ quy trình")) return;
         var ok = await Confirm.ShowAsync("Lưu trữ quy trình", $"Lưu trữ quy trình \"{row.Procedure.Name}\"?", confirmText: "Lưu trữ", isDanger: true);
         if (!ok) return;
         Store.UpdateProcedure(row.Procedure with { Status = "archived" });
@@ -380,6 +383,7 @@
 
     private async Task RestoreAsync(ProcedureRow row)
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "khôi phục quy trình")) return;
         var ok = await Confirm.ShowAsync("Khôi phục quy trình", $"Khôi phục quy trình \"{row.Procedure.Name}\"?", confirmText: "Khôi phục");
         if (!ok) return;
         Store.UpdateProcedure(row.Procedure with { Status = "active" });
@@ -388,6 +392,7 @@
 
     private async Task SubmitAsync(Sql.ProcedureVersion version)
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "gửi duyệt phiên bản")) return;
         var ok = await Confirm.ShowAsync("Gửi phê duyệt", $"Gửi phiên bản \"{version.Title}\" để phê duyệt?", confirmText: "Gửi");
         if (!ok) return;
         try
@@ -408,6 +413,7 @@
 
     private void WithdrawAsync(Sql.ProcedureVersion version)
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "thu hồi phiên bản")) return;
         _withdrawTarget = version;
         _withdrawReason = string.Empty;
         _withdrawOpen = true;
@@ -415,6 +421,7 @@
 
     private void ConfirmWithdrawAsync()
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "thu hồi phiên bản")) return;
         if (_withdrawTarget is null || string.IsNullOrWhiteSpace(_withdrawReason)) return;
         try
         {
