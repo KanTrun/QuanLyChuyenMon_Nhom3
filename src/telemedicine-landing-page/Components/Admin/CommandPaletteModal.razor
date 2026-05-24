@@ -206,7 +206,7 @@
         }
         if (!string.IsNullOrEmpty(command.NavigateTo) && Gate.CanAccess(command.NavigateTo))
         {
-            Navigation.NavigateTo(command.NavigateTo);
+            Navigation.NavigateTo(Gate.GetDisplayRoute(command.NavigateTo));
         }
     }
 

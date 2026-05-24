@@ -1,4 +1,5 @@
 @page "/admin/quy-trinh/tao"
+@page "/qlcm/quy-trinh/tao"
 @layout AdminLayout
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
@@ -16,7 +17,7 @@
             <h1 class="admin-page-title">Tạo quy trình kỹ thuật mới</h1>
             <p class="admin-page-subtitle">Khai báo quy trình, phiên bản, bước thực hiện, định mức nguồn lực, ánh xạ màn hình và tệp đính kèm.</p>
         </div>
-        <a class="admin-btn admin-btn-ghost" href="/admin/quy-trinh">Hủy và quay lại</a>
+        <a class="admin-btn admin-btn-ghost" href="/qlcm/quy-trinh">Hủy và quay lại</a>
     </header>
 
     <article class="admin-panel">
@@ -477,7 +478,7 @@
             }
 
             Toasts.Show(status == "pending_approval" ? "Đã gửi phê duyệt" : "Đã lưu bản nháp", proc.Name, ToastVariant.Success);
-            Navigation.NavigateTo("/admin/quy-trinh");
+            Navigation.NavigateTo("/qlcm/quy-trinh");
         }
         catch (Exception ex)
         {

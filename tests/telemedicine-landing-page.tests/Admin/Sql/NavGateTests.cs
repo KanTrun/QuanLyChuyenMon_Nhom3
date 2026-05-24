@@ -46,6 +46,7 @@ public sealed class NavGateTests
         var gate = new NavGate(context);
 
         Assert.False(gate.CanAccess("/admin/duong-dan-khong-ton-tai"));
+        Assert.False(gate.CanAccess("/qlcm/duong-dan-khong-ton-tai"));
         Assert.True(gate.CanAccess("/workspace-khong-bao-ve"));
     }
 
@@ -81,7 +82,82 @@ public sealed class NavGateTests
         var gate = new NavGate(context);
 
         Assert.True(gate.CanAccess("/admin/bao-cao"));
+        Assert.True(gate.CanAccess("/qlcm/bao-cao"));
         Assert.False(gate.CanAccess("/admin/phan-quyen"));
+    }
+
+    [Fact]
+    public void GetDisplayRoute_RewritesProfessionalAdminRouteForNonAdmin()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var userId = Guid.NewGuid();
+        db.Users.Add(new AppUser
+        {
+            UserId = userId,
+            Username = "business_user",
+            FullName = "Nguoi dung nghiep vu",
+            PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
+        });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+        context.SetCurrentUser(userId);
+        var gate = new NavGate(context);
+
+        Assert.Equal("/qlcm/quy-trinh/tao?mode=draft", gate.GetDisplayRoute("/admin/quy-trinh/tao?mode=draft"));
+        Assert.Equal("/admin/phan-quyen", gate.GetDisplayRoute("/admin/phan-quyen"));
+    }
+
+    [Fact]
+    public void GetDisplayRoute_KeepsAdminRouteForSystemAdmin()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+        context.SetCurrentUser(MedDataStoreSeed.AdminUserId);
+        var gate = new NavGate(context);
+
+        Assert.Equal("/admin/quy-trinh/tao", gate.GetDisplayRoute("/admin/quy-trinh/tao"));
+    }
+
+    [Fact]
+    public void Filter_RewritesProfessionalNavItemsForNonAdmin()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var userId = Guid.NewGuid();
+        var roleId = Guid.NewGuid();
+        var permissionId = Guid.NewGuid();
+
+        db.Users.Add(new AppUser
+        {
+            UserId = userId,
+            Username = "report_workspace_user",
+            FullName = "Nguoi xem bao cao",
+            PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
+        });
+        db.Roles.Add(new Role { RoleId = roleId, Code = "REPORT_WORKSPACE_TEST", Name = "Xem bao cao" });
+        db.UserRoles.Add(new UserRole { UserId = userId, RoleId = roleId });
+        db.Permissions.Add(new MedPermission
+        {
+            PermissionId = permissionId,
+            PermissionCode = "SCR_REPORTS:VIEW",
+            ScreenId = MedDataStoreSeed.ScreenDashId,
+            ActionCode = "view"
+        });
+        db.RolePermissions.Add(new RolePermission { RoleId = roleId, PermissionId = permissionId });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+        context.SetCurrentUser(userId);
+        var gate = new NavGate(context);
+        var nav = new[]
+        {
+            new AdminNavItem("Bao cao", "/admin/bao-cao", "chart", null),
+        };
+
+        var filtered = gate.Filter(nav);
+
+        var item = Assert.Single(filtered);
+        Assert.Equal("/qlcm/bao-cao", item.Url);
     }
 
     [Fact]

@@ -38,7 +38,7 @@ else
                     <section class="admin-page">
                         <article class="admin-panel" style="padding:20px;">
                             <h1 class="admin-page-title">Không có quyền truy cập</h1>
-                            <p class="admin-page-subtitle">Tài khoản hiện tại không có quyền xem trang @_currentPath. Vui lòng dùng khu vực được cấp quyền hoặc liên hệ quản trị hệ thống.</p>
+                            <p class="admin-page-subtitle">Tài khoản hiện tại chưa được cấp quyền cho chức năng này. Vui lòng dùng khu vực được cấp quyền hoặc liên hệ quản trị hệ thống.</p>
                         </article>
                     </section>
                 }
@@ -140,7 +140,7 @@ else
     {
         if (NavState.HotkeyMap.TryGetValue(digit, out var url) && Gate.CanAccess(url))
         {
-            Navigation.NavigateTo(url);
+            Navigation.NavigateTo(Gate.GetDisplayRoute(url));
         }
         return Task.CompletedTask;
     }
@@ -189,8 +189,18 @@ else
             return;
         }
 
-        _currentPath = new Uri(Navigation.Uri).AbsolutePath;
-        _isAuthorized = Gate.CanAccess(_currentPath);
+        var currentUri = new Uri(Navigation.Uri);
+        _currentPath = currentUri.AbsolutePath;
+        var currentRoute = currentUri.PathAndQuery;
+        _isAuthorized = Gate.CanAccess(currentRoute);
+        if (_isAuthorized)
+        {
+            var displayRoute = Gate.GetDisplayRoute(currentRoute);
+            if (!string.Equals(displayRoute, currentRoute, StringComparison.OrdinalIgnoreCase))
+            {
+                Navigation.NavigateTo(displayRoute, replace: true);
+            }
+        }
     }
 
     private void OnSidebarOverlayClick()

@@ -1,6 +1,13 @@
 # Project Changelog
 
 ## 2026-05-24
+### Improved
+| Item | Description |
+|---|---|
+| Permission picker | Replaced long role-permission dropdown with searchable grouped picker, duplicate-scope badges, scope-aware department selection and concise permission labels |
+| Permission request timing | Immediate role-permission requests now normalize effective time against requested time so SQL constraints do not crash the Blazor circuit |
+| Workspace URLs | Added `/qlcm` route aliases for professional workflows so non-admin users no longer remain on `/admin` URLs for business pages |
+
 ### Fixed
 | Item | Description |
 |---|---|
@@ -11,7 +18,7 @@
 | Command | Result |
 |---|---|
 | `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
-| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 136 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 141 tests |
 
 ## 2026-05-22
 ### QLCM Pro Business UI Remediation

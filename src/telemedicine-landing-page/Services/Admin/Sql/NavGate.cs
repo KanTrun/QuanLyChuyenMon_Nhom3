@@ -11,6 +11,20 @@ public sealed class NavGate
 {
     private readonly ICurrentUserContext _userContext;
 
+    private static readonly Dictionary<string, string> AdminToWorkspaceRouteMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["/admin"] = "/qlcm",
+        ["/admin/quy-trinh"] = "/qlcm/quy-trinh",
+        ["/admin/quy-trinh/tao"] = "/qlcm/quy-trinh/tao",
+        ["/admin/quy-trinh/phe-duyet"] = "/qlcm/quy-trinh/phe-duyet",
+        ["/admin/danh-muc"] = "/qlcm/danh-muc",
+        ["/admin/phac-do"] = "/qlcm/phac-do",
+        ["/admin/bao-cao"] = "/qlcm/bao-cao",
+        ["/admin/bao-cao/tieu-thu"] = "/qlcm/bao-cao/tieu-thu",
+        ["/admin/lam-sang"] = "/qlcm/lam-sang",
+        ["/admin/ho-so"] = "/qlcm/ho-so",
+    };
+
     private static readonly Dictionary<string, string[]> RoutePermissionMap = new(StringComparer.OrdinalIgnoreCase)
     {
         ["/admin"] = new[] { "SCR_DASHBOARD:VIEW", "PERM_VIEW_DASHBOARD" },
@@ -58,19 +72,29 @@ public sealed class NavGate
 
             if (item.Children is { Count: > 0 } children)
             {
-                var filteredChildren = children.Where(c => CanAccess(c.Url)).ToList();
+                var filteredChildren = children.Where(c => CanAccess(c.Url)).Select(ToDisplayItem).ToList();
                 if (canAccessParent || filteredChildren.Count > 0)
                 {
-                    result.Add(item with { Children = filteredChildren });
+                    result.Add(ToDisplayItem(item with { Children = filteredChildren }));
                 }
             }
             else if (canAccessParent)
             {
-                result.Add(item);
+                result.Add(ToDisplayItem(item));
             }
         }
 
         return result;
+    }
+
+    public string GetDisplayRoute(string route)
+    {
+        if (_userContext.CurrentUser is null || IsSystemAdmin())
+        {
+            return route;
+        }
+
+        return RewriteRoute(route, AdminToWorkspaceRouteMap);
     }
 
     public bool CanAccess(string route)
@@ -78,7 +102,7 @@ public sealed class NavGate
         if (_userContext.CurrentUser is null) return false;
         if (IsSystemAdmin()) return true;
 
-        var normalizedRoute = NormalizeRoute(route);
+        var normalizedRoute = ToPermissionRoute(NormalizeRoute(route));
         var matchedPermissions = GetRoutePermissionCodes(normalizedRoute);
         if (matchedPermissions.Count == 0)
         {
@@ -90,7 +114,7 @@ public sealed class NavGate
 
     public IReadOnlyList<string> GetRoutePermissionCodes(string route)
     {
-        var normalizedRoute = NormalizeRoute(route);
+        var normalizedRoute = ToPermissionRoute(NormalizeRoute(route));
         string[]? matchedPermissions = null;
         var matchLength = 0;
 
@@ -106,7 +130,7 @@ public sealed class NavGate
         return matchedPermissions ?? Array.Empty<string>();
     }
 
-    private bool IsSystemAdmin()
+    public bool IsSystemAdmin()
     {
         var perms = _userContext.GetEffectivePermissions();
         if (perms.Any(p =>
@@ -116,6 +140,41 @@ public sealed class NavGate
             return true;
 
         return string.Equals(_userContext.CurrentUser?.Username, "admin", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private AdminNavItem ToDisplayItem(AdminNavItem item)
+    {
+        var children = item.Children?.Select(ToDisplayItem).ToList();
+        return item with { Url = GetDisplayRoute(item.Url), Children = children };
+    }
+
+    private static string ToPermissionRoute(string route)
+    {
+        if (string.Equals(route, "/qlcm", StringComparison.OrdinalIgnoreCase))
+        {
+            return "/admin";
+        }
+
+        return route.StartsWith("/qlcm/", StringComparison.OrdinalIgnoreCase)
+            ? "/admin" + route["/qlcm".Length..]
+            : route;
+    }
+
+    private static string RewriteRoute(string route, IReadOnlyDictionary<string, string> routeMap)
+    {
+        if (string.IsNullOrWhiteSpace(route))
+        {
+            return route;
+        }
+
+        var suffixIndex = route.IndexOfAny(new[] { '?', '#' });
+        var path = suffixIndex >= 0 ? route[..suffixIndex] : route;
+        var suffix = suffixIndex >= 0 ? route[suffixIndex..] : string.Empty;
+        var normalizedPath = NormalizeRoute(path);
+
+        return routeMap.TryGetValue(normalizedPath, out var rewrittenPath)
+            ? rewrittenPath + suffix
+            : route;
     }
 
     private static string NormalizeRoute(string route)

@@ -1,4 +1,5 @@
 @page "/admin"
+@page "/qlcm"
 @layout AdminLayout
 @inject IMedDataStore DataStore
 @inject ICurrentUserContext UserContext
@@ -14,7 +15,7 @@
             <p class="admin-greeting-subtitle">Hôm nay là @_dateLine.</p>
         </div>
         <div class="admin-greeting-actions">
-            <a class="admin-btn admin-btn-primary" href="/admin/quy-trinh/tao">
+            <a class="admin-btn admin-btn-primary" href="/qlcm/quy-trinh/tao">
                 <span aria-hidden="true">@Icon("plus")</span>
                 Tạo quy trình mới
             </a>
@@ -156,10 +157,10 @@
 
     private readonly List<QuickTileViewModel> _quickTiles =
     [
-        new("Tạo quy trình mới", "Khởi tạo quy trình kỹ thuật và gửi phê duyệt.", "/admin/quy-trinh/tao", "plus", "tone-primary"),
+        new("Tạo quy trình mới", "Khởi tạo quy trình kỹ thuật và gửi phê duyệt.", "/qlcm/quy-trinh/tao", "plus", "tone-primary"),
         new("Quản lý phân quyền", "Cập nhật vai trò và quyền truy cập.", "/admin/phan-quyen", "shield", "tone-secondary"),
-        new("Phác đồ lâm sàng", "Tra cứu và cập nhật phác đồ điều trị.", "/admin/phac-do", "stethoscope", "tone-success"),
-        new("Báo cáo tiêu thụ", "Theo dõi tiêu thụ vật tư so với định mức.", "/admin/bao-cao/tieu-thu", "package", "tone-warning"),
+        new("Phác đồ lâm sàng", "Tra cứu và cập nhật phác đồ điều trị.", "/qlcm/phac-do", "stethoscope", "tone-success"),
+        new("Báo cáo tiêu thụ", "Theo dõi tiêu thụ vật tư so với định mức.", "/qlcm/bao-cao/tieu-thu", "package", "tone-warning"),
     ];
 
     protected override void OnInitialized()

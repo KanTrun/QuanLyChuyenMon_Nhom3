@@ -8,6 +8,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject ICurrentUserContext UserContext
+@inject NavGate Gate
 @inject BrowserSessionService BrowserSession
 @inject IToastService Toasts
 @implements IAsyncDisposable
@@ -114,7 +115,7 @@
                     <div class="admin-flyout-header">
                         <span class="admin-flyout-title">@_currentUserName</span>
                     </div>
-                    <a class="admin-flyout-menu-item" href="/admin/ho-so" role="menuitem" @onclick="CloseFlyouts">
+                    <a class="admin-flyout-menu-item" href="@ProfileUrl" role="menuitem" @onclick="CloseFlyouts">
                         <span class="admin-flyout-menu-icon" aria-hidden="true">@Icon("user")</span>
                         Hồ sơ cá nhân
                     </a>
@@ -145,6 +146,7 @@
     private string _userInitials = "..";
     private HubConnection? _notificationHub;
     private Guid? _notificationUserId;
+    private string ProfileUrl => Gate.GetDisplayRoute("/admin/ho-so");
 
     private static readonly Dictionary<string, (string Parent, string Current)> BreadcrumbMap = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -259,14 +261,14 @@
     {
         InvokeAsync(() =>
         {
-            Navigation.NavigateTo("/admin/bao-cao/tieu-thu?xuat=1");
+            Navigation.NavigateTo(Gate.GetDisplayRoute("/admin/bao-cao/tieu-thu?xuat=1"));
         });
     }
 
     private void UpdateBreadcrumb(string uri)
     {
         var path = ToRelative(uri);
-        if (BreadcrumbMap.TryGetValue(path, out var crumb))
+        if (BreadcrumbMap.TryGetValue(ToBreadcrumbKey(path), out var crumb))
         {
             _breadcrumbParent = crumb.Parent;
             _breadcrumbCurrent = crumb.Current;
@@ -276,6 +278,18 @@
             _breadcrumbParent = "Quản trị";
             _breadcrumbCurrent = "Trang";
         }
+    }
+
+    private static string ToBreadcrumbKey(string path)
+    {
+        if (string.Equals(path, "/qlcm", StringComparison.OrdinalIgnoreCase))
+        {
+            return "/admin";
+        }
+
+        return path.StartsWith("/qlcm/", StringComparison.OrdinalIgnoreCase)
+            ? "/admin" + path["/qlcm".Length..]
+            : path;
     }
 
     private static string ToRelative(string uri)

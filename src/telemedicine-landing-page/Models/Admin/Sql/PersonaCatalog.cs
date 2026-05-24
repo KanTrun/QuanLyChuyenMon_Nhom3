@@ -45,7 +45,7 @@ public static class PersonaCatalog
         new(Persona.DieuPhoiKyThuat, "Điều phối kỹ thuật", "CLINICAL_USER", "/dieu-phoi", "clipboard"),
         new(Persona.QuanLyPhacDo, "Quản lý phác đồ", "CLINICAL_USER", "/phac-do-pro", "stethoscope"),
         new(Persona.NguoiDungLamSang, "Người dùng lâm sàng", "CLINICAL_USER", "/lam-sang", "heart"),
-        new(Persona.XemBaoCao, "Xem báo cáo", "REPORT_VIEWER", "/admin/bao-cao", "chart"),
+        new(Persona.XemBaoCao, "Xem báo cáo", "REPORT_VIEWER", "/qlcm/bao-cao", "chart"),
     };
 
     /// <summary>Lấy persona phù hợp nhất cho vai trò.</summary>
