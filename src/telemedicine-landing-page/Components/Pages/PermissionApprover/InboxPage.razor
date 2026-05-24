@@ -22,7 +22,7 @@
 
     <AdminDataTable TItem="PermissionChangeRequest"
                     Items="_pending"
-                    ColumnCount="5"
+                    ColumnCount="6"
                     CurrentPage="1"
                     PageSize="50"
                     TotalItems="_pending.Count"
@@ -30,19 +30,22 @@
                     EmptyBody="Hiện tại không có yêu cầu nào đang chờ phê duyệt.">
         <HeaderTemplate>
             <th>Người yêu cầu</th>
-            <th>Loại đối tượng</th>
+            <th>Đối tượng ảnh hưởng</th>
+            <th>Thay đổi</th>
             <th>Lý do</th>
-            <th>Ngày yêu cầu</th>
+            <th>Hiệu lực</th>
             <th>Thao tác</th>
         </HeaderTemplate>
         <RowTemplate Context="req">
             <tr>
                 <td>@GetUserName(req.RequestedBy)</td>
                 <td>
-                    <AdminBadge Tone="tone-secondary">@TargetTypeLabel(req.TargetType)</AdminBadge>
+                    <div class="admin-table-cell-strong">@GetTargetName(req)</div>
+                    <div class="admin-table-cell-muted">@TargetTypeLabel(req.TargetType)</div>
                 </td>
+                <td>@ChangeSummary(req)</td>
                 <td>@req.Reason</td>
-                <td>@req.RequestedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@req.EffectiveAt.ToString("dd/MM/yyyy HH:mm")</td>
                 <td style="display:flex;gap:0.5rem;">
                     <button class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => Approve(req.PermissionChangeRequestId)">
                         Phê duyệt
@@ -102,6 +105,7 @@
         {
             var actor = UserContext.CurrentUser?.UserId ?? Guid.Empty;
             RequestService.Approve(requestId, actor);
+            Refresh();
             Toast.Show("Đã phê duyệt yêu cầu", "Thay đổi quyền đã được áp dụng.", ToastVariant.Success);
         }
         catch (MedDomainException ex) { Toast.Show("Không thể phê duyệt", ex.Message, ToastVariant.Error); }
@@ -144,13 +148,42 @@
             _rejectModalOpen = false;
             _rejectRequestId = null;
             _rejectReason = string.Empty;
+            Refresh();
             Toast.Show("Đã từ chối yêu cầu", "Yêu cầu đã được chuyển sang trạng thái từ chối.", ToastVariant.Warning);
         }
         catch (MedDomainException ex) { Toast.Show("Không thể từ chối", ex.Message, ToastVariant.Error); }
     }
 
+    private string GetTargetName(PermissionChangeRequest req)
+    {
+        if (req.TargetRoleId.HasValue)
+            return Store.Roles.FirstOrDefault(r => r.RoleId == req.TargetRoleId.Value)?.Name ?? "Vai trò";
+        if (req.TargetGroupId.HasValue)
+            return Store.Groups.FirstOrDefault(g => g.GroupId == req.TargetGroupId.Value)?.Name ?? "Nhóm";
+        if (req.TargetUserId.HasValue)
+            return GetUserName(req.TargetUserId.Value);
+        return "Đối tượng chưa xác định";
+    }
+
+    private string ChangeSummary(PermissionChangeRequest req)
+    {
+        var items = Store.PermissionChangeItems
+            .Where(i => i.PermissionChangeRequestId == req.PermissionChangeRequestId)
+            .ToList();
+        if (items.Count == 0) return "Chưa có nội dung thay đổi";
+        return string.Join("; ", items.Select(i =>
+        {
+            var permission = Store.Permissions.FirstOrDefault(p => p.PermissionId == i.PermissionId);
+            var label = AdminBusinessDisplay.PermissionLabel(permission, Store.Screens, Store.Features);
+            return $"{AdminBusinessDisplay.ChangeOperation(i.OperationCode)} {label} ({AdminBusinessDisplay.Effect(i.EffectCode)}, {AdminBusinessDisplay.Scope(i.DepartmentScopeType)})";
+        }));
+    }
+
     private static string TargetTypeLabel(string targetType) => targetType switch
     {
+        "role" => "Vai trò",
+        "group" => "Nhóm",
+        "user" => "Người dùng",
         "role_permission" => "Quyền vai trò",
         "user_permission_override" => "Ghi đè quyền người dùng",
         "user_role" => "Vai trò người dùng",

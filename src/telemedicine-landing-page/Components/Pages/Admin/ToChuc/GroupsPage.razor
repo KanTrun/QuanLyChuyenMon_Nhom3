@@ -4,6 +4,7 @@
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Nhóm người dùng | QLCM Pro</PageTitle>
@@ -162,9 +163,9 @@
                             <label class="admin-form-field-label">Khoa</label>
                             <select class="admin-select" @bind="_permissionDepartmentId">
                                 <option value="">Không chọn</option>
-                                @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Code))
+                                @foreach (var dept in DepartmentOptions())
                                 {
-                                    <option value="@dept.DepartmentId">@dept.Name</option>
+                                    <option value="@dept.DepartmentId">@DepartmentOptionLabel(dept)</option>
                                 }
                             </select>
                         </div>
@@ -200,9 +201,9 @@
                 <label class="admin-form-field-label">Khoa/phòng</label>
                 <select class="admin-select" @bind="_deptId">
                     <option value="">Không gắn khoa</option>
-                    @foreach (var d in Store.Departments.Where(d => d.Status == "active"))
+                    @foreach (var d in DepartmentOptions())
                     {
-                        <option value="@d.DepartmentId">@d.Name</option>
+                        <option value="@d.DepartmentId">@DepartmentOptionLabel(d)</option>
                     }
                 </select>
             </div>
@@ -271,12 +272,22 @@
 
     private void OpenCreate()
     {
+        if (!Guard.CanDo("SCR_ORG_GROUPS:CREATE", "thêm nhóm"))
+        {
+            return;
+        }
+
         _code = _name = _desc = _deptId = string.Empty;
         _createOpen = true;
     }
 
     private void SaveGroup()
     {
+        if (!Guard.CanDo("SCR_ORG_GROUPS:CREATE", "thêm nhóm"))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_code) || string.IsNullOrWhiteSpace(_name))
         {
             Toasts.Show("Thiếu thông tin", "Vui lòng nhập mã và tên nhóm.", ToastVariant.Warning);
@@ -312,6 +323,11 @@
 
     private void AddMember()
     {
+        if (!Guard.CanDo("SCR_ORG_GROUPS:UPDATE", "thêm thành viên nhóm"))
+        {
+            return;
+        }
+
         if (_selected is null || !Guid.TryParse(_memberUserId, out var userId))
         {
             Toasts.Show("Thiếu thành viên", "Vui lòng chọn người dùng.", ToastVariant.Warning);
@@ -337,6 +353,11 @@
 
     private void RemoveMember(Sql.UserGroupMember member)
     {
+        if (!Guard.CanDo("SCR_ORG_GROUPS:UPDATE", "xóa thành viên nhóm"))
+        {
+            return;
+        }
+
         try
         {
             Store.RemoveUserGroupMember(member.UserGroupMemberId);
@@ -350,6 +371,11 @@
 
     private void AddGroupPermission()
     {
+        if (!Guard.CanDo("SCR_ORG_GROUPS:UPDATE", "thêm quyền nhóm"))
+        {
+            return;
+        }
+
         if (_selected is null || !Guid.TryParse(_permissionId, out var permissionId))
         {
             Toasts.Show("Thiếu quyền", "Vui lòng chọn quyền.", ToastVariant.Warning);
@@ -390,6 +416,11 @@
 
     private void RemoveGroupPermission(Sql.GroupPermission permission)
     {
+        if (!Guard.CanDo("SCR_ORG_GROUPS:UPDATE", "xóa quyền nhóm"))
+        {
+            return;
+        }
+
         try
         {
             Store.RemoveGroupPermission(permission.GroupPermissionId);
@@ -414,7 +445,13 @@
     private void ShowMembers() => _activeTab = "members";
     private void ShowPermissions() => _activeTab = "permissions";
 
-    private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+    private IReadOnlyList<Sql.Department> DepartmentOptions()
+        => AdminBusinessDisplay.ActiveDepartmentsForSelection(Store.Departments);
+
+    private string DepartmentOptionLabel(Sql.Department? dept)
+        => AdminBusinessDisplay.DepartmentLabel(dept, Store.Departments);
+
+    private string GetDeptName(Guid? deptId) => deptId.HasValue ? DepartmentOptionLabel(Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)) : "—";
     private string GetUserName(Guid userId) => Store.Users.FirstOrDefault(u => u.UserId == userId)?.FullName ?? "—";
     private string GetUserDepartment(Guid userId)
     {

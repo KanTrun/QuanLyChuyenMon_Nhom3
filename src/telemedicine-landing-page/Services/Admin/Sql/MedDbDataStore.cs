@@ -61,12 +61,23 @@ public sealed class MedDbDataStore : IMedDataStore
     public IReadOnlyList<NotificationDeliveryAttempt> NotificationDeliveryAttempts => _db.NotificationDeliveryAttempts.ToList();
 
     // === Ghi dữ liệu — ghi trực tiếp vào SQL Server ===
-    public void AddDepartment(Department dept) { _db.Departments.Add(dept); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddDepartment(Department dept)
+    {
+        var normalized = NormalizeDepartment(dept);
+        ValidateDepartmentUniqueCode(normalized.DepartmentId, normalized.Code);
+        ValidateDepartmentParent(normalized.DepartmentId, normalized.ParentDepartmentId);
+        _db.Departments.Add(normalized);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void UpdateDepartment(Department dept)
     {
         var existing = _db.Departments.FirstOrDefault(d => d.DepartmentId == dept.DepartmentId)
             ?? throw new InvalidOperationException("Khoa/phòng không tồn tại.");
-        _db.Departments.Entry(existing).CurrentValues.SetValues(dept with { UpdatedAt = DateTime.UtcNow });
+        var normalized = NormalizeDepartment(dept);
+        ValidateDepartmentUniqueCode(normalized.DepartmentId, normalized.Code);
+        ValidateDepartmentParent(normalized.DepartmentId, normalized.ParentDepartmentId);
+        _db.Departments.Entry(existing).CurrentValues.SetValues(normalized with { UpdatedAt = DateTime.UtcNow });
         _db.SaveChanges();
         RaiseStateChanged();
     }
@@ -74,6 +85,7 @@ public sealed class MedDbDataStore : IMedDataStore
     {
         var dept = _db.Departments.FirstOrDefault(d => d.DepartmentId == departmentId)
             ?? throw new InvalidOperationException("Khoa/phòng không tồn tại.");
+        ValidateDepartmentParent(departmentId, newParentId);
         var updated = dept with { ParentDepartmentId = newParentId, UpdatedAt = DateTime.UtcNow };
         _db.Departments.Entry(dept).CurrentValues.SetValues(updated);
         _db.SaveChanges();
@@ -83,6 +95,12 @@ public sealed class MedDbDataStore : IMedDataStore
     {
         var dept = _db.Departments.FirstOrDefault(d => d.DepartmentId == departmentId)
             ?? throw new InvalidOperationException("Khoa/phòng không tồn tại.");
+        var hasActiveChildren = _db.Departments.Any(d => d.ParentDepartmentId == departmentId && d.Status == "active");
+        if (hasActiveChildren)
+        {
+            throw MedDomainException.Constraint("CK_departments_archive_children", 50021,
+                "Không thể lưu trữ khoa/phòng còn đơn vị con đang hoạt động.");
+        }
         var updated = dept with { Status = "archived", UpdatedAt = DateTime.UtcNow };
         _db.Departments.Entry(dept).CurrentValues.SetValues(updated);
         _db.SaveChanges();
@@ -98,12 +116,21 @@ public sealed class MedDbDataStore : IMedDataStore
         RaiseStateChanged();
     }
 
-    public void AddRole(Role role) { _db.Roles.Add(role); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddRole(Role role)
+    {
+        var normalized = NormalizeRole(role);
+        ValidateRoleUniqueCode(normalized.RoleId, normalized.Code);
+        _db.Roles.Add(normalized);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void UpdateRole(Role role)
     {
         var existing = _db.Roles.FirstOrDefault(r => r.RoleId == role.RoleId)
             ?? throw new InvalidOperationException("Vai trò không tồn tại.");
-        _db.Roles.Entry(existing).CurrentValues.SetValues(role with
+        var normalized = NormalizeRole(role);
+        ValidateRoleUniqueCode(normalized.RoleId, normalized.Code);
+        _db.Roles.Entry(existing).CurrentValues.SetValues(normalized with
         {
             IsSystem = existing.IsSystem,
             CreatedAt = existing.CreatedAt,
@@ -128,7 +155,15 @@ public sealed class MedDbDataStore : IMedDataStore
         _db.SaveChanges();
         RaiseStateChanged();
     }
-    public void AddGroup(Group group) { _db.Groups.Add(group); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddGroup(Group group)
+    {
+        var normalized = NormalizeGroup(group);
+        ValidateGroupUniqueCode(normalized.GroupId, normalized.Code);
+        ValidateGroupDepartment(normalized.DepartmentId);
+        _db.Groups.Add(normalized);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void AddUserRole(UserRole userRole) { _db.UserRoles.Add(userRole); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddUserGroupMember(UserGroupMember member) { _db.UserGroupMembers.Add(member); _db.SaveChanges(); RaiseStateChanged(); }
     public void RemoveUserRole(Guid userRoleId)
@@ -411,5 +446,102 @@ public sealed class MedDbDataStore : IMedDataStore
         _db.Notifications.Entry(existing).CurrentValues.SetValues(existing with { ReadAt = readAt });
         _db.SaveChanges();
         RaiseStateChanged();
+    }
+
+    private Department NormalizeDepartment(Department dept)
+        => dept with
+        {
+            Code = dept.Code.Trim().ToUpperInvariant(),
+            Name = dept.Name.Trim(),
+            ParentDepartmentId = dept.ParentDepartmentId == Guid.Empty ? null : dept.ParentDepartmentId
+        };
+
+    private void ValidateDepartmentUniqueCode(Guid departmentId, string code)
+    {
+        if (_db.Departments.Any(d => d.DepartmentId != departmentId && d.Code.ToUpper() == code.ToUpper()))
+        {
+            throw MedDomainException.Constraint("UQ_departments_code", 2627,
+                "Mã khoa/phòng đã tồn tại. Vui lòng dùng mã khác.");
+        }
+    }
+
+    private void ValidateDepartmentParent(Guid departmentId, Guid? parentDepartmentId)
+    {
+        if (parentDepartmentId is null)
+        {
+            return;
+        }
+
+        if (parentDepartmentId == departmentId)
+        {
+            throw MedDomainException.Constraint("CK_departments_parent_not_self", 50020,
+                "Khoa/phòng không thể là đơn vị cha của chính nó.");
+        }
+
+        var parentExists = _db.Departments.Any(d => d.DepartmentId == parentDepartmentId && d.Status == "active");
+        if (!parentExists)
+        {
+            throw MedDomainException.Constraint("FK_departments_parent", 547,
+                "Đơn vị cha không tồn tại hoặc đã lưu trữ.");
+        }
+
+        var parentIsDescendant = _db.DepartmentClosure.Any(e =>
+            e.AncestorDepartmentId == departmentId &&
+            e.DescendantDepartmentId == parentDepartmentId);
+        if (parentIsDescendant)
+        {
+            throw MedDomainException.Constraint("TR_department_closure_cycle", 50020,
+                "Không thể chuyển vào đơn vị con vì sẽ tạo vòng lặp tổ chức.");
+        }
+    }
+
+    private static Role NormalizeRole(Role role)
+        => role with
+        {
+            Code = role.Code.Trim().ToUpperInvariant(),
+            Name = role.Name.Trim(),
+            Description = string.IsNullOrWhiteSpace(role.Description) ? null : role.Description.Trim()
+        };
+
+    private void ValidateRoleUniqueCode(Guid roleId, string code)
+    {
+        if (_db.Roles.Any(r => r.RoleId != roleId && r.Code.ToUpper() == code.ToUpper()))
+        {
+            throw MedDomainException.Constraint("UQ_roles_code", 2627,
+                "Mã vai trò đã tồn tại. Vui lòng dùng mã khác.");
+        }
+    }
+
+    private static Group NormalizeGroup(Group group)
+        => group with
+        {
+            Code = group.Code.Trim().ToUpperInvariant(),
+            Name = group.Name.Trim(),
+            DepartmentId = group.DepartmentId == Guid.Empty ? null : group.DepartmentId,
+            Description = string.IsNullOrWhiteSpace(group.Description) ? null : group.Description.Trim()
+        };
+
+    private void ValidateGroupUniqueCode(Guid groupId, string code)
+    {
+        if (_db.Groups.Any(g => g.GroupId != groupId && g.Code.ToUpper() == code.ToUpper()))
+        {
+            throw MedDomainException.Constraint("UQ_groups_code", 2627,
+                "Mã nhóm đã tồn tại. Vui lòng dùng mã khác.");
+        }
+    }
+
+    private void ValidateGroupDepartment(Guid? departmentId)
+    {
+        if (departmentId is null)
+        {
+            return;
+        }
+
+        var departmentExists = _db.Departments.Any(d => d.DepartmentId == departmentId && d.Status == "active");
+        if (!departmentExists)
+        {
+            throw MedDomainException.Constraint("FK_groups_department", 547,
+                "Khoa/phòng của nhóm không tồn tại hoặc đã lưu trữ.");
+        }
     }
 }

@@ -179,15 +179,16 @@
                     <h3 class="admin-panel-title">Quy tắc áp dụng</h3>
                     <div class="admin-table-wrapper">
                         <table class="admin-table">
-                            <thead><tr><th>Loại</th><th>JSON</th><th>Ưu tiên</th><th>Hoạt động</th><th></th></tr></thead>
+                            <thead><tr><th>Loại</th><th>Điều kiện áp dụng</th><th>Ưu tiên</th><th>Hoạt động</th><th></th></tr></thead>
                             <tbody>
                                 @foreach (var rule in Store.ProtocolApplicabilityRules.Where(r => r.ClinicalProtocolVersionId == _selectedVersion.ClinicalProtocolVersionId).OrderByDescending(r => r.Priority))
                                 {
                                     <tr>
                                         <td>@Lookup(Sql.MedLookups.ProtocolRuleTypes, rule.RuleType)</td>
                                         <td>
+                                            <div>@FormatRule(rule)</div>
                                             <details>
-                                                <summary style="cursor:pointer;">@FormatRule(rule)</summary>
+                                                <summary style="cursor:pointer;">Chi tiết kỹ thuật</summary>
                                                 <code>@rule.RuleJson</code>
                                             </details>
                                         </td>
@@ -219,8 +220,9 @@
                             <label class="admin-check-row"><input type="checkbox" @bind="_ruleActive" /> Có</label>
                         </div>
                         <div class="admin-form-field admin-form-field-full">
-                            <label class="admin-form-field-label">Rule JSON</label>
-                            <textarea class="admin-textarea" rows="4" @bind="_ruleJson"></textarea>
+                            <label class="admin-form-field-label">Giá trị điều kiện</label>
+                            <input class="admin-input" @bind="_ruleJson" placeholder="VD: I10, 18-65, Nam, Khoa Nội" />
+                            <div class="admin-form-field-hint">Nhập nội dung nghiệp vụ; hệ thống sẽ lưu thành quy tắc kỹ thuật.</div>
                         </div>
                     </div>
                     <div style="display:flex;justify-content:flex-end;margin-top:10px;">
@@ -429,6 +431,21 @@
             if (_editingProtocolId.HasValue)
             {
                 var current = Store.ClinicalProtocols.First(p => p.ClinicalProtocolId == _editingProtocolId.Value);
+                var activeVersion = Store.ClinicalProtocolVersions
+                    .Where(v => v.ClinicalProtocolId == current.ClinicalProtocolId && v.StatusCode == "active")
+                    .OrderByDescending(v => v.VersionNo)
+                    .FirstOrDefault();
+                if (activeVersion is not null)
+                {
+                    CreateDraftProtocolVersionFromActive(current, activeVersion);
+                    Toasts.Show("Đã tạo bản nháp cập nhật",
+                        "Phác đồ đang hiệu lực không bị sửa trực tiếp. Vui lòng chỉnh bản nháp rồi gửi phê duyệt.",
+                        ToastVariant.Success);
+                    _createOpen = false;
+                    Recompute();
+                    return;
+                }
+
                 Store.UpdateClinicalProtocol(current with
                 {
                     ProtocolCode = _createCode.Trim(),
@@ -468,6 +485,46 @@
         catch (Exception ex)
         {
             Toasts.Show("Không thể tạo phác đồ", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void CreateDraftProtocolVersionFromActive(Sql.ClinicalProtocol protocol, Sql.ClinicalProtocolVersion activeVersion)
+    {
+        var nextNo = Store.ClinicalProtocolVersions
+            .Where(v => v.ClinicalProtocolId == protocol.ClinicalProtocolId)
+            .Select(v => v.VersionNo)
+            .DefaultIfEmpty(0)
+            .Max() + 1;
+        var draft = new Sql.ClinicalProtocolVersion
+        {
+            ClinicalProtocolId = protocol.ClinicalProtocolId,
+            VersionNo = nextNo,
+            StatusCode = "draft",
+            Title = _createName.Trim(),
+            Summary = string.IsNullOrWhiteSpace(_createSummary) ? activeVersion.Summary : _createSummary.Trim(),
+            ContentJson = activeVersion.ContentJson,
+            CreatedBy = UserContext.CurrentUser?.UserId
+        };
+        Store.AddClinicalProtocolVersion(draft);
+
+        foreach (var link in Store.ClinicalProtocolProcedures.Where(p => p.ClinicalProtocolVersionId == activeVersion.ClinicalProtocolVersionId))
+        {
+            Store.AddClinicalProtocolProcedure(link with
+            {
+                ClinicalProtocolProcedureId = Guid.NewGuid(),
+                ClinicalProtocolVersionId = draft.ClinicalProtocolVersionId,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        foreach (var rule in Store.ProtocolApplicabilityRules.Where(r => r.ClinicalProtocolVersionId == activeVersion.ClinicalProtocolVersionId))
+        {
+            Store.AddProtocolApplicabilityRule(rule with
+            {
+                ProtocolApplicabilityRuleId = Guid.NewGuid(),
+                ClinicalProtocolVersionId = draft.ClinicalProtocolVersionId,
+                CreatedAt = DateTime.UtcNow
+            });
         }
     }
 
@@ -536,6 +593,11 @@
             Toasts.Show("Thiếu quy trình", "Vui lòng chọn phiên bản quy trình.", ToastVariant.Warning);
             return;
         }
+        if (_selectedVersion.StatusCode != "draft")
+        {
+            Toasts.Show("Không thể sửa bản đã ban hành", "Hãy tạo bản nháp mới rồi chỉnh liên kết quy trình.", ToastVariant.Warning);
+            return;
+        }
 
         try
         {
@@ -583,7 +645,12 @@
 
         if (_selectedVersion is null || string.IsNullOrWhiteSpace(_ruleJson))
         {
-            Toasts.Show("Thiếu rule", "Vui lòng nhập JSON rule.", ToastVariant.Warning);
+            Toasts.Show("Thiếu điều kiện", "Vui lòng nhập giá trị điều kiện áp dụng.", ToastVariant.Warning);
+            return;
+        }
+        if (_selectedVersion.StatusCode != "draft")
+        {
+            Toasts.Show("Không thể sửa bản đã ban hành", "Hãy tạo bản nháp mới rồi chỉnh quy tắc áp dụng.", ToastVariant.Warning);
             return;
         }
 
@@ -593,7 +660,7 @@
             {
                 ClinicalProtocolVersionId = _selectedVersion.ClinicalProtocolVersionId,
                 RuleType = _ruleType,
-                RuleJson = _ruleJson.Trim(),
+                RuleJson = BuildRuleJson(_ruleType, _ruleJson),
                 Priority = _rulePriority,
                 IsActive = _ruleActive
             });
@@ -739,6 +806,26 @@
         if (version is null) return "—";
         var proc = Store.Procedures.FirstOrDefault(p => p.ProcedureId == version.ProcedureId);
         return $"{proc?.ProcedureCode ?? "QT"} v{version.VersionNo} - {version.Title}";
+    }
+
+    private static string BuildRuleJson(string ruleType, string value)
+    {
+        var trimmed = value.Trim();
+        if (trimmed.StartsWith("{", StringComparison.Ordinal))
+        {
+            return trimmed;
+        }
+
+        var payload = ruleType switch
+        {
+            "icd" => new Dictionary<string, string> { ["icd"] = trimmed },
+            "age" => new Dictionary<string, string> { ["age"] = trimmed },
+            "gender" => new Dictionary<string, string> { ["gender"] = trimmed },
+            "department" => new Dictionary<string, string> { ["department"] = trimmed },
+            "contraindication" => new Dictionary<string, string> { ["contraindication"] = trimmed },
+            _ => new Dictionary<string, string> { ["value"] = trimmed }
+        };
+        return JsonSerializer.Serialize(payload);
     }
 
     private static string FormatRule(Sql.ProtocolApplicabilityRule rule)

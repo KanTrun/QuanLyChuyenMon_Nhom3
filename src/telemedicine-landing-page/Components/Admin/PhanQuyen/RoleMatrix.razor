@@ -1,8 +1,11 @@
+@using System.Text.Json
 @using TelemedicineLandingPage.Models.Admin.Sql
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@inject ICurrentUserContext UserContext
+@inject PermissionChangeRequestService RequestService
 @implements IDisposable
 
 <article class="admin-panel">
@@ -109,7 +112,7 @@
                         {
                             <tr>
                                 <td class="admin-table-cell-strong">@rp.ScreenName</td>
-                                <td>@rp.PermissionCode</td>
+                                <td>@rp.PermissionLabel</td>
                                 <td>
                                     @if (rp.EffectCode == "allow")
                                     {
@@ -124,7 +127,7 @@
                                 <td>@GetDepartmentName(rp.DepartmentId)</td>
                                 <td>@rp.Priority</td>
                                 <td style="text-align:right;">
-                                    <button type="button" class="admin-icon-btn is-danger" title="Xóa quyền" @onclick="() => RemoveRolePermission(rp.RolePermissionId)">×</button>
+                                    <button type="button" class="admin-icon-btn is-danger" title="Gửi yêu cầu thu hồi quyền" @onclick="() => RemoveRolePermission(rp)">×</button>
                                 </td>
                             </tr>
                         }
@@ -140,7 +143,7 @@
                     <option value="">Chọn quyền</option>
                     @foreach (var permission in _permissions)
                     {
-                        <option value="@permission.PermissionId">@permission.PermissionCode</option>
+                        <option value="@permission.PermissionId">@GetPermissionLabel(permission)</option>
                     }
                 </select>
             </div>
@@ -263,8 +266,10 @@
                     : new RolePermissionView
                     {
                         RolePermissionId = rp.RolePermissionId,
+                        PermissionId = permission.PermissionId,
                         ScreenName = screen?.Name ?? "—",
                         PermissionCode = permission.PermissionCode,
+                        PermissionLabel = GetPermissionLabel(permission),
                         EffectCode = rp.EffectCode,
                         ScopeType = rp.DepartmentScopeType,
                         DepartmentId = rp.DepartmentId,
@@ -308,32 +313,74 @@
             return;
         }
 
-        Store.AddRolePermission(new RolePermission
-        {
-            RoleId = _selectedRoleId.Value,
-            PermissionId = permissionId,
-            EffectCode = _effectCode,
-            DepartmentScopeType = _scopeType,
-            DepartmentId = departmentId,
-            Priority = _priority,
-            Reason = string.IsNullOrWhiteSpace(_reason) ? null : _reason.Trim()
-        });
-        LoadRolePermissions(_selectedRoleId.Value);
+        CreateAndSubmitRolePermissionRequest(
+            "grant",
+            permissionId,
+            _effectCode,
+            _scopeType,
+            departmentId,
+            string.IsNullOrWhiteSpace(_reason) ? "Cấp quyền cho vai trò theo yêu cầu nghiệp vụ." : _reason.Trim(),
+            before: null);
         ResetPermissionForm();
-        Toasts.Show("Đã thêm quyền vai trò", _selectedRole?.Name ?? "", ToastVariant.Success);
+        Toasts.Show("Đã gửi yêu cầu phê duyệt", _selectedRole?.Name ?? "", ToastVariant.Success);
     }
 
-    private void RemoveRolePermission(Guid rolePermissionId)
+    private void RemoveRolePermission(RolePermissionView row)
     {
-        if (!Guard.CanDo("SCR_PERMISSIONS:DELETE", "xóa quyền vai trò")) return;
-        var existing = Store.RolePermissions.FirstOrDefault(rp => rp.RolePermissionId == rolePermissionId);
+        if (!Guard.CanDo("SCR_PERMISSIONS:DELETE", "thu hồi quyền vai trò")) return;
+        var existing = Store.RolePermissions.FirstOrDefault(rp => rp.RolePermissionId == row.RolePermissionId);
         if (existing is null) return;
-        Store.RemoveRolePermission(rolePermissionId);
-        if (_selectedRoleId.HasValue)
+        CreateAndSubmitRolePermissionRequest(
+            "revoke",
+            row.PermissionId,
+            existing.EffectCode,
+            existing.DepartmentScopeType,
+            existing.DepartmentId,
+            $"Thu hồi quyền {row.PermissionLabel} khỏi vai trò {_selectedRole?.Name}.",
+            before: existing);
+        Toasts.Show("Đã gửi yêu cầu thu hồi quyền", row.PermissionLabel, ToastVariant.Info);
+    }
+
+    private void CreateAndSubmitRolePermissionRequest(string operation, Guid permissionId, string effectCode,
+        string scopeType, Guid? departmentId, string reason, RolePermission? before)
+    {
+        var actor = UserContext.CurrentUser?.UserId;
+        if (actor is null || _selectedRoleId is null)
         {
-            LoadRolePermissions(_selectedRoleId.Value);
+            Toasts.Show("Không xác định người thao tác", "Vui lòng đăng nhập lại trước khi gửi yêu cầu.", ToastVariant.Warning);
+            return;
         }
-        Toasts.Show("Đã xóa quyền vai trò", _selectedRole?.Name ?? "", ToastVariant.Info);
+
+        var req = RequestService.CreateDraft(
+            actor.Value,
+            "role",
+            _selectedRoleId,
+            null,
+            null,
+            reason,
+            DateTime.UtcNow);
+        RequestService.AddItem(req.PermissionChangeRequestId, new PermissionChangeItem
+        {
+            PermissionChangeRequestId = req.PermissionChangeRequestId,
+            PermissionId = permissionId,
+            OperationCode = operation,
+            EffectCode = effectCode,
+            DepartmentScopeType = scopeType,
+            DepartmentId = departmentId,
+            BeforeJson = before is null ? null : JsonSerializer.Serialize(new
+            {
+                before.EffectCode,
+                before.DepartmentScopeType,
+                before.DepartmentId
+            }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                EffectCode = effectCode,
+                DepartmentScopeType = scopeType,
+                DepartmentId = departmentId
+            })
+        });
+        RequestService.SubmitForApproval(req.PermissionChangeRequestId, actor.Value);
     }
 
     private void ResetPermissionForm()
@@ -349,6 +396,9 @@
     private string GetDepartmentName(Guid? departmentId)
         => departmentId.HasValue ? _departments.FirstOrDefault(d => d.DepartmentId == departmentId.Value)?.Name ?? "—" : "—";
 
+    private string GetPermissionLabel(MedPermission permission)
+        => AdminBusinessDisplay.PermissionLabel(permission, Store.Screens, Store.Features);
+
     private static string Lookup(IReadOnlyList<LookupEntry> entries, string? code)
         => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
 
@@ -358,8 +408,10 @@
     private sealed class RolePermissionView
     {
         public Guid RolePermissionId { get; init; }
+        public Guid PermissionId { get; init; }
         public string ScreenName { get; init; } = "";
         public string PermissionCode { get; init; } = "";
+        public string PermissionLabel { get; init; } = "";
         public string EffectCode { get; init; } = "allow";
         public string ScopeType { get; init; } = "global";
         public Guid? DepartmentId { get; init; }

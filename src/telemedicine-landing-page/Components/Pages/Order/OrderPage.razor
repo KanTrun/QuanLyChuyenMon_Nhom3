@@ -184,7 +184,7 @@
                             <option value="">Chọn tài nguyên</option>
                             @foreach (var resource in ResourcesForSelectedService())
                             {
-                                <option value="@resource.ResourceId">@resource.ResourceCode - @resource.Name</option>
+                                <option value="@resource.ResourceId">@resource.Name</option>
                             }
                         </select>
                     </div>
@@ -195,7 +195,7 @@
                     <div class="admin-form-field">
                         <label class="admin-form-field-label">Đơn vị</label>
                         <select class="admin-select" @bind="_usageUnit">
-                            @foreach (var unit in Sql.MedLookups.UnitCatalog)
+                            @foreach (var unit in UsageUnitOptions())
                             {
                                 <option value="@unit.Code">@unit.Name</option>
                             }
@@ -276,7 +276,7 @@
                     <option value="">Chọn dịch vụ</option>
                     @foreach (var svc in Store.TechnicalServices.Where(s => s.Status == "active").OrderBy(s => s.ServiceCode))
                     {
-                        <option value="@svc.TechnicalServiceId">@svc.ServiceCode - @svc.Name</option>
+                        <option value="@svc.TechnicalServiceId">@svc.Name</option>
                     }
                 </select>
             </div>
@@ -286,13 +286,13 @@
                     <option value="">Không chọn</option>
                     @foreach (var patient in Store.PatientRefs.OrderBy(p => p.PatientCode))
                     {
-                        <option value="@patient.PatientRefId">@patient.PatientCode - @patient.DisplayName</option>
+                        <option value="@patient.PatientRefId">@patient.DisplayName</option>
                     }
                 </select>
             </div>
             <div class="admin-form-field">
                 <label class="admin-form-field-label">Lượt khám</label>
-                <select class="admin-select" @bind="_newEncounterId">
+                <select class="admin-select" @bind="_newEncounterId" @bind:after="SyncEncounterPatient">
                     <option value="">Không chọn</option>
                     @foreach (var encounter in Store.EncounterRefs.OrderByDescending(e => e.StartedAt))
                     {
@@ -440,8 +440,17 @@
 
         var service = Store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == serviceId);
         var procedureVersionId = service?.LinkedProcedureId is Guid procId
-            ? Store.ProcedureVersions.Where(v => v.ProcedureId == procId).OrderByDescending(v => v.VersionNo).FirstOrDefault()?.ProcedureVersionId
+            ? Store.ProcedureVersions
+                .Where(v => v.ProcedureId == procId && v.StatusCode == "active")
+                .OrderByDescending(v => v.VersionNo)
+                .FirstOrDefault()?.ProcedureVersionId
             : null;
+        var encounterId = ParseGuid(_newEncounterId);
+        var patientId = ParseGuid(_newPatientId);
+        if (encounterId.HasValue)
+        {
+            patientId = Store.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == encounterId.Value)?.PatientRefId ?? patientId;
+        }
 
         try
         {
@@ -449,8 +458,8 @@
             {
                 TechnicalServiceId = serviceId,
                 ProcedureVersionId = procedureVersionId,
-                PatientRefId = ParseGuid(_newPatientId),
-                EncounterRefId = ParseGuid(_newEncounterId),
+                PatientRefId = patientId,
+                EncounterRefId = encounterId,
                 OrderingDepartmentId = ParseGuid(_newDepartmentId),
                 OrderedBy = UserContext.CurrentUser?.UserId,
                 OrderStatus = "ordered",
@@ -549,6 +558,18 @@
             return;
         }
 
+        var expectedUnit = Store.TechnicalResourceNorms
+            .FirstOrDefault(n => n.TechnicalServiceId == _selected.TechnicalServiceId && n.ResourceId == resourceId)
+            ?.UnitCode
+            ?? Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == resourceId)?.DefaultUnitCode;
+        if (!AdminBusinessDisplay.UnitsCompatible(expectedUnit, _usageUnit))
+        {
+            Toasts.Show("Đơn vị không phù hợp",
+                $"Tài nguyên này đang theo đơn vị chuẩn {LookupUnit(expectedUnit)}. Vui lòng chọn đơn vị cùng nhóm.",
+                ToastVariant.Warning);
+            return;
+        }
+
         try
         {
             Store.AddActualResourceUsage(new Sql.ActualResourceUsage
@@ -643,6 +664,32 @@
     private string GetEncounterCode(Guid? encounterId) => encounterId.HasValue ? Store.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == encounterId.Value)?.ExternalEncounterId ?? "—" : "—";
     private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
     private string GetResourceName(Guid resourceId) => Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == resourceId)?.Name ?? "—";
+    private void SyncEncounterPatient()
+    {
+        if (Guid.TryParse(_newEncounterId, out var encounterId))
+        {
+            var encounter = Store.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == encounterId);
+            if (encounter is not null)
+            {
+                _newPatientId = encounter.PatientRefId.ToString();
+            }
+        }
+    }
+
+    private IReadOnlyList<Sql.UnitEntry> UsageUnitOptions()
+    {
+        if (!Guid.TryParse(_usageResourceId, out var resourceId))
+        {
+            return Sql.MedLookups.UnitCatalog;
+        }
+
+        var normUnit = _selected is null
+            ? null
+            : Store.TechnicalResourceNorms.FirstOrDefault(n => n.TechnicalServiceId == _selected.TechnicalServiceId && n.ResourceId == resourceId)?.UnitCode;
+        var resourceUnit = Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == resourceId)?.DefaultUnitCode;
+        return AdminBusinessDisplay.CompatibleUnits(normUnit ?? resourceUnit);
+    }
+
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
     private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
     private static string LookupUnit(string? code) => Sql.MedLookups.UnitCatalog.FirstOrDefault(u => u.Code == code)?.Name ?? code ?? "—";

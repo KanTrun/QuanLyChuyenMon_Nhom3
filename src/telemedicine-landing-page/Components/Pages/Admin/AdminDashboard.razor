@@ -59,8 +59,8 @@
         <section class="admin-panel admin-panel-trend">
             <header class="admin-panel-head">
                 <div>
-                    <h2 class="admin-panel-title">Thống kê</h2>
-                    <p class="admin-panel-subtitle">Dữ liệu tổng hợp từ hệ thống.</p>
+                    <h2 class="admin-panel-title">Quy trình theo tháng ban hành</h2>
+                    <p class="admin-panel-subtitle">Cột biểu diễn số phiên bản quy trình được tạo/cập nhật theo từng tháng.</p>
                 </div>
             </header>
             <div class="admin-trend-chart" style="display:grid;gap:14px;min-height:160px;">
@@ -75,6 +75,7 @@
                     }
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    <span class="admin-table-cell-muted">Chú giải trạng thái:</span>
                     @foreach (var segment in _versionStatusSegments)
                     {
                         <span class="admin-filter-chip">@segment.Label: @segment.Count</span>
@@ -249,7 +250,7 @@
             "submit" => $"đã gửi duyệt {FormatTarget(log.TargetType)}{details}",
             "publish" => $"đã ban hành {FormatTarget(log.TargetType)}{details}",
             "archive" => $"đã lưu trữ {FormatTarget(log.TargetType)}{details}",
-            _ => $"{log.ActionCode} {FormatTarget(log.TargetType)}{details}"
+            _ => $"{AdminBusinessDisplay.Action(log.ActionCode)} {FormatTarget(log.TargetType)}{details}"
         };
 
         return $"{actor} {action}".Trim();
@@ -264,7 +265,7 @@
         "procedure_version" => "phiên bản quy trình",
         "department" => "khoa/phòng",
         "role_permission" => "quyền vai trò",
-        _ => targetType
+        _ => AdminBusinessDisplay.Target(targetType)
     };
 
     private static string FormatVersionStatus(string status) => status switch
@@ -274,7 +275,7 @@
         "draft" => "Nháp",
         "rejected" => "Từ chối",
         "superseded" => "Thay thế",
-        _ => status
+        _ => AdminBusinessDisplay.VersionStatus(status)
     };
 
     private static string ExtractDetails(Models.Admin.Sql.AuditLog log)

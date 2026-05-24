@@ -331,7 +331,7 @@
         "revoke" or "withdraw" => "Thu hồi",
         "login" => "Đăng nhập",
         "register" => "Đăng ký",
-        _ => action
+        _ => AdminBusinessDisplay.Action(action)
     };
 
     private static string TargetLabel(string target) => target.ToLowerInvariant() switch
@@ -351,7 +351,7 @@
         "permission_change_request" => "Yêu cầu thay đổi quyền",
         "group" => "Nhóm",
         "department" => "Khoa/phòng",
-        _ => target
+        _ => AdminBusinessDisplay.Target(target)
     };
 
     private static string StatusLabel(string status) => status switch
@@ -364,7 +364,7 @@
         "rejected" => "bị từ chối",
         "published" => "đã ban hành",
         "superseded" => "đã thay thế",
-        _ => status
+        _ => AdminBusinessDisplay.Fallback(status)
     };
 
     private static string GetActionTone(string action) => action.ToLowerInvariant() switch
@@ -389,9 +389,18 @@
         builder.AddAttribute(2, "class", "admin-form-field-hint");
         builder.AddContent(3, title);
         builder.CloseElement();
-        builder.OpenElement(4, "pre");
-        builder.AddAttribute(5, "class", "admin-json-block");
-        builder.AddContent(6, json);
+        builder.OpenElement(4, "div");
+        builder.AddAttribute(5, "class", "admin-table-cell-muted");
+        builder.AddContent(6, AdminBusinessDisplay.JsonSummary(json));
+        builder.CloseElement();
+        builder.OpenElement(7, "details");
+        builder.OpenElement(8, "summary");
+        builder.AddContent(9, "Chi tiết kỹ thuật");
+        builder.CloseElement();
+        builder.OpenElement(10, "pre");
+        builder.AddAttribute(11, "class", "admin-json-block");
+        builder.AddContent(12, json);
+        builder.CloseElement();
         builder.CloseElement();
         builder.CloseElement();
     };

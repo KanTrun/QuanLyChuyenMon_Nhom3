@@ -38,9 +38,9 @@
             <label class="admin-filter-label">Khoa/phòng</label>
             <select class="admin-select" @bind="_departmentFilter" @bind:after="ResetAndPaginate">
                 <option value="">Tất cả</option>
-                @foreach (var d in Store.Departments.OrderBy(d => d.Name))
+                @foreach (var d in DepartmentOptions())
                 {
-                    <option value="@d.DepartmentId">@d.Name</option>
+                    <option value="@d.DepartmentId">@DepartmentOptionLabel(d)</option>
                 }
             </select>
         </div>
@@ -104,6 +104,25 @@
                  Title="@(_mode == FormMode.Create ? "Thêm người dùng" : _fullName)"
                  Subtitle="@(_selectedUser is null ? null : $"{_selectedUser.Username} • {StatusLabel(_selectedUser.Status)}")">
         <ChildContent>
+            @if (IsReadonly && _selectedUser is not null)
+            {
+                <dl class="admin-detail-grid">
+                    <dt>Họ tên</dt>
+                    <dd>@_selectedUser.FullName</dd>
+                    <dt>Tên đăng nhập</dt>
+                    <dd>@_selectedUser.Username</dd>
+                    <dt>Email</dt>
+                    <dd>@(_selectedUser.Email ?? "—")</dd>
+                    <dt>Khoa/phòng chính</dt>
+                    <dd>@GetDeptName(_selectedUser.PrimaryDepartmentId)</dd>
+                    <dt>Trạng thái</dt>
+                    <dd><AdminBadge Tone="@StatusTone(_selectedUser.Status)">@StatusLabel(_selectedUser.Status)</AdminBadge></dd>
+                    <dt>Cập nhật gần nhất</dt>
+                    <dd>@AdminDateTimeDisplay.ShortDateTime(_selectedUser.UpdatedAt)</dd>
+                </dl>
+            }
+            else
+            {
             <div class="admin-form-grid">
                 <div class="admin-form-field">
                     <label class="admin-form-field-label is-required">Họ tên</label>
@@ -121,9 +140,9 @@
                     <label class="admin-form-field-label">Khoa/phòng chính</label>
                     <select class="admin-select" @bind="_deptId" disabled="@IsReadonly">
                         <option value="">Không chọn</option>
-                        @foreach (var d in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
+                        @foreach (var d in DepartmentOptions())
                         {
-                            <option value="@d.DepartmentId">@d.Name</option>
+                            <option value="@d.DepartmentId">@DepartmentOptionLabel(d)</option>
                         }
                     </select>
                 </div>
@@ -135,6 +154,7 @@
                     </select>
                 </div>
             </div>
+            }
 
             @if (_selectedUser is not null)
             {
@@ -542,7 +562,13 @@
 
     private string RoleName(Guid roleId) => Store.Roles.FirstOrDefault(r => r.RoleId == roleId)?.Name ?? string.Empty;
     private string GroupName(Guid groupId) => Store.Groups.FirstOrDefault(g => g.GroupId == groupId)?.Name ?? string.Empty;
-    private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+    private IReadOnlyList<TelemedicineLandingPage.Models.Admin.Sql.Department> DepartmentOptions()
+        => AdminBusinessDisplay.ActiveDepartmentsForSelection(Store.Departments);
+
+    private string DepartmentOptionLabel(TelemedicineLandingPage.Models.Admin.Sql.Department? dept)
+        => AdminBusinessDisplay.DepartmentLabel(dept, Store.Departments);
+
+    private string GetDeptName(Guid? deptId) => deptId.HasValue ? DepartmentOptionLabel(Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)) : "—";
     private bool IsCurrentUser(AppUser user) => UserContext.CurrentUser?.UserId == user.UserId;
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
     private static string StatusTone(string status) => status == "active" ? "tone-success" : "tone-muted";

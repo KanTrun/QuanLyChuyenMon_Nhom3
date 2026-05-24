@@ -356,6 +356,21 @@
 
         try
         {
+            var activeVersion = Store.ProcedureVersions
+                .Where(v => v.ProcedureId == current.ProcedureId && v.StatusCode == "active")
+                .OrderByDescending(v => v.VersionNo)
+                .FirstOrDefault();
+            if (activeVersion is not null)
+            {
+                CreateDraftVersionFromActive(current, activeVersion);
+                _editOpen = false;
+                Toasts.Show("Đã tạo bản nháp cập nhật",
+                    "Quy trình đang hiệu lực không bị sửa trực tiếp. Vui lòng chỉnh bản nháp rồi gửi phê duyệt.",
+                    ToastVariant.Success);
+                Recompute();
+                return;
+            }
+
             Store.UpdateProcedure(current with
             {
                 ProcedureCode = _editCode.Trim(),
@@ -370,6 +385,69 @@
         catch (Exception ex)
         {
             Toasts.Show("Không thể cập nhật quy trình", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void CreateDraftVersionFromActive(Sql.ProfessionalProcedure procedure, Sql.ProcedureVersion activeVersion)
+    {
+        var nextNo = Store.ProcedureVersions
+            .Where(v => v.ProcedureId == procedure.ProcedureId)
+            .Select(v => v.VersionNo)
+            .DefaultIfEmpty(0)
+            .Max() + 1;
+        var draft = new Sql.ProcedureVersion
+        {
+            ProcedureId = procedure.ProcedureId,
+            VersionNo = nextNo,
+            VersionLabel = $"v{nextNo}.0",
+            StatusCode = "draft",
+            DepartmentId = ParseGuid(_editDepartmentId) ?? activeVersion.DepartmentId,
+            Title = _editName.Trim(),
+            Summary = string.IsNullOrWhiteSpace(_editDescription) ? activeVersion.Summary : _editDescription.Trim(),
+            ChangeReason = "Cập nhật từ bản đang hiệu lực",
+            CreatedBy = UserContext.CurrentUser?.UserId
+        };
+        Store.AddProcedureVersion(draft);
+
+        foreach (var step in Store.ProcedureSteps.Where(s => s.ProcedureVersionId == activeVersion.ProcedureVersionId))
+        {
+            Store.AddProcedureStep(step with
+            {
+                ProcedureStepId = Guid.NewGuid(),
+                ProcedureVersionId = draft.ProcedureVersionId,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        foreach (var norm in Store.ProcedureVersionResourceNorms.Where(n => n.ProcedureVersionId == activeVersion.ProcedureVersionId))
+        {
+            Store.AddProcedureVersionResourceNorm(norm with
+            {
+                ProcedureVersionResourceNormId = Guid.NewGuid(),
+                ProcedureVersionId = draft.ProcedureVersionId,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        foreach (var mapping in Store.ProcedureScreenMappings.Where(m => m.ProcedureVersionId == activeVersion.ProcedureVersionId))
+        {
+            Store.AddProcedureScreenMapping(mapping with
+            {
+                ProcedureScreenMappingId = Guid.NewGuid(),
+                ProcedureVersionId = draft.ProcedureVersionId,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        foreach (var attachment in Store.ProcedureAttachments.Where(a => a.ProcedureVersionId == activeVersion.ProcedureVersionId))
+        {
+            Store.AddProcedureAttachment(attachment with
+            {
+                ProcedureAttachmentId = Guid.NewGuid(),
+                ProcedureVersionId = draft.ProcedureVersionId,
+                UploadedAt = DateTime.UtcNow,
+                UploadedBy = UserContext.CurrentUser?.UserId
+            });
         }
     }
 

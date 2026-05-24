@@ -162,7 +162,7 @@
                         <tr>
                             <td>@GetScreenName(mapping.ScreenId)</td>
                             <td>@GetFeatureName(mapping.FeatureId)</td>
-                            <td>@(mapping.ActionCode ?? "—")</td>
+                            <td>@AdminBusinessDisplay.Action(mapping.ActionCode)</td>
                             <td>@Lookup(Sql.MedLookups.EnforcementModes, mapping.EnforcementMode)</td>
                             <td style="text-align:right;"><button type="button" class="admin-icon-btn is-danger" @onclick="() => _screenMappings.Remove(mapping)">×</button></td>
                         </tr>
@@ -177,7 +177,7 @@
                     <option value="">Chọn màn hình</option>
                     @foreach (var screen in Store.Screens.Where(s => s.Status == "active").OrderBy(s => s.ScreenCode))
                     {
-                        <option value="@screen.ScreenId">@screen.ScreenCode - @screen.Name</option>
+                        <option value="@screen.ScreenId">@screen.Name</option>
                     }
                 </select>
             </div>
@@ -187,7 +187,7 @@
                     <option value="">Không chọn</option>
                     @foreach (var feature in Store.Features.Where(f => f.Status == "active").OrderBy(f => f.FeatureCode))
                     {
-                        <option value="@feature.FeatureId">@feature.FeatureCode - @feature.Name</option>
+                        <option value="@feature.FeatureId">@feature.Name</option>
                     }
                 </select>
             </div>
@@ -211,8 +211,8 @@
                 </select>
             </div>
             <div class="admin-form-field admin-form-field-full">
-                <label class="admin-form-field-label">Rule JSON</label>
-                <input class="admin-input" @bind="_mappingRuleJson" placeholder="{&quot;requiredPermission&quot;:&quot;SCR_PROCEDURES:CREATE&quot;}" />
+                <label class="admin-form-field-label">Ghi chú kiểm soát</label>
+                <div class="admin-form-field-hint">Hệ thống tự lưu quy tắc theo màn hình, tác vụ và chế độ kiểm soát đã chọn. Chi tiết kỹ thuật không nhập ở đây.</div>
             </div>
         </div>
         <div style="display:flex;justify-content:flex-end;margin-top:10px;">
@@ -351,7 +351,7 @@
             ParseGuid(_mappingFeatureId),
             string.IsNullOrWhiteSpace(_mappingAction) ? null : _mappingAction,
             _mappingEnforcement,
-            string.IsNullOrWhiteSpace(_mappingRuleJson) ? null : _mappingRuleJson.Trim()));
+            null));
         _mappingScreenId = string.Empty;
         _mappingFeatureId = string.Empty;
         _mappingAction = "execute";

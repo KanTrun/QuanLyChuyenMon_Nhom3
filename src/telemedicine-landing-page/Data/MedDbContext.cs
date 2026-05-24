@@ -119,13 +119,29 @@ public class MedDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public override int SaveChanges()
     {
         AddAutomaticAuditLogs();
-        return base.SaveChanges();
+        try
+        {
+            return base.SaveChanges();
+        }
+        catch
+        {
+            ChangeTracker.Clear();
+            throw;
+        }
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         AddAutomaticAuditLogs();
-        return base.SaveChangesAsync(cancellationToken);
+        try
+        {
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            ChangeTracker.Clear();
+            throw;
+        }
     }
 
     private void AddAutomaticAuditLogs()
@@ -220,10 +236,11 @@ public class MedDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     private static Guid? TryGetDepartmentId(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
     {
         var departmentProperty = entry.Properties.FirstOrDefault(p =>
-            string.Equals(p.Metadata.Name, "DepartmentId", StringComparison.OrdinalIgnoreCase) ||
+            !p.Metadata.IsPrimaryKey() &&
+            (string.Equals(p.Metadata.Name, "DepartmentId", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(p.Metadata.Name, "OwnerDepartmentId", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(p.Metadata.Name, "PrimaryDepartmentId", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(p.Metadata.Name, "OrderingDepartmentId", StringComparison.OrdinalIgnoreCase));
+            string.Equals(p.Metadata.Name, "OrderingDepartmentId", StringComparison.OrdinalIgnoreCase)));
 
         return departmentProperty?.CurrentValue as Guid?;
     }

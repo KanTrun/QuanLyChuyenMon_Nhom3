@@ -15,8 +15,9 @@ Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-
 | Security validation guard | Complete | FluentValidation password commands, common-password checks, null-password lock migration, admin `AdminAccess` folder guard |
 | Workflow and jobs foundation | Complete | Workflow guards for procedure versions/orders, order status service extraction, Hangfire SQL dashboard and `IJobService` wrapper |
 | Realtime notifications | Complete | SignalR notification hub, persisted user/group/broadcast notification service, admin bell live toast updates and presence hooks |
+| Business UI remediation | Complete | Admin pages use hospital-facing labels, approval-backed permission changes, active-version drafts, resource-unit guards and compact technical details |
 | Seed data | Complete | `scripts/seed-realistic-data.sql` nạp dữ liệu mẫu thực tế cho demo/QA |
-| Verification | Complete | Release test passed, 124 tests after realtime notification phase |
+| Verification | Complete | Release build/test passed, 136 tests after organization mutation fix |
 
 ## Telemedicine Landing Page Track
 | Item | Status | Output |
@@ -47,7 +48,7 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này �
 | Architecture blueprint | 100% |
 | Implementation plan | 100% |
 | Code implementation | 100% for implementation-plan scope |
-| Test automation | Release build/test passed, 124 tests after realtime notification phase |
+| Test automation | Release build/test passed, 136 tests after organization mutation fix |
 | Deployment readiness | Docker Compose web/sql/db-init verified locally; target DB execution/config remains deployment task |
 
 ## Dependencies

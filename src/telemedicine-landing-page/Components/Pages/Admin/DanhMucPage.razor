@@ -141,11 +141,11 @@
                 <div class="admin-form-grid" style="margin-top:14px;">
                     <div class="admin-form-field">
                         <label class="admin-form-field-label">Tài nguyên</label>
-                        <select class="admin-select" @bind="_normResourceId">
+                        <select class="admin-select" @bind="_normResourceId" @bind:after="SyncNormUnit">
                             <option value="">Chọn tài nguyên</option>
                             @foreach (var resource in Store.ResourceCatalog.Where(r => r.Status == "active").OrderBy(r => r.ResourceCode))
                             {
-                                <option value="@resource.ResourceId">@resource.ResourceCode - @resource.Name</option>
+                                <option value="@resource.ResourceId">@resource.Name</option>
                             }
                         </select>
                     </div>
@@ -156,7 +156,7 @@
                     <div class="admin-form-field">
                         <label class="admin-form-field-label">Đơn vị</label>
                         <select class="admin-select" @bind="_normUnit">
-                            @foreach (var unit in Sql.MedLookups.UnitCatalog)
+                            @foreach (var unit in UnitOptionsForNorm())
                             {
                                 <option value="@unit.Code">@unit.Name</option>
                             }
@@ -442,6 +442,15 @@
             return;
         }
 
+        var resource = Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == resourceId);
+        if (resource is not null && !AdminBusinessDisplay.UnitsCompatible(resource.DefaultUnitCode, _normUnit))
+        {
+            Toasts.Show("Đơn vị không phù hợp",
+                $"Tài nguyên {resource.Name} đang dùng đơn vị chuẩn {LookupUnit(resource.DefaultUnitCode)}. Vui lòng chọn đơn vị cùng nhóm.",
+                ToastVariant.Warning);
+            return;
+        }
+
         try
         {
             Store.AddTechnicalResourceNorm(new Sql.TechnicalResourceNorm
@@ -484,6 +493,31 @@
         => _selected is null
             ? Array.Empty<Sql.TechnicalResourceNorm>()
             : Store.TechnicalResourceNorms.Where(n => n.TechnicalServiceId == _selected.TechnicalServiceId);
+
+    private void SyncNormUnit()
+    {
+        if (!Guid.TryParse(_normResourceId, out var resourceId))
+        {
+            return;
+        }
+
+        var resource = Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == resourceId);
+        if (!string.IsNullOrWhiteSpace(resource?.DefaultUnitCode))
+        {
+            _normUnit = resource.DefaultUnitCode;
+        }
+    }
+
+    private IReadOnlyList<Sql.UnitEntry> UnitOptionsForNorm()
+    {
+        if (!Guid.TryParse(_normResourceId, out var resourceId))
+        {
+            return Sql.MedLookups.UnitCatalog;
+        }
+
+        var resource = Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == resourceId);
+        return AdminBusinessDisplay.CompatibleUnits(resource?.DefaultUnitCode);
+    }
 
     private void ResetNormForm()
     {

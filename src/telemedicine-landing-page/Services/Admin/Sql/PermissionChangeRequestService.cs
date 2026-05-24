@@ -5,7 +5,7 @@ using TelemedicineLandingPage.Models.Admin.Sql;
 namespace TelemedicineLandingPage.Services.Admin.Sql;
 
 /// <summary>Dịch vụ quản lý yêu cầu thay đổi quyền (workflow đầy đủ).</summary>
-public sealed class PermissionChangeRequestService
+public sealed partial class PermissionChangeRequestService
 {
     private readonly MedDbContext _db;
     private readonly AuditTrailService _audit;
@@ -65,6 +65,8 @@ public sealed class PermissionChangeRequestService
 
         var updated = req with { ChangeStatus = "pending_approval" };
         _db.PermissionChangeRequests.Entry(req).CurrentValues.SetValues(updated);
+        AddRequestNotification(req, "Yêu cầu thay đổi quyền đã gửi duyệt",
+            "Yêu cầu đang chờ người có thẩm quyền xem xét.", "info");
         _db.SaveChanges();
 
         _audit.Append(new AuditLog
@@ -85,16 +87,26 @@ public sealed class PermissionChangeRequestService
             throw MedDomainException.Constraint("CK_permission_change_approve", 50014,
                 "Chỉ có thể phê duyệt yêu cầu đang chờ phê duyệt.");
 
+        var now = DateTime.UtcNow;
+        if (!schedule)
+        {
+            ApplyItems(req, approverUserId, now);
+        }
+
         var newStatus = schedule ? "scheduled" : "applied";
         var updated = req with
         {
             ChangeStatus = newStatus,
             ApprovedBy = approverUserId,
-            ApprovedAt = DateTime.UtcNow,
-            AppliedAt = schedule ? null : DateTime.UtcNow,
+            ApprovedAt = now,
+            AppliedAt = schedule ? null : now,
             AppliedBy = schedule ? null : approverUserId
         };
         _db.PermissionChangeRequests.Entry(req).CurrentValues.SetValues(updated);
+        AddRequestNotification(req,
+            schedule ? "Yêu cầu thay đổi quyền đã được lên lịch" : "Yêu cầu thay đổi quyền đã được áp dụng",
+            schedule ? "Thay đổi sẽ có hiệu lực theo lịch đã chọn." : "Thay đổi quyền đã được ghi vào hệ thống.",
+            "info");
         _db.SaveChanges();
 
         _audit.Append(new AuditLog
@@ -117,6 +129,7 @@ public sealed class PermissionChangeRequestService
 
         var updated = req with { ChangeStatus = "rejected" };
         _db.PermissionChangeRequests.Entry(req).CurrentValues.SetValues(updated);
+        AddRequestNotification(req, "Yêu cầu thay đổi quyền bị từ chối", reason, "warning");
         _db.SaveChanges();
 
         _audit.Append(new AuditLog

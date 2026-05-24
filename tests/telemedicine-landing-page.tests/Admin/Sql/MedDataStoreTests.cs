@@ -402,4 +402,27 @@ public sealed class MedDataStoreTests
         Assert.Equal("create", log!.ActionCode);
         Assert.Contains("AUDIT_TEST_ROLE", log.AfterJson!);
     }
+
+    [Fact]
+    public void MedDbContext_SaveChanges_DepartmentAuditDoesNotReferenceNewDepartment()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var departmentId = Guid.NewGuid();
+
+        db.Departments.Add(new Department
+        {
+            DepartmentId = departmentId,
+            Code = "AUDIT-DEPT",
+            Name = "Khoa audit",
+            ParentDepartmentId = MedDataStoreSeed.RootDeptId
+        });
+        db.SaveChanges();
+
+        var log = db.AuditLogs.FirstOrDefault(a =>
+            a.TargetType == "department" &&
+            a.TargetId == departmentId.ToString());
+
+        Assert.NotNull(log);
+        Assert.Null(log!.DepartmentId);
+    }
 }

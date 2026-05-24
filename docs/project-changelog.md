@@ -1,6 +1,35 @@
 # Project Changelog
 
+## 2026-05-24
+### Fixed
+| Item | Description |
+|---|---|
+| Organization mutations | Fixed SQL audit tracking so department create, role create, group create and user restore no longer fail after an admin save error |
+| Department dropdowns | Department selectors now disambiguate duplicate names by showing the code when names collide |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 136 tests |
+
 ## 2026-05-22
+### QLCM Pro Business UI Remediation
+| Item | Description |
+|---|---|
+| Business labels | Added shared admin display helper for actions, statuses, targets, modules, permissions, notifications, units and compact JSON summaries |
+| Permission workflow | Role permissions and user overrides now submit approval requests; approval applies real role/group/user permission records and sends notifications |
+| Organization guard | SQL-backed department create/update/archive now validates duplicate codes, parent links and active children with Vietnamese errors |
+| Procedure/protocol drafts | Editing active procedures/protocols creates a new draft version with copied steps, resource norms, mappings, links and rules |
+| Resource consistency | Service norms and actual order usage now sync/filter units by resource unit group and block mismatched units |
+| Admin UI wording | Dashboard, approval inbox, notifications, audit log, screen catalog, procedure mapping and protocol rules hide raw codes/JSON from primary views |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 132 tests |
+
 ### Fixed
 | Item | Description |
 |---|---|

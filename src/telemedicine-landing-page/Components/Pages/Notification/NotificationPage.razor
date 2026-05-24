@@ -60,7 +60,7 @@
                 <tr @onclick="() => OpenNotification(notif)" style="cursor:pointer;">
                     <td class="admin-table-cell-strong">@notif.Title</td>
                     <td>@notif.Body</td>
-                    <td>@notif.NotificationType</td>
+                    <td>@AdminBusinessDisplay.NotificationType(notif.NotificationType)</td>
                     <td><AdminBadge Tone="@SeverityTone(notif.Severity)">@Lookup(Sql.MedLookups.NotificationSeverities, notif.Severity)</AdminBadge></td>
                     <td>@(notif.ReadAt.HasValue ? "Đã đọc" : "Chưa đọc")</td>
                     <td>@notif.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
@@ -93,7 +93,7 @@
                         @foreach (var type in NotificationTypes())
                         {
                             <tr>
-                                <td class="admin-table-cell-strong">@type</td>
+                                <td class="admin-table-cell-strong">@AdminBusinessDisplay.NotificationType(type)</td>
                                 @foreach (var channel in Sql.MedLookups.NotificationChannels)
                                 {
                                     <td>
@@ -120,7 +120,7 @@
         {
             <dl class="admin-detail-grid">
                 <dt>Loại</dt>
-                <dd>@_selected.NotificationType</dd>
+                <dd>@AdminBusinessDisplay.NotificationType(_selected.NotificationType)</dd>
                 <dt>Nguồn</dt>
                 <dd>@DescribeSource(_selected)</dd>
                 <dt>Đã đọc lúc</dt>
@@ -332,7 +332,7 @@
             {
                 Store.UpdateNotificationPreference(existing with { IsEnabled = enabled, UpdatedAt = DateTime.UtcNow });
             }
-            Toasts.Show("Đã cập nhật cài đặt", $"{type} • {Lookup(Sql.MedLookups.NotificationChannels, channel)}", ToastVariant.Success);
+            Toasts.Show("Đã cập nhật cài đặt", $"{AdminBusinessDisplay.NotificationType(type)} • {Lookup(Sql.MedLookups.NotificationChannels, channel)}", ToastVariant.Success);
         }
         catch (Exception ex)
         {
@@ -395,7 +395,7 @@
             "permission_change" => "Yêu cầu thay đổi quyền",
             "procedure_approval" => "Quy trình cần phê duyệt",
             "order_status" => "Chỉ định kỹ thuật",
-            _ => notification.SourceType
+            _ => AdminBusinessDisplay.Source(notification.SourceType)
         };
     }
 
