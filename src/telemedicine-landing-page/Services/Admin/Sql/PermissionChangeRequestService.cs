@@ -33,6 +33,9 @@ public sealed partial class PermissionChangeRequestService
             throw MedDomainException.Constraint("CK_permission_change_reason", 50011,
                 "Lý do thay đổi không được để trống.");
 
+        var requestedAt = DateTime.UtcNow;
+        var normalizedEffectiveAt = effectiveAt < requestedAt ? requestedAt : effectiveAt;
+
         var request = new PermissionChangeRequest
         {
             ChangeStatus = "draft",
@@ -42,7 +45,8 @@ public sealed partial class PermissionChangeRequestService
             TargetUserId = targetUserId,
             Reason = reason,
             RequestedBy = actorUserId,
-            EffectiveAt = effectiveAt
+            RequestedAt = requestedAt,
+            EffectiveAt = normalizedEffectiveAt
         };
         _db.PermissionChangeRequests.Add(request);
         _db.SaveChanges();

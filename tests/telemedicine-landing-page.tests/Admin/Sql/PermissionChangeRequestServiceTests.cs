@@ -51,6 +51,17 @@ public sealed class PermissionChangeRequestServiceTests : IDisposable
         Assert.Equal(MedDataStoreSeed.RoleSysAdminId, req.TargetRoleId);
     }
 
+    [Fact]
+    public void CreateDraft_ImmediateEffectiveAt_ClampsToRequestedAt()
+    {
+        var req = _svc.CreateDraft(
+            MedDataStoreSeed.AdminUserId, "role",
+            MedDataStoreSeed.RoleSysAdminId, null, null,
+            "Cấp quyền ngay", DateTime.UtcNow.AddSeconds(-1));
+
+        Assert.True(req.EffectiveAt >= req.RequestedAt);
+    }
+
     // === 2. CreateDraft: phải chọn đúng 1 đối tượng ===
     [Fact]
     public void CreateDraft_MultipleTargets_Throws50010()

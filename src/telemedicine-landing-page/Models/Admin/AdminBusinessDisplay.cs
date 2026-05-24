@@ -81,6 +81,7 @@ public static class AdminBusinessDisplay
         "PROC" => "Quy trình",
         "CAT" => "Danh mục kỹ thuật",
         "TECH" => "Điều phối kỹ thuật",
+        "RPT" => "Báo cáo",
         "PROTOCOL" => "Phác đồ",
         "CLINICAL" => "Lâm sàng",
         "REPORT" => "Báo cáo",
@@ -118,7 +119,11 @@ public static class AdminBusinessDisplay
             ? features.FirstOrDefault(f => f.FeatureId == permission.FeatureId.Value)?.Name
             : null;
         var action = Action(permission.ActionCode);
-        return string.Join(" - ", new[] { screen, feature, action }.Where(v => !string.IsNullOrWhiteSpace(v)));
+        var parts = new List<string>();
+        AddDistinctLabel(parts, screen);
+        AddDistinctLabel(parts, feature);
+        AddDistinctLabel(parts, action);
+        return parts.Count == 0 ? Fallback(permission.PermissionCode) : string.Join(" - ", parts);
     }
 
     public static string ScreenLabel(ScreenCatalog? screen) => screen?.Name ?? Empty;
@@ -184,6 +189,16 @@ public static class AdminBusinessDisplay
     public static string NormalizeScope(string? scope) => Same(scope, "all") ? "global" : scope ?? string.Empty;
     public static string Fallback(string? code) => string.IsNullOrWhiteSpace(code) ? Empty : code.Replace('_', ' ');
     private static bool Same(string? left, string? right) => string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+
+    private static void AddDistinctLabel(List<string> parts, string? label)
+    {
+        if (string.IsNullOrWhiteSpace(label) || parts.Any(part => Same(part, label)))
+        {
+            return;
+        }
+
+        parts.Add(label);
+    }
 
     private static string JsonKey(string key) => key switch
     {

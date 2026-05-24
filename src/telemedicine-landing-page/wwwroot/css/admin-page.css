@@ -1122,6 +1122,193 @@
     accent-color: var(--color-primary);
 }
 
+.admin-role-permission-form {
+    margin-top: 16px;
+}
+
+.permission-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    padding: 12px;
+}
+
+.permission-picker-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.permission-picker-search {
+    min-height: 42px;
+}
+
+.permission-picker-count {
+    color: var(--color-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.permission-picker-current {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--color-primary-soft);
+    color: var(--color-primary-deep);
+}
+
+.permission-picker-current > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.permission-picker-current-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+}
+
+.permission-picker-current strong,
+.permission-option-title {
+    overflow-wrap: anywhere;
+}
+
+.permission-picker-current span:last-child {
+    font-size: 0.82rem;
+}
+
+.permission-picker-list {
+    max-height: 360px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 2px;
+}
+
+.permission-picker-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.permission-picker-group-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-muted);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 2px 0;
+}
+
+.permission-picker-group-head span:last-child {
+    color: var(--color-subtle);
+    font-weight: 700;
+}
+
+.permission-option {
+    width: 100%;
+    min-height: 58px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 10px;
+    background: var(--color-page);
+    color: var(--color-ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--motion-subtle), border-color var(--motion-subtle), box-shadow var(--motion-subtle);
+}
+
+.permission-option:hover:not(:disabled),
+.permission-option:focus-visible {
+    background: var(--color-primary-tint);
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 3px rgba(91, 155, 213, 0.12);
+    outline: none;
+}
+
+.permission-option.is-selected {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+}
+
+.permission-option.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.66;
+}
+
+.permission-option-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.permission-option-title {
+    font-weight: 700;
+    color: var(--color-ink);
+    line-height: 1.3;
+}
+
+.permission-option-meta {
+    color: var(--color-muted);
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.permission-option-tags {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.permission-picker-empty {
+    padding: 22px 12px;
+    text-align: center;
+    color: var(--color-muted);
+    border: 1px dashed var(--color-border-subtle);
+    border-radius: 10px;
+    background: var(--color-page);
+}
+
+.permission-request-preview {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    color: var(--color-muted);
+    font-size: 0.84rem;
+}
+
+.permission-request-preview strong {
+    color: var(--color-ink);
+}
+
 /* ── Protocol cards / report cards ──────────────── */
 
 .admin-card-grid {
@@ -1270,6 +1457,17 @@
     .admin-card-grid { grid-template-columns: 1fr; }
     .admin-detail-grid { grid-template-columns: 1fr; }
     .admin-step-row { grid-template-columns: 1fr; }
+    .permission-picker-toolbar,
+    .permission-option {
+        grid-template-columns: 1fr;
+    }
+    .permission-picker-count,
+    .permission-option-tags {
+        justify-content: flex-start;
+    }
+    .permission-request-preview {
+        justify-content: flex-start;
+    }
     .admin-toast-host { right: 12px; bottom: 12px; left: 12px; }
     .admin-toast { max-width: none; }
     .admin-profile-actions {
