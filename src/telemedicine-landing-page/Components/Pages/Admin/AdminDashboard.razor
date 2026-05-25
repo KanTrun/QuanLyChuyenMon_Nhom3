@@ -64,23 +64,35 @@
                     <p class="admin-panel-subtitle">Cột biểu diễn số phiên bản quy trình được tạo/cập nhật theo từng tháng.</p>
                 </div>
             </header>
-            <div class="admin-trend-chart" style="display:grid;gap:14px;min-height:160px;">
-                <div style="display:grid;grid-template-columns:repeat(6,minmax(42px,1fr));gap:10px;align-items:end;height:150px;">
+            <div class="admin-trend-chart">
+                <div class="admin-trend-bars" aria-label="Số quy trình tạo theo tháng">
                     @foreach (var point in _procedureTrend)
                     {
                         var height = Math.Max(10, point.Percent);
-                        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:end;">
-                            <div title="@($"{point.Label}: {point.Count}")" style="width:100%;max-width:44px;height:@height%;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--color-primary),var(--color-primary-deep));"></div>
-                            <span class="admin-table-cell-muted" style="font-size:0.78rem;">@point.Label</span>
+                        <div class="admin-trend-bar-item">
+                            <div class="admin-trend-bar" title="@($"{point.Label}: {point.Count}")" style="height:@height%;"></div>
+                            <span>@point.Label</span>
                         </div>
                     }
                 </div>
-                <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                    <span class="admin-table-cell-muted">Chú giải trạng thái:</span>
-                    @foreach (var segment in _versionStatusSegments)
-                    {
-                        <span class="admin-filter-chip">@segment.Label: @segment.Count</span>
-                    }
+                <div class="admin-status-distribution" aria-label="Phân bố trạng thái phiên bản quy trình">
+                    <div class="admin-status-distribution-head">
+                        <span>Phân bố trạng thái phiên bản</span>
+                        <strong>@_versionStatusSegments.Sum(s => s.Count) phiên bản</strong>
+                    </div>
+                    <div class="admin-status-strip" aria-hidden="true">
+                        @foreach (var segment in _versionStatusSegments)
+                        {
+                            var width = Math.Max(6, segment.Percent);
+                            <span class="@segment.Tone" style="width:@width%;" title="@($"{segment.Label}: {segment.Count}")"></span>
+                        }
+                    </div>
+                    <div class="admin-status-chips">
+                        @foreach (var segment in _versionStatusSegments)
+                        {
+                            <span class="admin-filter-chip">@segment.Label: @segment.Count</span>
+                        }
+                    </div>
                 </div>
             </div>
         </section>
@@ -223,10 +235,18 @@
             .Select(p => new TrendPoint(p.Label, p.Count, (int)Math.Round(p.Count * 100.0 / maxMonthlyCount)))
             .ToList();
 
-        _versionStatusSegments = DataStore.ProcedureVersions
+        var rawSegments = DataStore.ProcedureVersions
             .GroupBy(v => v.StatusCode)
-            .Select(g => new StatusSegment(FormatVersionStatus(g.Key), g.Count()))
+            .Select(g => new { Status = g.Key, Label = FormatVersionStatus(g.Key), Count = g.Count() })
             .OrderByDescending(s => s.Count)
+            .ToList();
+        var totalSegments = Math.Max(1, rawSegments.Sum(s => s.Count));
+        _versionStatusSegments = rawSegments
+            .Select(s => new StatusSegment(
+                s.Label,
+                s.Count,
+                (int)Math.Round(s.Count * 100.0 / totalSegments),
+                StatusTone(s.Status)))
             .ToList();
     }
 
@@ -279,6 +299,16 @@
         _ => AdminBusinessDisplay.VersionStatus(status)
     };
 
+    private static string StatusTone(string status) => status switch
+    {
+        "active" => "tone-success",
+        "pending_approval" => "tone-warning",
+        "draft" => "tone-primary",
+        "rejected" => "tone-danger",
+        "superseded" => "tone-muted",
+        _ => "tone-secondary"
+    };
+
     private static string ExtractDetails(Models.Admin.Sql.AuditLog log)
     {
         var json = log.AfterJson ?? log.BeforeJson;
@@ -324,5 +354,5 @@
 
     private sealed record QuickTileViewModel(string Title, string Subtitle, string Url, string Icon, string Tone);
     private sealed record TrendPoint(string Label, int Count, int Percent);
-    private sealed record StatusSegment(string Label, int Count);
+    private sealed record StatusSegment(string Label, int Count, int Percent, string Tone);
 }

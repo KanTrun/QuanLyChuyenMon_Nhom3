@@ -1,15 +1,15 @@
 # System Architecture
 
 ## QLCM Pro Runtime Entry Track
-Ngày 2026-05-25, runtime chính của repo là QLCM Pro. Landing page telemedicine cũ đã được gỡ khỏi app surface; `/` chuyển về `/login` để người dùng vào đúng shell nghiệp vụ mới nhất.
+Ngày 2026-05-25, runtime chính của repo là QLCM Pro. Landing page telemedicine cũ đã được gỡ khỏi app surface; `/` hiển thị trang giới thiệu QLCM Pro chuyên nghiệp với lựa chọn đăng nhập/đăng ký.
 
 | Area | Decision |
 |---|---|
 | Runtime | ASP.NET Core Blazor Web App, `net9.0` |
-| Entry route | `/` redirects to `/login`; authenticated users continue to first allowed route |
+| Entry route | `/` renders QLCM Pro intro; `/login` redirects authenticated users to first allowed route |
 | Shells | `/admin` for system administration, persona workspaces for procedure/resource/order/clinical/notification tasks |
 | Data persistence | EF Core `MedDbContext` with schema `MedicalProcedureManagement` |
-| UI system | Razor Components + admin design tokens; landing-only section CSS removed from runtime |
+| UI system | Razor Components + admin design tokens; legacy telemedicine landing CSS removed, QLCM intro CSS isolated in `css/qlcm-intro.css` |
 
 External HIS/EMR/inventory/pharmacy integrations remain behind service boundaries so Razor pages do not depend directly on outside systems.
 

@@ -1,20 +1,78 @@
 @page "/"
-@inject NavigationManager Navigation
 
-<PageTitle>QLCM Pro</PageTitle>
+<PageTitle>QLCM Pro | Quản lý chuyên môn bệnh viện</PageTitle>
 
-<main id="main-content" class="login-page">
-    <section class="login-shell" aria-live="polite">
-        <p>Đang chuyển hướng đến QLCM Pro...</p>
+<main id="main-content" class="qlcm-intro">
+    <header class="qlcm-intro-nav" aria-label="Điều hướng giới thiệu">
+        <a class="qlcm-intro-brand" href="/">
+            <span class="qlcm-intro-brand-mark" aria-hidden="true">+</span>
+            <span>
+                <strong>QLCM Pro</strong>
+                <small>Quản lý chuyên môn</small>
+            </span>
+        </a>
+        <nav class="qlcm-intro-nav-actions" aria-label="Tài khoản">
+            <a class="qlcm-intro-link" href="/register">Đăng ký</a>
+            <a class="qlcm-intro-btn qlcm-intro-btn-primary" href="/login">Đăng nhập</a>
+        </nav>
+    </header>
+
+    <section class="qlcm-intro-hero">
+        <div class="qlcm-intro-copy">
+            <p class="qlcm-intro-eyebrow">Nền tảng điều hành chuyên môn bệnh viện</p>
+            <h1>Chuẩn hóa quy trình, phân quyền và phác đồ trên một hệ thống thống nhất.</h1>
+            <p class="qlcm-intro-lead">
+                QLCM Pro giúp bệnh viện quản lý phiên bản quy trình kỹ thuật, kiểm soát thao tác theo vai trò,
+                theo dõi định mức vật tư và lưu vết phác đồ áp dụng cho từng bệnh nhân.
+            </p>
+            <div class="qlcm-intro-actions">
+                <a class="qlcm-intro-btn qlcm-intro-btn-primary" href="/login">Vào hệ thống</a>
+                <a class="qlcm-intro-btn qlcm-intro-btn-secondary" href="/register">Đăng ký tài khoản</a>
+            </div>
+        </div>
+
+        <aside class="qlcm-intro-preview" aria-label="Ảnh xem trước bảng điều khiển QLCM Pro">
+            <div class="qlcm-preview-topbar">
+                <span></span><span></span><span></span>
+                <strong>Dashboard</strong>
+            </div>
+            <div class="qlcm-preview-grid">
+                <div class="qlcm-preview-kpi">
+                    <span>Quy trình active</span>
+                    <strong>10</strong>
+                </div>
+                <div class="qlcm-preview-kpi">
+                    <span>Chờ duyệt</span>
+                    <strong>3</strong>
+                </div>
+                <div class="qlcm-preview-kpi">
+                    <span>Cảnh báo nguồn lực</span>
+                    <strong>2</strong>
+                </div>
+            </div>
+            <div class="qlcm-preview-workflow">
+                <div><span></span>Soạn thảo</div>
+                <div><span></span>Duyệt phiên bản</div>
+                <div><span></span>Áp dụng lâm sàng</div>
+            </div>
+        </aside>
+    </section>
+
+    <section class="qlcm-intro-modules" aria-label="Các năng lực chính">
+        <article>
+            <span>01</span>
+            <h2>Quy trình có phiên bản</h2>
+            <p>Lưu bước thực hiện, vai trò phụ trách, thời gian chuẩn và lịch sử thay đổi.</p>
+        </article>
+        <article>
+            <span>02</span>
+            <h2>Phân quyền theo nghiệp vụ</h2>
+            <p>Kiểm soát truy cập theo tài khoản, nhóm, vai trò, khoa/phòng và hành động.</p>
+        </article>
+        <article>
+            <span>03</span>
+            <h2>Định mức và phác đồ</h2>
+            <p>Gắn kỹ thuật với vật tư, kiểm tra nguồn lực và gợi ý phác đồ theo ICD.</p>
+        </article>
     </section>
 </main>
-
-@code {
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            Navigation.NavigateTo("/login", replace: true);
-        }
-    }
-}

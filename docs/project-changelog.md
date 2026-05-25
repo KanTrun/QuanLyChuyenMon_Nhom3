@@ -1,10 +1,16 @@
 # Project Changelog
 
 ## 2026-05-25
+### Improved
+| Item | Description |
+|---|---|
+| QLCM intro route | Restored `/` as a professional QLCM Pro introduction page with clear login/register actions, without bringing back obsolete telemedicine landing content |
+| Dashboard trend panel | Replaced the unclear blank-looking area under monthly bars with an explicit procedure-version status distribution strip and stopped the trend panel from stretching to activity height |
+
 ### Changed
 | Item | Description |
 |---|---|
-| Landing runtime cleanup | Removed obsolete public telemedicine landing content/services/styles/tests from the active Blazor runtime; `/` now redirects to `/login` for the QLCM Pro shell |
+| Landing runtime cleanup | Removed obsolete public telemedicine landing content/services/styles/tests from the active Blazor runtime; `/` now serves the QLCM Pro intro while authentication stays on `/login` and `/register` |
 | Procedure action guard | `AdminActionGuard` now runs `ProcedureRuntimeGuard` after permission checks so mapped active procedures can warn/block actions by first-step role and enforcement mode |
 | Scheduled permission job | Added Hangfire recurring job to apply due scheduled permission changes and audit/notify the result |
 | Inventory snapshots | Order resource checks now use `InventoryAvailabilityService`, prefer procedure-version norms, create availability snapshots and warn on missing/inactive resources |
@@ -15,8 +21,10 @@
 | Command | Result |
 |---|---|
 | `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
-| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 142 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 144 tests |
 | `dotnet list .\telemedicine-landing-page.sln package --vulnerable --include-transitive` | No vulnerable packages |
+| `docker compose up --build -d web` | Passed, web rebuilt and healthy on `localhost:8080` |
+| Chrome headless smoke check | Passed, `/` renders QLCM Pro intro and `/admin` renders 6 monthly bars plus visible status distribution strip |
 
 ## 2026-05-24
 ### Improved

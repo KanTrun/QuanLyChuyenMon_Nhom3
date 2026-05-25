@@ -1133,6 +1133,7 @@
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     gap: 16px;
+    align-items: start;
 }
 
 .admin-panel {
@@ -1192,6 +1193,95 @@
     width: 100%;
     height: auto;
     display: block;
+}
+
+.admin-panel-trend {
+    align-self: start;
+}
+
+.admin-trend-chart {
+    display: grid;
+    gap: 16px;
+}
+
+.admin-trend-bars {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(42px, 1fr));
+    gap: 10px;
+    align-items: end;
+    min-height: 150px;
+}
+
+.admin-trend-bar-item {
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: end;
+    gap: 6px;
+}
+
+.admin-trend-bar {
+    width: 100%;
+    max-width: 44px;
+    min-height: 10px;
+    border-radius: 6px 6px 2px 2px;
+    background: linear-gradient(180deg, var(--color-primary), var(--color-primary-deep));
+}
+
+.admin-trend-bar-item span {
+    color: var(--color-muted);
+    font-size: 0.78rem;
+}
+
+.admin-status-distribution {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border-subtle);
+    background: rgba(91, 155, 213, 0.08);
+}
+
+.admin-status-distribution-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--color-ink);
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.admin-status-distribution-head strong {
+    color: var(--color-muted);
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.admin-status-strip {
+    height: 10px;
+    display: flex;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--color-border-subtle);
+}
+
+.admin-status-strip span {
+    min-width: 4px;
+}
+
+.admin-status-strip .tone-success { background: var(--color-success); }
+.admin-status-strip .tone-warning { background: var(--color-warning); }
+.admin-status-strip .tone-primary { background: var(--color-primary); }
+.admin-status-strip .tone-danger { background: var(--color-danger); }
+.admin-status-strip .tone-muted { background: var(--color-subtle); }
+.admin-status-strip .tone-secondary { background: var(--color-secondary); }
+
+.admin-status-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 /* Activity timeline */

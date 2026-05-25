@@ -33,6 +33,33 @@ public sealed class RoutingIntegrityTests
     }
 
     [Fact]
+    public void HomeRoute_IsQlcmIntroBeforeAuthentication()
+    {
+        var root = FindRepositoryRoot();
+        var homePage = File.ReadAllText(Path.Combine(root, "src", "telemedicine-landing-page", "Components", "Pages", "Home.razor"));
+
+        Assert.Contains("@page \"/\"", homePage);
+        Assert.Contains("QLCM Pro", homePage);
+        Assert.Contains("href=\"/login\"", homePage);
+        Assert.Contains("href=\"/register\"", homePage);
+        Assert.DoesNotContain("NavigateTo(\"/login\"", homePage);
+        Assert.DoesNotContain("telemedicine", homePage, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void DashboardTrendPanel_HasExplicitStatusDistribution()
+    {
+        var root = FindRepositoryRoot();
+        var dashboardPage = File.ReadAllText(Path.Combine(root, "src", "telemedicine-landing-page", "Components", "Pages", "Admin", "AdminDashboard.razor"));
+        var shellCss = File.ReadAllText(Path.Combine(root, "src", "telemedicine-landing-page", "wwwroot", "css", "admin-shell.css"));
+
+        Assert.Contains("admin-status-distribution", dashboardPage);
+        Assert.Contains("Phân bố trạng thái phiên bản", dashboardPage);
+        Assert.Contains("align-items: start;", shellCss);
+        Assert.Contains(".admin-status-strip", shellCss);
+    }
+
+    [Fact]
     public void RazorPageRoutes_AreUniqueAcrossComponents()
     {
         var root = FindRepositoryRoot();

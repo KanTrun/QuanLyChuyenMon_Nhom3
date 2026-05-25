@@ -1,7 +1,7 @@
 # QLCM Pro - Quản lý chuyên môn bệnh viện
 
 ## Tổng quan
-Dự án hiện chạy QLCM Pro bằng Blazor Web App trên `.NET 9`. Landing page telemedicine cũ đã được gỡ khỏi runtime; route `/` chuyển về `/login`, còn luồng chính nằm ở `/admin` và các workspace nghiệp vụ.
+Dự án hiện chạy QLCM Pro bằng Blazor Web App trên `.NET 9`. Landing page telemedicine cũ đã được gỡ khỏi runtime; route `/` là trang giới thiệu QLCM Pro chuyên nghiệp trước khi người dùng chọn đăng nhập/đăng ký, còn luồng chính nằm ở `/admin` và các workspace nghiệp vụ.
 
 QLCM Pro gồm sidebar điều hướng, bảng lệnh nhanh và các trang Tổng quan, Quy trình kỹ thuật, Phân quyền, Danh mục, Tài nguyên, Chỉ định, Phác đồ, Báo cáo, Lâm sàng, Thông báo, Cài đặt. Module dùng SQL-backed data store qua `MedDbContext`/`IMedDataStore` cho các luồng quản trị quy trình chuyên môn, RBAC, định mức tài nguyên, chỉ định kỹ thuật, phác đồ, bệnh nhân và thông báo. Trợ lý AI tích hợp Google Gemini (mô hình mặc định `gemini-2.5-flash` - free tier). Khi chưa cấu hình API key, trợ lý sẽ chạy ở chế độ demo và phản hồi bằng tiếng Việt có dấu.
 
@@ -62,7 +62,7 @@ dotnet restore .\telemedicine-landing-page.sln
 dotnet run --project .\src\telemedicine-landing-page\telemedicine-landing-page.csproj
 ```
 
-Sau khi chạy, mở trình duyệt tại địa chỉ in ra trong terminal (mặc định `http://localhost:5xxx`). Route `/` sẽ chuyển đến `/login`; trang quản trị nội bộ ở `/admin`.
+Sau khi chạy, mở trình duyệt tại địa chỉ in ra trong terminal (mặc định `http://localhost:5xxx`). Route `/` hiển thị trang giới thiệu QLCM Pro; trang quản trị nội bộ ở `/admin`.
 
 ## Chạy full stack bằng Docker
 Dự án có thể chạy trọn bộ web app, SQL Server và database seed bằng Docker Compose:

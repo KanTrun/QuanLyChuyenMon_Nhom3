@@ -1,7 +1,7 @@
 # Project Overview PDR
 
 ## Current Implementation Scope
-Repo hiện có một ứng dụng Blazor Web App cho QLCM Pro tại `src/telemedicine-landing-page`. Landing page khám từ xa cũ không còn là runtime surface của nhánh mới; route `/` chuyển về `/login`, còn luồng nghiệp vụ chính nằm ở `/admin` và các workspace QLCM.
+Repo hiện có một ứng dụng Blazor Web App cho QLCM Pro tại `src/telemedicine-landing-page`. Landing page khám từ xa cũ không còn là runtime surface của nhánh mới; route `/` hiển thị trang giới thiệu QLCM Pro trước login/register, còn luồng nghiệp vụ chính nằm ở `/admin` và các workspace QLCM.
 
 Scope hiện tại là hệ thống quản lý chuyên môn bệnh viện: quy trình kỹ thuật, phân quyền, điều chỉnh quyền có hiệu lực tức thời/theo lịch, version quy trình/phác đồ, định mức tài nguyên, kiểm tra nguồn lực khi chỉ định kỹ thuật, phác đồ gợi ý theo ICD và audit/notification.
 
