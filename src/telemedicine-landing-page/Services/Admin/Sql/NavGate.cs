@@ -97,6 +97,12 @@ public sealed class NavGate
         return RewriteRoute(route, AdminToWorkspaceRouteMap);
     }
 
+    public string GetFirstAccessibleRoute(IReadOnlyList<AdminNavItem> items, string fallbackRoute = "/AccessDenied")
+    {
+        var firstItem = GetFirstNavigableItem(Filter(items));
+        return firstItem?.Url ?? fallbackRoute;
+    }
+
     public bool CanAccess(string route)
     {
         if (_userContext.CurrentUser is null) return false;
@@ -146,6 +152,27 @@ public sealed class NavGate
     {
         var children = item.Children?.Select(ToDisplayItem).ToList();
         return item with { Url = GetDisplayRoute(item.Url), Children = children };
+    }
+
+    private static AdminNavItem? GetFirstNavigableItem(IReadOnlyList<AdminNavItem> items)
+    {
+        foreach (var item in items)
+        {
+            if (item.Children is { Count: > 0 } children)
+            {
+                var child = GetFirstNavigableItem(children);
+                if (child is not null)
+                {
+                    return child;
+                }
+            }
+            else
+            {
+                return item;
+            }
+        }
+
+        return null;
     }
 
     private static string ToPermissionRoute(string route)

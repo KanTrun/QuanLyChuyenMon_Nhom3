@@ -1,11 +1,14 @@
 @page "/login"
 @using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin
 @using TelemedicineLandingPage.Services.Admin.Sql
 @inject ICurrentUserContext UserContext
 @inject BrowserSessionService BrowserSession
 @inject NavigationManager Navigation
 @inject MedDbContext Db
+@inject NavGate Gate
+@inject IAdminNavigationState NavState
 
 <PageTitle>Đăng nhập | QLCM Pro</PageTitle>
 
@@ -105,7 +108,7 @@
         // Nếu đã đăng nhập rồi thì chuyển thẳng vào admin
         if (UserContext.CurrentUser is not null)
         {
-            Navigation.NavigateTo("/admin", forceLoad: false);
+            Navigation.NavigateTo(GetPostLoginRoute(), forceLoad: false, replace: true);
         }
     }
 
@@ -176,13 +179,16 @@
             await BrowserSession.PersistCurrentUserAsync();
 
             // Đăng nhập thành công
-            Navigation.NavigateTo("/admin", forceLoad: false);
+            Navigation.NavigateTo(GetPostLoginRoute(), forceLoad: false, replace: true);
         }
         finally
         {
             _isLoading = false;
         }
     }
+
+    private string GetPostLoginRoute()
+        => Gate.GetFirstAccessibleRoute(NavState.NavItems, "/AccessDenied");
 
     private bool IsLockedOut(out TimeSpan remaining)
     {
