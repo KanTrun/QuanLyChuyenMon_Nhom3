@@ -5,7 +5,9 @@
 | Item | Description |
 |---|---|
 | QLCM intro route | Restored `/` as a professional QLCM Pro introduction page with clear login/register actions, without bringing back obsolete telemedicine landing content |
+| Auth entry pages | Aligned login/register intro panels, password visibility controls and registration feedback styling with the QLCM Pro administration experience |
 | Dashboard trend panel | Replaced the unclear blank-looking area under monthly bars with an explicit procedure-version status distribution strip and stopped the trend panel from stretching to activity height |
+| Dashboard operations chart | Added an operational chart for technical-order status, resource readiness and over-norm usage so the main dashboard uses the empty area for QLCM workflow monitoring |
 
 ### Changed
 | Item | Description |
@@ -21,10 +23,10 @@
 | Command | Result |
 |---|---|
 | `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
-| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 144 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 145 tests |
 | `dotnet list .\telemedicine-landing-page.sln package --vulnerable --include-transitive` | No vulnerable packages |
 | `docker compose up --build -d web` | Passed, web rebuilt and healthy on `localhost:8080` |
-| Chrome headless smoke check | Passed, `/` renders QLCM Pro intro and `/admin` renders 6 monthly bars plus visible status distribution strip |
+| Chrome headless smoke check | Passed, `/`, `/login`, `/register` and `/admin` render the QLCM intro/auth shell plus dashboard status and operations charts |
 
 ## 2026-05-24
 ### Improved

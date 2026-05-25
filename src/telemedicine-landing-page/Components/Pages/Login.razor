@@ -12,64 +12,82 @@
 
 <PageTitle>Đăng nhập | QLCM Pro</PageTitle>
 
-<div class="login-page">
-    <!-- Left: Royal Branding Panel -->
-    <div class="login-brand">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
+<div class="login-page" data-auth-page data-auth-variant="login">
+    <section class="login-brand" aria-label="QLCM Pro">
+        <div class="auth-grid-lines" aria-hidden="true"></div>
+        <div class="auth-signal auth-signal-one" aria-hidden="true"></div>
+        <div class="auth-signal auth-signal-two" aria-hidden="true"></div>
 
         <div class="login-brand-content">
-            <div class="login-logo">+</div>
+            <div class="login-logo" data-auth-float>+</div>
+            <p class="auth-kicker">Quản lý chuyên môn bệnh viện</p>
             <h1>QLCM Pro</h1>
-            <p>Hệ thống Quản lý Chuyên môn bệnh viện — quản lý quy trình, phân quyền, phác đồ và báo cáo.</p>
+            <p>Điều phối quy trình kỹ thuật, phân quyền, phác đồ và báo cáo vận hành trong một hệ thống an toàn.</p>
+
+            <div class="auth-command-strip" aria-label="Chỉ số hệ thống">
+                <span>RBAC</span>
+                <span>Audit</span>
+                <span>Clinical ops</span>
+            </div>
 
             <div class="login-features">
                 <div class="login-feature">
-                    <span class="login-feature-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <span class="login-feature-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M20 6 12 3 4 6v6c0 5 3.4 8.7 8 9 4.6-.3 8-4 8-9V6Z"/></svg>
                     </span>
-                    <span>Phân quyền chi tiết theo vai trò và khoa/phòng</span>
+                    <span>Phân quyền chi tiết theo vai trò và khoa phòng</span>
                 </div>
                 <div class="login-feature">
-                    <span class="login-feature-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="login-feature-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/></svg>
                     </span>
-                    <span>Quản lý vòng đời quy trình chuyên môn</span>
+                    <span>Theo dõi vòng đời quy trình chuyên môn</span>
                 </div>
                 <div class="login-feature">
-                    <span class="login-feature-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    <span class="login-feature-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5"/><path d="M8 17V9"/><path d="M12 17V7"/><path d="M16 17v-5"/><path d="M20 19H3"/></svg>
                     </span>
-                    <span>Nhật ký kiểm toán đầy đủ mọi thao tác</span>
+                    <span>Nhật ký kiểm toán đầy đủ cho thao tác nhạy cảm</span>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Right: Login Form -->
-    <div class="login-form-panel">
+    <section class="login-form-panel" aria-label="Đăng nhập">
         <div class="login-form-wrapper">
             <div class="login-form-header">
                 <p class="eyebrow">Chào mừng trở lại</p>
                 <h2>Đăng nhập hệ thống</h2>
-                <p>Nhập tên đăng nhập để truy cập hệ thống quản lý chuyên môn.</p>
+                <p>Nhập tài khoản nội bộ để vào không gian quản trị chuyên môn.</p>
             </div>
 
             <form class="login-form" @onsubmit="HandleLogin" @onsubmit:preventDefault>
                 <div class="form-group">
                     <label for="login-username">Tên đăng nhập</label>
-                    <input type="text" id="login-username" @bind="_username" placeholder="Nhập tên đăng nhập" autocomplete="username" required />
+                    <input type="text" id="login-username" @bind="_username" placeholder="vd: admin" autocomplete="username" required />
                 </div>
 
                 <div class="form-group">
                     <label for="login-password">Mật khẩu</label>
-                    <input type="password" id="login-password" @bind="_password" placeholder="Nhập mật khẩu" autocomplete="current-password" required />
+                    <div class="password-field">
+                        <input type="@PasswordInputType" id="login-password" @bind="_password" placeholder="Nhập mật khẩu" autocomplete="current-password" required />
+                        <button type="button" class="password-toggle" @onclick="TogglePasswordVisibility" aria-label="@PasswordToggleLabel" title="@PasswordToggleLabel">
+                            @if (_showPassword)
+                            {
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 10.6A2 2 0 0 0 13.4 13.4"/><path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c5 0 8.5 4.3 9.7 6a13.5 13.5 0 0 1-3.1 3.6"/><path d="M6.6 6.6A13.7 13.7 0 0 0 2.3 11c1.2 1.7 4.7 6 9.7 6 1.5 0 2.9-.4 4.1-1"/></svg>
+                            }
+                            else
+                            {
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.3 12S5.8 5 12 5s9.7 7 9.7 7-3.5 7-9.7 7-9.7-7-9.7-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            }
+                        </button>
+                    </div>
                 </div>
 
                 @if (!string.IsNullOrEmpty(_errorMessage))
                 {
                     <div class="login-error" role="alert">
-                        <span>⚠️ @_errorMessage</span>
+                        <span>@_errorMessage</span>
                     </div>
                 }
 
@@ -89,7 +107,7 @@
                 Chưa có tài khoản? <a href="/register">Đăng ký ngay</a>
             </p>
         </div>
-    </div>
+    </section>
 </div>
 
 @code {
@@ -100,12 +118,15 @@
     private string _password = "";
     private string? _errorMessage;
     private bool _isLoading;
+    private bool _showPassword;
     private int _failedAttempts;
     private DateTime? _lockedUntilUtc;
 
+    private string PasswordInputType => _showPassword ? "text" : "password";
+    private string PasswordToggleLabel => _showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu";
+
     protected override void OnInitialized()
     {
-        // Nếu đã đăng nhập rồi thì chuyển thẳng vào admin
         if (UserContext.CurrentUser is not null)
         {
             Navigation.NavigateTo(GetPostLoginRoute(), forceLoad: false, replace: true);
@@ -138,7 +159,6 @@
                 return;
             }
 
-            // Thử đăng nhập với mật khẩu và báo rõ nếu tài khoản đang chờ kích hoạt.
             var loginResult = UserContext.LoginByUsernameDetailed(_username.Trim(), _password);
             if (loginResult.Status == LoginAttemptStatus.Inactive)
             {
@@ -164,7 +184,6 @@
             _failedAttempts = 0;
             _lockedUntilUtc = null;
 
-            // Ghi audit log đăng nhập
             Db.AuditLogs.Add(new AuditLog
             {
                 CorrelationId = Guid.NewGuid(),
@@ -178,7 +197,6 @@
 
             await BrowserSession.PersistCurrentUserAsync();
 
-            // Đăng nhập thành công
             Navigation.NavigateTo(GetPostLoginRoute(), forceLoad: false, replace: true);
         }
         finally
@@ -186,6 +204,9 @@
             _isLoading = false;
         }
     }
+
+    private void TogglePasswordVisibility()
+        => _showPassword = !_showPassword;
 
     private string GetPostLoginRoute()
         => Gate.GetFirstAccessibleRoute(NavState.NavItems, "/AccessDenied");

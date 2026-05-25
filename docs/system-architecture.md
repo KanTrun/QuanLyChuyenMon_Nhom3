@@ -10,6 +10,7 @@ Ngày 2026-05-25, runtime chính của repo là QLCM Pro. Landing page telemedic
 | Shells | `/admin` for system administration, persona workspaces for procedure/resource/order/clinical/notification tasks |
 | Data persistence | EF Core `MedDbContext` with schema `MedicalProcedureManagement` |
 | UI system | Razor Components + admin design tokens; legacy telemedicine landing CSS removed, QLCM intro CSS isolated in `css/qlcm-intro.css` |
+| Dashboard telemetry | `/admin` summarizes procedure versions, technical-order status, resource availability snapshots and over-norm usage from `IMedDataStore` |
 
 External HIS/EMR/inventory/pharmacy integrations remain behind service boundaries so Razor pages do not depend directly on outside systems.
 

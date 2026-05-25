@@ -57,6 +57,7 @@
     </div>
 
     <div class="admin-dashboard-grid">
+        <div class="admin-dashboard-main-column">
         <section class="admin-panel admin-panel-trend">
             <header class="admin-panel-head">
                 <div>
@@ -96,6 +97,80 @@
                 </div>
             </div>
         </section>
+
+        <section class="admin-panel admin-panel-operations">
+            <header class="admin-panel-head">
+                <div>
+                    <h2 class="admin-panel-title">Điều phối chỉ định &amp; nguồn lực</h2>
+                    <p class="admin-panel-subtitle">Theo dõi trạng thái chỉ định kỹ thuật, khả dụng vật tư/thiết bị và tiêu hao lệch định mức.</p>
+                </div>
+                <a class="admin-panel-link" href="/qlcm/bao-cao/tieu-thu">Báo cáo tiêu thụ</a>
+            </header>
+
+            <div class="admin-operations-summary" role="list">
+                <article role="listitem">
+                    <span>Chỉ định đang mở</span>
+                    <strong>@_openOrderCount</strong>
+                </article>
+                <article role="listitem">
+                    <span>Cảnh báo nguồn lực</span>
+                    <strong>@_resourceWarningCount</strong>
+                </article>
+                <article role="listitem">
+                    <span>Vượt định mức</span>
+                    <strong>@_overNormUsageCount</strong>
+                </article>
+            </div>
+
+            <div class="admin-operations-grid">
+                <div class="admin-order-status-chart" aria-label="Phân bố trạng thái chỉ định kỹ thuật">
+                    @foreach (var segment in _orderStatusSegments)
+                    {
+                        var width = Math.Max(6, segment.Percent);
+                        <div class="admin-order-status-row">
+                            <div class="admin-order-status-row-head">
+                                <span>@segment.Label</span>
+                                <strong>@segment.Count</strong>
+                            </div>
+                            <div class="admin-order-status-track" aria-hidden="true">
+                                <span class="@segment.Tone" style="width:@width%;"></span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="admin-resource-readiness" aria-label="Tỷ lệ sẵn sàng nguồn lực">
+                    <div class="admin-resource-ring" style="--gauge:@_resourceReadyPercent;">
+                        <span>@_resourceReadyPercent%</span>
+                    </div>
+                    <div>
+                        <strong>Sẵn sàng nguồn lực</strong>
+                        <span>@_availableSnapshotCount / @_availabilitySnapshotCount lượt kiểm tra đạt yêu cầu</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-availability-distribution" aria-label="Phân bố kiểm tra nguồn lực">
+                <div class="admin-status-distribution-head">
+                    <span>Phân bố kiểm tra nguồn lực</span>
+                    <strong>@_availabilitySnapshotCount lượt</strong>
+                </div>
+                <div class="admin-status-strip" aria-hidden="true">
+                    @foreach (var segment in _availabilitySegments)
+                    {
+                        var width = Math.Max(6, segment.Percent);
+                        <span class="@segment.Tone" style="width:@width%;" title="@($"{segment.Label}: {segment.Count}")"></span>
+                    }
+                </div>
+                <div class="admin-status-chips">
+                    @foreach (var segment in _availabilitySegments)
+                    {
+                        <span class="admin-filter-chip">@segment.Label: @segment.Count</span>
+                    }
+                </div>
+            </div>
+        </section>
+        </div>
 
         <section class="admin-panel admin-panel-activity">
             <header class="admin-panel-head">
@@ -166,6 +241,14 @@
     private IReadOnlyList<Models.Admin.Sql.AuditLog> _recentAuditLogs = Array.Empty<Models.Admin.Sql.AuditLog>();
     private IReadOnlyList<TrendPoint> _procedureTrend = Array.Empty<TrendPoint>();
     private IReadOnlyList<StatusSegment> _versionStatusSegments = Array.Empty<StatusSegment>();
+    private IReadOnlyList<StatusSegment> _orderStatusSegments = Array.Empty<StatusSegment>();
+    private IReadOnlyList<StatusSegment> _availabilitySegments = Array.Empty<StatusSegment>();
+    private int _openOrderCount;
+    private int _resourceWarningCount;
+    private int _overNormUsageCount;
+    private int _availabilitySnapshotCount;
+    private int _availableSnapshotCount;
+    private int _resourceReadyPercent;
 
     private readonly List<QuickTileViewModel> _quickTiles =
     [
@@ -248,6 +331,32 @@
                 (int)Math.Round(s.Count * 100.0 / totalSegments),
                 StatusTone(s.Status)))
             .ToList();
+
+        var rawOrderSegments = DataStore.TechnicalOrders
+            .GroupBy(o => o.OrderStatus)
+            .Select(g => new RawStatusSegment(g.Key, FormatOrderStatus(g.Key), g.Count()))
+            .OrderByDescending(s => s.Count)
+            .ToList();
+        _orderStatusSegments = ToStatusSegments(rawOrderSegments, OrderStatusTone);
+        _openOrderCount = DataStore.TechnicalOrders
+            .Count(o => !IsClosedOrderStatus(o.OrderStatus));
+
+        var rawAvailabilitySegments = DataStore.ResourceAvailabilitySnapshots
+            .GroupBy(s => s.AvailabilityStatus)
+            .Select(g => new RawStatusSegment(g.Key, FormatAvailabilityStatus(g.Key), g.Count()))
+            .OrderByDescending(s => s.Count)
+            .ToList();
+        _availabilitySegments = ToStatusSegments(rawAvailabilitySegments, AvailabilityTone);
+        _availabilitySnapshotCount = rawAvailabilitySegments.Sum(s => s.Count);
+        _availableSnapshotCount = DataStore.ResourceAvailabilitySnapshots
+            .Count(s => string.Equals(s.AvailabilityStatus, "available", StringComparison.OrdinalIgnoreCase));
+        _resourceWarningCount = DataStore.ResourceAvailabilitySnapshots
+            .Count(s => IsResourceWarningStatus(s.AvailabilityStatus));
+        _resourceReadyPercent = _availabilitySnapshotCount == 0
+            ? 0
+            : (int)Math.Round(_availableSnapshotCount * 100.0 / _availabilitySnapshotCount);
+        _overNormUsageCount = DataStore.ActualResourceUsages
+            .Count(IsOverNormUsage);
     }
 
     private string FormatAuditAction(Models.Admin.Sql.AuditLog log)
@@ -299,6 +408,23 @@
         _ => AdminBusinessDisplay.VersionStatus(status)
     };
 
+    private static string FormatOrderStatus(string status) => status switch
+    {
+        "ordered" => "Mới chỉ định",
+        "in_progress" => "Đang thực hiện",
+        "completed" => "Hoàn tất",
+        "cancelled" or "canceled" => "Đã hủy",
+        _ => AdminBusinessDisplay.OrderStatus(status)
+    };
+
+    private static string FormatAvailabilityStatus(string status) => status switch
+    {
+        "available" => "Sẵn sàng",
+        "insufficient" => "Thiếu số lượng",
+        "missing" or "unavailable" => "Không có",
+        _ => AdminBusinessDisplay.Availability(status)
+    };
+
     private static string StatusTone(string status) => status switch
     {
         "active" => "tone-success",
@@ -308,6 +434,85 @@
         "superseded" => "tone-muted",
         _ => "tone-secondary"
     };
+
+    private static string OrderStatusTone(string status) => status switch
+    {
+        "ordered" => "tone-primary",
+        "in_progress" => "tone-warning",
+        "completed" => "tone-success",
+        "cancelled" or "canceled" => "tone-muted",
+        _ => "tone-secondary"
+    };
+
+    private static string AvailabilityTone(string status) => status switch
+    {
+        "available" => "tone-success",
+        "insufficient" => "tone-warning",
+        "missing" or "unavailable" => "tone-danger",
+        _ => "tone-secondary"
+    };
+
+    private static bool IsClosedOrderStatus(string status)
+        => string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "cancelled", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "canceled", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsResourceWarningStatus(string status)
+        => string.Equals(status, "insufficient", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "missing", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "unavailable", StringComparison.OrdinalIgnoreCase);
+
+    private static IReadOnlyList<StatusSegment> ToStatusSegments(
+        IReadOnlyList<RawStatusSegment> rawSegments,
+        Func<string, string> toneResolver)
+    {
+        if (rawSegments.Count == 0)
+        {
+            return [new StatusSegment("Chưa có dữ liệu", 0, 100, "tone-muted")];
+        }
+
+        var total = Math.Max(1, rawSegments.Sum(s => s.Count));
+        return rawSegments
+            .Select(s => new StatusSegment(
+                s.Label,
+                s.Count,
+                (int)Math.Round(s.Count * 100.0 / total),
+                toneResolver(s.Status)))
+            .ToList();
+    }
+
+    private bool IsOverNormUsage(Models.Admin.Sql.ActualResourceUsage usage)
+    {
+        var standard = ResolveStandardQuantity(usage);
+        return standard.HasValue && usage.ActualQuantity > standard.Value;
+    }
+
+    private decimal? ResolveStandardQuantity(Models.Admin.Sql.ActualResourceUsage usage)
+    {
+        var order = DataStore.TechnicalOrders.FirstOrDefault(o => o.TechnicalOrderId == usage.TechnicalOrderId);
+        if (order is null)
+        {
+            return null;
+        }
+
+        if (order.ProcedureVersionId is Guid procedureVersionId)
+        {
+            var procedureNorm = DataStore.ProcedureVersionResourceNorms.FirstOrDefault(n =>
+                n.ProcedureVersionId == procedureVersionId
+                && n.ResourceId == usage.ResourceId
+                && string.Equals(n.UnitCode, usage.UnitCode, StringComparison.OrdinalIgnoreCase));
+            if (procedureNorm is not null)
+            {
+                return procedureNorm.StandardQuantity;
+            }
+        }
+
+        return DataStore.TechnicalResourceNorms.FirstOrDefault(n =>
+            n.TechnicalServiceId == order.TechnicalServiceId
+            && n.ResourceId == usage.ResourceId
+            && string.Equals(n.UnitCode, usage.UnitCode, StringComparison.OrdinalIgnoreCase))
+            ?.StandardQuantity;
+    }
 
     private static string ExtractDetails(Models.Admin.Sql.AuditLog log)
     {
@@ -355,4 +560,5 @@
     private sealed record QuickTileViewModel(string Title, string Subtitle, string Url, string Icon, string Tone);
     private sealed record TrendPoint(string Label, int Count, int Percent);
     private sealed record StatusSegment(string Label, int Count, int Percent, string Tone);
+    private sealed record RawStatusSegment(string Status, string Label, int Count);
 }

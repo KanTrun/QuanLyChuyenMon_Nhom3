@@ -60,6 +60,22 @@ public sealed class RoutingIntegrityTests
     }
 
     [Fact]
+    public void DashboardOperationsPanel_UsesRealOrderAndResourceData()
+    {
+        var root = FindRepositoryRoot();
+        var dashboardPage = File.ReadAllText(Path.Combine(root, "src", "telemedicine-landing-page", "Components", "Pages", "Admin", "AdminDashboard.razor"));
+        var shellCss = File.ReadAllText(Path.Combine(root, "src", "telemedicine-landing-page", "wwwroot", "css", "admin-shell.css"));
+
+        Assert.Contains("admin-panel-operations", dashboardPage);
+        Assert.Contains("Điều phối chỉ định", dashboardPage);
+        Assert.Contains("DataStore.TechnicalOrders", dashboardPage);
+        Assert.Contains("DataStore.ResourceAvailabilitySnapshots", dashboardPage);
+        Assert.Contains("DataStore.ActualResourceUsages", dashboardPage);
+        Assert.Contains(".admin-resource-ring", shellCss);
+        Assert.Contains(".admin-order-status-track", shellCss);
+    }
+
+    [Fact]
     public void RazorPageRoutes_AreUniqueAcrossComponents()
     {
         var root = FindRepositoryRoot();

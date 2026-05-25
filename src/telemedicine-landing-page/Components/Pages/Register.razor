@@ -1,13 +1,12 @@
 @page "/register"
 @using System.Text.Json
-@using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Application.Validation
+@using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Models.Admin.Sql
 @using TelemedicineLandingPage.Services.Admin.Sql
 @using TelemedicineLandingPage.Services.Notifications
 @inject MedDbContext Db
 @inject NavigationManager Navigation
-@inject IToastService Toast
 @inject EffectivePermissionResolver Resolver
 @inject IValidationService Validation
 @inject IPasswordStrengthService PasswordStrengthService
@@ -15,58 +14,64 @@
 
 <PageTitle>Đăng ký | QLCM Pro</PageTitle>
 
-<div class="login-page">
-    <!-- Left: Branding Panel -->
-    <div class="login-brand">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
+<div class="login-page" data-auth-page data-auth-variant="register">
+    <section class="login-brand" aria-label="QLCM Pro">
+        <div class="auth-grid-lines" aria-hidden="true"></div>
+        <div class="auth-signal auth-signal-one" aria-hidden="true"></div>
+        <div class="auth-signal auth-signal-two" aria-hidden="true"></div>
 
         <div class="login-brand-content">
-            <div class="login-logo">+</div>
-            <h1>QLCM Pro</h1>
-            <p>Hệ thống Quản lý Chuyên môn bệnh viện — quản lý quy trình, phân quyền, phác đồ và báo cáo.</p>
+            <div class="login-logo" data-auth-float>+</div>
+            <p class="auth-kicker">Tài khoản chuyên môn</p>
+            <h1>Gia nhập QLCM Pro</h1>
+            <p>Tài khoản mới sẽ được ghi nhận và chờ quản trị viên kích hoạt để bảo vệ dữ liệu bệnh viện.</p>
+
+            <div class="auth-command-strip" aria-label="Quy trình đăng ký">
+                <span>Đăng ký</span>
+                <span>Duyệt quyền</span>
+                <span>Kích hoạt</span>
+            </div>
 
             <div class="login-features">
                 <div class="login-feature">
-                    <span class="login-feature-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span class="login-feature-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
                     </span>
-                    <span>An toàn và bảo mật thông tin chuẩn y tế</span>
+                    <span>Bảo vệ thông tin theo chuẩn vận hành y tế</span>
                 </div>
                 <div class="login-feature">
-                    <span class="login-feature-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <span class="login-feature-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M20 6 12 3 4 6v6c0 5 3.4 8.7 8 9 4.6-.3 8-4 8-9V6Z"/></svg>
                     </span>
-                    <span>Phân quyền chi tiết theo vai trò và khoa/phòng</span>
+                    <span>Phân quyền theo vai trò, nhóm và khoa phòng</span>
                 </div>
                 <div class="login-feature">
-                    <span class="login-feature-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="login-feature-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/></svg>
                     </span>
-                    <span>Quản lý vòng đời quy trình chuyên môn</span>
+                    <span>Thông báo tự động đến quản trị viên phụ trách</span>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Right: Register Form -->
-    <div class="login-form-panel">
-        <div class="login-form-wrapper">
+    <section class="login-form-panel" aria-label="Đăng ký">
+        <div class="login-form-wrapper register-form-wrapper">
             <div class="login-form-header">
                 <p class="eyebrow">Đăng ký mới</p>
                 <h2>Tạo tài khoản hệ thống</h2>
-                <p>Điền thông tin dưới đây để đăng ký tài khoản QLCM Pro.</p>
+                <p>Điền thông tin công việc để gửi yêu cầu kích hoạt tài khoản.</p>
             </div>
 
             <form class="login-form" @onsubmit="HandleRegister" @onsubmit:preventDefault>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+                <div class="auth-name-grid">
                     <div class="form-group">
                         <label for="reg-fname">Họ</label>
-                        <input type="text" id="reg-fname" @bind="_firstName" placeholder="Nguyễn Văn" required />
+                        <input type="text" id="reg-fname" @bind="_firstName" placeholder="Nguyễn Văn" autocomplete="given-name" required />
                     </div>
                     <div class="form-group">
                         <label for="reg-lname">Tên</label>
-                        <input type="text" id="reg-lname" @bind="_lastName" placeholder="A" required />
+                        <input type="text" id="reg-lname" @bind="_lastName" placeholder="A" autocomplete="family-name" required />
                     </div>
                 </div>
 
@@ -77,7 +82,19 @@
 
                 <div class="form-group">
                     <label for="reg-password">Mật khẩu</label>
-                    <input type="password" id="reg-password" @bind="_password" @bind:event="oninput" placeholder="Tạo mật khẩu mạnh" autocomplete="new-password" required />
+                    <div class="password-field">
+                        <input type="@PasswordInputType" id="reg-password" @bind="_password" @bind:event="oninput" placeholder="Tạo mật khẩu mạnh" autocomplete="new-password" required />
+                        <button type="button" class="password-toggle" @onclick="TogglePasswordVisibility" aria-label="@PasswordToggleLabel" title="@PasswordToggleLabel">
+                            @if (_showPassword)
+                            {
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 10.6A2 2 0 0 0 13.4 13.4"/><path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c5 0 8.5 4.3 9.7 6a13.5 13.5 0 0 1-3.1 3.6"/><path d="M6.6 6.6A13.7 13.7 0 0 0 2.3 11c1.2 1.7 4.7 6 9.7 6 1.5 0 2.9-.4 4.1-1"/></svg>
+                            }
+                            else
+                            {
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.3 12S5.8 5 12 5s9.7 7 9.7 7-3.5 7-9.7 7-9.7-7-9.7-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            }
+                        </button>
+                    </div>
                     @if (!string.IsNullOrEmpty(_password))
                     {
                         <div class="password-strength" aria-live="polite">
@@ -89,26 +106,44 @@
 
                 <div class="form-group">
                     <label for="reg-confirm">Xác nhận mật khẩu</label>
-                    <input type="password" id="reg-confirm" @bind="_confirmPassword" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required />
+                    <div class="password-field">
+                        <input type="@ConfirmPasswordInputType" id="reg-confirm" @bind="_confirmPassword" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required />
+                        <button type="button" class="password-toggle" @onclick="ToggleConfirmPasswordVisibility" aria-label="@ConfirmPasswordToggleLabel" title="@ConfirmPasswordToggleLabel">
+                            @if (_showConfirmPassword)
+                            {
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 10.6A2 2 0 0 0 13.4 13.4"/><path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c5 0 8.5 4.3 9.7 6a13.5 13.5 0 0 1-3.1 3.6"/><path d="M6.6 6.6A13.7 13.7 0 0 0 2.3 11c1.2 1.7 4.7 6 9.7 6 1.5 0 2.9-.4 4.1-1"/></svg>
+                            }
+                            else
+                            {
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.3 12S5.8 5 12 5s9.7 7 9.7 7-3.5 7-9.7 7-9.7-7-9.7-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            }
+                        </button>
+                    </div>
                 </div>
 
                 @if (!string.IsNullOrEmpty(_errorMessage))
                 {
                     <div class="login-error" role="alert">
-                        <span>⚠️ @_errorMessage</span>
+                        <span>@_errorMessage</span>
                     </div>
                 }
 
                 @if (!string.IsNullOrEmpty(_successMessage))
                 {
-                    <div style="padding:0.75rem 1rem;border-radius:var(--radius-sm);background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:0.88rem;font-weight:500;">
-                        ✓ @_successMessage
+                    <div class="login-success" role="status">
+                        <span>@_successMessage</span>
                     </div>
                 }
 
                 <button type="submit" class="login-submit" disabled="@_isLoading">
-                    @if (_isLoading) { <span class="login-spinner"></span><span>Đang xử lý...</span> }
-                    else { <span>Đăng ký tài khoản</span> }
+                    @if (_isLoading)
+                    {
+                        <span class="login-spinner"></span><span>Đang xử lý...</span>
+                    }
+                    else
+                    {
+                        <span>Đăng ký tài khoản</span>
+                    }
                 </button>
             </form>
 
@@ -116,7 +151,7 @@
                 Đã có tài khoản? <a href="/login">Đăng nhập</a>
             </p>
         </div>
-    </div>
+    </section>
 </div>
 
 @code {
@@ -128,7 +163,14 @@
     private string? _errorMessage;
     private string? _successMessage;
     private bool _isLoading;
+    private bool _showPassword;
+    private bool _showConfirmPassword;
+
     private PasswordStrengthResult PasswordStrength => PasswordStrengthService.Evaluate(_password, _email);
+    private string PasswordInputType => _showPassword ? "text" : "password";
+    private string ConfirmPasswordInputType => _showConfirmPassword ? "text" : "password";
+    private string PasswordToggleLabel => _showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu";
+    private string ConfirmPasswordToggleLabel => _showConfirmPassword ? "Ẩn mật khẩu xác nhận" : "Hiện mật khẩu xác nhận";
 
     private async Task HandleRegister()
     {
@@ -151,7 +193,6 @@
                 return;
             }
 
-            // Kiểm tra email đã tồn tại chưa
             var existingUser = Db.Users.FirstOrDefault(u => u.Email == _email.Trim());
             if (existingUser is not null)
             {
@@ -159,32 +200,24 @@
                 return;
             }
 
-            // Tạo username từ email (phần trước @)
             var username = _email.Trim().Split('@')[0].ToLowerInvariant();
-
-            // Kiểm tra username đã tồn tại
             if (Db.Users.Any(u => u.Username == username))
             {
                 username = username + DateTime.Now.ToString("HHmmss");
             }
 
-            // Tạo user mới trong database
-            var fullName = $"{_firstName.Trim()} {_lastName.Trim()}";
-            var passwordHash = CurrentUserContext.HashPassword(_password);
-
             var newUser = new AppUser
             {
                 Username = username,
-                FullName = fullName,
+                FullName = $"{_firstName.Trim()} {_lastName.Trim()}",
                 Email = _email.Trim(),
-                PasswordHash = passwordHash,
+                PasswordHash = CurrentUserContext.HashPassword(_password),
                 Status = "inactive"
             };
 
             Db.Users.Add(newUser);
             Db.SaveChanges();
 
-            // Ghi audit log đăng ký
             Db.AuditLogs.Add(new AuditLog
             {
                 CorrelationId = Guid.NewGuid(),
@@ -200,7 +233,6 @@
 
             _successMessage = $"Đã ghi nhận đăng ký. Tên đăng nhập của bạn là: {username}. Tài khoản cần quản trị viên kích hoạt trước khi sử dụng.";
 
-            // Redirect sang trang đăng nhập sau 2 giây
             _ = Task.Delay(2000).ContinueWith(_ =>
             {
                 InvokeAsync(() => Navigation.NavigateTo("/login", forceLoad: false));
@@ -215,6 +247,12 @@
             _isLoading = false;
         }
     }
+
+    private void TogglePasswordVisibility()
+        => _showPassword = !_showPassword;
+
+    private void ToggleConfirmPasswordVisibility()
+        => _showConfirmPassword = !_showConfirmPassword;
 
     private async Task NotifyAdministrators(AppUser newUser)
     {
