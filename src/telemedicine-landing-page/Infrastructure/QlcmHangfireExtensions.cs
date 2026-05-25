@@ -2,6 +2,7 @@ using Hangfire;
 using Hangfire.SqlServer;
 using TelemedicineLandingPage.Application.Jobs;
 using TelemedicineLandingPage.Infrastructure.Jobs;
+using TelemedicineLandingPage.Services.Admin.Sql;
 
 namespace TelemedicineLandingPage.Infrastructure;
 
@@ -39,6 +40,15 @@ public static class QlcmHangfireExtensions
             Authorization = new[] { new HangfireAdminAuthorizationFilter() },
             DashboardTitle = "QLCM Pro Jobs"
         });
+        return app;
+    }
+
+    public static WebApplication UseQlcmRecurringJobs(this WebApplication app)
+    {
+        RecurringJob.AddOrUpdate<PermissionChangeRequestService>(
+            "qlcm-apply-scheduled-permission-changes",
+            service => service.ApplyDueScheduledRequests(),
+            Cron.Minutely);
         return app;
     }
 }

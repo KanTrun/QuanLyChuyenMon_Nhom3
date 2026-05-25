@@ -1,18 +1,17 @@
 # System Architecture
 
-## Telemedicine Landing Page Track
-Ngày 2026-05-14, repo có thêm một ứng dụng Blazor Web App riêng cho trang chủ khám từ xa tại `src/telemedicine-landing-page`.
+## QLCM Pro Runtime Entry Track
+Ngày 2026-05-25, runtime chính của repo là QLCM Pro. Landing page telemedicine cũ đã được gỡ khỏi app surface; `/` chuyển về `/login` để người dùng vào đúng shell nghiệp vụ mới nhất.
 
 | Area | Decision |
 |---|---|
 | Runtime | ASP.NET Core Blazor Web App, `net9.0` |
-| Rendering | SSR-first Razor Components, không phụ thuộc JS cho nội dung chính |
-| Content source | `LandingPageContentService` seed dữ liệu chuyên khoa, chỉ số, tín hiệu tin cậy |
-| CTA config | `LandingPageLinks` trong `appsettings.json` |
-| Data persistence | Không lưu dữ liệu người bệnh trong scope landing page |
-| UI system | CSS token theo màu y tế dịu, Figtree/Noto Sans, motion nhẹ có `prefers-reduced-motion` |
+| Entry route | `/` redirects to `/login`; authenticated users continue to first allowed route |
+| Shells | `/admin` for system administration, persona workspaces for procedure/resource/order/clinical/notification tasks |
+| Data persistence | EF Core `MedDbContext` with schema `MedicalProcedureManagement` |
+| UI system | Razor Components + admin design tokens; landing-only section CSS removed from runtime |
 
-Landing page hiện chạy cùng Blazor app với module QLCM Pro. Nếu sau này tích hợp đặt lịch, tư vấn thật hoặc hồ sơ người bệnh, cần thêm API/server-side authorization và review tuân thủ dữ liệu y tế trước khi lưu PHI.
+External HIS/EMR/inventory/pharmacy integrations remain behind service boundaries so Razor pages do not depend directly on outside systems.
 
 ## QLCM Pro SQL-Backed Architecture
 Ngày 2026-05-19, module quản lý quy trình kỹ thuật chuyên môn đã được triển khai trong `src/telemedicine-landing-page` theo hướng SQL-backed.
@@ -21,12 +20,23 @@ Ngày 2026-05-19, module quản lý quy trình kỹ thuật chuyên môn đã đ
 |---|---|
 | UI | Razor Components trong `Components/Pages`, tổ chức theo Admin, Procedure, Resource, Order, Clinical, Notification |
 | Application services | Các service admin dùng `IMedDataStore`, `IProcedureLifecycleService`, `ICurrentUserContext`, `IToastService` |
-| Action authorization | `AdminActionGuard` checks `SCR_*:ACTION` permissions plus legacy aliases before dangerous UI mutations |
+| Action authorization | `AdminActionGuard` checks `SCR_*:ACTION` permissions plus legacy aliases, then calls `ProcedureRuntimeGuard` for mapped active procedure enforcement |
 | Circuit session restore | Login writes current SQL user id to browser `sessionStorage`; admin/persona layouts restore it before route checks |
 | Persistence | Entity Framework Core `MedDbContext` map schema `MedicalProcedureManagement` |
 | SQL facade | `IMedDataStore` che chi tiết query/mutation cho identity, permissions, procedures, catalog, patients, orders, protocols, notifications |
 | Seed data | `scripts/seed-realistic-data.sql` nạp dữ liệu demo/QA có lookup hợp lệ |
 | Version lifecycle | `procedure_versions.status_code` dùng `draft`, `pending_approval`, `active`, `superseded`, `archived` |
+
+## QLCM Pro Business Completion Architecture
+Ngày 2026-05-25, các khoảng trống nghiệp vụ chính của yêu cầu QLCM được nối vào runtime.
+
+| Area | Decision |
+|---|---|
+| Scheduled permission changes | Hangfire recurring job calls `PermissionChangeRequestService.ApplyDueScheduledRequests()` every minute |
+| Procedure runtime enforcement | `ProcedureRuntimeGuard` resolves `screen_catalog`, active `procedure_versions`, `procedure_screen_mappings` and first required step role before allowing/warning/blocking actions |
+| Inventory snapshots | `InventoryAvailabilityService` creates missing `resource_availability_snapshots` from procedure-version norms first, then technical-service norms |
+| Clinical suggestions | `ClinicalProtocolSuggestionService` scores active protocol versions from ICD/gender/department/age rules and removes contraindicated protocols |
+| Persona route guard | `PersonaLayout` filters links and denies direct route access through `NavGate` |
 
 ## Docker Runtime Architecture
 Ngày 2026-05-21, repo có Docker Compose full stack để chạy app, database và seed dữ liệu từ một lệnh.

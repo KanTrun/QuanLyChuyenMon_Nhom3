@@ -5,6 +5,7 @@
 @inject NavigationManager Navigation
 @inject LoadingService Loading
 @inject BrowserSessionService BrowserSession
+@inject NavGate Gate
 @implements IDisposable
 
 @if (UserContext.CurrentUser is null)
@@ -31,7 +32,7 @@ else
         </div>
 
         <nav class="admin-sidebar-nav" aria-label="Cổng nghiệp vụ">
-            @foreach (var link in _navLinks)
+            @foreach (var link in AuthorizedNavLinks)
             {
                 <NavLink class="admin-nav-link" ActiveClass="is-active" Match="NavLinkMatch.Prefix" href="@link.Url">
                     <span class="admin-nav-icon" aria-hidden="true">●</span>
@@ -41,7 +42,7 @@ else
         </nav>
 
         <div class="admin-sidebar-footer">
-            <a class="admin-nav-link" href="/admin">
+            <a class="admin-nav-link" href="@Gate.GetDisplayRoute(AdminHomeRoute)">
                 <span class="admin-nav-icon" aria-hidden="true">←</span>
                 <span class="admin-nav-label">Quay lại quản trị</span>
             </a>
@@ -66,7 +67,17 @@ else
         </header>
 
         <main class="admin-content" id="main-content">
-            @Body
+            @if (_isAuthorized)
+            {
+                @Body
+            }
+            else
+            {
+                <div class="admin-empty" style="min-height:50vh;">
+                    <div class="admin-empty-title">Không có quyền truy cập</div>
+                    <div class="admin-empty-body">Tài khoản hiện tại không được phép mở chức năng này.</div>
+                </div>
+            }
         </main>
     </div>
 
@@ -81,8 +92,10 @@ else
 </div>
 
 @code {
+    private const string AdminHomeRoute = "/admin";
     private string _currentUserName = "";
     private bool _sessionRestoreAttempted;
+    private bool _isAuthorized = true;
 
     private record NavLink(string Label, string Url);
 
@@ -101,6 +114,7 @@ else
     {
         UserContext.StateChanged += OnUserChanged;
         Loading.StateChanged += OnLoadingChanged;
+        Navigation.LocationChanged += OnLocationChanged;
 
         if (UserContext.CurrentUser is not null)
         {
@@ -140,10 +154,28 @@ else
 
     private void OnLoadingChanged() => InvokeAsync(StateHasChanged);
 
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+        => InvokeAsync(() => { EvaluateRouteAccess(); StateHasChanged(); });
+
     private void RefreshUser()
     {
         var user = UserContext.CurrentUser;
         _currentUserName = user?.FullName ?? "Chưa đăng nhập";
+        EvaluateRouteAccess();
+    }
+
+    private IEnumerable<NavLink> AuthorizedNavLinks => _navLinks.Where(link => Gate.CanAccess(link.Url));
+
+    private void EvaluateRouteAccess()
+    {
+        if (UserContext.CurrentUser is null)
+        {
+            _isAuthorized = false;
+            return;
+        }
+
+        var currentRoute = "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].TrimStart('/');
+        _isAuthorized = Gate.CanAccess(currentRoute);
     }
 
     private async Task HandleLogout()
@@ -156,5 +188,6 @@ else
     {
         UserContext.StateChanged -= OnUserChanged;
         Loading.StateChanged -= OnLoadingChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
     }
 }

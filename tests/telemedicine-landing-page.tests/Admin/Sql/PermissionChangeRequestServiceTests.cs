@@ -211,6 +211,36 @@ public sealed class PermissionChangeRequestServiceTests : IDisposable
         Assert.Equal("scheduled", updated.ChangeStatus);
     }
 
+    [Fact]
+    public void ApplyDueScheduledRequests_AppliesDueRequest()
+    {
+        var req = _svc.CreateDraft(
+            MedDataStoreSeed.AdminUserId, "role",
+            MedDataStoreSeed.RoleNurseId, null, null,
+            "Cap quyen quan ly quy trinh theo lich", DateTime.UtcNow.AddSeconds(-1));
+        _svc.AddItem(req.PermissionChangeRequestId, new PermissionChangeItem
+        {
+            PermissionChangeRequestId = req.PermissionChangeRequestId,
+            PermissionId = MedDataStoreSeed.PermManageProcId,
+            OperationCode = "grant",
+            EffectCode = "allow",
+            DepartmentScopeType = "global"
+        });
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
+        _svc.Approve(req.PermissionChangeRequestId, _testApproverId, schedule: true);
+
+        var appliedCount = _svc.ApplyDueScheduledRequests();
+
+        var updated = _db.PermissionChangeRequests
+            .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
+        Assert.Equal(1, appliedCount);
+        Assert.Equal("applied", updated.ChangeStatus);
+        Assert.Contains(_db.RolePermissions, rp =>
+            rp.RoleId == MedDataStoreSeed.RoleNurseId &&
+            rp.PermissionId == MedDataStoreSeed.PermManageProcId &&
+            rp.EffectiveTo is null);
+    }
+
     // === 9. Reject: chuyển pending_approval → rejected ===
     [Fact]
     public void Reject_PendingRequest_Succeeds()

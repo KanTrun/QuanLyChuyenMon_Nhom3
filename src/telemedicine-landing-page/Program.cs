@@ -2,8 +2,6 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using TelemedicineLandingPage.Components;
 using TelemedicineLandingPage.Hubs;
 using TelemedicineLandingPage.Infrastructure;
-using TelemedicineLandingPage.Models;
-using TelemedicineLandingPage.Services;
 using TelemedicineLandingPage.Services.Auth;
 using Serilog;
 
@@ -16,17 +14,11 @@ builder.Host.UseQlcmSerilog();
 
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddSignalR();
-builder.Services.AddSingleton<ILandingPageContentService, LandingPageContentService>();
 builder.Services.AddQlcmDatabase(medDbConnectionString);
 builder.Services.AddQlcmIdentityAndAuthorization();
 builder.Services.AddQlcmAdminServices();
 builder.Services.AddQlcmHangfire(medDbConnectionString);
 builder.Services.AddQlcmChatbot(builder.Configuration);
-
-builder.Services.AddOptions<LandingPageLinksOptions>()
-    .Bind(builder.Configuration.GetSection(LandingPageLinksOptions.SectionName))
-    .Validate(options => options.HasValidUrls(), "Landing page CTA URLs must be absolute URLs or in-page anchors.")
-    .ValidateOnStart();
 
 var app = builder.Build();
 
@@ -45,6 +37,7 @@ app.UseSerilogRequestLogging();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseQlcmHangfireDashboard();
+app.UseQlcmRecurringJobs();
 app.UseAntiforgery();
 
 app.MapHealthChecks("/health", new HealthCheckOptions

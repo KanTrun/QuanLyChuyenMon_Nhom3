@@ -11,6 +11,7 @@ public sealed class AdminActionGuard
 {
     private readonly ICurrentUserContext _userContext;
     private readonly IToastService _toasts;
+    private readonly ProcedureRuntimeGuard _runtimeGuard;
 
     private static readonly Dictionary<string, string[]> PermissionAliases = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -72,17 +73,36 @@ public sealed class AdminActionGuard
         ["SCR_NOTIFICATIONS:UPDATE"] = ["PERM_NOTIFICATIONS_update"],
     };
 
-    public AdminActionGuard(ICurrentUserContext userContext, IToastService toasts)
+    public AdminActionGuard(
+        ICurrentUserContext userContext,
+        IToastService toasts,
+        ProcedureRuntimeGuard runtimeGuard)
     {
         _userContext = userContext;
         _toasts = toasts;
+        _runtimeGuard = runtimeGuard;
     }
 
     public bool CanDo(string permissionCode, string? actionName = null)
     {
         if (HasPermission(permissionCode))
         {
-            return true;
+            var runtimeDecision = _runtimeGuard.EvaluatePermission(permissionCode);
+            if (runtimeDecision.Allowed)
+            {
+                if (runtimeDecision.WarnOnly && runtimeDecision.Message is not null)
+                {
+                    _toasts.Show("Cảnh báo quy trình", runtimeDecision.Message, ToastVariant.Warning);
+                }
+
+                return true;
+            }
+
+            _toasts.Show(
+                "Không đúng quy trình",
+                runtimeDecision.Message ?? "Thao tác này đang bị quy trình chuyên môn chặn.",
+                ToastVariant.Warning);
+            return false;
         }
 
         _toasts.Show(

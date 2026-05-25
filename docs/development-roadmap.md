@@ -1,7 +1,7 @@
 # Development Roadmap
 
 ## Current Source Status
-Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-page`, gồm landing page và module QLCM Pro. Module QLCM Pro đã chuyển từ demo/in-memory sang luồng SQL-backed qua `MedDbContext`, `IMedDataStore` và schema `MedicalProcedureManagement`.
+Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-page`, chạy trọng tâm QLCM Pro. Landing page telemedicine cũ đã được gỡ khỏi runtime; `/` chuyển về `/login`, còn module nghiệp vụ dùng SQL-backed qua `MedDbContext`, `IMedDataStore` và schema `MedicalProcedureManagement`.
 
 ## QLCM Pro SQL Track
 | Item | Status | Output |
@@ -16,17 +16,16 @@ Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-
 | Workflow and jobs foundation | Complete | Workflow guards for procedure versions/orders, order status service extraction, Hangfire SQL dashboard and `IJobService` wrapper |
 | Realtime notifications | Complete | SignalR notification hub, persisted user/group/broadcast notification service, admin bell live toast updates and presence hooks |
 | Business UI remediation | Complete | Admin pages use hospital-facing labels, approval-backed permission changes, active-version drafts, resource-unit guards and compact technical details |
+| Business workflow completion | Complete | Runtime procedure guard, scheduled permission apply job, inventory snapshot service, ICD protocol suggestions and persona route gating |
 | Seed data | Complete | `scripts/seed-realistic-data.sql` nạp dữ liệu mẫu thực tế cho demo/QA |
-| Verification | Complete | Release build/test passed, 142 tests after login landing route fix |
+| Verification | Complete | Release build/test passed, 142 tests after business workflow completion |
 
-## Telemedicine Landing Page Track
+## Legacy Landing Cleanup Track
 | Item | Status | Output |
 |---|---|---|
-| Stack scaffold | Complete | `telemedicine-landing-page.sln`, Blazor Web App `net9.0`, xUnit tests |
-| Home UI | Complete | Hero, preview tư vấn video, danh bạ chuyên khoa, theo dõi sức khỏe, CTA tải ứng dụng |
-| Vietnamese content | Complete | UI copy, aria labels, metadata and seed data use Vietnamese with diacritics |
-| Verification | Complete | Release build passed, 4 tests passed |
-| Next | Planned | Replace placeholder CTA/store/contact URLs and run browser/Lighthouse QA |
+| Runtime removal | Complete | Removed landing sections/content service/link options/CSS from active app |
+| Entry route | Complete | `/` redirects to `/login` so latest QLCM Pro workflow is the first runtime surface |
+| Verification | Complete | Release build/test passed, 142 tests |
 
 ## Procedure Module Roadmap
 Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này đã có source triển khai trong Blazor app và đã được kiểm tra bằng build/test Release.
@@ -48,7 +47,7 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này �
 | Architecture blueprint | 100% |
 | Implementation plan | 100% |
 | Code implementation | 100% for implementation-plan scope |
-| Test automation | Release build/test passed, 142 tests after login landing route fix |
+| Test automation | Release build/test passed, 142 tests after business workflow completion |
 | Deployment readiness | Docker Compose web/sql/db-init verified locally; target DB execution/config remains deployment task |
 
 ## Dependencies

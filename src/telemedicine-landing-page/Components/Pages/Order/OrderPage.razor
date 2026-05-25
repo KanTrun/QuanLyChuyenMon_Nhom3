@@ -7,6 +7,7 @@
 @inject AdminActionGuard Guard
 @inject AuditTrailService Audit
 @inject ITechnicalOrderWorkflowService OrderWorkflow
+@inject IInventoryAvailabilityService InventoryAvailability
 @implements IDisposable
 
 <PageTitle>Điều phối kỹ thuật | QLCM Pro</PageTitle>
@@ -514,35 +515,25 @@
         }
 
         if (_selected is null) return;
-        var norms = Store.TechnicalResourceNorms.Where(n => n.TechnicalServiceId == _selected.TechnicalServiceId).ToList();
-        if (norms.Count == 0)
+        var result = InventoryAvailability.CreateMissingSnapshots(_selected);
+        if (result.Added == 0 && result.Existing == 0)
         {
             Toasts.Show("Chưa có định mức", "Dịch vụ này chưa khai báo định mức nguồn lực.", ToastVariant.Warning);
             return;
         }
 
-        var added = 0;
-        foreach (var norm in norms)
-        {
-            var exists = Store.ResourceAvailabilitySnapshots.Any(s => s.TechnicalOrderId == _selected.TechnicalOrderId && s.ResourceId == norm.ResourceId);
-            if (exists) continue;
-            Store.AddResourceAvailabilitySnapshot(new Sql.ResourceAvailabilitySnapshot
-            {
-                TechnicalOrderId = _selected.TechnicalOrderId,
-                ResourceId = norm.ResourceId,
-                RequiredQuantity = norm.StandardQuantity,
-                AvailableQuantity = null,
-                UnitCode = norm.UnitCode,
-                AvailabilityStatus = "unknown",
-                ExternalPayloadJson = "{\"source\":\"inventory_not_connected\"}"
-            });
-            added++;
-        }
-        if (added > 0)
+        if (result.Added > 0)
         {
             AppendOrderAudit(_selected, "update");
         }
-        Toasts.Show("Đã tạo snapshot cần xác minh", $"{added} dòng định mức mới.", ToastVariant.Info);
+
+        if (result.Insufficient > 0)
+        {
+            Toasts.Show("Nguồn lực thiếu", $"{result.Insufficient} dòng cần bổ sung từ kho/dược/vật tư.", ToastVariant.Warning);
+            return;
+        }
+
+        Toasts.Show("Đã kiểm tra nguồn lực", $"{result.Added} snapshot mới, {result.Existing} snapshot đã có.", ToastVariant.Success);
     }
 
     private void AddUsage()

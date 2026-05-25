@@ -189,6 +189,46 @@ public sealed partial class PermissionChangeRequestService
     public IReadOnlyList<PermissionChangeRequest> GetByStatus(string status)
         => _db.PermissionChangeRequests.Where(r => r.ChangeStatus == status).ToList();
 
+    /// <summary>Applies scheduled permission changes whose effective time has arrived.</summary>
+    public int ApplyDueScheduledRequests()
+    {
+        var now = DateTime.UtcNow;
+        var dueRequests = _db.PermissionChangeRequests
+            .Where(r => r.ChangeStatus == "scheduled" && r.EffectiveAt <= now)
+            .OrderBy(r => r.EffectiveAt)
+            .ToList();
+
+        foreach (var req in dueRequests)
+        {
+            var actorUserId = req.ApprovedBy ?? req.RequestedBy;
+            ApplyItems(req, actorUserId, now);
+            var updated = req with
+            {
+                ChangeStatus = "applied",
+                AppliedAt = now,
+                AppliedBy = actorUserId
+            };
+            _db.PermissionChangeRequests.Entry(req).CurrentValues.SetValues(updated);
+            AddRequestNotification(req,
+                "Yêu cầu thay đổi quyền đã đến hạn và được áp dụng",
+                "Quyền mới đã có hiệu lực trong hệ thống.",
+                "info");
+            _db.SaveChanges();
+
+            _audit.Append(new AuditLog
+            {
+                CorrelationId = Guid.NewGuid(),
+                ActorUserId = actorUserId,
+                ActionCode = "approve",
+                TargetType = "permission_change_request",
+                TargetId = req.PermissionChangeRequestId.ToString(),
+                MetadataJson = JsonSerializer.Serialize(new { scheduled = true, effectiveAt = req.EffectiveAt })
+            });
+        }
+
+        return dueRequests.Count;
+    }
+
     private PermissionChangeRequest GetRequestOrThrow(Guid requestId)
     {
         return _db.PermissionChangeRequests

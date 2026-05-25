@@ -138,6 +138,9 @@ public static class QlcmServiceCollectionExtensions
         services.AddScoped<PermissionChangeRequestService>();
         services.AddScoped<ProcedureLifecycleService>();
         services.AddScoped<ITechnicalOrderWorkflowService, TechnicalOrderWorkflowService>();
+        services.AddScoped<ProcedureRuntimeGuard>();
+        services.AddScoped<IInventoryAvailabilityService, InventoryAvailabilityService>();
+        services.AddScoped<IClinicalProtocolSuggestionService, ClinicalProtocolSuggestionService>();
         services.AddScoped<ICurrentUserContext, CurrentUserContext>();
         services.AddScoped<AdminActionGuard>();
         services.AddScoped<BrowserSessionService>();

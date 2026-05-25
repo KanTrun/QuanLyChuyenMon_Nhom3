@@ -5,6 +5,7 @@
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@inject IClinicalProtocolSuggestionService ProtocolSuggestions
 @implements IDisposable
 
 <PageTitle>Lâm sàng | QLCM Pro</PageTitle>
@@ -186,8 +187,27 @@
                         </div>
                     </div>
                     <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                        <button type="button" class="admin-btn admin-btn-ghost" @onclick="SuggestProtocols">Gợi ý theo ICD</button>
                         <button type="button" class="admin-btn admin-btn-primary" @onclick="ApplyProtocol">Áp dụng phác đồ</button>
                     </div>
+                    @if (_protocolSuggestions.Count > 0)
+                    {
+                        <div class="admin-table-wrapper" style="margin-top:12px;">
+                            <table class="admin-table">
+                                <thead><tr><th>Gợi ý</th><th>Điểm</th><th>Lý do</th></tr></thead>
+                                <tbody>
+                                    @foreach (var suggestion in _protocolSuggestions)
+                                    {
+                                        <tr>
+                                            <td>@suggestion.Protocol.Name v@suggestion.Version.VersionNo</td>
+                                            <td><AdminBadge Tone="tone-primary">@suggestion.Score</AdminBadge></td>
+                                            <td>@string.Join("; ", suggestion.Reasons)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
                 </div>
             }
             else
@@ -284,6 +304,7 @@
     private string _appEncounterId = string.Empty;
     private string _appStatus = "applied";
     private string _appDiagnosisCode = string.Empty;
+    private IReadOnlyList<ClinicalProtocolSuggestion> _protocolSuggestions = Array.Empty<ClinicalProtocolSuggestion>();
 
     protected override void OnInitialized()
     {
@@ -436,11 +457,37 @@
             return;
         }
 
-        if (_selected is null || !Guid.TryParse(_appProtocolVersionId, out var versionId))
+        if (_selected is null)
+        {
+            return;
+        }
+
+        if (!Guid.TryParse(_appProtocolVersionId, out var versionId))
+        {
+            RefreshProtocolSuggestions(selectBest: true, showToast: false);
+        }
+
+        if (!Guid.TryParse(_appProtocolVersionId, out versionId))
         {
             Toasts.Show("Thiếu phác đồ", "Vui lòng chọn phiên bản phác đồ.", ToastVariant.Warning);
             return;
         }
+
+        var version = Store.ClinicalProtocolVersions.FirstOrDefault(v => v.ClinicalProtocolVersionId == versionId);
+        if (!IsActiveProtocolVersion(version))
+        {
+            Toasts.Show("Phác đồ chưa hiệu lực", "Chỉ được áp dụng phiên bản phác đồ đang active và còn hiệu lực.", ToastVariant.Warning);
+            return;
+        }
+
+        var suggestion = _protocolSuggestions.FirstOrDefault(s => s.Version.ClinicalProtocolVersionId == versionId);
+        var decisionContextJson = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            source = suggestion is null ? "manual" : "protocol_suggestion",
+            score = suggestion?.Score,
+            reasons = suggestion?.Reasons ?? Array.Empty<string>(),
+            warnings = suggestion?.Warnings ?? Array.Empty<string>()
+        });
 
         try
         {
@@ -453,7 +500,7 @@
                 ApplicationStatus = _appStatus,
                 AppliedBy = UserContext.CurrentUser?.UserId,
                 AppliedAt = DateTime.UtcNow,
-                DecisionContextJson = "{\"source\":\"manual\"}"
+                DecisionContextJson = decisionContextJson
             });
             Toasts.Show("Đã áp dụng phác đồ", GetProtocolVersionName(versionId), ToastVariant.Success);
             ResetProtocolForm();
@@ -461,6 +508,48 @@
         catch (Exception ex)
         {
             Toasts.Show("Không thể áp dụng phác đồ", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void SuggestProtocols()
+    {
+        if (!Guard.CanDo("SCR_CLINICAL:EXECUTE", "gợi ý phác đồ"))
+        {
+            return;
+        }
+
+        RefreshProtocolSuggestions(selectBest: true, showToast: true);
+    }
+
+    private void RefreshProtocolSuggestions(bool selectBest, bool showToast)
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+
+        _protocolSuggestions = ProtocolSuggestions.Suggest(
+            _selected.PatientRefId,
+            ParseGuid(_appEncounterId),
+            _appDiagnosisCode);
+
+        if (_protocolSuggestions.Count == 0)
+        {
+            if (showToast)
+            {
+                Toasts.Show("Chưa có phác đồ phù hợp", "Không tìm thấy rule active khớp ICD/lượt khám hiện tại.", ToastVariant.Warning);
+            }
+            return;
+        }
+
+        if (selectBest)
+        {
+            _appProtocolVersionId = _protocolSuggestions[0].Version.ClinicalProtocolVersionId.ToString();
+        }
+
+        if (showToast)
+        {
+            Toasts.Show("Đã gợi ý phác đồ", $"{_protocolSuggestions.Count} phác đồ phù hợp, đã chọn gợi ý điểm cao nhất.", ToastVariant.Success);
         }
     }
 
@@ -478,6 +567,7 @@
         _appEncounterId = string.Empty;
         _appStatus = "applied";
         _appDiagnosisCode = string.Empty;
+        _protocolSuggestions = Array.Empty<ClinicalProtocolSuggestion>();
     }
 
     private void ShowEncounters() => _patientTab = "encounters";
@@ -499,6 +589,11 @@
     }
 
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    private static bool IsActiveProtocolVersion(Sql.ClinicalProtocolVersion? version)
+        => version is not null &&
+           version.StatusCode == "active" &&
+           (version.EffectiveFrom is null || version.EffectiveFrom <= DateTime.UtcNow) &&
+           (version.EffectiveTo is null || version.EffectiveTo > DateTime.UtcNow);
     private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
     private static string ProtocolAppTone(string status) => status switch
     {

@@ -1,5 +1,23 @@
 # Project Changelog
 
+## 2026-05-25
+### Changed
+| Item | Description |
+|---|---|
+| Landing runtime cleanup | Removed obsolete public telemedicine landing content/services/styles/tests from the active Blazor runtime; `/` now redirects to `/login` for the QLCM Pro shell |
+| Procedure action guard | `AdminActionGuard` now runs `ProcedureRuntimeGuard` after permission checks so mapped active procedures can warn/block actions by first-step role and enforcement mode |
+| Scheduled permission job | Added Hangfire recurring job to apply due scheduled permission changes and audit/notify the result |
+| Inventory snapshots | Order resource checks now use `InventoryAvailabilityService`, prefer procedure-version norms, create availability snapshots and warn on missing/inactive resources |
+| Clinical protocol suggestions | Clinical page can suggest active protocol versions by ICD/rule score, auto-select the best match and save decision context on patient protocol applications |
+| Persona route access | Persona layout filters sidebar links and blocks direct route access through `NavGate` |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 142 tests |
+| `dotnet list .\telemedicine-landing-page.sln package --vulnerable --include-transitive` | No vulnerable packages |
+
 ## 2026-05-24
 ### Improved
 | Item | Description |

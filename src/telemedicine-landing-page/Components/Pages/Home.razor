@@ -1,13 +1,20 @@
 @page "/"
-@inject ILandingPageContentService Content
-@inject IOptions<LandingPageLinksOptions> LinksOptions
+@inject NavigationManager Navigation
 
-<PageTitle>QLCM Pro | Quản lý Quy trình Kỹ thuật Chuyên Môn</PageTitle>
+<PageTitle>QLCM Pro</PageTitle>
 
-<main id="main-content" class="landing-page">
-    <HeroSection Links="Links" Stats="Content.GetStats()" />
+<main id="main-content" class="login-page">
+    <section class="login-shell" aria-live="polite">
+        <p>Đang chuyển hướng đến QLCM Pro...</p>
+    </section>
 </main>
 
 @code {
-    private LandingPageLinksOptions Links => LinksOptions.Value;
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Navigation.NavigateTo("/login", replace: true);
+        }
+    }
 }
