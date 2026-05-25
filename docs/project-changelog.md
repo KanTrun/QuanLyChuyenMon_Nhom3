@@ -18,6 +18,7 @@
 | Inventory snapshots | Order resource checks now use `InventoryAvailabilityService`, prefer procedure-version norms, create availability snapshots and warn on missing/inactive resources |
 | Clinical protocol suggestions | Clinical page can suggest active protocol versions by ICD/rule score, auto-select the best match and save decision context on patient protocol applications |
 | Persona route access | Persona layout filters sidebar links and blocks direct route access through `NavGate` |
+| Auth motion runtime | Auth entry animations now load GSAP 3.15.0 on demand and use GSAP timelines, matchMedia and quickTo motion helpers |
 
 ### Verification
 | Command | Result |
@@ -27,6 +28,7 @@
 | `dotnet list .\telemedicine-landing-page.sln package --vulnerable --include-transitive` | No vulnerable packages |
 | `docker compose up --build -d web` | Passed, web rebuilt and healthy on `localhost:8080` |
 | Chrome headless smoke check | Passed, `/`, `/login`, `/register` and `/admin` render the QLCM intro/auth shell plus dashboard status and operations charts |
+| Docker auth asset check | Passed, fingerprinted `animations.js` contains GSAP 3.15.0 loader and password visibility controls render on `/login` |
 
 ## 2026-05-24
 ### Improved

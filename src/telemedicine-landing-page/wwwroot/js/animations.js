@@ -3,7 +3,10 @@
     'use strict';
 
     const revealSelectors = '.reveal, .reveal-left, .reveal-right, .reveal-scale, .gold-line';
+    const gsapCdnUrl = 'https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js';
     const initializedAuthPages = new WeakSet();
+    let activeAuthMatchMedia = null;
+    let gsapLoadPromise = null;
 
     function prefersReducedMotion() {
         return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -75,141 +78,129 @@
         const page = document.querySelector('[data-auth-page]');
         if (!page || initializedAuthPages.has(page)) return;
 
-        initializedAuthPages.add(page);
         page.classList.add('auth-ready');
-
-        if (prefersReducedMotion()) return;
-
-        const brandContent = page.querySelector('.login-brand-content');
-        const logo = page.querySelector('.login-logo');
-        const formWrapper = page.querySelector('.login-form-wrapper');
-
-        animateAuthIntro(page, brandContent, logo, formWrapper);
-        initAuthPointerParallax(page, brandContent, formWrapper);
-        initAuthFieldMotion(page);
-    }
-
-    function animateAuthIntro(page, brandContent, logo, formWrapper) {
-        animateElement(brandContent, [
-            { opacity: 0, transform: 'translate3d(0, 34px, 0) rotateX(-5deg)' },
-            { opacity: 1, transform: 'translate3d(0, 0, 0) rotateX(0deg)' }
-        ], 760, 0, 'cubic-bezier(.16, 1, .3, 1)');
-
-        animateElement(logo, [
-            { opacity: 0, transform: 'scale(.82) rotate(-8deg)' },
-            { opacity: 1, transform: 'scale(1) rotate(0deg)' }
-        ], 620, 180, 'cubic-bezier(.34, 1.56, .64, 1)');
-
-        staggerElements(page.querySelectorAll('.auth-command-strip span'), function () {
-            return [
-                { opacity: 0, transform: 'translate3d(0, 12px, 0)' },
-                { opacity: 1, transform: 'translate3d(0, 0, 0)' }
-            ];
-        }, 360, 260, 55);
-
-        staggerElements(page.querySelectorAll('.login-feature'), function () {
-            return [
-                { opacity: 0, transform: 'translate3d(-18px, 0, 0)' },
-                { opacity: 1, transform: 'translate3d(0, 0, 0)' }
-            ];
-        }, 420, 360, 75);
-
-        animateElement(formWrapper, [
-            { opacity: 0, transform: 'translate3d(0, 26px, 0) scale(.985)' },
-            { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
-        ], 620, 220, 'cubic-bezier(.16, 1, .3, 1)');
-
-        staggerElements(page.querySelectorAll('.login-form .form-group, .login-error, .login-success, .login-submit'), function () {
-            return [
-                { opacity: 0, transform: 'translate3d(0, 12px, 0)' },
-                { opacity: 1, transform: 'translate3d(0, 0, 0)' }
-            ];
-        }, 340, 460, 45);
-
-        if (logo) {
-            logo.animate([
-                { transform: 'translate3d(0, 0, 0) rotate(0deg)' },
-                { transform: 'translate3d(0, -8px, 0) rotate(1.5deg)' }
-            ], {
-                duration: 2800,
-                direction: 'alternate',
-                easing: 'ease-in-out',
-                iterations: Infinity
-            });
+        if (prefersReducedMotion()) {
+            initializedAuthPages.add(page);
+            return;
         }
-    }
 
-    function animateElement(element, keyframes, duration, delay, easing) {
-        if (!element || typeof element.animate !== 'function') return;
+        if (!window.gsap) {
+            loadGsap().then(initAuthPage).catch(function () {
+                initializedAuthPages.add(page);
+            });
+            return;
+        }
 
-        element.animate(keyframes, {
-            duration: duration,
-            delay: delay,
-            easing: easing,
-            fill: 'both'
+        initializedAuthPages.add(page);
+        const gsap = window.gsap;
+        if (activeAuthMatchMedia) {
+            activeAuthMatchMedia.revert();
+            activeAuthMatchMedia = null;
+        }
+
+        const mm = gsap.matchMedia();
+        activeAuthMatchMedia = mm;
+
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+            const brandContent = page.querySelector('.login-brand-content');
+            const logo = page.querySelector('.login-logo');
+            const features = page.querySelectorAll('.login-feature');
+            const formWrapper = page.querySelector('.login-form-wrapper');
+            const formItems = page.querySelectorAll('.login-form .form-group, .login-error, .login-success, .login-submit');
+            const stripItems = page.querySelectorAll('.auth-command-strip span');
+
+            gsap.set([brandContent, formWrapper], { transformPerspective: 900 });
+
+            gsap.timeline({ defaults: { ease: 'power3.out' } })
+                .from(brandContent, { autoAlpha: 0, y: 34, rotateX: -5, duration: 0.75 })
+                .from(logo, { scale: 0.82, rotate: -8, duration: 0.65, ease: 'back.out(1.8)' }, '-=0.48')
+                .from(stripItems, { autoAlpha: 0, y: 12, stagger: 0.055, duration: 0.36 }, '-=0.32')
+                .from(features, { autoAlpha: 0, x: -18, stagger: 0.075, duration: 0.42 }, '-=0.16')
+                .from(formWrapper, { autoAlpha: 0, y: 26, scale: 0.985, duration: 0.62 }, '-=0.55')
+                .from(formItems, { autoAlpha: 0, y: 12, stagger: 0.045, duration: 0.34 }, '-=0.34');
+
+            if (logo) {
+                gsap.to(logo, {
+                    y: -8,
+                    rotate: 1.5,
+                    duration: 2.8,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: 'sine.inOut'
+                });
+            }
+
+            initAuthPointerParallax(page, gsap, brandContent, formWrapper);
+            initAuthFieldMotion(page, gsap);
         });
     }
 
-    function staggerElements(elements, keyframesFactory, duration, baseDelay, stepDelay) {
-        elements.forEach(function (element, index) {
-            animateElement(element, keyframesFactory(element), duration, baseDelay + index * stepDelay, 'cubic-bezier(.16, 1, .3, 1)');
+    function loadGsap() {
+        if (window.gsap) return Promise.resolve(window.gsap);
+        if (gsapLoadPromise) return gsapLoadPromise;
+
+        const existingScript = document.querySelector('script[data-auth-gsap]');
+        if (existingScript) {
+            gsapLoadPromise = new Promise(function (resolve, reject) {
+                existingScript.addEventListener('load', function () { resolve(window.gsap); }, { once: true });
+                existingScript.addEventListener('error', reject, { once: true });
+            });
+            return gsapLoadPromise;
+        }
+
+        gsapLoadPromise = new Promise(function (resolve, reject) {
+            const script = document.createElement('script');
+            script.src = gsapCdnUrl;
+            script.async = true;
+            script.dataset.authGsap = '3.15.0';
+            script.onload = function () { resolve(window.gsap); };
+            script.onerror = reject;
+            document.head.appendChild(script);
         });
+
+        return gsapLoadPromise;
     }
 
-    function initAuthPointerParallax(page, brandContent, formWrapper) {
+    function initAuthPointerParallax(page, gsap, brandContent, formWrapper) {
         if (!brandContent || !formWrapper || page.dataset.pointerMotionBound === 'true') return;
         page.dataset.pointerMotionBound = 'true';
 
-        let frameId = 0;
-        const offsets = {
-            brandX: 0,
-            brandY: 0,
-            formX: 0,
-            formY: 0
-        };
-
-        function scheduleTransform() {
-            if (frameId) return;
-            frameId = window.requestAnimationFrame(function () {
-                brandContent.style.transform = `translate3d(${offsets.brandX}px, ${offsets.brandY}px, 0)`;
-                formWrapper.style.transform = `translate3d(${offsets.formX}px, ${offsets.formY}px, 0)`;
-                frameId = 0;
-            });
-        }
+        const brandX = gsap.quickTo(brandContent, 'x', { duration: 0.75, ease: 'power3.out' });
+        const brandY = gsap.quickTo(brandContent, 'y', { duration: 0.75, ease: 'power3.out' });
+        const formX = gsap.quickTo(formWrapper, 'x', { duration: 0.85, ease: 'power3.out' });
+        const formY = gsap.quickTo(formWrapper, 'y', { duration: 0.85, ease: 'power3.out' });
 
         page.addEventListener('pointermove', function (event) {
             if (event.pointerType === 'touch') return;
             const rect = page.getBoundingClientRect();
             const x = (event.clientX - rect.left) / rect.width - 0.5;
             const y = (event.clientY - rect.top) / rect.height - 0.5;
-            offsets.brandX = Math.round(x * 14);
-            offsets.brandY = Math.round(y * 10);
-            offsets.formX = Math.round(x * -8);
-            offsets.formY = Math.round(y * -6);
-            scheduleTransform();
+            brandX(x * 14);
+            brandY(y * 10);
+            formX(x * -8);
+            formY(y * -6);
         }, { passive: true });
 
         page.addEventListener('pointerleave', function () {
-            offsets.brandX = 0;
-            offsets.brandY = 0;
-            offsets.formX = 0;
-            offsets.formY = 0;
-            scheduleTransform();
+            brandX(0);
+            brandY(0);
+            formX(0);
+            formY(0);
         }, { passive: true });
     }
 
-    function initAuthFieldMotion(page) {
+    function initAuthFieldMotion(page, gsap) {
         if (page.dataset.fieldMotionBound === 'true') return;
         page.dataset.fieldMotionBound = 'true';
 
         page.addEventListener('focusin', function (event) {
             const group = event.target.closest('.form-group');
-            if (group) group.style.transform = 'translate3d(0, -2px, 0)';
+            if (group) gsap.to(group, { y: -2, duration: 0.18, ease: 'power2.out' });
         });
 
         page.addEventListener('focusout', function (event) {
             const group = event.target.closest('.form-group');
-            if (group) group.style.transform = '';
+            if (group) gsap.to(group, { y: 0, duration: 0.22, ease: 'power2.out' });
         });
     }
 
