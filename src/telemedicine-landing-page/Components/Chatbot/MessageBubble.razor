@@ -1,5 +1,3 @@
-@using System.Globalization
-
 <div class="chatbot-bubble @RoleClass">
     <div class="chatbot-bubble-content">
         @if (Message.Role == ChatRole.Assistant)
@@ -41,10 +39,8 @@
         _ => "is-assistant",
     };
 
-    private static readonly CultureInfo Vi = CultureInfo.GetCultureInfo("vi-VN");
-
     private static string FormatTime(DateTime when) =>
-        when.ToLocalTime().ToString("HH:mm", Vi);
+        AdminDateTimeDisplay.Time(when);
 
     private static string EscapeUserContent(string? content)
     {

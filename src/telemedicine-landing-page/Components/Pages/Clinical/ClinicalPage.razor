@@ -92,8 +92,8 @@
                                         <td class="admin-table-cell-strong">@encounter.ExternalEncounterId</td>
                                         <td>@(encounter.EncounterType ?? "—")</td>
                                         <td>@GetDeptName(encounter.DepartmentId)</td>
-                                        <td>@encounter.StartedAt?.ToString("dd/MM/yyyy HH:mm")</td>
-                                        <td>@encounter.EndedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@AdminDateTimeDisplay.DateTime(encounter.StartedAt)</td>
+                                        <td>@AdminDateTimeDisplay.DateTime(encounter.EndedAt)</td>
                                     </tr>
                                 }
                             </tbody>
@@ -144,7 +144,7 @@
                                         <td>@GetEncounterCode(app.EncounterRefId)</td>
                                         <td>@(app.DiagnosisCode ?? "—")</td>
                                         <td><AdminBadge Tone="@ProtocolAppTone(app.ApplicationStatus)">@Lookup(Sql.MedLookups.ProtocolApplicationStatuses, app.ApplicationStatus)</AdminBadge></td>
-                                        <td>@app.AppliedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@AdminDateTimeDisplay.DateTime(app.AppliedAt)</td>
                                     </tr>
                                 }
                             </tbody>
@@ -225,7 +225,7 @@
                                         <td>@GetEncounterCode(order.EncounterRefId)</td>
                                         <td>@GetDeptName(order.OrderingDepartmentId)</td>
                                         <td><AdminBadge Tone="@OrderTone(order.OrderStatus)">@Lookup(Sql.MedLookups.OrderStatuses, order.OrderStatus)</AdminBadge></td>
-                                        <td>@order.OrderedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@AdminDateTimeDisplay.DateTime(order.OrderedAt)</td>
                                     </tr>
                                 }
                             </tbody>
@@ -439,7 +439,9 @@
                 ExternalEncounterId = _encounterExternalId.Trim(),
                 EncounterType = string.IsNullOrWhiteSpace(_encounterType) ? null : _encounterType.Trim(),
                 DepartmentId = ParseGuid(_encounterDepartmentId),
-                StartedAt = DateTime.TryParse(_encounterStartedAt, out var started) ? started : DateTime.UtcNow
+                StartedAt = DateTime.TryParse(_encounterStartedAt, out var started)
+                    ? AdminDateTimeDisplay.DisplayTimeToUtc(started)
+                    : DateTime.UtcNow
             });
             Toasts.Show("Đã tạo lượt khám", _encounterExternalId, ToastVariant.Success);
             ResetEncounterForm();
@@ -558,7 +560,7 @@
         _encounterExternalId = string.Empty;
         _encounterType = "outpatient";
         _encounterDepartmentId = string.Empty;
-        _encounterStartedAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
+        _encounterStartedAt = AdminDateTimeDisplay.Now().ToString("yyyy-MM-ddTHH:mm");
     }
 
     private void ResetProtocolForm()

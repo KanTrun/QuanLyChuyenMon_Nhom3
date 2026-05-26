@@ -118,8 +118,8 @@
     private string _filterAction = string.Empty;
     private string _filterActor = string.Empty;
     private string _filterTarget = string.Empty;
-    private string _fromIso = DateOnly.FromDateTime(DateTime.Today.AddDays(-30)).ToString("yyyy-MM-dd");
-    private string _toIso = DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd");
+    private string _fromIso = AdminDateTimeDisplay.Today().AddDays(-30).ToString("yyyy-MM-dd");
+    private string _toIso = AdminDateTimeDisplay.Today().ToString("yyyy-MM-dd");
     private List<AuditLog> _filtered = new();
     private IReadOnlyList<string> _actionCodes = Array.Empty<string>();
     private IReadOnlyList<string> _targetTypes = Array.Empty<string>();

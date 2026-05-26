@@ -238,7 +238,7 @@
             var username = _email.Trim().Split('@')[0].ToLowerInvariant();
             if (Db.Users.Any(u => u.Username == username))
             {
-                username = username + DateTime.Now.ToString("HHmmss");
+                username = username + AdminDateTimeDisplay.Now().ToString("HHmmss");
             }
 
             var newUser = new AppUser

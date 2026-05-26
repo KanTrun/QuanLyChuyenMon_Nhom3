@@ -196,7 +196,7 @@
                                 <div class="admin-activity-headline">
                                     <span class="admin-activity-headline-text">@FormatAuditAction(log)</span>
                                 </div>
-                                <span class="admin-activity-time">@log.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                <span class="admin-activity-time">@AdminDateTimeDisplay.DateTime(log.OccurredAt)</span>
                             </div>
                         </li>
                     }
@@ -228,8 +228,6 @@
 </section>
 
 @code {
-    private static readonly string[] _viDays = { "Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy" };
-
     private string _displayName = "Đang tải...";
     private string _dateLine = string.Empty;
 
@@ -260,8 +258,7 @@
 
     protected override void OnInitialized()
     {
-        var now = DateTime.Now;
-        _dateLine = $"{_viDays[(int)now.DayOfWeek]}, ngày {now:dd/MM/yyyy}";
+        _dateLine = AdminDateTimeDisplay.TodayLine();
 
         UserContext.StateChanged += OnUserChanged;
         DataStore.StateChanged += OnDataChanged;
@@ -303,14 +300,20 @@
             .Take(8)
             .ToList();
 
+        var today = AdminDateTimeDisplay.Today();
+        var monthAnchor = new DateTime(today.Year, today.Month, 1);
         var monthStarts = Enumerable.Range(0, 6)
-            .Select(i => new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(i - 5))
+            .Select(i => monthAnchor.AddMonths(i - 5))
             .ToList();
         var monthlyCounts = monthStarts
             .Select(month => new
             {
                 Label = month.ToString("MM/yy"),
-                Count = DataStore.Procedures.Count(p => p.CreatedAt >= month && p.CreatedAt < month.AddMonths(1))
+                Count = DataStore.Procedures.Count(p =>
+                {
+                    var createdAt = AdminDateTimeDisplay.ToDisplayTime(p.CreatedAt);
+                    return createdAt >= month && createdAt < month.AddMonths(1);
+                })
             })
             .ToList();
         var maxMonthlyCount = Math.Max(1, monthlyCounts.Max(p => p.Count));

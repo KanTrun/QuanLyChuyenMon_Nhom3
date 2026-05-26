@@ -152,8 +152,8 @@
 </section>
 
 @code {
-    private DateOnly _from = DateOnly.FromDateTime(DateTime.Today.AddDays(-30));
-    private DateOnly _to = DateOnly.FromDateTime(DateTime.Today);
+    private DateOnly _from = AdminDateTimeDisplay.Today().AddDays(-30);
+    private DateOnly _to = AdminDateTimeDisplay.Today();
     private string _fromIso = string.Empty;
     private string _toIso = string.Empty;
     private string _deptKey = string.Empty;
@@ -263,7 +263,7 @@
         }
         try
         {
-            var filename = $"bao-cao-tieu-thu-{DateTime.Now:yyyyMMdd-HHmm}.csv";
+            var filename = $"bao-cao-tieu-thu-{AdminDateTimeDisplay.Now():yyyyMMdd-HHmm}.csv";
             await JS.InvokeVoidAsync("qlcmShell.downloadCsv", filename, sb.ToString());
             Toasts.Show("Đã xuất báo cáo", filename, ToastVariant.Success);
         }

@@ -57,7 +57,7 @@ public sealed class CatalogService : ICatalogService
         var next = record with
         {
             Id = record.Id == Guid.Empty ? Guid.NewGuid() : record.Id,
-            UpdatedAt = DateTime.Now,
+            UpdatedAt = DateTime.UtcNow,
         };
         lock (_gate) _items.Add(next);
         Raise();
@@ -72,7 +72,7 @@ public sealed class CatalogService : ICatalogService
         {
             var index = _items.FindIndex(s => s.Id == id);
             if (index < 0) throw new KeyNotFoundException($"Không tìm thấy kỹ thuật {id}.");
-            next = updated with { Id = id, UpdatedAt = DateTime.Now };
+            next = updated with { Id = id, UpdatedAt = DateTime.UtcNow };
             _items[index] = next;
         }
         Raise();
@@ -85,7 +85,7 @@ public sealed class CatalogService : ICatalogService
         {
             var index = _items.FindIndex(s => s.Id == id);
             if (index < 0) return;
-            _items[index] = _items[index] with { Status = CatalogStatus.NgungSuDung, UpdatedAt = DateTime.Now };
+            _items[index] = _items[index] with { Status = CatalogStatus.NgungSuDung, UpdatedAt = DateTime.UtcNow };
         }
         Raise();
     }
@@ -103,7 +103,7 @@ public sealed class CatalogService : ICatalogService
                 return; // ignore duplicates by code
             }
             var nextNorms = current.ResourceNorms.Append(norm).ToList();
-            _items[index] = current with { ResourceNorms = nextNorms, UpdatedAt = DateTime.Now };
+            _items[index] = current with { ResourceNorms = nextNorms, UpdatedAt = DateTime.UtcNow };
         }
         Raise();
     }
@@ -119,7 +119,7 @@ public sealed class CatalogService : ICatalogService
             var nextNorms = current.ResourceNorms
                 .Where(r => !string.Equals(r.ResourceCode, resourceCode, StringComparison.OrdinalIgnoreCase))
                 .ToList();
-            _items[index] = current with { ResourceNorms = nextNorms, UpdatedAt = DateTime.Now };
+            _items[index] = current with { ResourceNorms = nextNorms, UpdatedAt = DateTime.UtcNow };
         }
         Raise();
     }
@@ -211,7 +211,7 @@ public sealed class CatalogService : ICatalogService
                 var record = service with { ResourceNorms = norms };
                 if (index < 0)
                 {
-                    _items.Add(record with { Id = Guid.NewGuid(), UpdatedAt = DateTime.Now });
+                    _items.Add(record with { Id = Guid.NewGuid(), UpdatedAt = DateTime.UtcNow });
                 }
                 else
                 {
@@ -226,7 +226,7 @@ public sealed class CatalogService : ICatalogService
                         Department = record.Department,
                         Status = record.Status,
                         ResourceNorms = mergedNorms,
-                        UpdatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.UtcNow,
                     };
                 }
                 imported++;

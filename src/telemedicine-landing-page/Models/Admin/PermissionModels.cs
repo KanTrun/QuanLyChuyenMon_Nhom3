@@ -26,7 +26,7 @@ public sealed record RoleRecord
     public Department Department { get; init; }
     public IReadOnlyList<PermissionGrant> Permissions { get; init; } = Array.Empty<PermissionGrant>();
     public int MemberCount { get; init; }
-    public DateTime UpdatedAt { get; init; } = DateTime.Now;
+    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
 }
 
 /// <summary>A user account assigned to one or more roles.</summary>

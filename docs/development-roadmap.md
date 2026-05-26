@@ -18,14 +18,14 @@ Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-
 | Business UI remediation | Complete | Admin pages use hospital-facing labels, approval-backed permission changes, active-version drafts, resource-unit guards and compact technical details |
 | Business workflow completion | Complete | Runtime procedure guard, scheduled permission apply job, inventory snapshot service, ICD protocol suggestions and persona route gating |
 | Seed data | Complete | `scripts/seed-realistic-data.sql` nạp dữ liệu mẫu thực tế cho demo/QA |
-| Verification | Complete | Release build/test passed, 145 tests after dashboard operations chart |
+| Verification | Complete | Release build/test passed, 149 tests after Vietnam time timeline fix |
 
 ## Legacy Landing Cleanup Track
 | Item | Status | Output |
 |---|---|---|
 | Runtime removal | Complete | Removed landing sections/content service/link options/CSS from active app |
 | Entry route | Complete | `/` shows a QLCM Pro intro with login/register CTAs so users see the professional product entry first |
-| Verification | Complete | Release build/test passed, 145 tests; Docker web healthy on `localhost:8080` |
+| Verification | Complete | Release build/test passed, 149 tests; Docker web healthy on `localhost:8080` |
 
 ## Procedure Module Roadmap
 Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này đã có source triển khai trong Blazor app và đã được kiểm tra bằng build/test Release.
@@ -47,7 +47,7 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này �
 | Architecture blueprint | 100% |
 | Implementation plan | 100% |
 | Code implementation | 100% for implementation-plan scope |
-| Test automation | Release build/test passed, 144 tests after intro/dashboard remediation |
+| Test automation | Release build/test passed, 149 tests after Vietnam time timeline fix |
 | Deployment readiness | Docker Compose web/sql/db-init verified locally; target DB execution/config remains deployment task |
 
 ## Dependencies

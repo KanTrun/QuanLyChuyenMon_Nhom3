@@ -8,12 +8,18 @@
 | Ocean auth theme | Shifted `/login` and `/register` to a cohesive ocean-blue palette with reduced glow, softer shadows and cleaner form panels |
 | Premium GSAP auth experience | Upgraded `/login` and `/register` with layered clinical glass panels, subtle 3D floating depth, stronger shadows, responsive polish and password visibility controls |
 | Auth motion reliability | Added visible-target filtering and final reveal cleanup so GSAP intro motion respects mobile breakpoints and never leaves form controls hidden after hydration |
+| Vietnam time timeline | Standardized system timeline rendering, date filters, report windows and chat/admin timestamps on Vietnam time while keeping persisted timestamps UTC |
+
+### Fixed
+| Item | Description |
+|---|---|
+| Docker/server timezone drift | Replaced direct `DateTime.Now`, `DateTime.Today` and `.ToLocalTime()` usage in runtime paths so dashboard activity and reports no longer depend on container host timezone |
 
 ### Verification
 | Command | Result |
 |---|---|
-| `dotnet build .\telemedicine-landing-page.sln -c Release --no-restore` | Passed, 0 warnings, 0 errors |
-| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 145 tests |
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 149 tests |
 | `node --check .\src\telemedicine-landing-page\wwwroot\js\animations.js` | Passed |
 | `docker compose up --build -d web` | Passed, image `quanlychuyenmon_nhom3-web:latest` rebuilt and web container healthy on `localhost:8080` |
 | Playwright screenshot smoke check | Passed, `/`, `/login` and `/register` render ocean-blue pre-auth/auth UI with restrained shadows |

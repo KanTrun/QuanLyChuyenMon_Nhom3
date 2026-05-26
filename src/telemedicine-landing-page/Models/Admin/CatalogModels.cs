@@ -61,7 +61,7 @@ public sealed record TechnicalServiceRecord
     public required Department Department { get; init; }
     public required CatalogStatus Status { get; init; }
     public IReadOnlyList<ResourceNorm> ResourceNorms { get; init; } = Array.Empty<ResourceNorm>();
-    public DateTime UpdatedAt { get; init; } = DateTime.Now;
+    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
 }
 
 /// <summary>Filter applied to the technical service list page.</summary>

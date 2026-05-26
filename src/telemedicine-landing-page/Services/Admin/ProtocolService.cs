@@ -43,7 +43,7 @@ public sealed class ProtocolService : IProtocolService
         var next = record with
         {
             Id = record.Id == Guid.Empty ? Guid.NewGuid() : record.Id,
-            UpdatedAt = DateTime.Now,
+            UpdatedAt = DateTime.UtcNow,
         };
         lock (_gate) _items.Add(next);
         Raise();
@@ -58,7 +58,7 @@ public sealed class ProtocolService : IProtocolService
         {
             var index = _items.FindIndex(p => p.Id == id);
             if (index < 0) throw new KeyNotFoundException($"Không tìm thấy phác đồ {id}.");
-            next = updated with { Id = id, UpdatedAt = DateTime.Now };
+            next = updated with { Id = id, UpdatedAt = DateTime.UtcNow };
             _items[index] = next;
         }
         Raise();
@@ -71,7 +71,7 @@ public sealed class ProtocolService : IProtocolService
         {
             var index = _items.FindIndex(p => p.Id == id);
             if (index < 0) return;
-            _items[index] = _items[index] with { Status = CatalogStatus.NgungSuDung, UpdatedAt = DateTime.Now };
+            _items[index] = _items[index] with { Status = CatalogStatus.NgungSuDung, UpdatedAt = DateTime.UtcNow };
         }
         Raise();
     }
@@ -87,7 +87,7 @@ public sealed class ProtocolService : IProtocolService
             var next = _items[index] with
             {
                 ApplicationCount = _items[index].ApplicationCount + 1,
-                UpdatedAt = DateTime.Now,
+                UpdatedAt = DateTime.UtcNow,
             };
             _items[index] = next;
             entry = new ProtocolApplication(
@@ -95,7 +95,7 @@ public sealed class ProtocolService : IProtocolService
                 protocolId,
                 patientName.Trim(),
                 string.IsNullOrWhiteSpace(outcome) ? "Đang theo dõi" : outcome.Trim(),
-                DateTime.Now);
+                DateTime.UtcNow);
             _applications.Add(entry);
         }
         Raise();

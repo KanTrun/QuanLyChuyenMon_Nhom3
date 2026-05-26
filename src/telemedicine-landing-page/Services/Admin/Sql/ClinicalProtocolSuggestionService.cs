@@ -1,4 +1,5 @@
 using System.Text.Json;
+using TelemedicineLandingPage.Models.Admin;
 using TelemedicineLandingPage.Models.Admin.Sql;
 
 namespace TelemedicineLandingPage.Services.Admin.Sql;
@@ -167,7 +168,7 @@ public sealed class ClinicalProtocolSuggestionService : IClinicalProtocolSuggest
     private static bool AgeMatches(DateOnly? birthDate, JsonElement from, JsonElement to)
     {
         if (!birthDate.HasValue) return false;
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = AdminDateTimeDisplay.Today();
         var age = today.Year - birthDate.Value.Year;
         if (birthDate.Value.AddYears(age) > today) age--;
         return (!TryGetJsonInt(from, out var min) || age >= min) &&

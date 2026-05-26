@@ -32,5 +32,5 @@ public sealed record ClinicalProtocolRecord
     public DateOnly EffectiveFrom { get; init; }
     public DateOnly? EffectiveTo { get; init; }
     public int ApplicationCount { get; init; }
-    public DateTime UpdatedAt { get; init; } = DateTime.Now;
+    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
 }

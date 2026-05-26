@@ -65,7 +65,7 @@ public sealed class ReportService : IReportService
                 MidpointRounding.AwayFromZero);
         var onlineCount = users.Count == 0
             ? 0
-            : Math.Max(0, users.Count(u => u.IsActive && u.LastLogin is { } last && (DateTime.Now - last).TotalHours < 8));
+            : Math.Max(0, users.Count(u => u.IsActive && u.LastLogin is { } last && (AdminDateTimeDisplay.Now() - AdminDateTimeDisplay.ToDisplayTime(last)).TotalHours < 8));
 
         return new List<DashboardKpi>
         {
@@ -154,7 +154,7 @@ public sealed class ReportService : IReportService
     public IReadOnlyList<(DateOnly Day, int Count)> GetActivityTrend(int days)
     {
         if (days <= 0) days = 7;
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = AdminDateTimeDisplay.Today();
         var result = new List<(DateOnly Day, int Count)>(days);
         for (var i = days - 1; i >= 0; i--)
         {

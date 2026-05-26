@@ -328,8 +328,8 @@
     private string _statusFilter = string.Empty;
     private string _departmentFilter = string.Empty;
     private string _serviceFilter = string.Empty;
-    private string _fromIso = DateOnly.FromDateTime(DateTime.Today.AddDays(-30)).ToString("yyyy-MM-dd");
-    private string _toIso = DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd");
+    private string _fromIso = AdminDateTimeDisplay.Today().AddDays(-30).ToString("yyyy-MM-dd");
+    private string _toIso = AdminDateTimeDisplay.Today().ToString("yyyy-MM-dd");
 
     private bool _drawerOpen;
     private Sql.TechnicalOrder? _selected;

@@ -21,8 +21,8 @@ public sealed class SqlReportService : IReportService
 
     public IReadOnlyList<ConsumptionReportRow> GenerateConsumptionReportForDepartment(DateOnly from, DateOnly to, Guid? departmentId)
     {
-        var fromUtc = from.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-        var toUtc = to.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var fromUtc = AdminDateTimeDisplay.DisplayDateStartUtc(from);
+        var toUtc = AdminDateTimeDisplay.DisplayDateEndExclusiveUtc(to);
         var period = $"{from:dd/MM/yyyy} - {to:dd/MM/yyyy}";
         var departmentScope = ResolveDepartmentScope(departmentId);
 
@@ -127,14 +127,14 @@ public sealed class SqlReportService : IReportService
             days = 7;
         }
 
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = AdminDateTimeDisplay.Today();
         var start = today.AddDays(-(days - 1));
-        var startUtc = start.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var startUtc = AdminDateTimeDisplay.DisplayDateStartUtc(start);
 
         var counts = _db.AuditLogs
             .Where(log => log.OccurredAt >= startUtc)
             .AsEnumerable()
-            .GroupBy(log => DateOnly.FromDateTime(log.OccurredAt.ToLocalTime()))
+            .GroupBy(log => DateOnly.FromDateTime(AdminDateTimeDisplay.ToDisplayTime(log.OccurredAt)))
             .ToDictionary(g => g.Key, g => g.Count());
 
         return Enumerable.Range(0, days)

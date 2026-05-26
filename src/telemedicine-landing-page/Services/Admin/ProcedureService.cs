@@ -73,7 +73,7 @@ public sealed class ProcedureService : IProcedureService
         var next = record with
         {
             Id = record.Id == Guid.Empty ? Guid.NewGuid() : record.Id,
-            UpdatedAt = DateTime.Now,
+            UpdatedAt = DateTime.UtcNow,
         };
         lock (_gate)
         {
@@ -91,7 +91,7 @@ public sealed class ProcedureService : IProcedureService
         {
             var index = _items.FindIndex(p => p.Id == id);
             if (index < 0) throw new KeyNotFoundException($"Không tìm thấy quy trình với mã {id}.");
-            next = updated with { Id = id, UpdatedAt = DateTime.Now };
+            next = updated with { Id = id, UpdatedAt = DateTime.UtcNow };
             _items[index] = next;
         }
         Raise();
@@ -115,7 +115,7 @@ public sealed class ProcedureService : IProcedureService
             Status = ProcedureStatus.DaBanHanh,
             UpdatedBy = approver,
             RejectionReason = null,
-            EffectiveFrom = p.EffectiveFrom == default ? DateOnly.FromDateTime(DateTime.Today) : p.EffectiveFrom,
+            EffectiveFrom = p.EffectiveFrom == default ? AdminDateTimeDisplay.Today() : p.EffectiveFrom,
         });
     }
 
@@ -135,7 +135,7 @@ public sealed class ProcedureService : IProcedureService
         {
             var index = _items.FindIndex(p => p.Id == id);
             if (index < 0) return;
-            _items[index] = mutator(_items[index]) with { UpdatedAt = DateTime.Now };
+            _items[index] = mutator(_items[index]) with { UpdatedAt = DateTime.UtcNow };
         }
         Raise();
     }
@@ -144,7 +144,7 @@ public sealed class ProcedureService : IProcedureService
 
     private static List<ProcedureRecord> SeedData()
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = AdminDateTimeDisplay.Today();
         return new List<ProcedureRecord>
         {
             new()
