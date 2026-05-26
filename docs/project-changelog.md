@@ -4,6 +4,8 @@
 ### Improved
 | Item | Description |
 |---|---|
+| Ocean pre-auth entry | Reworked `/` into a clearer ocean-blue entry portal with login/register choices, product console preview and restrained card elevation |
+| Ocean auth theme | Shifted `/login` and `/register` to a cohesive ocean-blue palette with reduced glow, softer shadows and cleaner form panels |
 | Premium GSAP auth experience | Upgraded `/login` and `/register` with layered clinical glass panels, subtle 3D floating depth, stronger shadows, responsive polish and password visibility controls |
 | Auth motion reliability | Added visible-target filtering and final reveal cleanup so GSAP intro motion respects mobile breakpoints and never leaves form controls hidden after hydration |
 
@@ -14,7 +16,7 @@
 | `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 145 tests |
 | `node --check .\src\telemedicine-landing-page\wwwroot\js\animations.js` | Passed |
 | `docker compose up --build -d web` | Passed, image `quanlychuyenmon_nhom3-web:latest` rebuilt and web container healthy on `localhost:8080` |
-| Playwright screenshot smoke check | Passed, `/login` desktop and `/register` mobile render polished auth UI with password-eye controls |
+| Playwright screenshot smoke check | Passed, `/`, `/login` and `/register` render ocean-blue pre-auth/auth UI with restrained shadows |
 
 ## 2026-05-25
 ### Improved

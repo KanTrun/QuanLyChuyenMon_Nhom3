@@ -5,7 +5,9 @@
     const revealSelectors = '.reveal, .reveal-left, .reveal-right, .reveal-scale, .gold-line';
     const gsapCdnUrl = 'https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js';
     const initializedAuthPages = new WeakSet();
+    const initializedIntroPages = new WeakSet();
     let activeAuthMatchMedia = null;
+    let activeIntroMatchMedia = null;
     let gsapLoadPromise = null;
 
     function prefersReducedMotion() {
@@ -171,6 +173,12 @@
             if (assuranceItems.length) {
                 intro.from(assuranceItems, { autoAlpha: 0, y: 8, stagger: 0.04, duration: 0.24 }, 0.76);
             }
+            gsap.delayedCall(1.8, function () {
+                const brandRevealTargets = [brandContent, productRow, logo, statusCard]
+                    .concat(stripItems, features, meterBars)
+                    .filter(Boolean);
+                gsap.set(brandRevealTargets, { autoAlpha: 1, clearProps: 'opacity,visibility' });
+            });
             if (routePill || formItems.length || assuranceItems.length) {
                 gsap.delayedCall(1.8, function () {
                     const formRevealTargets = [routePill].concat(formItems, assuranceItems).filter(Boolean);
@@ -181,6 +189,73 @@
             startAuthFloatingMotion(page, gsap, logo, planes, rings, signals, statusCard, formAura);
             initAuthPointerParallax(page, gsap, brandContent, formWrapper, statusCard);
             initAuthFieldMotion(page, gsap);
+        });
+    }
+
+    function initPreAuthPage() {
+        const page = document.querySelector('[data-preauth-page]');
+        if (!page || initializedIntroPages.has(page)) return;
+
+        if (prefersReducedMotion()) {
+            initializedIntroPages.add(page);
+            return;
+        }
+
+        if (!window.gsap) {
+            loadGsap().then(initPreAuthPage).catch(function () {
+                initializedIntroPages.add(page);
+            });
+            return;
+        }
+
+        initializedIntroPages.add(page);
+        const gsap = window.gsap;
+        if (activeIntroMatchMedia) {
+            activeIntroMatchMedia.revert();
+            activeIntroMatchMedia = null;
+        }
+
+        const mm = gsap.matchMedia();
+        activeIntroMatchMedia = mm;
+
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+            const brand = selectVisibleOne(page, '.qlcm-intro-brand');
+            const navActions = selectVisible(page, '.qlcm-intro-nav-actions a');
+            const copyItems = selectVisible(page, '.qlcm-intro-eyebrow, .qlcm-intro-copy h1, .qlcm-intro-lead, .qlcm-intro-actions');
+            const entryItems = selectVisible(page, '.qlcm-intro-entry a');
+            const preview = selectVisibleOne(page, '.qlcm-intro-preview');
+            const previewItems = selectVisible(page, '.qlcm-preview-status, .qlcm-preview-kpi, .qlcm-preview-workflow div');
+            const modules = selectVisible(page, '.qlcm-intro-modules article');
+
+            gsap.set([preview].filter(Boolean), { transformPerspective: 1000, transformStyle: 'preserve-3d' });
+
+            const intro = gsap.timeline({ defaults: { ease: 'power3.out' } });
+            if (brand) {
+                intro.from(brand, { autoAlpha: 0, y: -10, duration: 0.42 });
+            }
+            if (navActions.length) {
+                intro.from(navActions, { autoAlpha: 0, y: -8, stagger: 0.05, duration: 0.32 }, '-=0.26');
+            }
+            if (copyItems.length) {
+                intro.from(copyItems, { autoAlpha: 0, y: 18, stagger: 0.07, duration: 0.52 }, '-=0.12');
+            }
+            if (entryItems.length) {
+                intro.from(entryItems, { autoAlpha: 0, x: -14, stagger: 0.06, duration: 0.36 }, '-=0.28');
+            }
+            if (preview) {
+                intro.from(preview, { autoAlpha: 0, y: 22, rotationY: -4, duration: 0.6 }, 0.24);
+            }
+            if (previewItems.length) {
+                intro.from(previewItems, { autoAlpha: 0, y: 10, stagger: 0.045, duration: 0.32 }, 0.58);
+            }
+            if (modules.length) {
+                intro.from(modules, { autoAlpha: 0, y: 14, stagger: 0.055, duration: 0.36 }, 0.82);
+            }
+            gsap.delayedCall(1.6, function () {
+                const revealTargets = [brand, preview].concat(navActions, copyItems, entryItems, previewItems, modules).filter(Boolean);
+                gsap.set(revealTargets, { autoAlpha: 1, clearProps: 'opacity,visibility,transform' });
+            });
+
         });
     }
 
@@ -369,6 +444,7 @@
         initScrollReveal();
         initStickyHeader();
         initSmoothScroll();
+        initPreAuthPage();
         initAuthPage();
     }
 
