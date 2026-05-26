@@ -1,5 +1,21 @@
 # Project Changelog
 
+## 2026-05-26
+### Improved
+| Item | Description |
+|---|---|
+| Premium GSAP auth experience | Upgraded `/login` and `/register` with layered clinical glass panels, subtle 3D floating depth, stronger shadows, responsive polish and password visibility controls |
+| Auth motion reliability | Added visible-target filtering and final reveal cleanup so GSAP intro motion respects mobile breakpoints and never leaves form controls hidden after hydration |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release --no-restore` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 145 tests |
+| `node --check .\src\telemedicine-landing-page\wwwroot\js\animations.js` | Passed |
+| `docker compose up --build -d web` | Passed, image `quanlychuyenmon_nhom3-web:latest` rebuilt and web container healthy on `localhost:8080` |
+| Playwright screenshot smoke check | Passed, `/login` desktop and `/register` mobile render polished auth UI with password-eye controls |
+
 ## 2026-05-25
 ### Improved
 | Item | Description |

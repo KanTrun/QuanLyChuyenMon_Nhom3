@@ -17,11 +17,24 @@
 <div class="login-page" data-auth-page data-auth-variant="register">
     <section class="login-brand" aria-label="QLCM Pro">
         <div class="auth-grid-lines" aria-hidden="true"></div>
+        <div class="auth-depth-field" aria-hidden="true">
+            <span class="auth-plane auth-plane-one"></span>
+            <span class="auth-plane auth-plane-two"></span>
+            <span class="auth-plane auth-plane-three"></span>
+            <span class="auth-ring auth-ring-one"></span>
+            <span class="auth-ring auth-ring-two"></span>
+        </div>
         <div class="auth-signal auth-signal-one" aria-hidden="true"></div>
         <div class="auth-signal auth-signal-two" aria-hidden="true"></div>
 
         <div class="login-brand-content">
-            <div class="login-logo" data-auth-float>+</div>
+            <div class="auth-product-row">
+                <div class="login-logo" data-auth-float>+</div>
+                <div class="auth-product-copy">
+                    <span>Account provisioning</span>
+                    <strong>Approval required</strong>
+                </div>
+            </div>
             <p class="auth-kicker">Tài khoản chuyên môn</p>
             <h1>Gia nhập QLCM Pro</h1>
             <p>Tài khoản mới sẽ được ghi nhận và chờ quản trị viên kích hoạt để bảo vệ dữ liệu bệnh viện.</p>
@@ -52,11 +65,28 @@
                     <span>Thông báo tự động đến quản trị viên phụ trách</span>
                 </div>
             </div>
+
+            <div class="auth-status-card" data-auth-float-layer>
+                <div>
+                    <span class="auth-status-label">Luồng kích hoạt</span>
+                    <strong>Đăng ký → duyệt → sử dụng</strong>
+                </div>
+                <div class="auth-status-meter" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
         </div>
     </section>
 
     <section class="login-form-panel" aria-label="Đăng ký">
+        <div class="auth-form-aura" aria-hidden="true"></div>
         <div class="login-form-wrapper register-form-wrapper">
+            <div class="auth-route-pill">
+                <span></span>
+                Yêu cầu tài khoản mới
+            </div>
             <div class="login-form-header">
                 <p class="eyebrow">Đăng ký mới</p>
                 <h2>Tạo tài khoản hệ thống</h2>
@@ -150,6 +180,11 @@
             <p class="login-footer">
                 Đã có tài khoản? <a href="/login">Đăng nhập</a>
             </p>
+            <div class="auth-assurance">
+                <span>Chờ kích hoạt</span>
+                <span>Thông báo quản trị</span>
+                <span>RBAC</span>
+            </div>
         </div>
     </section>
 </div>
