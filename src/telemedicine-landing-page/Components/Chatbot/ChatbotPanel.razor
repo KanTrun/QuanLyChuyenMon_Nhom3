@@ -1,8 +1,10 @@
+@using System.Text.Json
 @inject IAdminNavigationState NavState
 @inject IChatbotService Chatbot
 @inject IUserPreferencesService Preferences
 @inject IConfirmDialogService Confirm
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
 @implements IAsyncDisposable
 
 @if (NavState.IsChatbotOpen)
@@ -45,6 +47,12 @@
                 Tin nhắn mới ↓
             </button>
         }
+
+        <div class="chatbot-quick-actions" aria-label="Hanh dong nhanh">
+            <button type="button" @onclick='() => UsePrompt("Tom tat quy trinh dang ky tai khoan den tao ho so lam sang")'>Quy trinh</button>
+            <button type="button" @onclick="OpenClinicalDraftAsync">Tao ho so</button>
+            <button type="button" @onclick='() => NavigateSafe("/admin/phac-do")'>Phac do</button>
+        </div>
 
         <form class="chatbot-composer" @onsubmit="OnSendAsync" @onsubmit:preventDefault>
             <textarea id="@TextareaId"
@@ -178,6 +186,51 @@
     }
 
     private async Task OnCancelAsync() => await Chatbot.CancelAsync();
+
+    private void UsePrompt(string prompt)
+    {
+        _draft = prompt;
+        _stickToBottom = true;
+    }
+
+    private async Task OpenClinicalDraftAsync()
+    {
+        var nonce = Guid.NewGuid().ToString("N");
+        var payload = JsonSerializer.Serialize(new
+        {
+            source = "chatbot",
+            applicationStatus = "draft",
+            patientName = "",
+            patientCode = "",
+            encounterCode = "",
+            diagnosisCode = ""
+        });
+
+        if (!ChatActionParser.TryCreate(ChatActionKind.NavigateWithDraft, "Tao ho so", "/admin/lam-sang", nonce, out var action))
+        {
+            return;
+        }
+
+        var stored = await SafeInvokeWithResultAsync<bool>("qlcmShell.setSessionJson", $"draft:{nonce}", payload);
+        if (stored != true)
+        {
+            return;
+        }
+
+        NavState.CloseChatbot();
+        Navigation.NavigateTo($"{action.Route}?draft_nonce={Uri.EscapeDataString(nonce)}");
+    }
+
+    private void NavigateSafe(string route)
+    {
+        if (!ChatActionParser.TryCreate(ChatActionKind.Navigate, route, route, null, out var action))
+        {
+            return;
+        }
+
+        NavState.CloseChatbot();
+        Navigation.NavigateTo(action.Route);
+    }
 
     private async Task OnClearAsync()
     {

@@ -270,6 +270,29 @@
         }
     }
 
+    function setSessionJson(key, json) {
+        if (!key || typeof json !== 'string') return false;
+        try {
+            window.sessionStorage.setItem(key, json);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function consumeSessionJson(key) {
+        if (!key) return null;
+        try {
+            var value = window.sessionStorage.getItem(key);
+            if (value !== null) {
+                window.sessionStorage.removeItem(key);
+            }
+            return value;
+        } catch (_) {
+            return null;
+        }
+    }
+
     // Apply the saved/preferred theme as early as possible so the first paint matches.
     try {
         var initial = getThemePreference();
@@ -293,6 +316,8 @@
         downloadCsv: downloadCsv,
         registerOutsideClick: registerOutsideClick,
         unregisterOutsideClick: unregisterOutsideClick,
+        setSessionJson: setSessionJson,
+        consumeSessionJson: consumeSessionJson,
         scrollToBottom: scrollToBottom,
         isAtBottom: isAtBottom,
         autoGrowTextarea: autoGrowTextarea,
