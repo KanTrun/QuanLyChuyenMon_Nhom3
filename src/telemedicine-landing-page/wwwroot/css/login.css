@@ -184,6 +184,14 @@
     font-weight: 850;
 }
 
+.login-logo img {
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+    border-radius: 6px;
+    display: block;
+}
+
 .auth-product-copy {
     display: grid;
     gap: 0.18rem;

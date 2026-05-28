@@ -83,13 +83,22 @@
 .admin-sidebar-brand-mark {
     width: 40px;
     height: 40px;
-    border-radius: 12px;
-    background: var(--gradient-primary);
-    color: #FFFFFF;
+    border-radius: 10px;
+    background: #FFFFFF;
+    border: 1px solid var(--color-border-subtle);
+    color: var(--color-primary-deep);
     display: grid;
     place-items: center;
     box-shadow: var(--shadow-accent);
     flex: 0 0 auto;
+    overflow: hidden;
+}
+
+.admin-sidebar-brand-mark img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    display: block;
 }
 
 .admin-sidebar-brand-text {
@@ -2135,8 +2144,36 @@
     outline-offset: 2px;
 }
 
-.chatbot-composer {
+.chatbot-quick-actions {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px 0;
+    background: var(--color-surface);
     border-top: 1px solid var(--color-border-subtle);
+}
+
+.chatbot-quick-actions button {
+    border: 1px solid var(--color-border-subtle);
+    background: var(--color-page);
+    color: var(--color-ink);
+    border-radius: var(--radius-pill);
+    padding: 5px 10px;
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.chatbot-quick-actions button:hover,
+.chatbot-quick-actions button:focus-visible {
+    border-color: var(--color-primary-light);
+    color: var(--color-primary-deep);
+    outline: 0;
+}
+
+.chatbot-composer {
+    border-top: 0;
     padding: 10px 12px;
     display: flex;
     flex-direction: column;
