@@ -43,5 +43,6 @@ public enum LoginAttemptStatus
     Success,
     InvalidCredentials,
     Inactive,
+    Rejected,
     PasswordNotSet
 }

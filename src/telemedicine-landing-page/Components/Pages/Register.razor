@@ -29,7 +29,7 @@
 
         <div class="login-brand-content">
             <div class="auth-product-row">
-                <div class="login-logo" data-auth-float>+</div>
+                <div class="login-logo" data-auth-float><img src="/brand/logo-hos.jpg" alt="" /></div>
                 <div class="auth-product-copy">
                     <span>Account provisioning</span>
                     <strong>Approval required</strong>
@@ -247,7 +247,8 @@
                 FullName = $"{_firstName.Trim()} {_lastName.Trim()}",
                 Email = _email.Trim(),
                 PasswordHash = CurrentUserContext.HashPassword(_password),
-                Status = "inactive"
+                Status = "inactive",
+                OnboardingStatus = "submitted"
             };
 
             Db.Users.Add(newUser);

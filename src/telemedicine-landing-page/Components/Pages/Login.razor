@@ -27,7 +27,7 @@
 
         <div class="login-brand-content">
             <div class="auth-product-row">
-                <div class="login-logo" data-auth-float>+</div>
+                <div class="login-logo" data-auth-float><img src="/brand/logo-hos.jpg" alt="" /></div>
                 <div class="auth-product-copy">
                     <span>Clinical command access</span>
                     <strong>Secure session</strong>
@@ -198,6 +198,12 @@
             if (loginResult.Status == LoginAttemptStatus.Inactive)
             {
                 _errorMessage = "Tài khoản đã được ghi nhận trong hệ thống nhưng chưa được quản trị viên kích hoạt.";
+                return;
+            }
+
+            if (loginResult.Status == LoginAttemptStatus.Rejected)
+            {
+                _errorMessage = "Yeu cau tai khoan nay da bi tu choi. Vui long lien he quan tri vien de cap nhat ho so.";
                 return;
             }
 

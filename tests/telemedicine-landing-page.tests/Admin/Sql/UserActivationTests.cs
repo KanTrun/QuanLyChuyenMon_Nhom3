@@ -95,6 +95,52 @@ public sealed class UserActivationTests
     }
 
     [Fact]
+    public void LoginByUsernameDetailed_ReturnsRejectedForRejectedOnboardingUser()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        db.Users.Add(new AppUser
+        {
+            Username = "rejected_user",
+            FullName = "Rejected User",
+            PasswordHash = CurrentUserContext.HashPassword("secret123"),
+            Status = "inactive",
+            OnboardingStatus = "rejected"
+        });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+
+        var result = context.LoginByUsernameDetailed("rejected_user", "secret123");
+
+        Assert.Equal(LoginAttemptStatus.Rejected, result.Status);
+        Assert.Null(result.User);
+        Assert.Null(context.CurrentUser);
+    }
+
+    [Fact]
+    public void LoginByUsernameDetailed_DoesNotRevealRejectedStatusForWrongPassword()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        db.Users.Add(new AppUser
+        {
+            Username = "rejected_wrong_password",
+            FullName = "Rejected Wrong Password",
+            PasswordHash = CurrentUserContext.HashPassword("secret123"),
+            Status = "inactive",
+            OnboardingStatus = "rejected"
+        });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+
+        var result = context.LoginByUsernameDetailed("rejected_wrong_password", "wrongpass");
+
+        Assert.Equal(LoginAttemptStatus.InvalidCredentials, result.Status);
+        Assert.Null(result.User);
+        Assert.Null(context.CurrentUser);
+    }
+
+    [Fact]
     public void LoginByUsernameDetailed_BlocksActiveAccountWithoutPassword()
     {
         using var db = TestDbHelper.CreateSeededContext();

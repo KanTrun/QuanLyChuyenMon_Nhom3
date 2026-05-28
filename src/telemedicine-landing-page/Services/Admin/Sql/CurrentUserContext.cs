@@ -26,7 +26,7 @@ public sealed class CurrentUserContext : ICurrentUserContext
 
     public void SetCurrentUser(Guid userId)
     {
-        var user = _db.Users.FirstOrDefault(u => u.UserId == userId && u.Status == "active")
+        var user = _db.Users.FirstOrDefault(u => u.UserId == userId && u.Status == "active" && u.OnboardingStatus == "active")
             ?? throw new InvalidOperationException("Người dùng không tồn tại hoặc đã bị vô hiệu hóa.");
         CurrentUser = user;
         StateChanged?.Invoke();
@@ -61,7 +61,10 @@ public sealed class CurrentUserContext : ICurrentUserContext
         if (candidate.PasswordHash != inputHash)
             return new LoginAttemptResult(LoginAttemptStatus.InvalidCredentials);
 
-        if (inactiveUser is not null)
+        if (string.Equals(candidate.OnboardingStatus, "rejected", StringComparison.OrdinalIgnoreCase))
+            return new LoginAttemptResult(LoginAttemptStatus.Rejected);
+
+        if (!string.Equals(candidate.OnboardingStatus, "active", StringComparison.OrdinalIgnoreCase) || inactiveUser is not null)
             return new LoginAttemptResult(LoginAttemptStatus.Inactive);
 
         CurrentUser = candidate;
