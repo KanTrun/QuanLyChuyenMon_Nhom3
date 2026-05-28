@@ -6,6 +6,7 @@
 ## Scope
 - Remove white logo frame/padding so the hospital logo fills its mark.
 - Fix clinical signature permission mismatch between UI guard and service.
+- Fix clinical signature DbContext concurrency crash during Blazor rerender.
 - Add Vietnamese accents for clinical signature labels/messages and related seed text.
 - Verify build/tests, update docs if needed, commit/push, then run Docker Compose.
 

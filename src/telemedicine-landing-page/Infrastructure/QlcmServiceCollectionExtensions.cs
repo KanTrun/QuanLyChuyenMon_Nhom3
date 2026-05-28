@@ -65,18 +65,21 @@ public static class QlcmServiceCollectionExtensions
 
     public static IServiceCollection AddQlcmDatabase(this IServiceCollection services, string connectionString)
     {
-        services.AddDbContext<MedDbContext>(options =>
-            options.UseSqlServer(connectionString, sqlOptions =>
-            {
-                sqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
-                sqlOptions.CommandTimeout(60);
-            }));
+        services.AddDbContext<MedDbContext>(ConfigureMedDbContext);
+        services.AddDbContextFactory<MedDbContext>(ConfigureMedDbContext);
 
         services.AddHealthChecks()
             .AddDbContextCheck<MedDbContext>("med-db")
             .AddSqlServer(connectionString, name: "sqlserver");
 
         return services;
+
+        void ConfigureMedDbContext(DbContextOptionsBuilder options)
+            => options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                sqlOptions.CommandTimeout(60);
+            });
     }
 
     public static IServiceCollection AddQlcmIdentityAndAuthorization(this IServiceCollection services)

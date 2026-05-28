@@ -14,6 +14,7 @@
 |---|---|
 | Clinical workflow | New protocol applications start as `draft`; signing moves `application_status` from `applied` to `signed`, revocation moves to `revoked` with reason |
 | Clinical signature UX | Removed the white logo frame, restored Vietnamese accents in signature labels/messages, and aligned signature permission aliases with the UI guard |
+| Clinical signature stability | Isolated signing/revoke database work with a DbContext factory so Blazor rerenders no longer race the page data store context |
 | Login UX | Rejected onboarding users now receive a rejected-specific login result/message instead of the generic inactive account message |
 
 ### Verification

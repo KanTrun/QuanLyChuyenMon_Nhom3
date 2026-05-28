@@ -22,16 +22,16 @@ public sealed class SignatureService : ISignatureService
         "PERM_CLINICAL_execute"
     ];
 
-    private readonly MedDbContext _db;
+    private readonly IDbContextFactory<MedDbContext> _dbFactory;
     private readonly EffectivePermissionResolver _permissions;
     private readonly IWorkflowGuard<PatientProtocolApplication, string> _workflow;
 
     public SignatureService(
-        MedDbContext db,
+        IDbContextFactory<MedDbContext> dbFactory,
         EffectivePermissionResolver permissions,
         IWorkflowGuard<PatientProtocolApplication, string> workflow)
     {
-        _db = db;
+        _dbFactory = dbFactory;
         _permissions = permissions;
         _workflow = workflow;
     }
@@ -50,11 +50,13 @@ public sealed class SignatureService : ISignatureService
         if (!CanSign(signerUserId, signerUsername))
             return (SignatureResult.Unauthorized, null);
 
-        var existing = await GetSignatureAsync(targetType, targetId, cancellationToken);
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+
+        var existing = await GetSignatureAsync(db, targetType, targetId, cancellationToken);
         if (existing is not null)
             return (SignatureResult.AlreadySigned, existing);
 
-        var target = await _db.PatientProtocolApplications
+        var target = await db.PatientProtocolApplications
             .FirstOrDefaultAsync(a => a.PatientProtocolApplicationId == targetId, cancellationToken);
         if (target is null)
             return (SignatureResult.TargetNotFound, null);
@@ -78,13 +80,13 @@ public sealed class SignatureService : ISignatureService
             CorrelationId = correlationId
         };
 
-        _db.SignatureRecords.Add(record);
-        _db.PatientProtocolApplications.Entry(target).CurrentValues.SetValues(target with
+        db.SignatureRecords.Add(record);
+        db.PatientProtocolApplications.Entry(target).CurrentValues.SetValues(target with
         {
             ApplicationStatus = "signed",
             AppliedAt = target.AppliedAt ?? signedAt
         });
-        _db.AuditLogs.Add(new AuditLog
+        db.AuditLogs.Add(new AuditLog
         {
             CorrelationId = correlationId,
             ActorUserId = signerUserId,
@@ -99,15 +101,25 @@ public sealed class SignatureService : ISignatureService
             })
         });
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
         return (SignatureResult.Created, record);
     }
 
-    public Task<SignatureRecord?> GetSignatureAsync(
+    public async Task<SignatureRecord?> GetSignatureAsync(
         string targetType,
         Guid targetId,
         CancellationToken cancellationToken = default)
-        => _db.SignatureRecords
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        return await GetSignatureAsync(db, targetType, targetId, cancellationToken);
+    }
+
+    private static Task<SignatureRecord?> GetSignatureAsync(
+        MedDbContext db,
+        string targetType,
+        Guid targetId,
+        CancellationToken cancellationToken)
+        => db.SignatureRecords
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.TargetType == targetType && s.TargetId == targetId, cancellationToken);
 
@@ -126,7 +138,9 @@ public sealed class SignatureService : ISignatureService
         if (!CanRevoke(actorUserId, actorUsername))
             return SignatureResult.Unauthorized;
 
-        var target = await _db.PatientProtocolApplications
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+
+        var target = await db.PatientProtocolApplications
             .FirstOrDefaultAsync(a => a.PatientProtocolApplicationId == targetId, cancellationToken);
         if (target is null)
             return SignatureResult.TargetNotFound;
@@ -134,11 +148,11 @@ public sealed class SignatureService : ISignatureService
             return SignatureResult.InvalidState;
 
         var correlationId = Guid.NewGuid();
-        _db.PatientProtocolApplications.Entry(target).CurrentValues.SetValues(target with
+        db.PatientProtocolApplications.Entry(target).CurrentValues.SetValues(target with
         {
             ApplicationStatus = "revoked"
         });
-        _db.AuditLogs.Add(new AuditLog
+        db.AuditLogs.Add(new AuditLog
         {
             CorrelationId = correlationId,
             ActorUserId = actorUserId,
@@ -149,7 +163,7 @@ public sealed class SignatureService : ISignatureService
             MetadataJson = JsonSerializer.Serialize(new { Reason = reason.Trim() })
         });
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
         return SignatureResult.Revoked;
     }
 
