@@ -48,10 +48,10 @@
             </button>
         }
 
-        <div class="chatbot-quick-actions" aria-label="Hanh dong nhanh">
-            <button type="button" @onclick='() => UsePrompt("Tom tat quy trinh dang ky tai khoan den tao ho so lam sang")'>Quy trinh</button>
-            <button type="button" @onclick="OpenClinicalDraftAsync">Tao ho so</button>
-            <button type="button" @onclick='() => NavigateSafe("/admin/phac-do")'>Phac do</button>
+        <div class="chatbot-quick-actions" aria-label="Hành động nhanh">
+            <button type="button" @onclick='() => UsePrompt("Tóm tắt quy trình đăng ký tài khoản đến tạo hồ sơ lâm sàng")'>Quy trình</button>
+            <button type="button" @onclick="OpenClinicalDraftAsync">Tạo hồ sơ</button>
+            <button type="button" @onclick='() => NavigateSafe("/admin/phac-do")'>Phác đồ</button>
         </div>
 
         <form class="chatbot-composer" @onsubmit="OnSendAsync" @onsubmit:preventDefault>
@@ -206,7 +206,7 @@
             diagnosisCode = ""
         });
 
-        if (!ChatActionParser.TryCreate(ChatActionKind.NavigateWithDraft, "Tao ho so", "/admin/lam-sang", nonce, out var action))
+        if (!ChatActionParser.TryCreate(ChatActionKind.NavigateWithDraft, "Tạo hồ sơ", "/admin/lam-sang", nonce, out var action))
         {
             return;
         }

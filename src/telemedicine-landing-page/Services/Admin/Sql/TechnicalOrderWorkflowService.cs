@@ -31,7 +31,7 @@ public sealed class TechnicalOrderWorkflowService : ITechnicalOrderWorkflowServi
             throw MedDomainException.Constraint(
                 "CK_technical_order_transition",
                 50027,
-                "Trang thai chi dinh ky thuat khong the chuyen truc tiep.");
+                "Trạng thái chỉ định kỹ thuật không thể chuyển trực tiếp.");
         }
 
         var updated = order with

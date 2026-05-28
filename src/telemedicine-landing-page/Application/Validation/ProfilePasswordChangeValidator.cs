@@ -10,9 +10,9 @@ public sealed class ProfilePasswordChangeValidator : AbstractValidator<ProfilePa
         RuleFor(command => command.OldPassword)
             .Must((command, oldPassword) => !command.HasExistingPassword ||
                 CurrentUserContext.HashPassword(oldPassword) == command.CurrentPasswordHash)
-            .WithMessage("Mat khau hien tai khong dung.");
+            .WithMessage("Mật khẩu hiện tại không đúng.");
         RuleFor(command => command.ConfirmPassword)
-            .Equal(command => command.NewPassword).WithMessage("Mat khau xac nhan khong khop.");
+            .Equal(command => command.NewPassword).WithMessage("Mật khẩu xác nhận không khớp.");
         RuleFor(command => command.NewPassword)
             .Must((command, password) => passwordStrength.Evaluate(
                 password,

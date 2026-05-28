@@ -15,6 +15,12 @@ public sealed class SignatureService : ISignatureService
     private const string DemoProviderCode = "demo";
     private const string SignPermission = "SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION";
     private const string RevokePermission = "SCR_ADMIN:MANAGE_SIGNATURES";
+    private static readonly string[] SignPermissionAliases =
+    [
+        SignPermission,
+        "SCR_CLINICAL:EXECUTE",
+        "PERM_CLINICAL_execute"
+    ];
 
     private readonly MedDbContext _db;
     private readonly EffectivePermissionResolver _permissions;
@@ -114,7 +120,7 @@ public sealed class SignatureService : ISignatureService
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(reason))
-            throw new InvalidOperationException("Ly do thu hoi chu ky la bat buoc.");
+            throw new InvalidOperationException("Lý do thu hồi chữ ký là bắt buộc.");
         if (!IsSupportedTarget(targetType))
             return SignatureResult.TargetNotFound;
         if (!CanRevoke(actorUserId, actorUsername))
@@ -154,7 +160,7 @@ public sealed class SignatureService : ISignatureService
             StringComparison.OrdinalIgnoreCase);
 
     private bool CanSign(Guid signerUserId, string signerUsername)
-        => IsAdmin(signerUsername) || _permissions.HasPermission(signerUserId, SignPermission);
+        => IsAdmin(signerUsername) || SignPermissionAliases.Any(permission => _permissions.HasPermission(signerUserId, permission));
 
     private bool CanRevoke(Guid actorUserId, string actorUsername)
         => IsAdmin(actorUsername) || _permissions.HasPermission(actorUserId, RevokePermission);

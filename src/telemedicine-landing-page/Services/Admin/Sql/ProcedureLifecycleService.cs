@@ -65,7 +65,7 @@ public sealed class ProcedureLifecycleService
     {
         var ver = GetVersionOrThrow(versionId);
         EnsureTransition(ver, "pending_approval", "CK_procedure_version_submit", 50020,
-            "Chi co the gui phien ban dang o trang thai draft.");
+            "Chỉ có thể gửi phiên bản đang ở trạng thái draft.");
         if (ver.StatusCode != "draft")
             throw MedDomainException.Constraint("CK_procedure_version_submit", 50020,
                 "Chỉ có thể gửi phiên bản ở trạng thái bản nháp.");
@@ -101,7 +101,7 @@ public sealed class ProcedureLifecycleService
     {
         var ver = GetVersionOrThrow(versionId);
         EnsureTransition(ver, "active", "CK_procedure_version_publish", 50022,
-            "Chi co the xuat ban phien ban dang cho phe duyet.");
+            "Chỉ có thể xuất bản phiên bản đang chờ phê duyệt.");
         if (ver.StatusCode != "pending_approval")
             throw MedDomainException.Constraint("CK_procedure_version_publish", 50022,
                 "Chỉ có thể xuất bản phiên bản đang chờ phê duyệt.");
@@ -154,7 +154,7 @@ public sealed class ProcedureLifecycleService
     {
         var ver = GetVersionOrThrow(versionId);
         EnsureTransition(ver, "rejected", "CK_procedure_version_reject", 50023,
-            "Chi co the tu choi phien ban dang cho phe duyet.");
+            "Chỉ có thể từ chối phiên bản đang chờ phê duyệt.");
         if (ver.StatusCode != "pending_approval")
             throw MedDomainException.Constraint("CK_procedure_version_reject", 50023,
                 "Chỉ có thể từ chối phiên bản đang chờ phê duyệt.");
@@ -184,7 +184,7 @@ public sealed class ProcedureLifecycleService
     {
         var ver = GetVersionOrThrow(versionId);
         EnsureTransition(ver, "archived", "CK_procedure_version_withdraw", 50024,
-            "Chi co the thu hoi phien ban active.");
+            "Chỉ có thể thu hồi phiên bản active.");
         if (ver.StatusCode != "active")
             throw MedDomainException.Constraint("CK_procedure_version_withdraw", 50024,
                 "Chỉ có thể thu hồi phiên bản đã xuất bản.");
@@ -214,7 +214,7 @@ public sealed class ProcedureLifecycleService
     {
         var ver = GetVersionOrThrow(versionId);
         EnsureTransition(ver, "archived", "CK_procedure_version_archive", 50025,
-            "Khong the luu tru phien ban tu trang thai hien tai.");
+            "Không thể lưu trữ phiên bản từ trạng thái hiện tại.");
 
         var archived = ver with
         {

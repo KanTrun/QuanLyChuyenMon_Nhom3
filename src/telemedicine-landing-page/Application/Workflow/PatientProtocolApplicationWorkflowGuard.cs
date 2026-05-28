@@ -47,7 +47,7 @@ public sealed class PatientProtocolApplicationWorkflowGuard
         string? reason = null)
     {
         if (toState == "revoked" && string.IsNullOrWhiteSpace(reason))
-            throw new InvalidOperationException("Ly do thu hoi chu ky la bat buoc.");
+            throw new InvalidOperationException("Lý do thu hồi chữ ký là bắt buộc.");
 
         _audit.Append(new AuditLog
         {

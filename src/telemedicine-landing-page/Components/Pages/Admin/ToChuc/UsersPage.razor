@@ -87,12 +87,12 @@
                         <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEdit(user)">Sửa</button>
                         @if (user.OnboardingStatus == "submitted")
                         {
-                            <button class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => ApproveUser(user)">Duyet</button>
-                            <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => RejectUser(user)">Tu choi</button>
+                            <button class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => ApproveUser(user)">Duyệt</button>
+                            <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => RejectUser(user)">Từ chối</button>
                         }
                         else if (user.OnboardingStatus == "rejected")
                         {
-                            <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ResubmitUser(user)">Gui lai</button>
+                            <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ResubmitUser(user)">Gửi lại</button>
                         }
                         @if (user.Status == "active")
                         {
@@ -131,7 +131,7 @@
                     <dd>@GetDeptName(_selectedUser.PrimaryDepartmentId)</dd>
                     <dt>Trạng thái</dt>
                     <dd><AdminBadge Tone="@StatusTone(_selectedUser.Status)">@StatusLabel(_selectedUser.Status)</AdminBadge></dd>
-                    <dt>Duyet tai khoan</dt>
+                    <dt>Duyệt tài khoản</dt>
                     <dd><AdminBadge Tone="@OnboardingTone(_selectedUser.OnboardingStatus)">@OnboardingLabel(_selectedUser.OnboardingStatus)</AdminBadge></dd>
                     <dt>Cập nhật gần nhất</dt>
                     <dd>@AdminDateTimeDisplay.ShortDateTime(_selectedUser.UpdatedAt)</dd>
@@ -472,61 +472,61 @@
 
     private async Task ApproveUser(AppUser user)
     {
-        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "duyet tai khoan")) return;
+        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "duyệt tài khoản")) return;
         if (IsCurrentUser(user))
         {
-            Toast.Show("Khong the duyet", "Ban dang dung tai khoan nay.", ToastVariant.Warning);
+            Toast.Show("Không thể duyệt", "Bạn đang dùng tài khoản này.", ToastVariant.Warning);
             return;
         }
 
-        var ok = await Confirm.ShowAsync("Duyet tai khoan", $"Kich hoat tai khoan \"{user.FullName}\"?", confirmText: "Duyet");
+        var ok = await Confirm.ShowAsync("Duyệt tài khoản", $"Kích hoạt tài khoản \"{user.FullName}\"?", confirmText: "Duyệt");
         if (!ok) return;
 
         try
         {
             Store.UpdateUser(user with { Status = "active", OnboardingStatus = "active", DeletedAt = null, UpdatedAt = DateTime.UtcNow });
-            Toast.Show("Da duyet tai khoan", user.FullName, ToastVariant.Success);
+            Toast.Show("Đã duyệt tài khoản", user.FullName, ToastVariant.Success);
         }
-        catch (Exception ex) { Toast.Show("Khong the duyet", ex.Message, ToastVariant.Error); }
+        catch (Exception ex) { Toast.Show("Không thể duyệt", ex.Message, ToastVariant.Error); }
     }
 
     private async Task RejectUser(AppUser user)
     {
-        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "tu choi tai khoan")) return;
+        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "từ chối tài khoản")) return;
         if (IsCurrentUser(user))
         {
-            Toast.Show("Khong the tu choi", "Ban dang dung tai khoan nay.", ToastVariant.Warning);
+            Toast.Show("Không thể từ chối", "Bạn đang dùng tài khoản này.", ToastVariant.Warning);
             return;
         }
 
         var ok = await Confirm.ShowAsync(
-            "Tu choi tai khoan",
-            $"Tu choi yeu cau tai khoan \"{user.FullName}\"?",
-            confirmText: "Tu choi",
+            "Từ chối tài khoản",
+            $"Từ chối yêu cầu tài khoản \"{user.FullName}\"?",
+            confirmText: "Từ chối",
             isDanger: true);
         if (!ok) return;
 
         try
         {
             Store.UpdateUser(user with { Status = "inactive", OnboardingStatus = "rejected", DeletedAt = null, UpdatedAt = DateTime.UtcNow });
-            Toast.Show("Da tu choi tai khoan", user.FullName, ToastVariant.Success);
+            Toast.Show("Đã từ chối tài khoản", user.FullName, ToastVariant.Success);
         }
-        catch (Exception ex) { Toast.Show("Khong the tu choi", ex.Message, ToastVariant.Error); }
+        catch (Exception ex) { Toast.Show("Không thể từ chối", ex.Message, ToastVariant.Error); }
     }
 
     private async Task ResubmitUser(AppUser user)
     {
-        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "gui lai yeu cau tai khoan")) return;
+        if (!Guard.CanDo("SCR_ORG_USERS:UPDATE", "gửi lại yêu cầu tài khoản")) return;
 
-        var ok = await Confirm.ShowAsync("Gui lai yeu cau", $"Chuyen \"{user.FullName}\" ve trang thai cho duyet?", confirmText: "Gui lai");
+        var ok = await Confirm.ShowAsync("Gửi lại yêu cầu", $"Chuyển \"{user.FullName}\" về trạng thái chờ duyệt?", confirmText: "Gửi lại");
         if (!ok) return;
 
         try
         {
             Store.UpdateUser(user with { Status = "inactive", OnboardingStatus = "submitted", DeletedAt = null, UpdatedAt = DateTime.UtcNow });
-            Toast.Show("Da gui lai yeu cau", user.FullName, ToastVariant.Success);
+            Toast.Show("Đã gửi lại yêu cầu", user.FullName, ToastVariant.Success);
         }
-        catch (Exception ex) { Toast.Show("Khong the gui lai", ex.Message, ToastVariant.Error); }
+        catch (Exception ex) { Toast.Show("Không thể gửi lại", ex.Message, ToastVariant.Error); }
     }
 
     private async Task ResetPassword(AppUser user)
@@ -660,10 +660,10 @@
     };
     private static string OnboardingLabel(string status) => status switch
     {
-        "active" => "Da duyet",
-        "submitted" => "Cho duyet",
-        "rejected" => "Bi tu choi",
-        _ => "Ngung hoat dong"
+        "active" => "Đã duyệt",
+        "submitted" => "Chờ duyệt",
+        "rejected" => "Bị từ chối",
+        _ => "Ngừng hoạt động"
     };
     private static string ResolveEditedOnboardingStatus(AppUser user, string status)
     {

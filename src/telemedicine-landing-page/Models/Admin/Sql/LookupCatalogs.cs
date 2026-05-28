@@ -36,10 +36,10 @@ public static class MedLookups
 
     public static IReadOnlyList<LookupEntry> UserOnboardingStatuses { get; } = new[]
     {
-        new LookupEntry("submitted", "Cho duyet"),
-        new LookupEntry("active", "Dang hoat dong"),
-        new LookupEntry("rejected", "Bi tu choi"),
-        new LookupEntry("inactive", "Ngung hoat dong"),
+        new LookupEntry("submitted", "Chờ duyệt"),
+        new LookupEntry("active", "Đang hoạt động"),
+        new LookupEntry("rejected", "Bị từ chối"),
+        new LookupEntry("inactive", "Ngừng hoạt động"),
     };
 
     public static IReadOnlyList<LookupEntry> ActionCodes { get; } = new[]

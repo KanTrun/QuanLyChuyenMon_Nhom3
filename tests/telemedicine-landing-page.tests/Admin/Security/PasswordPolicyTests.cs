@@ -18,9 +18,9 @@ public sealed class PasswordPolicyTests
     {
         var service = CreateService();
 
-        Assert.Contains(service.Evaluate("password", "doctor").Errors, error => error.Contains("pho bien"));
-        Assert.Contains(service.Evaluate("Doctor@2026", "doctor").Errors, error => error.Contains("ten dang nhap"));
-        Assert.Contains(service.Evaluate("short", "doctor").Errors, error => error.Contains("toi thieu 8"));
+        Assert.Contains(service.Evaluate("password", "doctor").Errors, error => error.Contains("phổ biến"));
+        Assert.Contains(service.Evaluate("Doctor@2026", "doctor").Errors, error => error.Contains("tên đăng nhập"));
+        Assert.Contains(service.Evaluate("short", "doctor").Errors, error => error.Contains("tối thiểu 8"));
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public sealed class PasswordPolicyTests
         var result = service.Evaluate("Valid@2026", "doctor", hash);
 
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, error => error.Contains("trung mat khau cu"));
+        Assert.Contains(result.Errors, error => error.Contains("trùng mật khẩu cũ"));
     }
 
     [Fact]

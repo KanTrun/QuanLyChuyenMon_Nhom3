@@ -15,10 +15,10 @@ END;
 
 MERGE med.lookup_user_onboarding_status AS target
 USING (VALUES
-    (N'submitted', N'Cho duyet'),
-    (N'active', N'Dang hoat dong'),
-    (N'rejected', N'Bi tu choi'),
-    (N'inactive', N'Ngung hoat dong')
+    (N'submitted', N'Chờ duyệt'),
+    (N'active', N'Đang hoạt động'),
+    (N'rejected', N'Bị từ chối'),
+    (N'inactive', N'Ngừng hoạt động')
 ) AS source(code, name)
 ON target.code = source.code
 WHEN MATCHED THEN UPDATE SET name = source.name

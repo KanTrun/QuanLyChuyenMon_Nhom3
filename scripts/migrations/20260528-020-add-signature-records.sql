@@ -6,7 +6,7 @@ SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
 MERGE med.lookup_action_codes AS target
-USING (VALUES (N'sign', N'Ky xac nhan', 90, 1, N'Ky xac nhan dien tu'))
+USING (VALUES (N'sign', N'Ký xác nhận', 90, 1, N'Ký xác nhận điện tử'))
     AS source(action_code, name, display_order, is_active, description)
 ON target.action_code = source.action_code
 WHEN MATCHED THEN UPDATE SET name = source.name, display_order = source.display_order, is_active = source.is_active, description = source.description
@@ -16,9 +16,9 @@ WHEN NOT MATCHED THEN
 
 MERGE med.lookup_protocol_application_statuses AS target
 USING (VALUES
-    (N'draft', N'Ban nhap', 5, 1, N'Ho so dang soan'),
-    (N'signed', N'Da ky', 30, 1, N'Ho so da ky demo'),
-    (N'revoked', N'Da thu hoi', 40, 1, N'Ho so da thu hoi ky xac nhan')
+    (N'draft', N'Bản nháp', 5, 1, N'Hồ sơ đang soạn'),
+    (N'signed', N'Đã ký', 30, 1, N'Hồ sơ đã ký demo'),
+    (N'revoked', N'Đã thu hồi', 40, 1, N'Hồ sơ đã thu hồi ký xác nhận')
 ) AS source(application_status, name, display_order, is_active, description)
 ON target.application_status = source.application_status
 WHEN MATCHED THEN UPDATE SET name = source.name, display_order = source.display_order, is_active = source.is_active, description = source.description
@@ -77,7 +77,7 @@ DECLARE @sign_permission_id UNIQUEIDENTIFIER;
 IF @clinical_screen_id IS NOT NULL
 BEGIN
     MERGE med.feature_catalog AS target
-    USING (VALUES (@clinical_screen_id, N'FEAT_CLINICAL_SIGN_PROTOCOL_APPLICATION', N'Ky xac nhan ho so phac do'))
+    USING (VALUES (@clinical_screen_id, N'FEAT_CLINICAL_SIGN_PROTOCOL_APPLICATION', N'Ký xác nhận hồ sơ phác đồ'))
         AS source(screen_id, feature_code, name)
     ON target.feature_code = source.feature_code
     WHEN MATCHED THEN UPDATE SET screen_id = source.screen_id, name = source.name, status = N'active', updated_at = SYSUTCDATETIME()
@@ -90,7 +90,7 @@ BEGIN
     WHERE feature_code = N'FEAT_CLINICAL_SIGN_PROTOCOL_APPLICATION';
 
     MERGE med.permissions AS target
-    USING (VALUES (N'SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION', @clinical_screen_id, @sign_feature_id, N'sign', N'Ky xac nhan ho so ap dung phac do'))
+    USING (VALUES (N'SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION', @clinical_screen_id, @sign_feature_id, N'sign', N'Ký xác nhận hồ sơ áp dụng phác đồ'))
         AS source(permission_code, screen_id, feature_id, action_code, description)
     ON target.permission_code = source.permission_code
     WHEN MATCHED THEN UPDATE SET screen_id = source.screen_id, feature_id = source.feature_id, action_code = source.action_code, description = source.description, status = N'active', updated_at = SYSUTCDATETIME()
@@ -103,7 +103,7 @@ BEGIN
     WHERE permission_code = N'SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION';
 
     INSERT INTO med.role_permissions (role_id, permission_id, effect_code, department_scope_type, priority, reason, created_by)
-    SELECT r.role_id, @sign_permission_id, N'allow', N'global', 100, N'Seed quyen ky xac nhan demo', admin_user.user_id
+    SELECT r.role_id, @sign_permission_id, N'allow', N'global', 100, N'Seed quyền ký xác nhận demo', admin_user.user_id
     FROM med.roles r
     CROSS APPLY (SELECT TOP (1) user_id FROM med.users WHERE username = N'admin') admin_user
     WHERE @sign_permission_id IS NOT NULL
@@ -135,7 +135,7 @@ FROM med.screen_catalog
 WHERE screen_code = N'SCR_ADMIN';
 
 MERGE med.feature_catalog AS target
-USING (VALUES (@admin_screen_id, N'FEAT_ADMIN_MANAGE_SIGNATURES', N'Quan ly thu hoi chu ky'))
+USING (VALUES (@admin_screen_id, N'FEAT_ADMIN_MANAGE_SIGNATURES', N'Quản lý thu hồi chữ ký'))
     AS source(screen_id, feature_code, name)
 ON target.feature_code = source.feature_code
 WHEN MATCHED THEN UPDATE SET screen_id = source.screen_id, name = source.name, status = N'active', updated_at = SYSUTCDATETIME()
@@ -148,7 +148,7 @@ FROM med.feature_catalog
 WHERE feature_code = N'FEAT_ADMIN_MANAGE_SIGNATURES';
 
 MERGE med.permissions AS target
-USING (VALUES (N'SCR_ADMIN:MANAGE_SIGNATURES', @admin_screen_id, @manage_feature_id, N'update', N'Thu hoi chu ky demo'))
+USING (VALUES (N'SCR_ADMIN:MANAGE_SIGNATURES', @admin_screen_id, @manage_feature_id, N'update', N'Thu hồi chữ ký demo'))
     AS source(permission_code, screen_id, feature_id, action_code, description)
 ON target.permission_code = source.permission_code
 WHEN MATCHED THEN UPDATE SET screen_id = source.screen_id, feature_id = source.feature_id, action_code = source.action_code, description = source.description, status = N'active', updated_at = SYSUTCDATETIME()
@@ -161,7 +161,7 @@ FROM med.permissions
 WHERE permission_code = N'SCR_ADMIN:MANAGE_SIGNATURES';
 
 INSERT INTO med.role_permissions (role_id, permission_id, effect_code, department_scope_type, priority, reason, created_by)
-SELECT r.role_id, @manage_permission_id, N'allow', N'global', 100, N'Seed quyen thu hoi chu ky demo', admin_user.user_id
+SELECT r.role_id, @manage_permission_id, N'allow', N'global', 100, N'Seed quyền thu hồi chữ ký demo', admin_user.user_id
 FROM med.roles r
 CROSS APPLY (SELECT TOP (1) user_id FROM med.users WHERE username = N'admin') admin_user
 WHERE @manage_permission_id IS NOT NULL

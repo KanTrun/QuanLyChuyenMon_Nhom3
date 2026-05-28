@@ -13,13 +13,14 @@
 | Item | Description |
 |---|---|
 | Clinical workflow | New protocol applications start as `draft`; signing moves `application_status` from `applied` to `signed`, revocation moves to `revoked` with reason |
+| Clinical signature UX | Removed the white logo frame, restored Vietnamese accents in signature labels/messages, and aligned signature permission aliases with the UI guard |
 | Login UX | Rejected onboarding users now receive a rejected-specific login result/message instead of the generic inactive account message |
 
 ### Verification
 | Command | Result |
 |---|---|
 | `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
-| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 160 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 161 tests |
 
 ## 2026-05-26
 ### Improved
@@ -279,10 +280,10 @@ None.
 | Notification center | Trung tâm thông báo hỗ trợ lọc mức độ, đánh dấu đã đọc, xem lần gửi và cấu hình preference |
 | Profile and lookup hardening | Sửa lỗi lưu hồ sơ với bảng SQL có trigger, làm lại UI hồ sơ theo admin style, thêm seed chuẩn hóa lookup và mở rộng unit catalog |
 
-| SQL Server alignment | Dong bo file SQL chinh voi database that `MedicalProcedureManagement`: bo sung `med.users.password_hash` va doi map dieu huong sang permission code dang co trong `med.permissions` |
-| Full SQL permission catalog | Mo rong `MedicalProcedureManagement.sql` de seed day du screen/feature/permission cho 25 route nghiep vu, them base roles va role-permission cho SYSTEM_ADMIN, quan tri khoa, lam sang, ky thuat/duoc va bao cao |
-| SQL-backed reports | Chuyen `IReportService` sang `SqlReportService` de bao cao tieu thu, KPI va activity feed doc tu bang SQL that thay vi service demo in-memory |
-| SQL-backed admin routes | Gan route admin chinh cua Quy trinh va Lam sang vao cac page doc `IMedDataStore`, chuyen page demo cu sang route `-legacy` |
+| SQL Server alignment | Đồng bộ file SQL chính với database thật `MedicalProcedureManagement`: bổ sung `med.users.password_hash` và đổi map điều hướng sang permission code đang có trong `med.permissions` |
+| Full SQL permission catalog | Mở rộng `MedicalProcedureManagement.sql` để seed đầy đủ screen/feature/permission cho 25 route nghiệp vụ, thêm base roles và role-permission cho SYSTEM_ADMIN, quản trị khoa, lâm sàng, kỹ thuật/dược và báo cáo |
+| SQL-backed reports | Chuyển `IReportService` sang `SqlReportService` để báo cáo tiêu thụ, KPI và activity feed đọc từ bảng SQL thật thay vì service demo in-memory |
+| SQL-backed admin routes | Gắn route admin chính của Quy trình và Lâm sàng vào các page đọc `IMedDataStore`, chuyển page demo cũ sang route `-legacy` |
 
 ### Verification
 | Command | Result |

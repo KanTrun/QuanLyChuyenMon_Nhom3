@@ -1,7 +1,7 @@
 # System Architecture
 
 ## Signing, Onboarding and Safe Chat Actions
-Ngay 2026-05-28, QLCM Pro co lop ky demo va account onboarding rieng, khong pollute lookup dung chung.
+Ngày 2026-05-28, QLCM Pro có lớp ký demo và account onboarding riêng, không pollute lookup dùng chung.
 
 | Area | Decision |
 |---|---|

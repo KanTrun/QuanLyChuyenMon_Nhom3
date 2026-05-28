@@ -96,7 +96,7 @@
                         <AdminBadge Tone="@ApplicationTone(row.Application.ApplicationStatus)">@Lookup(Sql.MedLookups.ProtocolApplicationStatuses, row.Application.ApplicationStatus)</AdminBadge>
                         @if (SignatureFor(row.Application.PatientProtocolApplicationId) is not null)
                         {
-                            <AdminBadge Tone="tone-secondary">Demo signature</AdminBadge>
+                            <AdminBadge Tone="tone-secondary">Chữ ký demo</AdminBadge>
                         }
                     </div>
                 </td>
@@ -108,11 +108,11 @@
                         <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => SetStatus(row, "applied")'>Áp dụng</button>
                         @if (row.Application.ApplicationStatus == "applied")
                         {
-                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => OpenSign(row)">Ky</button>
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => OpenSign(row)">Ký</button>
                         }
                         @if (row.Application.ApplicationStatus == "signed")
                         {
-                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenRevoke(row)">Thu hoi</button>
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenRevoke(row)">Thu hồi</button>
                         }
                     </div>
                 </td>
@@ -191,40 +191,40 @@
     </FooterContent>
 </AdminModal>
 
-<AdminModal IsOpen="_signModalOpen" IsOpenChanged="v => _signModalOpen = v" Title="Ky xac nhan ho so">
+<AdminModal IsOpen="_signModalOpen" IsOpenChanged="v => _signModalOpen = v" Title="Ký xác nhận hồ sơ">
     <ChildContent>
         @if (_signingRow is not null)
         {
             <dl class="admin-detail-grid">
-                <dt>Nguoi ky</dt>
+                <dt>Người ký</dt>
                 <dd>@(UserContext.CurrentUser?.Username ?? "anonymous")</dd>
-                <dt>Ho so</dt>
+                <dt>Hồ sơ</dt>
                 <dd>@PatientName(_signingRow.Patient) - @ProtocolVersionName(_signingRow.Application.ClinicalProtocolVersionId)</dd>
-                <dt>Thoi diem</dt>
+                <dt>Thời điểm</dt>
                 <dd>@AdminDateTimeDisplay.DateTime(DateTime.UtcNow)</dd>
-                <dt>Nha cung cap</dt>
-                <dd>Demo - chua co gia tri phap ly</dd>
+                <dt>Nhà cung cấp</dt>
+                <dd>Demo - chưa có giá trị pháp lý</dd>
             </dl>
         }
     </ChildContent>
     <FooterContent>
-        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _signModalOpen = false">Huy</button>
-        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">Ky xac nhan</button>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _signModalOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">Ký xác nhận</button>
     </FooterContent>
 </AdminModal>
 
-<AdminModal IsOpen="_revokeModalOpen" IsOpenChanged="v => _revokeModalOpen = v" Title="Thu hoi ky xac nhan">
+<AdminModal IsOpen="_revokeModalOpen" IsOpenChanged="v => _revokeModalOpen = v" Title="Thu hồi ký xác nhận">
     <ChildContent>
         <div class="admin-form-grid">
             <div class="admin-form-field admin-form-field-full">
-                <label class="admin-form-field-label is-required">Ly do thu hoi</label>
+                <label class="admin-form-field-label is-required">Lý do thu hồi</label>
                 <input class="admin-input" @bind="_revokeReason" />
             </div>
         </div>
     </ChildContent>
     <FooterContent>
-        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _revokeModalOpen = false">Huy</button>
-        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmRevoke">Thu hoi</button>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _revokeModalOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmRevoke">Thu hồi</button>
     </FooterContent>
 </AdminModal>
 
@@ -362,9 +362,9 @@
         _protocolVersionId = string.Empty;
         _diagnosisCode = payload.DiagnosisCode ?? string.Empty;
         _applicationStatus = string.IsNullOrWhiteSpace(payload.ApplicationStatus) ? "draft" : payload.ApplicationStatus;
-        _skippedReason = "Draft tu chat action";
+        _skippedReason = "Bản nháp từ thao tác chat";
         _modalOpen = true;
-        Toasts.Show("Da nap ban nhap", "Du lieu draft chi doc mot lan tu sessionStorage.", ToastVariant.Success);
+        Toasts.Show("Đã nạp bản nháp", "Dữ liệu nháp chỉ đọc một lần từ sessionStorage.", ToastVariant.Success);
         StateHasChanged();
     }
 
@@ -537,7 +537,7 @@
 
     private void OpenSign(ClinicalRow row)
     {
-        if (!Guard.CanDo("SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION", "ky xac nhan ho so"))
+        if (!Guard.CanDo("SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION", "ký xác nhận hồ sơ"))
         {
             return;
         }
@@ -568,21 +568,21 @@
             if (result.Result == SignatureResult.Created)
             {
                 _signModalOpen = false;
-                Toasts.Show("Da ky xac nhan ho so", "Chu ky demo da duoc luu.", ToastVariant.Success);
+                Toasts.Show("Đã ký xác nhận hồ sơ", "Chữ ký demo đã được lưu.", ToastVariant.Success);
                 Recompute();
                 return;
             }
 
             var message = result.Result == SignatureResult.AlreadySigned
-                ? "Ho so nay da co chu ky."
+                ? "Hồ sơ này đã có chữ ký."
                 : result.Result == SignatureResult.Unauthorized
-                    ? "Tai khoan hien tai khong co quyen ky."
-                    : "Ho so khong o trang thai co the ky.";
-            Toasts.Show("Khong the ky", message, ToastVariant.Warning);
+                    ? "Tài khoản hiện tại không có quyền ký."
+                    : "Hồ sơ không ở trạng thái có thể ký.";
+            Toasts.Show("Không thể ký", message, ToastVariant.Warning);
         }
         catch (Exception ex)
         {
-            Toasts.Show("Khong the ky", ex.Message, ToastVariant.Error);
+            Toasts.Show("Không thể ký", ex.Message, ToastVariant.Error);
         }
         finally
         {
@@ -592,7 +592,7 @@
 
     private void OpenRevoke(ClinicalRow row)
     {
-        if (!Guard.CanDo("SCR_ADMIN:MANAGE_SIGNATURES", "thu hoi chu ky demo"))
+        if (!Guard.CanDo("SCR_ADMIN:MANAGE_SIGNATURES", "thu hồi chữ ký demo"))
         {
             return;
         }
@@ -607,7 +607,7 @@
         if (_signingRow is null || UserContext.CurrentUser is null) return;
         if (string.IsNullOrWhiteSpace(_revokeReason))
         {
-            Toasts.Show("Thieu ly do", "Vui long nhap ly do thu hoi.", ToastVariant.Warning);
+            Toasts.Show("Thiếu lý do", "Vui lòng nhập lý do thu hồi.", ToastVariant.Warning);
             return;
         }
 
@@ -624,16 +624,16 @@
             if (result == SignatureResult.Revoked)
             {
                 _revokeModalOpen = false;
-                Toasts.Show("Da thu hoi", "Ho so da chuyen sang trang thai thu hoi.", ToastVariant.Success);
+                Toasts.Show("Đã thu hồi", "Hồ sơ đã chuyển sang trạng thái thu hồi.", ToastVariant.Success);
                 Recompute();
                 return;
             }
 
-            Toasts.Show("Khong the thu hoi", "Ho so khong o trang thai co the thu hoi hoac ban thieu quyen.", ToastVariant.Warning);
+            Toasts.Show("Không thể thu hồi", "Hồ sơ không ở trạng thái có thể thu hồi hoặc bạn thiếu quyền.", ToastVariant.Warning);
         }
         catch (Exception ex)
         {
-            Toasts.Show("Khong the thu hoi", ex.Message, ToastVariant.Error);
+            Toasts.Show("Không thể thu hồi", ex.Message, ToastVariant.Error);
         }
         finally
         {

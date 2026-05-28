@@ -82,6 +82,42 @@ public sealed class SignatureServiceTests
     }
 
     [Fact]
+    public async Task CreateDemoSignatureAsync_UserWithClinicalExecuteAlias_CreatesRecord()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var app = AddApplication(db, "applied");
+        var user = new AppUser
+        {
+            Username = "clinical_execute_only",
+            FullName = "Clinical Execute Only",
+            Status = "active",
+            OnboardingStatus = "active"
+        };
+        var permission = new MedPermission
+        {
+            PermissionCode = "SCR_CLINICAL:EXECUTE",
+            ScreenId = MedDataStoreSeed.ScreenOrderId,
+            ActionCode = "execute"
+        };
+        db.Users.Add(user);
+        db.UserRoles.Add(new UserRole { UserId = user.UserId, RoleId = MedDataStoreSeed.RoleClinicalId });
+        db.Permissions.Add(permission);
+        db.RolePermissions.Add(new RolePermission { RoleId = MedDataStoreSeed.RoleClinicalId, PermissionId = permission.PermissionId });
+        db.SaveChanges();
+        var service = CreateService(db);
+
+        var (result, record) = await service.CreateDemoSignatureAsync(
+            SignatureService.PatientProtocolApplicationTarget,
+            app.PatientProtocolApplicationId,
+            user.UserId,
+            user.Username);
+
+        Assert.Equal(SignatureResult.Created, result);
+        Assert.NotNull(record);
+        Assert.Equal("signed", db.PatientProtocolApplications.Single(a => a.PatientProtocolApplicationId == app.PatientProtocolApplicationId).ApplicationStatus);
+    }
+
+    [Fact]
     public void VerifyIntegrity_TamperedRecord_ReturnsFalse()
     {
         using var db = TestDbHelper.CreateSeededContext();

@@ -22,10 +22,10 @@ public sealed partial class MedDataStore
         {
             var idx = _procedures.FindIndex(p => p.ProcedureId == proc.ProcedureId);
             if (idx < 0)
-                throw MedDomainException.Constraint("PK_procedures", 547, "Quy trinh khong ton tai.");
+                throw MedDomainException.Constraint("PK_procedures", 547, "Quy trình không tồn tại.");
 
             if (_procedures.Any(p => p.ProcedureId != proc.ProcedureId && p.ProcedureCode == proc.ProcedureCode))
-                throw MedDomainException.Constraint("UQ_procedures_code", 2627, $"Ma quy trinh '{proc.ProcedureCode}' da ton tai.");
+                throw MedDomainException.Constraint("UQ_procedures_code", 2627, $"Mã quy trình '{proc.ProcedureCode}' đã tồn tại.");
 
             var current = _procedures[idx];
             _procedures[idx] = proc with
