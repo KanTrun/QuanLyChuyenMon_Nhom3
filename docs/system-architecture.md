@@ -1,5 +1,18 @@
 # System Architecture
 
+## Signing, Onboarding and Safe Chat Actions
+Ngay 2026-05-28, QLCM Pro co lop ky demo va account onboarding rieng, khong pollute lookup dung chung.
+
+| Area | Decision |
+|---|---|
+| User onboarding | `med.users.onboarding_status` references `med.lookup_user_onboarding_status`; `status` still represents active/inactive runtime account state |
+| Re-registration policy | Public registration remains insert-only. Rejected email records stay in DB; admin resubmits by setting onboarding back to `submitted` |
+| Login states | `LoginAttemptStatus.Rejected` separates rejected onboarding from pending/inactive accounts |
+| Signature target | `med.signature_records` supports `patient_protocol_application` target only in v1 and enforces one signature per target |
+| Signature integrity | Demo hash uses SHA-256 over `target_type:target_id:signer_user_id:signed_at:provider_code`; demo records set `is_legally_valid = false` |
+| Signature workflow | `PatientProtocolApplicationWorkflowGuard` allows `applied -> signed` and `signed/applied -> revoked`; revoked has no outgoing transition |
+| Chat action security | Chat quick actions are whitelist-only navigation. Draft payloads are stored under `sessionStorage["draft:{nonce}"]`, URL carries `draft_nonce`, and the clinical page deletes the draft on read |
+
 ## QLCM Pro Runtime Entry Track
 Ngày 2026-05-25, runtime chính của repo là QLCM Pro. Landing page telemedicine cũ đã được gỡ khỏi app surface; `/` hiển thị trang giới thiệu QLCM Pro chuyên nghiệp với lựa chọn đăng nhập/đăng ký.
 

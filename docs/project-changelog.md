@@ -1,5 +1,26 @@
 # Project Changelog
 
+## 2026-05-28
+### Added
+| Item | Description |
+|---|---|
+| Account onboarding | Added dedicated `lookup_user_onboarding_status` and `med.users.onboarding_status`; registration remains insert-only while admins can approve, reject, or resubmit accounts |
+| Demo e-signature | Added immutable `med.signature_records`, SHA-256 demo hash integrity, one-signature-per-PPA guard, signing/revoke workflow, and `SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION` permission |
+| Safe chat actions | Added chat quick actions with route whitelist and nonce-only `sessionStorage` draft handoff; chat actions never mutate SQL data |
+| Hospital logo | Added tracked `wwwroot/brand/logo-hos.jpg` and applied it to intro, auth pages, admin/persona sidebars, and favicon |
+
+### Changed
+| Item | Description |
+|---|---|
+| Clinical workflow | New protocol applications start as `draft`; signing moves `application_status` from `applied` to `signed`, revocation moves to `revoked` with reason |
+| Login UX | Rejected onboarding users now receive a rejected-specific login result/message instead of the generic inactive account message |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 160 tests |
+
 ## 2026-05-26
 ### Improved
 | Item | Description |

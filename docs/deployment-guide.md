@@ -17,6 +17,14 @@ docker compose up --build
 
 Open `http://localhost:8080`.
 
+For an existing local database volume, use:
+
+```powershell
+docker compose up --build -d
+```
+
+Do not run `docker compose down --volumes` unless you intentionally want to erase SQL Server data.
+
 ### Local Bootstrap Admin
 | Username | Password |
 |---|---|
@@ -46,6 +54,9 @@ Scripts run in order:
 2. `scripts/seed-lookup-catalogs.sql`
 3. `scripts/seed-realistic-data.sql`
 4. `scripts/seed-hospital-data.sql`
+5. `scripts/migrations/*.sql`
+
+Current migrations add Identity bootstrap, onboarding status, demo signatures, and related permissions. They are written to run on existing Docker volumes.
 
 To rebuild a fresh database:
 
