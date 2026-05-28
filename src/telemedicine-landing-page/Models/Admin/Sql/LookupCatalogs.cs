@@ -34,6 +34,14 @@ public static class MedLookups
         new LookupEntry("archived", "Lưu trữ"),
     };
 
+    public static IReadOnlyList<LookupEntry> UserOnboardingStatuses { get; } = new[]
+    {
+        new LookupEntry("submitted", "Cho duyet"),
+        new LookupEntry("active", "Dang hoat dong"),
+        new LookupEntry("rejected", "Bi tu choi"),
+        new LookupEntry("inactive", "Ngung hoat dong"),
+    };
+
     public static IReadOnlyList<LookupEntry> ActionCodes { get; } = new[]
     {
         new LookupEntry("view", "Xem"),
@@ -43,6 +51,7 @@ public static class MedLookups
         new LookupEntry("approve", "Phê duyệt"),
         new LookupEntry("publish", "Ban hành"),
         new LookupEntry("execute", "Thực hiện"),
+        new LookupEntry("sign", "Ký xác nhận"),
         new LookupEntry("export", "Xuất dữ liệu"),
         new LookupEntry("configure", "Cấu hình"),
     };
@@ -184,7 +193,10 @@ public static class MedLookups
     public static IReadOnlyList<LookupEntry> ProtocolApplicationStatuses { get; } = new[]
     {
         new LookupEntry("suggested", "Đề xuất"),
+        new LookupEntry("draft", "Bản nháp"),
         new LookupEntry("applied", "Đã áp dụng"),
+        new LookupEntry("signed", "Đã ký"),
+        new LookupEntry("revoked", "Đã thu hồi"),
         new LookupEntry("skipped", "Bỏ qua"),
         new LookupEntry("cancelled", "Đã hủy"),
     };

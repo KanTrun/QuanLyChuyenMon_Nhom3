@@ -47,6 +47,7 @@ public interface IMedDataStore
     IReadOnlyList<ClinicalProtocolProcedure> ClinicalProtocolProcedures { get; }
     IReadOnlyList<ProtocolApplicabilityRule> ProtocolApplicabilityRules { get; }
     IReadOnlyList<PatientProtocolApplication> PatientProtocolApplications { get; }
+    IReadOnlyList<SignatureRecord> SignatureRecords { get; }
     IReadOnlyList<NotificationPreference> NotificationPreferences { get; }
     IReadOnlyList<MedNotification> Notifications { get; }
     IReadOnlyList<NotificationDeliveryAttempt> NotificationDeliveryAttempts { get; }
@@ -127,6 +128,7 @@ public interface IMedDataStore
     void RemoveProtocolApplicabilityRule(Guid ruleId);
     void AddPatientProtocolApplication(PatientProtocolApplication app);
     void UpdatePatientProtocolApplication(PatientProtocolApplication app);
+    void AddSignatureRecord(SignatureRecord signature);
 
     void AddNotificationPreference(NotificationPreference pref);
     void UpdateNotificationPreference(NotificationPreference pref);

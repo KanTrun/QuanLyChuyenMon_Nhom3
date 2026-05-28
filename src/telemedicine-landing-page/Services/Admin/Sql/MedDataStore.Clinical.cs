@@ -124,4 +124,21 @@ public sealed partial class MedDataStore
             RaiseStateChanged();
         }
     }
+
+    public void AddSignatureRecord(SignatureRecord signature)
+    {
+        lock (_lock)
+        {
+            ValidateJson(signature.MetadataJson, "metadata");
+            if (_signatureRecords.Any(s =>
+                    s.TargetType == signature.TargetType &&
+                    s.TargetId == signature.TargetId))
+            {
+                throw MedDomainException.Constraint("UQ_sig_target_active", 2627, "Target da co chu ky.");
+            }
+
+            _signatureRecords.Add(signature);
+            RaiseStateChanged();
+        }
+    }
 }

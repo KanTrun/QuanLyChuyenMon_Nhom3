@@ -1,12 +1,18 @@
 @page "/admin/lam-sang"
 @page "/qlcm/lam-sang"
 @layout AdminLayout
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Text.Json
+@using TelemedicineLandingPage.Application.Signature
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
 @inject IConfirmDialogService Confirm
+@inject ISignatureService SignatureService
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
 @implements IDisposable
 
 <PageTitle>Lâm sàng | QLCM Pro</PageTitle>
@@ -85,13 +91,29 @@
                 <td>@GetDeptName(row.Encounter?.DepartmentId)</td>
                 <td>@(row.Application.DiagnosisCode ?? "—")</td>
                 <td>@ProtocolVersionName(row.Application.ClinicalProtocolVersionId)</td>
-                <td><AdminBadge Tone="@ApplicationTone(row.Application.ApplicationStatus)">@Lookup(Sql.MedLookups.ProtocolApplicationStatuses, row.Application.ApplicationStatus)</AdminBadge></td>
+                <td>
+                    <div class="admin-row-actions">
+                        <AdminBadge Tone="@ApplicationTone(row.Application.ApplicationStatus)">@Lookup(Sql.MedLookups.ProtocolApplicationStatuses, row.Application.ApplicationStatus)</AdminBadge>
+                        @if (SignatureFor(row.Application.PatientProtocolApplicationId) is not null)
+                        {
+                            <AdminBadge Tone="tone-secondary">Demo signature</AdminBadge>
+                        }
+                    </div>
+                </td>
                 <td>@AdminDateTimeDisplay.DateTime(row.Application.AppliedAt)</td>
                 <td style="text-align:right;">
                     <div class="admin-row-actions">
                         <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEdit(row)">Sửa</button>
                         <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SetStatus(row, "skipped")'>Bỏ qua</button>
                         <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => SetStatus(row, "applied")'>Áp dụng</button>
+                        @if (row.Application.ApplicationStatus == "applied")
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => OpenSign(row)">Ky</button>
+                        }
+                        @if (row.Application.ApplicationStatus == "signed")
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenRevoke(row)">Thu hoi</button>
+                        }
                     </div>
                 </td>
             </tr>
@@ -169,8 +191,46 @@
     </FooterContent>
 </AdminModal>
 
+<AdminModal IsOpen="_signModalOpen" IsOpenChanged="v => _signModalOpen = v" Title="Ky xac nhan ho so">
+    <ChildContent>
+        @if (_signingRow is not null)
+        {
+            <dl class="admin-detail-grid">
+                <dt>Nguoi ky</dt>
+                <dd>@(UserContext.CurrentUser?.Username ?? "anonymous")</dd>
+                <dt>Ho so</dt>
+                <dd>@PatientName(_signingRow.Patient) - @ProtocolVersionName(_signingRow.Application.ClinicalProtocolVersionId)</dd>
+                <dt>Thoi diem</dt>
+                <dd>@AdminDateTimeDisplay.DateTime(DateTime.UtcNow)</dd>
+                <dt>Nha cung cap</dt>
+                <dd>Demo - chua co gia tri phap ly</dd>
+            </dl>
+        }
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _signModalOpen = false">Huy</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">Ky xac nhan</button>
+    </FooterContent>
+</AdminModal>
+
+<AdminModal IsOpen="_revokeModalOpen" IsOpenChanged="v => _revokeModalOpen = v" Title="Thu hoi ky xac nhan">
+    <ChildContent>
+        <div class="admin-form-grid">
+            <div class="admin-form-field admin-form-field-full">
+                <label class="admin-form-field-label is-required">Ly do thu hoi</label>
+                <input class="admin-input" @bind="_revokeReason" />
+            </div>
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _revokeModalOpen = false">Huy</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmRevoke">Thu hoi</button>
+    </FooterContent>
+</AdminModal>
+
 @code {
     private const int _pageSize = 10;
+    private const string SignatureTargetType = "patient_protocol_application";
     private int _page = 1;
     private int _total;
     private IReadOnlyList<ClinicalRow> _rows = Array.Empty<ClinicalRow>();
@@ -190,13 +250,26 @@
     private string _encounterDepartmentId = string.Empty;
     private string _protocolVersionId = string.Empty;
     private string _diagnosisCode = string.Empty;
-    private string _applicationStatus = "suggested";
+    private string _applicationStatus = "draft";
     private string _skippedReason = string.Empty;
+    private bool _signModalOpen;
+    private bool _revokeModalOpen;
+    private bool _signatureBusy;
+    private ClinicalRow? _signingRow;
+    private string _revokeReason = string.Empty;
 
     protected override void OnInitialized()
     {
         Store.StateChanged += OnChanged;
         Recompute();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await TryConsumeDraftNonceAsync();
+        }
     }
 
     private void OnChanged() => InvokeAsync(() => { Recompute(); StateHasChanged(); });
@@ -253,6 +326,48 @@
             || (row.Application.DiagnosisCode?.Contains(key, StringComparison.OrdinalIgnoreCase) ?? false);
     }
 
+    private async Task TryConsumeDraftNonceAsync()
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        var nonce = query.TryGetValue("draft_nonce", out var values) ? values.FirstOrDefault() : null;
+        if (string.IsNullOrWhiteSpace(nonce)) return;
+
+        string? payloadJson;
+        try
+        {
+            payloadJson = await JS.InvokeAsync<string?>("qlcmShell.consumeSessionJson", $"draft:{nonce}");
+        }
+        catch (JSDisconnectedException)
+        {
+            return;
+        }
+        catch
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(payloadJson)) return;
+        var payload = JsonSerializer.Deserialize<ClinicalDraftPayload>(payloadJson, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+        if (payload is null) return;
+
+        _editingApplicationId = null;
+        _patientId = string.Empty;
+        _patientName = payload.PatientName ?? string.Empty;
+        _patientCode = payload.PatientCode ?? string.Empty;
+        _encounterCode = payload.EncounterCode ?? string.Empty;
+        _encounterDepartmentId = string.Empty;
+        _protocolVersionId = string.Empty;
+        _diagnosisCode = payload.DiagnosisCode ?? string.Empty;
+        _applicationStatus = string.IsNullOrWhiteSpace(payload.ApplicationStatus) ? "draft" : payload.ApplicationStatus;
+        _skippedReason = "Draft tu chat action";
+        _modalOpen = true;
+        Toasts.Show("Da nap ban nhap", "Du lieu draft chi doc mot lan tu sessionStorage.", ToastVariant.Success);
+        StateHasChanged();
+    }
+
     private void OpenCreate()
     {
         if (!Guard.CanDo("SCR_CLINICAL_ADMIN:CREATE", "tạo áp dụng phác đồ"))
@@ -262,7 +377,7 @@
 
         _editingApplicationId = null;
         _patientId = _patientName = _patientCode = _encounterCode = _encounterDepartmentId = _protocolVersionId = _diagnosisCode = _skippedReason = string.Empty;
-        _applicationStatus = "suggested";
+        _applicationStatus = "draft";
         _modalOpen = true;
     }
 
@@ -420,6 +535,112 @@
         Toasts.Show("Đã cập nhật trạng thái", Lookup(Sql.MedLookups.ProtocolApplicationStatuses, status), ToastVariant.Success);
     }
 
+    private void OpenSign(ClinicalRow row)
+    {
+        if (!Guard.CanDo("SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION", "ky xac nhan ho so"))
+        {
+            return;
+        }
+
+        _signingRow = row;
+        _signModalOpen = true;
+    }
+
+    private async Task ConfirmSign()
+    {
+        if (_signingRow is null || UserContext.CurrentUser is null) return;
+        _signatureBusy = true;
+        try
+        {
+            var metadata = JsonSerializer.Serialize(new
+            {
+                Page = "admin_lam_sang",
+                Patient = PatientCode(_signingRow.Patient),
+                ProtocolVersionId = _signingRow.Application.ClinicalProtocolVersionId
+            });
+            var result = await SignatureService.CreateDemoSignatureAsync(
+                SignatureTargetType,
+                _signingRow.Application.PatientProtocolApplicationId,
+                UserContext.CurrentUser.UserId,
+                UserContext.CurrentUser.Username,
+                metadata);
+
+            if (result.Result == SignatureResult.Created)
+            {
+                _signModalOpen = false;
+                Toasts.Show("Da ky xac nhan ho so", "Chu ky demo da duoc luu.", ToastVariant.Success);
+                Recompute();
+                return;
+            }
+
+            var message = result.Result == SignatureResult.AlreadySigned
+                ? "Ho so nay da co chu ky."
+                : result.Result == SignatureResult.Unauthorized
+                    ? "Tai khoan hien tai khong co quyen ky."
+                    : "Ho so khong o trang thai co the ky.";
+            Toasts.Show("Khong the ky", message, ToastVariant.Warning);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Khong the ky", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _signatureBusy = false;
+        }
+    }
+
+    private void OpenRevoke(ClinicalRow row)
+    {
+        if (!Guard.CanDo("SCR_ADMIN:MANAGE_SIGNATURES", "thu hoi chu ky demo"))
+        {
+            return;
+        }
+
+        _signingRow = row;
+        _revokeReason = string.Empty;
+        _revokeModalOpen = true;
+    }
+
+    private async Task ConfirmRevoke()
+    {
+        if (_signingRow is null || UserContext.CurrentUser is null) return;
+        if (string.IsNullOrWhiteSpace(_revokeReason))
+        {
+            Toasts.Show("Thieu ly do", "Vui long nhap ly do thu hoi.", ToastVariant.Warning);
+            return;
+        }
+
+        _signatureBusy = true;
+        try
+        {
+            var result = await SignatureService.RevokeDemoSignatureAsync(
+                SignatureTargetType,
+                _signingRow.Application.PatientProtocolApplicationId,
+                UserContext.CurrentUser.UserId,
+                UserContext.CurrentUser.Username,
+                _revokeReason);
+
+            if (result == SignatureResult.Revoked)
+            {
+                _revokeModalOpen = false;
+                Toasts.Show("Da thu hoi", "Ho so da chuyen sang trang thai thu hoi.", ToastVariant.Success);
+                Recompute();
+                return;
+            }
+
+            Toasts.Show("Khong the thu hoi", "Ho so khong o trang thai co the thu hoi hoac ban thieu quyen.", ToastVariant.Warning);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Khong the thu hoi", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _signatureBusy = false;
+        }
+    }
+
     private string ProtocolVersionName(Guid versionId)
     {
         var version = Store.ClinicalProtocolVersions.FirstOrDefault(v => v.ClinicalProtocolVersionId == versionId);
@@ -437,12 +658,26 @@
     {
         "applied" => "tone-success",
         "suggested" => "tone-primary",
+        "draft" => "tone-muted",
+        "signed" => "tone-secondary",
+        "revoked" => "tone-danger",
         "skipped" => "tone-warning",
         "cancelled" => "tone-danger",
         _ => "tone-muted"
     };
+    private Sql.SignatureRecord? SignatureFor(Guid applicationId)
+        => Store.SignatureRecords.FirstOrDefault(s =>
+            s.TargetType == SignatureTargetType &&
+            s.TargetId == applicationId);
 
     public void Dispose() => Store.StateChanged -= OnChanged;
 
     private sealed record ClinicalRow(Sql.PatientProtocolApplication Application, Sql.PatientRef? Patient, Sql.EncounterRef? Encounter);
+    private sealed record ClinicalDraftPayload(
+        string? Source,
+        string? ApplicationStatus,
+        string? PatientName,
+        string? PatientCode,
+        string? EncounterCode,
+        string? DiagnosisCode);
 }

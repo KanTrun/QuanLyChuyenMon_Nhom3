@@ -56,6 +56,7 @@ public sealed class MedDbDataStore : IMedDataStore
     public IReadOnlyList<ClinicalProtocolProcedure> ClinicalProtocolProcedures => _db.ClinicalProtocolProcedures.ToList();
     public IReadOnlyList<ProtocolApplicabilityRule> ProtocolApplicabilityRules => _db.ProtocolApplicabilityRules.ToList();
     public IReadOnlyList<PatientProtocolApplication> PatientProtocolApplications => _db.PatientProtocolApplications.ToList();
+    public IReadOnlyList<SignatureRecord> SignatureRecords => _db.SignatureRecords.ToList();
     public IReadOnlyList<NotificationPreference> NotificationPreferences => _db.NotificationPreferences.ToList();
     public IReadOnlyList<MedNotification> Notifications => _db.Notifications.ToList();
     public IReadOnlyList<NotificationDeliveryAttempt> NotificationDeliveryAttempts => _db.NotificationDeliveryAttempts.ToList();
@@ -420,6 +421,7 @@ public sealed class MedDbDataStore : IMedDataStore
         RaiseStateChanged();
     }
 
+    public void AddSignatureRecord(SignatureRecord signature) { _db.SignatureRecords.Add(signature); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddNotificationPreference(NotificationPreference pref) { _db.NotificationPreferences.Add(pref); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddNotification(MedNotification notification) { _db.Notifications.Add(notification); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddNotificationDeliveryAttempt(NotificationDeliveryAttempt attempt) { _db.NotificationDeliveryAttempts.Add(attempt); _db.SaveChanges(); RaiseStateChanged(); }

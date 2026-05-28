@@ -70,6 +70,7 @@ public class MedDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<ClinicalProtocolProcedure> ClinicalProtocolProcedures => Set<ClinicalProtocolProcedure>();
     public DbSet<ProtocolApplicabilityRule> ProtocolApplicabilityRules => Set<ProtocolApplicabilityRule>();
     public DbSet<PatientProtocolApplication> PatientProtocolApplications => Set<PatientProtocolApplication>();
+    public DbSet<SignatureRecord> SignatureRecords => Set<SignatureRecord>();
 
     // === Thông báo ===
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
@@ -111,6 +112,9 @@ public class MedDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
 
         modelBuilder.Entity<AuditLog>()
             .ToTable("audit_logs", "med", table => table.HasTrigger("TR_audit_logs_immutable"));
+
+        modelBuilder.Entity<SignatureRecord>()
+            .ToTable("signature_records", "med", table => table.HasTrigger("TR_signature_records_immutable"));
 
         modelBuilder.Entity<ActualResourceUsage>()
             .ToTable("actual_resource_usages", "med", table => table.HasTrigger("TR_actual_resource_usages_set_final"));

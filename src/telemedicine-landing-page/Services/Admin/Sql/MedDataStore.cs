@@ -55,6 +55,7 @@ public sealed partial class MedDataStore : IMedDataStore
     private readonly List<ClinicalProtocolProcedure> _clinicalProtocolProcedures = new();
     private readonly List<ProtocolApplicabilityRule> _protocolRules = new();
     private readonly List<PatientProtocolApplication> _patientProtocolApps = new();
+    private readonly List<SignatureRecord> _signatureRecords = new();
     private readonly List<NotificationPreference> _notificationPrefs = new();
     private readonly List<MedNotification> _notifications = new();
     private readonly List<NotificationDeliveryAttempt> _deliveryAttempts = new();
@@ -96,6 +97,7 @@ public sealed partial class MedDataStore : IMedDataStore
     public IReadOnlyList<ClinicalProtocolProcedure> ClinicalProtocolProcedures => _clinicalProtocolProcedures;
     public IReadOnlyList<ProtocolApplicabilityRule> ProtocolApplicabilityRules => _protocolRules;
     public IReadOnlyList<PatientProtocolApplication> PatientProtocolApplications => _patientProtocolApps;
+    public IReadOnlyList<SignatureRecord> SignatureRecords => _signatureRecords;
     public IReadOnlyList<NotificationPreference> NotificationPreferences => _notificationPrefs;
     public IReadOnlyList<MedNotification> Notifications => _notifications;
     public IReadOnlyList<NotificationDeliveryAttempt> NotificationDeliveryAttempts => _deliveryAttempts;

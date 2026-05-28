@@ -1,4 +1,5 @@
 using FluentValidation;
+using TelemedicineLandingPage.Application.Signature;
 using System.Net;
 using TelemedicineLandingPage.Application.Validation;
 using TelemedicineLandingPage.Application.Workflow;
@@ -135,6 +136,8 @@ public static class QlcmServiceCollectionExtensions
         services.AddScoped<AuditTrailService>();
         services.AddScoped<IWorkflowGuard<ProcedureVersion, string>, ProcedureVersionWorkflowGuard>();
         services.AddScoped<IWorkflowGuard<TechnicalOrder, string>, TechnicalOrderWorkflowGuard>();
+        services.AddScoped<IWorkflowGuard<PatientProtocolApplication, string>, PatientProtocolApplicationWorkflowGuard>();
+        services.AddScoped<ISignatureService, SignatureService>();
         services.AddScoped<PermissionChangeRequestService>();
         services.AddScoped<ProcedureLifecycleService>();
         services.AddScoped<ITechnicalOrderWorkflowService, TechnicalOrderWorkflowService>();
