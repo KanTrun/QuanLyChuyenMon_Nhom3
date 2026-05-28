@@ -31,20 +31,22 @@ BEGIN
             CONSTRAINT DF_users_onboarding_status DEFAULT N'inactive';
 END;
 
+EXEC(N'
 UPDATE med.users
 SET onboarding_status =
     CASE
-        WHEN status = N'active' THEN N'active'
-        WHEN deleted_at IS NOT NULL THEN N'inactive'
-        WHEN onboarding_status IN (N'submitted', N'rejected') THEN onboarding_status
-        WHEN status = N'inactive' THEN N'inactive'
-        ELSE N'inactive'
+        WHEN status = N''active'' THEN N''active''
+        WHEN deleted_at IS NOT NULL THEN N''inactive''
+        WHEN onboarding_status IN (N''submitted'', N''rejected'') THEN onboarding_status
+        WHEN status = N''inactive'' THEN N''inactive''
+        ELSE N''inactive''
     END
 WHERE onboarding_status IS NULL
-   OR onboarding_status NOT IN (N'submitted', N'active', N'rejected', N'inactive')
-   OR (status = N'active' AND onboarding_status <> N'active')
-   OR (deleted_at IS NOT NULL AND onboarding_status <> N'inactive')
-   OR (status = N'inactive' AND onboarding_status NOT IN (N'submitted', N'rejected', N'inactive'));
+   OR onboarding_status NOT IN (N''submitted'', N''active'', N''rejected'', N''inactive'')
+   OR (status = N''active'' AND onboarding_status <> N''active'')
+   OR (deleted_at IS NOT NULL AND onboarding_status <> N''inactive'')
+   OR (status = N''inactive'' AND onboarding_status NOT IN (N''submitted'', N''rejected'', N''inactive''));
+');
 
 IF NOT EXISTS (
     SELECT 1
@@ -53,10 +55,12 @@ IF NOT EXISTS (
       AND parent_object_id = OBJECT_ID(N'med.users')
 )
 BEGIN
+    EXEC(N'
     ALTER TABLE med.users WITH CHECK
         ADD CONSTRAINT FK_users_onboarding_status
         FOREIGN KEY (onboarding_status)
         REFERENCES med.lookup_user_onboarding_status(code);
+    ');
 END;
 
 COMMIT TRANSACTION;
