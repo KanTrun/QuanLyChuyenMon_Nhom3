@@ -184,6 +184,46 @@ public sealed class ProcedureLifecycleServiceTests : IDisposable
 
     // === 12. GetActiveVersion: trả về bản active ===
     [Fact]
+    public void Archive_DraftVersion_UsesWorkflowGuard()
+    {
+        var ver = CreateDraftWithSteps();
+
+        _svc.Archive(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+
+        var updated = _db.ProcedureVersions.First(v => v.ProcedureVersionId == ver.ProcedureVersionId);
+        Assert.Equal("archived", updated.StatusCode);
+        Assert.Contains(_db.AuditLogs, log =>
+            log.ActionCode == "archive" &&
+            log.TargetId == ver.ProcedureVersionId.ToString());
+    }
+
+    [Fact]
+    public void RestoreDraft_ArchivedVersion_UsesWorkflowGuard()
+    {
+        var ver = CreateDraftWithSteps();
+        _svc.Archive(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+
+        _svc.RestoreDraft(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+
+        var updated = _db.ProcedureVersions.First(v => v.ProcedureVersionId == ver.ProcedureVersionId);
+        Assert.Equal("draft", updated.StatusCode);
+        Assert.Null(updated.EffectiveTo);
+    }
+
+    [Fact]
+    public void Publish_RejectedVersion_IsBlockedByWorkflowGuard()
+    {
+        var ver = CreateDraftWithSteps();
+        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Reject(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId, "Noi dung chua dat");
+
+        var ex = Assert.Throws<MedDomainException>(() =>
+            _svc.Publish(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId));
+
+        Assert.Equal(50022, ex.SqlErrorNumber);
+    }
+
+    [Fact]
     public void GetActiveVersion_ReturnsPublished()
     {
         var ver = CreateDraftWithSteps();

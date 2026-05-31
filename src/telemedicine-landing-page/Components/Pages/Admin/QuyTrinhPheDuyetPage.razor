@@ -1,8 +1,13 @@
-@page "/admin/quy-trinh/phe-duyet-legacy"
+@page "/admin/quy-trinh/phe-duyet"
+@page "/qlcm/quy-trinh/phe-duyet"
 @layout AdminLayout
-@inject IProcedureService ProcedureService
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@inject ProcedureLifecycleService Lifecycle
+@inject ICurrentUserContext UserContext
 @inject IConfirmDialogService Confirm
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Phê duyệt quy trình | QLCM Pro</PageTitle>
@@ -12,125 +17,411 @@
         <div>
             <span class="admin-page-eyebrow">Quy trình</span>
             <h1 class="admin-page-title">Phê duyệt quy trình kỹ thuật</h1>
-            <p class="admin-page-subtitle">Duyệt hoặc trả lại các quy trình đang chờ ký số. Tổng số chờ duyệt: @_pending.Count.</p>
+            <p class="admin-page-subtitle">Duyệt, trả lại, chỉnh metadata hoặc lưu trữ mềm các phiên bản quy trình.</p>
         </div>
-        <a class="admin-btn admin-btn-ghost" href="/admin/quy-trinh">Quay lại danh sách</a>
+        <a class="admin-btn admin-btn-ghost" href="/qlcm/quy-trinh">Quay lại danh sách</a>
     </header>
 
-    @if (_pending.Count == 0)
-    {
-        <div class="admin-table-wrapper">
-            <div class="admin-empty" style="padding:48px 16px;">
-                <div class="admin-empty-title">Không có quy trình nào đang chờ phê duyệt</div>
-                <div class="admin-empty-body">Hãy quay lại sau hoặc kiểm tra danh sách quy trình đã ban hành.</div>
-            </div>
+    <div class="admin-filter-bar is-compact">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="approval-search">Tìm kiếm</label>
+            <input id="approval-search" class="admin-input" type="search" placeholder="Mã, tên, tiêu đề phiên bản" @bind="_search" @bind:event="oninput" @bind:after="Recompute" />
         </div>
-    }
-    else
-    {
-        <div class="admin-table-wrapper">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Mã</th>
-                        <th>Quy trình</th>
-                        <th>Khoa</th>
-                        <th>Phiên bản</th>
-                        <th>Soạn thảo</th>
-                        <th style="text-align:right;">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var proc in _pending)
-                    {
-                        <tr>
-                            <td class="admin-table-cell-strong">@proc.Code</td>
-                            <td>
-                                <div class="admin-table-cell-strong">@proc.Name</div>
-                                <div class="admin-table-cell-muted">@proc.Steps.Count bước • Cập nhật @proc.UpdatedAt.ToString("dd/MM HH:mm")</div>
-                            </td>
-                            <td>@AdminEnumLabels.GetLabel(proc.Department)</td>
-                            <td>@proc.Version</td>
-                            <td>@proc.UpdatedBy</td>
-                            <td style="text-align:right;">
-                                <div class="admin-row-actions">
-                                    <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => RejectAsync(proc)">
-                                        Từ chối
-                                    </button>
-                                    <button type="button" class="admin-btn admin-btn-primary" @onclick="() => ApproveAsync(proc)">
-                                        Phê duyệt
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="approval-status">Trạng thái</label>
+            <select id="approval-status" class="admin-select" @bind="_status" @bind:after="Recompute">
+                <option value="pending_approval">Chờ duyệt</option>
+                <option value="draft">Bản nháp</option>
+                <option value="rejected">Đã trả lại</option>
+                <option value="active">Đang hiệu lực</option>
+                <option value="archived">Lưu trữ</option>
+                <option value="">Tất cả</option>
+            </select>
         </div>
-    }
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="approval-dept">Khoa</label>
+            <select id="approval-dept" class="admin-select" @bind="_departmentId" @bind:after="Recompute">
+                <option value="">Tất cả khoa</option>
+                @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
+                {
+                    <option value="@dept.DepartmentId">@dept.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <AdminDataTable TItem="ApprovalRow"
+                    Items="_paged"
+                    ColumnCount="7"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_rows.Count"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }"
+                    EmptyTitle="Không có phiên bản phù hợp"
+                    EmptyBody="Không có quy trình nào trong trạng thái đang lọc.">
+        <HeaderTemplate>
+            <th>Mã</th>
+            <th>Quy trình</th>
+            <th>Phiên bản</th>
+            <th>Khoa</th>
+            <th>Trạng thái</th>
+            <th>Thời gian</th>
+            <th style="text-align:right;">Hành động</th>
+        </HeaderTemplate>
+        <RowTemplate Context="row">
+            <tr @onclick="() => OpenDetail(row)" style="cursor:pointer;">
+                <td class="admin-table-cell-strong">@row.Procedure.ProcedureCode</td>
+                <td>
+                    <div class="admin-table-cell-strong">@row.Procedure.Name</div>
+                    <div class="admin-table-cell-muted">@row.Version.Summary</div>
+                </td>
+                <td>@VersionLabel(row.Version)</td>
+                <td>@GetDeptName(row.Version.DepartmentId ?? row.Procedure.OwnerDepartmentId)</td>
+                <td><AdminBadge Tone="@VersionTone(row.Version.StatusCode)">@StatusLabel(row.Version.StatusCode)</AdminBadge></td>
+                <td class="admin-table-cell-muted">@AdminDateTimeDisplay.ShortDateTime(row.Version.SubmittedAt ?? row.Version.CreatedAt)</td>
+                <td style="text-align:right;" @onclick:stopPropagation="true">
+                    <div class="admin-row-actions">
+                        <button type="button" class="admin-icon-btn" title="Xem" @onclick="() => OpenDetail(row)">☰</button>
+                        @if (row.Version.StatusCode is "draft" or "rejected")
+                        {
+                            <button type="button" class="admin-icon-btn" title="Sửa" @onclick="() => OpenEdit(row)">✎</button>
+                        }
+                        @if (row.Version.StatusCode == "pending_approval")
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => RejectAsync(row)">Từ chối</button>
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => ApproveAsync(row)">Phê duyệt</button>
+                        }
+                        @if (row.Version.StatusCode == "archived")
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => RestoreVersion(row)">Khôi phục</button>
+                        }
+                        else if (row.Version.StatusCode != "active")
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ArchiveVersion(row)">Lưu trữ</button>
+                        }
+                    </div>
+                </td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
 </section>
 
-<AdminModal IsOpen="_rejectOpen" IsOpenChanged="@(value => _rejectOpen = value)" Title="Trả về soạn thảo">
+<AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" SizeClass="admin-drawer-wide"
+             Eyebrow="Phiên bản quy trình"
+             Title="@(_selected?.Procedure.Name ?? string.Empty)"
+             Subtitle="@(_selected is null ? null : $"{_selected.Procedure.ProcedureCode} • {VersionLabel(_selected.Version)}")">
     <ChildContent>
-        <p style="margin:0;">Vui lòng nhập lý do trả lại quy trình <strong>@(_rejectTarget?.Name)</strong>.</p>
-        <textarea class="admin-textarea" placeholder="VD: Cần bổ sung bước kiểm tra dị ứng trước tiêm." @bind="_rejectReason"></textarea>
+        @if (_selected is not null)
+        {
+            <dl class="admin-detail-grid">
+                <dt>Tiêu đề phiên bản</dt>
+                <dd>@_selected.Version.Title</dd>
+                <dt>Trạng thái</dt>
+                <dd><AdminBadge Tone="@VersionTone(_selected.Version.StatusCode)">@StatusLabel(_selected.Version.StatusCode)</AdminBadge></dd>
+                <dt>Lý do thay đổi</dt>
+                <dd>@(_selected.Version.ChangeReason ?? "—")</dd>
+                <dt>Gửi duyệt</dt>
+                <dd>@AdminDateTimeDisplay.DateTime(_selected.Version.SubmittedAt)</dd>
+                <dt>Phê duyệt</dt>
+                <dd>@AdminDateTimeDisplay.DateTime(_selected.Version.ApprovedAt)</dd>
+            </dl>
+
+            <h3 class="admin-panel-title">Các bước quy trình</h3>
+            <ol class="admin-step-list">
+                @foreach (var step in Store.ProcedureSteps.Where(s => s.ProcedureVersionId == _selected.Version.ProcedureVersionId).OrderBy(s => s.StepNo))
+                {
+                    <li class="admin-step-card">
+                        <div class="admin-step-card-head">
+                            <span class="admin-step-card-seq">Bước @step.StepNo</span>
+                            <span class="admin-table-cell-muted">@((step.StandardDurationMinutes?.ToString() ?? "—")) phút</span>
+                        </div>
+                        <div class="admin-table-cell-strong">@step.Name</div>
+                        <div class="admin-table-cell-muted">@step.Description</div>
+                    </li>
+                }
+            </ol>
+
+            <h3 class="admin-panel-title">Tài liệu đính kèm</h3>
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead><tr><th>Tên file</th><th>Loại</th><th>URI</th><th>Tải lên</th></tr></thead>
+                    <tbody>
+                        @foreach (var file in Store.ProcedureAttachments.Where(a => a.ProcedureVersionId == _selected.Version.ProcedureVersionId).OrderBy(a => a.FileName))
+                        {
+                            <tr>
+                                <td>@file.FileName</td>
+                                <td>@file.AttachmentType</td>
+                                <td>@file.FileUri</td>
+                                <td>@AdminDateTimeDisplay.ShortDateTime(file.UploadedAt)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </ChildContent>
+    <FooterContent>
+        @if (_selected?.Version.StatusCode is "draft" or "rejected")
+        {
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => OpenEdit(_selected)">Sửa metadata</button>
+        }
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="() => _drawerOpen = false">Đóng</button>
+    </FooterContent>
+</AdminDrawer>
+
+<AdminModal IsOpen="_editOpen" IsOpenChanged="v => _editOpen = v" Title="Sửa metadata phiên bản">
+    <ChildContent>
+        <div class="admin-form-grid">
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Tiêu đề</label>
+                <input class="admin-input" @bind="_editTitle" />
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Khoa áp dụng</label>
+                <select class="admin-select" @bind="_editDepartmentId">
+                    <option value="">Theo quy trình</option>
+                    @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
+                    {
+                        <option value="@dept.DepartmentId">@dept.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field admin-form-field-full">
+                <label class="admin-form-field-label">Tóm tắt</label>
+                <textarea class="admin-textarea" rows="3" @bind="_editSummary"></textarea>
+            </div>
+            <div class="admin-form-field admin-form-field-full">
+                <label class="admin-form-field-label">Lý do thay đổi</label>
+                <textarea class="admin-textarea" rows="3" @bind="_editReason"></textarea>
+            </div>
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _editOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="SaveEdit">Lưu</button>
+    </FooterContent>
+</AdminModal>
+
+<AdminModal IsOpen="_rejectOpen" IsOpenChanged="v => _rejectOpen = v" Title="Trả về soạn thảo">
+    <ChildContent>
+        <p style="margin:0;">Nhập lý do trả lại phiên bản <strong>@_rejectTarget?.Version.Title</strong>.</p>
+        <textarea class="admin-textarea" rows="3" placeholder="VD: Cần bổ sung bước kiểm tra dị ứng." @bind="_rejectReason"></textarea>
     </ChildContent>
     <FooterContent>
         <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _rejectOpen = false">Hủy</button>
-        <button type="button" class="admin-btn admin-btn-danger" @onclick="ConfirmRejectAsync" disabled="@string.IsNullOrWhiteSpace(_rejectReason)">Trả về soạn thảo</button>
+        <button type="button" class="admin-btn admin-btn-danger" @onclick="ConfirmReject" disabled="@string.IsNullOrWhiteSpace(_rejectReason)">Trả về</button>
     </FooterContent>
 </AdminModal>
 
 @code {
-    private IReadOnlyList<ProcedureRecord> _pending = Array.Empty<ProcedureRecord>();
+    private const int _pageSize = 10;
+    private int _page = 1;
+    private string _search = string.Empty;
+    private string _status = "pending_approval";
+    private string _departmentId = string.Empty;
+    private IReadOnlyList<ApprovalRow> _rows = Array.Empty<ApprovalRow>();
+    private IReadOnlyList<ApprovalRow> _paged = Array.Empty<ApprovalRow>();
+    private ApprovalRow? _selected;
+    private bool _drawerOpen;
     private bool _rejectOpen;
-    private ProcedureRecord? _rejectTarget;
+    private ApprovalRow? _rejectTarget;
     private string _rejectReason = string.Empty;
+    private bool _editOpen;
+    private Guid? _editVersionId;
+    private string _editTitle = string.Empty;
+    private string _editSummary = string.Empty;
+    private string _editReason = string.Empty;
+    private string _editDepartmentId = string.Empty;
 
     protected override void OnInitialized()
     {
-        ProcedureService.StateChanged += OnStateChanged;
+        Store.StateChanged += OnChanged;
         Recompute();
     }
 
-    private void OnStateChanged() => InvokeAsync(() => { Recompute(); StateHasChanged(); });
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        if (_selected is not null)
+        {
+            _selected = BuildRow(_selected.Version.ProcedureVersionId);
+        }
+        Recompute();
+        StateHasChanged();
+    });
 
     private void Recompute()
     {
-        _pending = ProcedureService.Search(new ProcedureFilter(Status: ProcedureStatus.DangChoPheDuyet));
+        var deptId = Guid.TryParse(_departmentId, out var parsedDept) ? parsedDept : (Guid?)null;
+        _rows = Store.ProcedureVersions
+            .Select(v => BuildRow(v.ProcedureVersionId))
+            .Where(r => r is not null)
+            .Cast<ApprovalRow>()
+            .Where(r => string.IsNullOrEmpty(_status) || r.Version.StatusCode == _status)
+            .Where(r => !deptId.HasValue || (r.Version.DepartmentId ?? r.Procedure.OwnerDepartmentId) == deptId.Value)
+            .Where(r => string.IsNullOrWhiteSpace(_search)
+                || r.Procedure.ProcedureCode.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                || r.Procedure.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                || r.Version.Title.Contains(_search, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(r => r.Version.SubmittedAt ?? r.Version.CreatedAt)
+            .ToList();
+        Paginate();
     }
 
-    private async Task ApproveAsync(ProcedureRecord proc)
+    private void Paginate()
     {
-        var ok = await Confirm.ShowAsync(
-            "Phê duyệt quy trình",
-            $"Phê duyệt và ban hành quy trình \"{proc.Name}\"?",
-            confirmText: "Phê duyệt");
+        var totalPages = Math.Max(1, (int)Math.Ceiling(_rows.Count / (double)_pageSize));
+        _page = Math.Clamp(_page, 1, totalPages);
+        _paged = _rows.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private ApprovalRow? BuildRow(Guid versionId)
+    {
+        var version = Store.ProcedureVersions.FirstOrDefault(v => v.ProcedureVersionId == versionId);
+        if (version is null) return null;
+        var procedure = Store.Procedures.FirstOrDefault(p => p.ProcedureId == version.ProcedureId);
+        return procedure is null ? null : new ApprovalRow(procedure, version);
+    }
+
+    private void OpenDetail(ApprovalRow row)
+    {
+        _selected = row;
+        _drawerOpen = true;
+    }
+
+    private void OpenEdit(ApprovalRow row)
+    {
+        _editVersionId = row.Version.ProcedureVersionId;
+        _editTitle = row.Version.Title;
+        _editSummary = row.Version.Summary ?? string.Empty;
+        _editReason = row.Version.ChangeReason ?? string.Empty;
+        _editDepartmentId = row.Version.DepartmentId?.ToString() ?? string.Empty;
+        _editOpen = true;
+    }
+
+    private void SaveEdit()
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "cập nhật metadata phiên bản")) return;
+        if (!_editVersionId.HasValue) return;
+        var version = Store.ProcedureVersions.FirstOrDefault(v => v.ProcedureVersionId == _editVersionId.Value);
+        if (version is null) return;
+        if (version.StatusCode is not ("draft" or "rejected"))
+        {
+            Toasts.Show("Không thể sửa", "Chỉ sửa metadata khi phiên bản là bản nháp hoặc đã trả lại.", ToastVariant.Warning);
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_editTitle))
+        {
+            Toasts.Show("Thiếu tiêu đề", "Vui lòng nhập tiêu đề phiên bản.", ToastVariant.Warning);
+            return;
+        }
+
+        Store.UpdateProcedureVersion(version with
+        {
+            Title = _editTitle.Trim(),
+            Summary = string.IsNullOrWhiteSpace(_editSummary) ? null : _editSummary.Trim(),
+            ChangeReason = string.IsNullOrWhiteSpace(_editReason) ? null : _editReason.Trim(),
+            DepartmentId = ParseGuid(_editDepartmentId)
+        });
+        _editOpen = false;
+        Toasts.Show("Đã cập nhật phiên bản", _editTitle.Trim(), ToastVariant.Success);
+    }
+
+    private async Task ApproveAsync(ApprovalRow row)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "phê duyệt quy trình")) return;
+        var ok = await Confirm.ShowAsync("Phê duyệt quy trình", $"Phê duyệt và ban hành \"{row.Version.Title}\"?", confirmText: "Phê duyệt");
         if (!ok) return;
-        ProcedureService.Approve(proc.Id, "BS. Đặng Thái Sơn");
-        Toasts.Show("Đã phê duyệt quy trình", proc.Name, ToastVariant.Success);
+        try
+        {
+            Lifecycle.Publish(row.Version.ProcedureVersionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
+            Recompute();
+            RefreshSelected(row.Version.ProcedureVersionId);
+            Toasts.Show("Đã phê duyệt quy trình", row.Procedure.Name, ToastVariant.Success);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể phê duyệt", ex.Message, ToastVariant.Error);
+        }
     }
 
-    private Task RejectAsync(ProcedureRecord proc)
+    private Task RejectAsync(ApprovalRow row)
     {
-        _rejectTarget = proc;
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "từ chối quy trình")) return Task.CompletedTask;
+        _rejectTarget = row;
         _rejectReason = string.Empty;
         _rejectOpen = true;
         return Task.CompletedTask;
     }
 
-    private void ConfirmRejectAsync()
+    private void ConfirmReject()
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "từ chối quy trình")) return;
         if (_rejectTarget is null || string.IsNullOrWhiteSpace(_rejectReason)) return;
-        ProcedureService.Reject(_rejectTarget.Id, "BS. Đặng Thái Sơn", _rejectReason.Trim());
-        Toasts.Show("Đã trả về soạn thảo", _rejectTarget.Name, ToastVariant.Info);
-        _rejectOpen = false;
-        _rejectTarget = null;
-        _rejectReason = string.Empty;
+        try
+        {
+            Lifecycle.Reject(_rejectTarget.Version.ProcedureVersionId, UserContext.CurrentUser?.UserId ?? Guid.Empty, _rejectReason.Trim());
+            Recompute();
+            RefreshSelected(_rejectTarget.Version.ProcedureVersionId);
+            Toasts.Show("Đã trả về soạn thảo", _rejectTarget.Procedure.Name, ToastVariant.Info);
+            _rejectOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể trả về", ex.Message, ToastVariant.Error);
+        }
     }
 
-    public void Dispose()
+    private void ArchiveVersion(ApprovalRow row)
     {
-        ProcedureService.StateChanged -= OnStateChanged;
+        if (!Guard.CanDo("SCR_PROCEDURES:DELETE", "lưu trữ phiên bản")) return;
+        try
+        {
+            Lifecycle.Archive(row.Version.ProcedureVersionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
+            Recompute();
+            RefreshSelected(row.Version.ProcedureVersionId);
+            Toasts.Show("Đã lưu trữ phiên bản", row.Version.Title, ToastVariant.Info);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể lưu trữ", ex.Message, ToastVariant.Error);
+        }
     }
+
+    private void RestoreVersion(ApprovalRow row)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "khôi phục phiên bản")) return;
+        try
+        {
+            Lifecycle.RestoreDraft(row.Version.ProcedureVersionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
+            Recompute();
+            RefreshSelected(row.Version.ProcedureVersionId);
+            Toasts.Show("Đã khôi phục về bản nháp", row.Version.Title, ToastVariant.Success);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể khôi phục", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void RefreshSelected(Guid versionId)
+    {
+        _selected = _rows.FirstOrDefault(r => r.Version.ProcedureVersionId == versionId);
+    }
+
+    private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+    private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    private static string VersionLabel(Sql.ProcedureVersion version) => version.VersionLabel ?? $"v{version.VersionNo}";
+    private static string StatusLabel(string status) => Sql.MedLookups.VersionStatuses.FirstOrDefault(s => s.Code == status)?.Name ?? status;
+    private static string VersionTone(string status) => status switch
+    {
+        "active" => "tone-success",
+        "pending_approval" => "tone-warning",
+        "rejected" or "archived" => "tone-danger",
+        "draft" => "tone-muted",
+        _ => "tone-muted"
+    };
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+
+    private sealed record ApprovalRow(Sql.ProfessionalProcedure Procedure, Sql.ProcedureVersion Version);
 }

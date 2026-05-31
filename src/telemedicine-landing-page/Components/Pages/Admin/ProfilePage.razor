@@ -1,12 +1,16 @@
 @page "/admin/ho-so"
+@page "/qlcm/ho-so"
 @layout AdminLayout
 @using System.Text.Json
 @using TelemedicineLandingPage.Data
+@using TelemedicineLandingPage.Application.Validation
 @using TelemedicineLandingPage.Models.Admin.Sql
 @using TelemedicineLandingPage.Services.Admin.Sql
 @inject ICurrentUserContext UserContext
 @inject MedDbContext Db
 @inject IToastService Toast
+@inject IValidationService Validation
+@inject IPasswordStrengthService PasswordStrengthService
 
 <PageTitle>Hồ sơ cá nhân | QLCM Pro</PageTitle>
 
@@ -95,8 +99,15 @@
                         }
                         <div class="admin-form-field">
                             <label class="admin-form-field-label" for="profile-new-pw">Mật khẩu mới</label>
-                            <input id="profile-new-pw" class="admin-input" type="password" @bind="_newPassword" autocomplete="new-password" />
-                            <span class="admin-form-field-hint">Tối thiểu 6 ký tự.</span>
+                            <input id="profile-new-pw" class="admin-input" type="password" @bind="_newPassword" @bind:event="oninput" autocomplete="new-password" />
+                            @if (!string.IsNullOrEmpty(_newPassword))
+                            {
+                                <div class="password-strength" aria-live="polite">
+                                    <meter min="0" max="@PasswordStrength.MaxScore" value="@PasswordStrength.Score"></meter>
+                                    <span>@PasswordStrength.Label</span>
+                                </div>
+                            }
+                            <span class="admin-form-field-hint">Tối thiểu 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.</span>
                         </div>
                         <div class="admin-form-field">
                             <label class="admin-form-field-label" for="profile-confirm-pw">Xác nhận mật khẩu mới</label>
@@ -128,6 +139,7 @@
     private string _oldPassword = string.Empty;
     private string _newPassword = string.Empty;
     private string _confirmPassword = string.Empty;
+    private PasswordStrengthResult PasswordStrength => PasswordStrengthService.Evaluate(_newPassword, _user?.Username, _user?.PasswordHash);
 
     private string Initials
     {
@@ -186,7 +198,7 @@
         Toast.Show("Đã hoàn tác", "Khôi phục dữ liệu hồ sơ đang lưu trong hệ thống.", ToastVariant.Info);
     }
 
-    private void SaveProfile()
+    private async Task SaveProfile()
     {
         if (_user is null || _isSaving) return;
 
@@ -206,7 +218,7 @@
             return;
         }
 
-        if (changingPassword && !ValidatePasswordChange())
+        if (changingPassword && !await ValidatePasswordChange())
         {
             return;
         }
@@ -264,26 +276,21 @@
         }
     }
 
-    private bool ValidatePasswordChange()
+    private async Task<bool> ValidatePasswordChange()
     {
-        if (_newPassword.Length < 6)
+        var errors = await Validation.ValidateAsync(new ProfilePasswordChangeCommand(
+            _user?.Username ?? string.Empty,
+            _user?.PasswordHash,
+            _hasPassword,
+            _oldPassword,
+            _newPassword,
+            _confirmPassword));
+        if (errors.Count == 0)
         {
-            Toast.Show("Mật khẩu quá ngắn", "Mật khẩu mới cần tối thiểu 6 ký tự.", ToastVariant.Warning);
-            return false;
+            return true;
         }
 
-        if (_newPassword != _confirmPassword)
-        {
-            Toast.Show("Mật khẩu không khớp", "Vui lòng nhập lại phần xác nhận mật khẩu.", ToastVariant.Error);
-            return false;
-        }
-
-        if (!_hasPassword) return true;
-
-        var oldHash = CurrentUserContext.HashPassword(_oldPassword);
-        if (oldHash == _user?.PasswordHash) return true;
-
-        Toast.Show("Mật khẩu hiện tại không đúng", "Vui lòng kiểm tra lại mật khẩu đang dùng.", ToastVariant.Error);
+        Toast.Show("Mật khẩu chưa hợp lệ", errors[0], ToastVariant.Warning);
         return false;
     }
 }

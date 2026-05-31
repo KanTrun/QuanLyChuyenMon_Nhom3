@@ -51,6 +51,17 @@ public sealed class PermissionChangeRequestServiceTests : IDisposable
         Assert.Equal(MedDataStoreSeed.RoleSysAdminId, req.TargetRoleId);
     }
 
+    [Fact]
+    public void CreateDraft_ImmediateEffectiveAt_ClampsToRequestedAt()
+    {
+        var req = _svc.CreateDraft(
+            MedDataStoreSeed.AdminUserId, "role",
+            MedDataStoreSeed.RoleSysAdminId, null, null,
+            "Cấp quyền ngay", DateTime.UtcNow.AddSeconds(-1));
+
+        Assert.True(req.EffectiveAt >= req.RequestedAt);
+    }
+
     // === 2. CreateDraft: phải chọn đúng 1 đối tượng ===
     [Fact]
     public void CreateDraft_MultipleTargets_Throws50010()
@@ -133,6 +144,59 @@ public sealed class PermissionChangeRequestServiceTests : IDisposable
         Assert.Equal(_testApproverId, updated.ApprovedBy);
     }
 
+    [Fact]
+    public void Approve_GrantRolePermission_AppliesPermission()
+    {
+        var req = _svc.CreateDraft(
+            MedDataStoreSeed.AdminUserId, "role",
+            MedDataStoreSeed.RoleNurseId, null, null,
+            "Cấp quyền tạo chỉ định cho điều dưỡng", DateTime.UtcNow);
+        _svc.AddItem(req.PermissionChangeRequestId, new PermissionChangeItem
+        {
+            PermissionChangeRequestId = req.PermissionChangeRequestId,
+            PermissionId = MedDataStoreSeed.PermCreateOrderId,
+            OperationCode = "grant",
+            EffectCode = "allow",
+            DepartmentScopeType = "global"
+        });
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
+
+        _svc.Approve(req.PermissionChangeRequestId, _testApproverId);
+
+        Assert.Contains(_db.RolePermissions, rp =>
+            rp.RoleId == MedDataStoreSeed.RoleNurseId &&
+            rp.PermissionId == MedDataStoreSeed.PermCreateOrderId &&
+            rp.EffectiveTo is null);
+        Assert.Contains(_db.Notifications, n =>
+            n.NotificationType == "permission_change" &&
+            n.SourceId == req.PermissionChangeRequestId.ToString());
+    }
+
+    [Fact]
+    public void Approve_RevokeRolePermission_ExpiresExistingPermission()
+    {
+        var req = _svc.CreateDraft(
+            MedDataStoreSeed.AdminUserId, "role",
+            MedDataStoreSeed.RoleSysAdminId, null, null,
+            "Thu hồi quyền xem tổng quan", DateTime.UtcNow);
+        _svc.AddItem(req.PermissionChangeRequestId, new PermissionChangeItem
+        {
+            PermissionChangeRequestId = req.PermissionChangeRequestId,
+            PermissionId = MedDataStoreSeed.PermViewDashId,
+            OperationCode = "revoke",
+            EffectCode = "allow",
+            DepartmentScopeType = "global"
+        });
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
+
+        _svc.Approve(req.PermissionChangeRequestId, _testApproverId);
+
+        var permission = _db.RolePermissions.First(rp =>
+            rp.RoleId == MedDataStoreSeed.RoleSysAdminId &&
+            rp.PermissionId == MedDataStoreSeed.PermViewDashId);
+        Assert.NotNull(permission.EffectiveTo);
+    }
+
     // === 8. Approve: scheduled mode ===
     [Fact]
     public void Approve_Scheduled_SetsScheduledStatus()
@@ -145,6 +209,36 @@ public sealed class PermissionChangeRequestServiceTests : IDisposable
         var updated = _db.PermissionChangeRequests
             .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
         Assert.Equal("scheduled", updated.ChangeStatus);
+    }
+
+    [Fact]
+    public void ApplyDueScheduledRequests_AppliesDueRequest()
+    {
+        var req = _svc.CreateDraft(
+            MedDataStoreSeed.AdminUserId, "role",
+            MedDataStoreSeed.RoleNurseId, null, null,
+            "Cap quyen quan ly quy trinh theo lich", DateTime.UtcNow.AddSeconds(-1));
+        _svc.AddItem(req.PermissionChangeRequestId, new PermissionChangeItem
+        {
+            PermissionChangeRequestId = req.PermissionChangeRequestId,
+            PermissionId = MedDataStoreSeed.PermManageProcId,
+            OperationCode = "grant",
+            EffectCode = "allow",
+            DepartmentScopeType = "global"
+        });
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
+        _svc.Approve(req.PermissionChangeRequestId, _testApproverId, schedule: true);
+
+        var appliedCount = _svc.ApplyDueScheduledRequests();
+
+        var updated = _db.PermissionChangeRequests
+            .First(r => r.PermissionChangeRequestId == req.PermissionChangeRequestId);
+        Assert.Equal(1, appliedCount);
+        Assert.Equal("applied", updated.ChangeStatus);
+        Assert.Contains(_db.RolePermissions, rp =>
+            rp.RoleId == MedDataStoreSeed.RoleNurseId &&
+            rp.PermissionId == MedDataStoreSeed.PermManageProcId &&
+            rp.EffectiveTo is null);
     }
 
     // === 9. Reject: chuyển pending_approval → rejected ===

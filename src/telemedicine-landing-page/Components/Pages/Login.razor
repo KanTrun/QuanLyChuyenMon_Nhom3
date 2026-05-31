@@ -1,87 +1,114 @@
 @page "/login"
-@using Microsoft.Data.SqlClient
 @using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin
 @using TelemedicineLandingPage.Services.Admin.Sql
 @inject ICurrentUserContext UserContext
+@inject BrowserSessionService BrowserSession
 @inject NavigationManager Navigation
 @inject MedDbContext Db
+@inject NavGate Gate
+@inject IAdminNavigationState NavState
 
 <PageTitle>Đăng nhập | QLCM Pro</PageTitle>
 
-<div class="login-page">
-    <!-- Left: Royal Branding Panel -->
-    <div class="login-brand">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
+<div class="login-page" data-auth-page data-auth-variant="login">
+    <section class="login-brand" aria-label="QLCM Pro">
+        <div class="auth-grid-lines" aria-hidden="true"></div>
+        <div class="auth-depth-field" aria-hidden="true">
+            <span class="auth-plane auth-plane-one"></span>
+            <span class="auth-plane auth-plane-two"></span>
+            <span class="auth-plane auth-plane-three"></span>
+            <span class="auth-ring auth-ring-one"></span>
+            <span class="auth-ring auth-ring-two"></span>
+        </div>
+        <div class="auth-signal auth-signal-one" aria-hidden="true"></div>
+        <div class="auth-signal auth-signal-two" aria-hidden="true"></div>
 
         <div class="login-brand-content">
-            <div class="login-logo">+</div>
+            <div class="auth-product-row">
+                <div class="login-logo" data-auth-float><img src="/brand/logo-hos.jpg" alt="" /></div>
+                <div class="auth-product-copy">
+                    <span>Clinical command access</span>
+                    <strong>Secure session</strong>
+                </div>
+            </div>
+            <p class="auth-kicker">Quản lý chuyên môn bệnh viện</p>
             <h1>QLCM Pro</h1>
-            <p>Hệ thống Quản lý Chuyên môn bệnh viện — quản lý quy trình, phân quyền, phác đồ và báo cáo.</p>
+            <p>Điều phối quy trình kỹ thuật, phân quyền, phác đồ và báo cáo vận hành trong một hệ thống an toàn.</p>
+
+            <div class="auth-command-strip" aria-label="Chỉ số hệ thống">
+                <span>RBAC</span>
+                <span>Audit</span>
+                <span>Clinical ops</span>
+            </div>
 
             <div class="login-features">
                 <div class="login-feature">
-                    <span class="login-feature-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <span class="login-feature-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M20 6 12 3 4 6v6c0 5 3.4 8.7 8 9 4.6-.3 8-4 8-9V6Z"/></svg>
                     </span>
-                    <span>Phân quyền chi tiết theo vai trò và khoa/phòng</span>
+                    <span>Phân quyền chi tiết theo vai trò và khoa phòng</span>
                 </div>
                 <div class="login-feature">
-                    <span class="login-feature-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="login-feature-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/></svg>
                     </span>
-                    <span>Quản lý vòng đời quy trình chuyên môn</span>
+                    <span>Theo dõi vòng đời quy trình chuyên môn</span>
                 </div>
                 <div class="login-feature">
-                    <span class="login-feature-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    <span class="login-feature-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5"/><path d="M8 17V9"/><path d="M12 17V7"/><path d="M16 17v-5"/><path d="M20 19H3"/></svg>
                     </span>
-                    <span>Nhật ký kiểm toán đầy đủ mọi thao tác</span>
+                    <span>Nhật ký kiểm toán đầy đủ cho thao tác nhạy cảm</span>
+                </div>
+            </div>
+
+            <div class="auth-status-card" data-auth-float-layer>
+                <div>
+                    <span class="auth-status-label">Phiên trực tuyến</span>
+                    <strong>Kiểm soát truy cập</strong>
+                </div>
+                <div class="auth-status-meter" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Right: Login Form -->
-    <div class="login-form-panel">
+    <section class="login-form-panel" aria-label="Đăng nhập">
+        <div class="auth-form-aura" aria-hidden="true"></div>
         <div class="login-form-wrapper">
+            <div class="auth-route-pill">
+                <span></span>
+                Cổng quản trị nội bộ
+            </div>
             <div class="login-form-header">
                 <p class="eyebrow">Chào mừng trở lại</p>
                 <h2>Đăng nhập hệ thống</h2>
-                <p>Nhập email hoặc tên đăng nhập để truy cập hệ thống quản lý chuyên môn.</p>
+                <p>Nhập tài khoản nội bộ để vào không gian quản trị chuyên môn.</p>
             </div>
 
             <form class="login-form" @onsubmit="HandleLogin" @onsubmit:preventDefault>
                 <div class="form-group">
-                    <label for="login-identifier">Email hoặc tên đăng nhập</label>
-                    <input type="text" id="login-identifier" @bind="_identifier" placeholder="Nhập email hoặc tên đăng nhập" autocomplete="username" required />
+                    <label for="login-username">Tên đăng nhập</label>
+                    <input type="text" id="login-username" @bind="_username" placeholder="vd: admin" autocomplete="username" required />
                 </div>
 
                 <div class="form-group">
                     <label for="login-password">Mật khẩu</label>
-                    <div class="password-input-wrapper">
-                        <input type="@(_showPassword ? "text" : "password")" id="login-password" @bind="_password" placeholder="Nhập mật khẩu" autocomplete="current-password" required />
-                        <button type="button"
-                                class="password-toggle"
-                                @onclick="TogglePasswordVisibility"
-                                aria-label="@(_showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu")"
-                                aria-pressed="@_showPassword">
+                    <div class="password-field">
+                        <input type="@PasswordInputType" id="login-password" @bind="_password" placeholder="Nhập mật khẩu" autocomplete="current-password" required />
+                        <button type="button" class="password-toggle" @onclick="TogglePasswordVisibility" aria-label="@PasswordToggleLabel" title="@PasswordToggleLabel">
                             @if (_showPassword)
                             {
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C7 19 2.73 15.89 1 12c.92-2.06 2.42-3.83 4.31-5.1" />
-                                    <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c5 0 9.27 3.11 11 8a11.05 11.05 0 0 1-1.67 2.68" />
-                                    <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
-                                    <path d="M1 1l22 22" />
-                                </svg>
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 10.6A2 2 0 0 0 13.4 13.4"/><path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c5 0 8.5 4.3 9.7 6a13.5 13.5 0 0 1-3.1 3.6"/><path d="M6.6 6.6A13.7 13.7 0 0 0 2.3 11c1.2 1.7 4.7 6 9.7 6 1.5 0 2.9-.4 4.1-1"/></svg>
                             }
                             else
                             {
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg>
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.3 12S5.8 5 12 5s9.7 7 9.7 7-3.5 7-9.7 7-9.7-7-9.7-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                             }
                         </button>
                     </div>
@@ -90,7 +117,7 @@
                 @if (!string.IsNullOrEmpty(_errorMessage))
                 {
                     <div class="login-error" role="alert">
-                        <span>⚠️ @_errorMessage</span>
+                        <span>@_errorMessage</span>
                     </div>
                 }
 
@@ -106,39 +133,38 @@
                 </button>
             </form>
 
-            <div class="login-divider">hoặc đăng nhập bằng</div>
-
-            <div class="social-login">
-                <button type="button" class="social-btn" disabled>
-                    <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                    Google
-                </button>
-                <button type="button" class="social-btn" disabled>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"/></svg>
-                    GitHub
-                </button>
-            </div>
-
             <p class="login-footer">
                 Chưa có tài khoản? <a href="/register">Đăng ký ngay</a>
             </p>
+            <div class="auth-assurance">
+                <span>Mã hóa phiên</span>
+                <span>Audit log</span>
+                <span>RBAC</span>
+            </div>
         </div>
-    </div>
+    </section>
 </div>
 
 @code {
-    private string _identifier = "";
+    private const int MaxFailedAttempts = 5;
+    private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
+
+    private string _username = "";
     private string _password = "";
     private string? _errorMessage;
     private bool _isLoading;
     private bool _showPassword;
+    private int _failedAttempts;
+    private DateTime? _lockedUntilUtc;
+
+    private string PasswordInputType => _showPassword ? "text" : "password";
+    private string PasswordToggleLabel => _showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu";
 
     protected override void OnInitialized()
     {
-        // Nếu đã đăng nhập rồi thì chuyển thẳng vào admin
         if (UserContext.CurrentUser is not null)
         {
-            Navigation.NavigateTo("/admin", forceLoad: false);
+            Navigation.NavigateTo(GetPostLoginRoute(), forceLoad: false, replace: true);
         }
     }
 
@@ -150,9 +176,15 @@
         try
         {
             await Task.Delay(300);
-            if (string.IsNullOrWhiteSpace(_identifier))
+            if (IsLockedOut(out var remaining))
             {
-                _errorMessage = "Vui lòng nhập email hoặc tên đăng nhập.";
+                _errorMessage = $"Tài khoản đăng nhập đang bị tạm khóa. Thử lại sau {Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes))} phút.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_username))
+            {
+                _errorMessage = "Vui lòng nhập tên đăng nhập.";
                 return;
             }
 
@@ -162,22 +194,37 @@
                 return;
             }
 
-            // Thử đăng nhập với mật khẩu
-            var user = UserContext.Login(_identifier.Trim(), _password);
-
-            // Nếu thất bại, thử đăng nhập không mật khẩu (tài khoản chưa đặt password)
-            if (user is null)
+            var loginResult = UserContext.LoginByUsernameDetailed(_username.Trim(), _password);
+            if (loginResult.Status == LoginAttemptStatus.Inactive)
             {
-                user = UserContext.LoginWithoutPassword(_identifier.Trim());
-            }
-
-            if (user is null)
-            {
-                _errorMessage = "Email, tên đăng nhập hoặc mật khẩu không đúng.";
+                _errorMessage = "Tài khoản đã được ghi nhận trong hệ thống nhưng chưa được quản trị viên kích hoạt.";
                 return;
             }
 
-            // Ghi audit log đăng nhập
+            if (loginResult.Status == LoginAttemptStatus.Rejected)
+            {
+                _errorMessage = "Yêu cầu tài khoản này đã bị từ chối. Vui lòng liên hệ quản trị viên để cập nhật hồ sơ.";
+                return;
+            }
+
+            if (loginResult.Status == LoginAttemptStatus.PasswordNotSet)
+            {
+                _errorMessage = "Tài khoản chưa có mật khẩu. Vui lòng liên hệ quản trị viên để nhận liên kết thiết lập mật khẩu.";
+                return;
+            }
+
+            var user = loginResult.User;
+
+            if (user is null)
+            {
+                RegisterFailedAttempt();
+                _errorMessage = "Tên đăng nhập hoặc mật khẩu không đúng.";
+                return;
+            }
+
+            _failedAttempts = 0;
+            _lockedUntilUtc = null;
+
             Db.AuditLogs.Add(new AuditLog
             {
                 CorrelationId = Guid.NewGuid(),
@@ -189,12 +236,9 @@
             });
             Db.SaveChanges();
 
-            // Đăng nhập thành công
-            Navigation.NavigateTo("/admin", forceLoad: false);
-        }
-        catch (Exception ex) when (IsDatabaseConnectivityError(ex))
-        {
-            _errorMessage = "Không thể kết nối cơ sở dữ liệu đăng nhập. Vui lòng kiểm tra SQL Server local hoặc chạy Docker Compose của dự án.";
+            await BrowserSession.PersistCurrentUserAsync();
+
+            Navigation.NavigateTo(GetPostLoginRoute(), forceLoad: false, replace: true);
         }
         finally
         {
@@ -203,17 +247,30 @@
     }
 
     private void TogglePasswordVisibility()
-    {
-        _showPassword = !_showPassword;
-    }
+        => _showPassword = !_showPassword;
 
-    private static bool IsDatabaseConnectivityError(Exception ex)
+    private string GetPostLoginRoute()
+        => Gate.GetFirstAccessibleRoute(NavState.NavItems, "/AccessDenied");
+
+    private bool IsLockedOut(out TimeSpan remaining)
     {
-        if (ex is SqlException)
+        if (_lockedUntilUtc is null || _lockedUntilUtc <= DateTime.UtcNow)
         {
-            return true;
+            _lockedUntilUtc = null;
+            remaining = TimeSpan.Zero;
+            return false;
         }
 
-        return ex.InnerException is not null && IsDatabaseConnectivityError(ex.InnerException);
+        remaining = _lockedUntilUtc.Value - DateTime.UtcNow;
+        return true;
+    }
+
+    private void RegisterFailedAttempt()
+    {
+        _failedAttempts++;
+        if (_failedAttempts >= MaxFailedAttempts)
+        {
+            _lockedUntilUtc = DateTime.UtcNow.Add(LockoutDuration);
+        }
     }
 }

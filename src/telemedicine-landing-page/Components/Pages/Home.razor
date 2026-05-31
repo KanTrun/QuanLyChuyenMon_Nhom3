@@ -1,13 +1,98 @@
 @page "/"
-@inject ILandingPageContentService Content
-@inject IOptions<LandingPageLinksOptions> LinksOptions
 
-<PageTitle>QLCM Pro | Quản lý Quy trình Kỹ thuật Chuyên Môn</PageTitle>
+<PageTitle>QLCM Pro | Quản lý chuyên môn bệnh viện</PageTitle>
 
-<main id="main-content" class="landing-page">
-    <HeroSection Links="Links" Stats="Content.GetStats()" />
+<main id="main-content" class="qlcm-intro" data-preauth-page>
+    <header class="qlcm-intro-nav" aria-label="Điều hướng giới thiệu">
+        <a class="qlcm-intro-brand" href="/">
+            <span class="qlcm-intro-brand-mark" aria-hidden="true"><img src="/brand/logo-hos.jpg" alt="" /></span>
+            <span>
+                <strong>QLCM Pro</strong>
+                <small>Clinical Operations</small>
+            </span>
+        </a>
+        <nav class="qlcm-intro-nav-actions" aria-label="Tài khoản">
+            <a class="qlcm-intro-link" href="/register">Đăng ký</a>
+            <a class="qlcm-intro-btn qlcm-intro-btn-primary" href="/login">Đăng nhập</a>
+        </nav>
+    </header>
+
+    <section class="qlcm-intro-hero">
+        <div class="qlcm-intro-copy">
+            <p class="qlcm-intro-eyebrow">Cổng điều hành chuyên môn bệnh viện</p>
+            <h1>Đi vào không gian quản trị QLCM Pro.</h1>
+            <p class="qlcm-intro-lead">
+                Quản lý quy trình kỹ thuật, phân quyền, định mức tài nguyên và phác đồ lâm sàng trong một
+                giao diện nội bộ rõ ràng, bảo mật và dễ kiểm soát.
+            </p>
+
+            <div class="qlcm-intro-actions">
+                <a class="qlcm-intro-btn qlcm-intro-btn-primary" href="/login">Vào đăng nhập</a>
+                <a class="qlcm-intro-btn qlcm-intro-btn-secondary" href="/register">Tạo tài khoản</a>
+            </div>
+
+            <div class="qlcm-intro-entry" aria-label="Lối vào hệ thống">
+                <a href="/login">
+                    <span>01</span>
+                    <strong>Đăng nhập nội bộ</strong>
+                    <small>Dành cho tài khoản đã được kích hoạt</small>
+                </a>
+                <a href="/register">
+                    <span>02</span>
+                    <strong>Đăng ký quyền truy cập</strong>
+                    <small>Gửi yêu cầu chờ quản trị viên duyệt</small>
+                </a>
+            </div>
+        </div>
+
+        <aside class="qlcm-intro-preview" aria-label="Bảng điều khiển xem trước QLCM Pro">
+            <div class="qlcm-preview-topbar">
+                <span></span><span></span><span></span>
+                <strong>Ocean Console</strong>
+            </div>
+            <div class="qlcm-preview-surface">
+                <div class="qlcm-preview-status">
+                    <span>Trạng thái hệ thống</span>
+                    <strong>Sẵn sàng vận hành</strong>
+                </div>
+                <div class="qlcm-preview-grid">
+                    <div class="qlcm-preview-kpi">
+                        <span>Quy trình active</span>
+                        <strong>10</strong>
+                    </div>
+                    <div class="qlcm-preview-kpi">
+                        <span>Chờ duyệt</span>
+                        <strong>3</strong>
+                    </div>
+                    <div class="qlcm-preview-kpi">
+                        <span>Cảnh báo tài nguyên</span>
+                        <strong>2</strong>
+                    </div>
+                </div>
+                <div class="qlcm-preview-workflow">
+                    <div><span></span>Soạn thảo quy trình</div>
+                    <div><span></span>Duyệt phiên bản</div>
+                    <div><span></span>Áp dụng lâm sàng</div>
+                </div>
+            </div>
+        </aside>
+    </section>
+
+    <section class="qlcm-intro-modules" aria-label="Các năng lực chính">
+        <article>
+            <span>01</span>
+            <h2>Quy trình có phiên bản</h2>
+            <p>Lưu bước thực hiện, vai trò phụ trách, thời gian chuẩn và lịch sử thay đổi.</p>
+        </article>
+        <article>
+            <span>02</span>
+            <h2>Phân quyền theo nghiệp vụ</h2>
+            <p>Kiểm soát truy cập theo tài khoản, nhóm, vai trò, khoa/phòng và hành động.</p>
+        </article>
+        <article>
+            <span>03</span>
+            <h2>Định mức và phác đồ</h2>
+            <p>Gắn kỹ thuật với vật tư, kiểm tra nguồn lực và gợi ý phác đồ theo ICD.</p>
+        </article>
+    </section>
 </main>
-
-@code {
-    private LandingPageLinksOptions Links => LinksOptions.Value;
-}

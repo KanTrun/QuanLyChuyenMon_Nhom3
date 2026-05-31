@@ -13,34 +13,38 @@
         <div>
             <span class="admin-page-eyebrow">Hệ thống</span>
             <h1 class="admin-page-title">Danh mục màn hình và tính năng</h1>
-            <p class="admin-page-subtitle">Quản lý danh sách màn hình, tính năng để ánh xạ quyền truy cập.</p>
+            <p class="admin-page-subtitle">Danh mục này dùng để quản trị quyền theo màn hình và tác vụ; mã kỹ thuật chỉ nằm trong phần chi tiết.</p>
         </div>
         <button class="admin-btn admin-btn-primary" @onclick="OpenCreateScreen">Thêm màn hình</button>
     </header>
 
     <AdminDataTable TItem="ScreenCatalog"
                     Items="_pagedScreens"
-                    ColumnCount="5"
+                    ColumnCount="4"
                     CurrentPage="_page"
                     PageSize="_pageSize"
                     TotalItems="_totalScreens"
                     CurrentPageChanged="p => { _page = p; Paginate(); }">
         <HeaderTemplate>
-            <th>Mã</th>
             <th>Tên màn hình</th>
-            <th>Route</th>
-            <th>Module</th>
+            <th>Nhóm nghiệp vụ</th>
             <th>Số tính năng</th>
+            <th>Chi tiết kỹ thuật</th>
         </HeaderTemplate>
         <RowTemplate Context="screen">
             <tr>
-                <td>@screen.ScreenCode</td>
                 <td>@screen.Name</td>
-                <td>@screen.Route</td>
                 <td>
-                    <AdminBadge Tone="tone-primary">@screen.ModuleCode</AdminBadge>
+                    <AdminBadge Tone="tone-primary">@AdminBusinessDisplay.Module(screen.ModuleCode)</AdminBadge>
                 </td>
                 <td>@Store.Features.Count(f => f.ScreenId == screen.ScreenId)</td>
+                <td>
+                    <details>
+                        <summary>Xem</summary>
+                        <div class="admin-table-cell-muted">@screen.ScreenCode</div>
+                        <div class="admin-table-cell-muted">@screen.Route</div>
+                    </details>
+                </td>
             </tr>
         </RowTemplate>
     </AdminDataTable>
@@ -112,9 +116,9 @@
                 ModuleCode = _moduleCode
             });
             _drawerOpen = false;
-            Toast.Show("Đã thêm màn hình thành công.", "success");
+            Toast.Show("Đã thêm màn hình", "Màn hình đã sẵn sàng để ánh xạ quyền truy cập.", ToastVariant.Success);
         }
-        catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
+        catch (MedDomainException ex) { Toast.Show("Không thể thêm màn hình", ex.Message, ToastVariant.Error); }
     }
 
     public void Dispose() => Store.StateChanged -= OnChanged;

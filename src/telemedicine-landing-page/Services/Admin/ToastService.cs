@@ -45,7 +45,7 @@ public sealed class ToastService : IToastService
         {
             title = "Thông báo";
         }
-        var message = new ToastMessage(Guid.NewGuid(), title.Trim(), string.IsNullOrWhiteSpace(body) ? null : body.Trim(), variant, DateTime.Now);
+        var message = new ToastMessage(Guid.NewGuid(), title.Trim(), string.IsNullOrWhiteSpace(body) ? null : body.Trim(), variant, DateTime.UtcNow);
         lock (_gate)
         {
             _active.Add(message);

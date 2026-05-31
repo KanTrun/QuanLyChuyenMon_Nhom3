@@ -1,4 +1,5 @@
 @page "/admin"
+@page "/qlcm"
 @layout AdminLayout
 @inject IMedDataStore DataStore
 @inject ICurrentUserContext UserContext
@@ -14,7 +15,7 @@
             <p class="admin-greeting-subtitle">Hôm nay là @_dateLine.</p>
         </div>
         <div class="admin-greeting-actions">
-            <a class="admin-btn admin-btn-primary" href="/admin/quy-trinh/tao">
+            <a class="admin-btn admin-btn-primary" href="/qlcm/quy-trinh/tao">
                 <span aria-hidden="true">@Icon("plus")</span>
                 Tạo quy trình mới
             </a>
@@ -56,17 +57,120 @@
     </div>
 
     <div class="admin-dashboard-grid">
+        <div class="admin-dashboard-main-column">
         <section class="admin-panel admin-panel-trend">
             <header class="admin-panel-head">
                 <div>
-                    <h2 class="admin-panel-title">Thống kê</h2>
-                    <p class="admin-panel-subtitle">Dữ liệu tổng hợp từ hệ thống.</p>
+                    <h2 class="admin-panel-title">Quy trình theo tháng ban hành</h2>
+                    <p class="admin-panel-subtitle">Cột biểu diễn số phiên bản quy trình được tạo/cập nhật theo từng tháng.</p>
                 </div>
             </header>
-            <div class="admin-trend-chart" style="display:flex;align-items:center;justify-content:center;min-height:160px;">
-                <p style="color:var(--color-muted);font-size:0.95rem;">Chưa có dữ liệu thống kê</p>
+            <div class="admin-trend-chart">
+                <div class="admin-trend-bars" aria-label="Số quy trình tạo theo tháng">
+                    @foreach (var point in _procedureTrend)
+                    {
+                        var height = Math.Max(10, point.Percent);
+                        <div class="admin-trend-bar-item">
+                            <div class="admin-trend-bar" title="@($"{point.Label}: {point.Count}")" style="height:@height%;"></div>
+                            <span>@point.Label</span>
+                        </div>
+                    }
+                </div>
+                <div class="admin-status-distribution" aria-label="Phân bố trạng thái phiên bản quy trình">
+                    <div class="admin-status-distribution-head">
+                        <span>Phân bố trạng thái phiên bản</span>
+                        <strong>@_versionStatusSegments.Sum(s => s.Count) phiên bản</strong>
+                    </div>
+                    <div class="admin-status-strip" aria-hidden="true">
+                        @foreach (var segment in _versionStatusSegments)
+                        {
+                            var width = Math.Max(6, segment.Percent);
+                            <span class="@segment.Tone" style="width:@width%;" title="@($"{segment.Label}: {segment.Count}")"></span>
+                        }
+                    </div>
+                    <div class="admin-status-chips">
+                        @foreach (var segment in _versionStatusSegments)
+                        {
+                            <span class="admin-filter-chip">@segment.Label: @segment.Count</span>
+                        }
+                    </div>
+                </div>
             </div>
         </section>
+
+        <section class="admin-panel admin-panel-operations">
+            <header class="admin-panel-head">
+                <div>
+                    <h2 class="admin-panel-title">Điều phối chỉ định &amp; nguồn lực</h2>
+                    <p class="admin-panel-subtitle">Theo dõi trạng thái chỉ định kỹ thuật, khả dụng vật tư/thiết bị và tiêu hao lệch định mức.</p>
+                </div>
+                <a class="admin-panel-link" href="/qlcm/bao-cao/tieu-thu">Báo cáo tiêu thụ</a>
+            </header>
+
+            <div class="admin-operations-summary" role="list">
+                <article role="listitem">
+                    <span>Chỉ định đang mở</span>
+                    <strong>@_openOrderCount</strong>
+                </article>
+                <article role="listitem">
+                    <span>Cảnh báo nguồn lực</span>
+                    <strong>@_resourceWarningCount</strong>
+                </article>
+                <article role="listitem">
+                    <span>Vượt định mức</span>
+                    <strong>@_overNormUsageCount</strong>
+                </article>
+            </div>
+
+            <div class="admin-operations-grid">
+                <div class="admin-order-status-chart" aria-label="Phân bố trạng thái chỉ định kỹ thuật">
+                    @foreach (var segment in _orderStatusSegments)
+                    {
+                        var width = Math.Max(6, segment.Percent);
+                        <div class="admin-order-status-row">
+                            <div class="admin-order-status-row-head">
+                                <span>@segment.Label</span>
+                                <strong>@segment.Count</strong>
+                            </div>
+                            <div class="admin-order-status-track" aria-hidden="true">
+                                <span class="@segment.Tone" style="width:@width%;"></span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="admin-resource-readiness" aria-label="Tỷ lệ sẵn sàng nguồn lực">
+                    <div class="admin-resource-ring" style="--gauge:@_resourceReadyPercent;">
+                        <span>@_resourceReadyPercent%</span>
+                    </div>
+                    <div>
+                        <strong>Sẵn sàng nguồn lực</strong>
+                        <span>@_availableSnapshotCount / @_availabilitySnapshotCount lượt kiểm tra đạt yêu cầu</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-availability-distribution" aria-label="Phân bố kiểm tra nguồn lực">
+                <div class="admin-status-distribution-head">
+                    <span>Phân bố kiểm tra nguồn lực</span>
+                    <strong>@_availabilitySnapshotCount lượt</strong>
+                </div>
+                <div class="admin-status-strip" aria-hidden="true">
+                    @foreach (var segment in _availabilitySegments)
+                    {
+                        var width = Math.Max(6, segment.Percent);
+                        <span class="@segment.Tone" style="width:@width%;" title="@($"{segment.Label}: {segment.Count}")"></span>
+                    }
+                </div>
+                <div class="admin-status-chips">
+                    @foreach (var segment in _availabilitySegments)
+                    {
+                        <span class="admin-filter-chip">@segment.Label: @segment.Count</span>
+                    }
+                </div>
+            </div>
+        </section>
+        </div>
 
         <section class="admin-panel admin-panel-activity">
             <header class="admin-panel-head">
@@ -92,7 +196,7 @@
                                 <div class="admin-activity-headline">
                                     <span class="admin-activity-headline-text">@FormatAuditAction(log)</span>
                                 </div>
-                                <span class="admin-activity-time">@log.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                <span class="admin-activity-time">@AdminDateTimeDisplay.DateTime(log.OccurredAt)</span>
                             </div>
                         </li>
                     }
@@ -124,8 +228,6 @@
 </section>
 
 @code {
-    private static readonly string[] _viDays = { "Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy" };
-
     private string _displayName = "Đang tải...";
     private string _dateLine = string.Empty;
 
@@ -135,19 +237,28 @@
     private int _activeDepartmentCount;
 
     private IReadOnlyList<Models.Admin.Sql.AuditLog> _recentAuditLogs = Array.Empty<Models.Admin.Sql.AuditLog>();
+    private IReadOnlyList<TrendPoint> _procedureTrend = Array.Empty<TrendPoint>();
+    private IReadOnlyList<StatusSegment> _versionStatusSegments = Array.Empty<StatusSegment>();
+    private IReadOnlyList<StatusSegment> _orderStatusSegments = Array.Empty<StatusSegment>();
+    private IReadOnlyList<StatusSegment> _availabilitySegments = Array.Empty<StatusSegment>();
+    private int _openOrderCount;
+    private int _resourceWarningCount;
+    private int _overNormUsageCount;
+    private int _availabilitySnapshotCount;
+    private int _availableSnapshotCount;
+    private int _resourceReadyPercent;
 
     private readonly List<QuickTileViewModel> _quickTiles =
     [
-        new("Tạo quy trình mới", "Khởi tạo quy trình kỹ thuật và gửi phê duyệt.", "/admin/quy-trinh/tao", "plus", "tone-primary"),
+        new("Tạo quy trình mới", "Khởi tạo quy trình kỹ thuật và gửi phê duyệt.", "/qlcm/quy-trinh/tao", "plus", "tone-primary"),
         new("Quản lý phân quyền", "Cập nhật vai trò và quyền truy cập.", "/admin/phan-quyen", "shield", "tone-secondary"),
-        new("Phác đồ lâm sàng", "Tra cứu và cập nhật phác đồ điều trị.", "/admin/phac-do", "stethoscope", "tone-success"),
-        new("Báo cáo tiêu thụ", "Theo dõi tiêu thụ vật tư so với định mức.", "/admin/bao-cao/tieu-thu", "package", "tone-warning"),
+        new("Phác đồ lâm sàng", "Tra cứu và cập nhật phác đồ điều trị.", "/qlcm/phac-do", "stethoscope", "tone-success"),
+        new("Báo cáo tiêu thụ", "Theo dõi tiêu thụ vật tư so với định mức.", "/qlcm/bao-cao/tieu-thu", "package", "tone-warning"),
     ];
 
     protected override void OnInitialized()
     {
-        var now = DateTime.Now;
-        _dateLine = $"{_viDays[(int)now.DayOfWeek]}, ngày {now:dd/MM/yyyy}";
+        _dateLine = AdminDateTimeDisplay.TodayLine();
 
         UserContext.StateChanged += OnUserChanged;
         DataStore.StateChanged += OnDataChanged;
@@ -178,7 +289,7 @@
     {
         _procedureCount = DataStore.Procedures.Count;
         _publishedVersionCount = DataStore.ProcedureVersions
-            .Count(v => v.StatusCode is "published" or "active");
+            .Count(v => v.StatusCode == "active");
         _activeUserCount = DataStore.Users
             .Count(u => u.Status == "active");
         _activeDepartmentCount = DataStore.Departments
@@ -188,6 +299,67 @@
             .OrderByDescending(a => a.OccurredAt)
             .Take(8)
             .ToList();
+
+        var today = AdminDateTimeDisplay.Today();
+        var monthAnchor = new DateTime(today.Year, today.Month, 1);
+        var monthStarts = Enumerable.Range(0, 6)
+            .Select(i => monthAnchor.AddMonths(i - 5))
+            .ToList();
+        var monthlyCounts = monthStarts
+            .Select(month => new
+            {
+                Label = month.ToString("MM/yy"),
+                Count = DataStore.Procedures.Count(p =>
+                {
+                    var createdAt = AdminDateTimeDisplay.ToDisplayTime(p.CreatedAt);
+                    return createdAt >= month && createdAt < month.AddMonths(1);
+                })
+            })
+            .ToList();
+        var maxMonthlyCount = Math.Max(1, monthlyCounts.Max(p => p.Count));
+        _procedureTrend = monthlyCounts
+            .Select(p => new TrendPoint(p.Label, p.Count, (int)Math.Round(p.Count * 100.0 / maxMonthlyCount)))
+            .ToList();
+
+        var rawSegments = DataStore.ProcedureVersions
+            .GroupBy(v => v.StatusCode)
+            .Select(g => new { Status = g.Key, Label = FormatVersionStatus(g.Key), Count = g.Count() })
+            .OrderByDescending(s => s.Count)
+            .ToList();
+        var totalSegments = Math.Max(1, rawSegments.Sum(s => s.Count));
+        _versionStatusSegments = rawSegments
+            .Select(s => new StatusSegment(
+                s.Label,
+                s.Count,
+                (int)Math.Round(s.Count * 100.0 / totalSegments),
+                StatusTone(s.Status)))
+            .ToList();
+
+        var rawOrderSegments = DataStore.TechnicalOrders
+            .GroupBy(o => o.OrderStatus)
+            .Select(g => new RawStatusSegment(g.Key, FormatOrderStatus(g.Key), g.Count()))
+            .OrderByDescending(s => s.Count)
+            .ToList();
+        _orderStatusSegments = ToStatusSegments(rawOrderSegments, OrderStatusTone);
+        _openOrderCount = DataStore.TechnicalOrders
+            .Count(o => !IsClosedOrderStatus(o.OrderStatus));
+
+        var rawAvailabilitySegments = DataStore.ResourceAvailabilitySnapshots
+            .GroupBy(s => s.AvailabilityStatus)
+            .Select(g => new RawStatusSegment(g.Key, FormatAvailabilityStatus(g.Key), g.Count()))
+            .OrderByDescending(s => s.Count)
+            .ToList();
+        _availabilitySegments = ToStatusSegments(rawAvailabilitySegments, AvailabilityTone);
+        _availabilitySnapshotCount = rawAvailabilitySegments.Sum(s => s.Count);
+        _availableSnapshotCount = DataStore.ResourceAvailabilitySnapshots
+            .Count(s => string.Equals(s.AvailabilityStatus, "available", StringComparison.OrdinalIgnoreCase));
+        _resourceWarningCount = DataStore.ResourceAvailabilitySnapshots
+            .Count(s => IsResourceWarningStatus(s.AvailabilityStatus));
+        _resourceReadyPercent = _availabilitySnapshotCount == 0
+            ? 0
+            : (int)Math.Round(_availableSnapshotCount * 100.0 / _availabilitySnapshotCount);
+        _overNormUsageCount = DataStore.ActualResourceUsages
+            .Count(IsOverNormUsage);
     }
 
     private string FormatAuditAction(Models.Admin.Sql.AuditLog log)
@@ -211,7 +383,7 @@
             "submit" => $"đã gửi duyệt {FormatTarget(log.TargetType)}{details}",
             "publish" => $"đã ban hành {FormatTarget(log.TargetType)}{details}",
             "archive" => $"đã lưu trữ {FormatTarget(log.TargetType)}{details}",
-            _ => $"{log.ActionCode} {FormatTarget(log.TargetType)}{details}"
+            _ => $"{AdminBusinessDisplay.Action(log.ActionCode)} {FormatTarget(log.TargetType)}{details}"
         };
 
         return $"{actor} {action}".Trim();
@@ -226,8 +398,124 @@
         "procedure_version" => "phiên bản quy trình",
         "department" => "khoa/phòng",
         "role_permission" => "quyền vai trò",
-        _ => targetType
+        _ => AdminBusinessDisplay.Target(targetType)
     };
+
+    private static string FormatVersionStatus(string status) => status switch
+    {
+        "active" => "Đang hiệu lực",
+        "pending_approval" => "Chờ duyệt",
+        "draft" => "Nháp",
+        "rejected" => "Từ chối",
+        "superseded" => "Thay thế",
+        _ => AdminBusinessDisplay.VersionStatus(status)
+    };
+
+    private static string FormatOrderStatus(string status) => status switch
+    {
+        "ordered" => "Mới chỉ định",
+        "in_progress" => "Đang thực hiện",
+        "completed" => "Hoàn tất",
+        "cancelled" or "canceled" => "Đã hủy",
+        _ => AdminBusinessDisplay.OrderStatus(status)
+    };
+
+    private static string FormatAvailabilityStatus(string status) => status switch
+    {
+        "available" => "Sẵn sàng",
+        "insufficient" => "Thiếu số lượng",
+        "missing" or "unavailable" => "Không có",
+        _ => AdminBusinessDisplay.Availability(status)
+    };
+
+    private static string StatusTone(string status) => status switch
+    {
+        "active" => "tone-success",
+        "pending_approval" => "tone-warning",
+        "draft" => "tone-primary",
+        "rejected" => "tone-danger",
+        "superseded" => "tone-muted",
+        _ => "tone-secondary"
+    };
+
+    private static string OrderStatusTone(string status) => status switch
+    {
+        "ordered" => "tone-primary",
+        "in_progress" => "tone-warning",
+        "completed" => "tone-success",
+        "cancelled" or "canceled" => "tone-muted",
+        _ => "tone-secondary"
+    };
+
+    private static string AvailabilityTone(string status) => status switch
+    {
+        "available" => "tone-success",
+        "insufficient" => "tone-warning",
+        "missing" or "unavailable" => "tone-danger",
+        _ => "tone-secondary"
+    };
+
+    private static bool IsClosedOrderStatus(string status)
+        => string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "cancelled", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "canceled", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsResourceWarningStatus(string status)
+        => string.Equals(status, "insufficient", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "missing", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "unavailable", StringComparison.OrdinalIgnoreCase);
+
+    private static IReadOnlyList<StatusSegment> ToStatusSegments(
+        IReadOnlyList<RawStatusSegment> rawSegments,
+        Func<string, string> toneResolver)
+    {
+        if (rawSegments.Count == 0)
+        {
+            return [new StatusSegment("Chưa có dữ liệu", 0, 100, "tone-muted")];
+        }
+
+        var total = Math.Max(1, rawSegments.Sum(s => s.Count));
+        return rawSegments
+            .Select(s => new StatusSegment(
+                s.Label,
+                s.Count,
+                (int)Math.Round(s.Count * 100.0 / total),
+                toneResolver(s.Status)))
+            .ToList();
+    }
+
+    private bool IsOverNormUsage(Models.Admin.Sql.ActualResourceUsage usage)
+    {
+        var standard = ResolveStandardQuantity(usage);
+        return standard.HasValue && usage.ActualQuantity > standard.Value;
+    }
+
+    private decimal? ResolveStandardQuantity(Models.Admin.Sql.ActualResourceUsage usage)
+    {
+        var order = DataStore.TechnicalOrders.FirstOrDefault(o => o.TechnicalOrderId == usage.TechnicalOrderId);
+        if (order is null)
+        {
+            return null;
+        }
+
+        if (order.ProcedureVersionId is Guid procedureVersionId)
+        {
+            var procedureNorm = DataStore.ProcedureVersionResourceNorms.FirstOrDefault(n =>
+                n.ProcedureVersionId == procedureVersionId
+                && n.ResourceId == usage.ResourceId
+                && string.Equals(n.UnitCode, usage.UnitCode, StringComparison.OrdinalIgnoreCase));
+            if (procedureNorm is not null)
+            {
+                return procedureNorm.StandardQuantity;
+            }
+        }
+
+        return DataStore.TechnicalResourceNorms.FirstOrDefault(n =>
+            n.TechnicalServiceId == order.TechnicalServiceId
+            && n.ResourceId == usage.ResourceId
+            && string.Equals(n.UnitCode, usage.UnitCode, StringComparison.OrdinalIgnoreCase))
+            ?.StandardQuantity;
+    }
 
     private static string ExtractDetails(Models.Admin.Sql.AuditLog log)
     {
@@ -273,4 +561,7 @@
     }
 
     private sealed record QuickTileViewModel(string Title, string Subtitle, string Url, string Icon, string Tone);
+    private sealed record TrendPoint(string Label, int Count, int Percent);
+    private sealed record StatusSegment(string Label, int Count, int Percent, string Tone);
+    private sealed record RawStatusSegment(string Status, string Label, int Count);
 }

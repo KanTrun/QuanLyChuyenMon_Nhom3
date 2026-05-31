@@ -1,7 +1,18 @@
-@page "/admin/lam-sang-legacy"
+@page "/admin/lam-sang"
+@page "/qlcm/lam-sang"
 @layout AdminLayout
-@inject IClinicService ClinicService
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Text.Json
+@using TelemedicineLandingPage.Application.Signature
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
+@inject IConfirmDialogService Confirm
+@inject ISignatureService SignatureService
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
 @implements IDisposable
 
 <PageTitle>Lâm sàng | QLCM Pro</PageTitle>
@@ -10,115 +21,663 @@
     <header class="admin-page-header">
         <div>
             <span class="admin-page-eyebrow">Lâm sàng</span>
-            <h1 class="admin-page-title">Bảng điều phối lâm sàng</h1>
-            <p class="admin-page-subtitle">Theo dõi luồng tiếp nhận bệnh nhân theo ba trạng thái: đang chờ, đang thực hiện và hoàn thành.</p>
+            <h1 class="admin-page-title">Quản lý lâm sàng</h1>
+            <p class="admin-page-subtitle">Quản lý bệnh nhân, lượt khám và áp dụng phác đồ trên dữ liệu SQL.</p>
         </div>
-        <div class="admin-page-actions">
-            <span class="admin-table-cell-muted">Tổng @_total phiên trong ngày</span>
-        </div>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="OpenCreate">Tạo áp dụng phác đồ</button>
     </header>
 
-    <div class="admin-kanban">
-        @foreach (var column in _columns)
-        {
-            <article class="admin-kanban-col">
-                <header class="admin-kanban-col-head">
-                    <span class="admin-kanban-col-title">@AdminEnumLabels.GetLabel(column.Status)</span>
-                    <AdminBadge Tone="@AdminEnumLabels.GetTone(column.Status)">@column.Sessions.Count</AdminBadge>
-                </header>
-
-                @if (column.Sessions.Count == 0)
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Tìm kiếm</label>
+            <input class="admin-input" placeholder="Bệnh nhân, mã lượt khám, chẩn đoán..." @bind="_search" @bind:after="Recompute" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Khoa</label>
+            <select class="admin-select" @bind="_departmentFilter" @bind:after="Recompute">
+                <option value="">Tất cả</option>
+                @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
                 {
-                    <div class="admin-empty" style="padding:18px 8px;">
-                        <div class="admin-empty-title">Chưa có phiên</div>
-                        <div class="admin-empty-body">Chuyển phiên từ cột trước hoặc đợi tiếp nhận mới.</div>
-                    </div>
+                    <option value="@dept.DepartmentId">@dept.Name</option>
                 }
-                else
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Trạng thái áp dụng</label>
+            <select class="admin-select" @bind="_statusFilter" @bind:after="Recompute">
+                <option value="">Tất cả</option>
+                @foreach (var status in Sql.MedLookups.ProtocolApplicationStatuses)
                 {
-                    @foreach (var session in column.Sessions)
-                    {
-                        <div class="admin-kanban-card">
-                            <div class="admin-kanban-card-head">
-                                <div>
-                                    <div class="admin-kanban-card-name">@session.PatientName</div>
-                                    <div class="admin-table-cell-muted">@session.PatientCode • @AdminEnumLabels.GetLabel(session.Department)</div>
-                                </div>
-                                <AdminBadge Tone="tone-primary">@session.ScheduledAt.ToString("HH:mm")</AdminBadge>
-                            </div>
-                            <div class="admin-kanban-card-meta">
-                                <strong>@session.TechnicalService</strong><br />
-                                Phụ trách: @session.AssignedTo
-                            </div>
-                            @if (!string.IsNullOrEmpty(session.Note))
-                            {
-                                <div class="admin-table-cell-muted">Ghi chú: @session.Note</div>
-                            }
-                            <div class="admin-kanban-card-actions">
-                                @if (column.Status == ClinicSessionStatus.DangCho)
-                                {
-                                    <button type="button" class="admin-btn admin-btn-primary" @onclick='() => Move(session, ClinicSessionStatus.DangThucHien, "Bắt đầu")'>
-                                        Bắt đầu
-                                    </button>
-                                }
-                                else if (column.Status == ClinicSessionStatus.DangThucHien)
-                                {
-                                    <button type="button" class="admin-btn admin-btn-ghost" @onclick='() => Move(session, ClinicSessionStatus.DangCho, "Tạm dừng")'>
-                                        Tạm dừng
-                                    </button>
-                                    <button type="button" class="admin-btn admin-btn-primary" @onclick='() => Move(session, ClinicSessionStatus.HoanThanh, "Hoàn tất")'>
-                                        Hoàn tất
-                                    </button>
-                                }
-                                else
-                                {
-                                    <button type="button" class="admin-btn admin-btn-ghost" @onclick='() => Move(session, ClinicSessionStatus.DangThucHien, "Mở lại")'>
-                                        Mở lại
-                                    </button>
-                                }
-                            </div>
-                        </div>
-                    }
+                    <option value="@status.Code">@status.Name</option>
                 }
-            </article>
-        }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Từ ngày</label>
+            <input class="admin-input" type="date" value="@_fromIso" @onchange="OnFromChanged" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Đến ngày</label>
+            <input class="admin-input" type="date" value="@_toIso" @onchange="OnToChanged" />
+        </div>
     </div>
+
+    <AdminDataTable TItem="ClinicalRow"
+                    Items="_pagedItems"
+                    ColumnCount="8"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_total"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }"
+                    EmptyTitle="Không có dữ liệu lâm sàng"
+                    EmptyBody="Không có bản ghi phù hợp với bộ lọc hiện tại.">
+        <HeaderTemplate>
+            <th>Bệnh nhân</th>
+            <th>Lượt khám</th>
+            <th>Khoa</th>
+            <th>Chẩn đoán</th>
+            <th>Phác đồ</th>
+            <th>Trạng thái</th>
+            <th>Thời điểm</th>
+            <th></th>
+        </HeaderTemplate>
+        <RowTemplate Context="row">
+            <tr>
+                <td>
+                    <div class="admin-table-cell-strong">@PatientName(row.Patient)</div>
+                    <div class="admin-table-cell-muted">@PatientCode(row.Patient)</div>
+                </td>
+                <td>@(row.Encounter?.ExternalEncounterId ?? "—")</td>
+                <td>@GetDeptName(row.Encounter?.DepartmentId)</td>
+                <td>@(row.Application.DiagnosisCode ?? "—")</td>
+                <td>@ProtocolVersionName(row.Application.ClinicalProtocolVersionId)</td>
+                <td>
+                    <div class="admin-row-actions">
+                        <AdminBadge Tone="@ApplicationTone(row.Application.ApplicationStatus)">@Lookup(Sql.MedLookups.ProtocolApplicationStatuses, row.Application.ApplicationStatus)</AdminBadge>
+                        @if (SignatureFor(row.Application.PatientProtocolApplicationId) is not null)
+                        {
+                            <AdminBadge Tone="tone-secondary">Chữ ký demo</AdminBadge>
+                        }
+                    </div>
+                </td>
+                <td>@AdminDateTimeDisplay.DateTime(row.Application.AppliedAt)</td>
+                <td style="text-align:right;">
+                    <div class="admin-row-actions">
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEdit(row)">Sửa</button>
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SetStatus(row, "skipped")'>Bỏ qua</button>
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => SetStatus(row, "applied")'>Áp dụng</button>
+                        @if (row.Application.ApplicationStatus == "applied")
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => OpenSign(row)">Ký</button>
+                        }
+                        @if (row.Application.ApplicationStatus == "signed")
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenRevoke(row)">Thu hồi</button>
+                        }
+                    </div>
+                </td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
 </section>
 
+<AdminModal IsOpen="_modalOpen" IsOpenChanged="v => _modalOpen = v" Title="@(_editingApplicationId.HasValue ? "Sửa áp dụng phác đồ" : "Tạo áp dụng phác đồ")">
+    <ChildContent>
+        <div class="admin-form-grid">
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Bệnh nhân có sẵn</label>
+                <select class="admin-select" @bind="_patientId" @bind:after="SyncPatientFields">
+                    <option value="">Tạo bệnh nhân mới</option>
+                    @foreach (var patient in Store.PatientRefs.OrderBy(p => p.DisplayName ?? p.PatientCode))
+                    {
+                        <option value="@patient.PatientRefId">@PatientName(patient) - @PatientCode(patient)</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Tên bệnh nhân</label>
+                <input class="admin-input" @bind="_patientName" />
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Mã bệnh nhân</label>
+                <input class="admin-input" @bind="_patientCode" />
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Mã lượt khám</label>
+                <input class="admin-input" @bind="_encounterCode" />
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Khoa</label>
+                <select class="admin-select" @bind="_encounterDepartmentId">
+                    <option value="">Không chọn</option>
+                    @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
+                    {
+                        <option value="@dept.DepartmentId">@dept.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Phác đồ</label>
+                <select class="admin-select" @bind="_protocolVersionId">
+                    <option value="">Chọn phác đồ</option>
+                    @foreach (var version in Store.ClinicalProtocolVersions.OrderByDescending(v => v.CreatedAt))
+                    {
+                        <option value="@version.ClinicalProtocolVersionId">@ProtocolVersionName(version.ClinicalProtocolVersionId)</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Chẩn đoán</label>
+                <input class="admin-input" @bind="_diagnosisCode" placeholder="ICD hoặc ghi chú chẩn đoán" />
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Trạng thái</label>
+                <select class="admin-select" @bind="_applicationStatus">
+                    @foreach (var status in Sql.MedLookups.ProtocolApplicationStatuses)
+                    {
+                        <option value="@status.Code">@status.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field admin-form-field-full">
+                <label class="admin-form-field-label">Lý do bỏ qua / ghi chú</label>
+                <input class="admin-input" @bind="_skippedReason" />
+            </div>
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _modalOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="SaveClinical">Lưu</button>
+    </FooterContent>
+</AdminModal>
+
+<AdminModal IsOpen="_signModalOpen" IsOpenChanged="v => _signModalOpen = v" Title="Ký xác nhận hồ sơ">
+    <ChildContent>
+        @if (_signingRow is not null)
+        {
+            <dl class="admin-detail-grid">
+                <dt>Người ký</dt>
+                <dd>@(UserContext.CurrentUser?.Username ?? "anonymous")</dd>
+                <dt>Hồ sơ</dt>
+                <dd>@PatientName(_signingRow.Patient) - @ProtocolVersionName(_signingRow.Application.ClinicalProtocolVersionId)</dd>
+                <dt>Thời điểm</dt>
+                <dd>@AdminDateTimeDisplay.DateTime(DateTime.UtcNow)</dd>
+                <dt>Nhà cung cấp</dt>
+                <dd>Demo - chưa có giá trị pháp lý</dd>
+            </dl>
+        }
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _signModalOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">Ký xác nhận</button>
+    </FooterContent>
+</AdminModal>
+
+<AdminModal IsOpen="_revokeModalOpen" IsOpenChanged="v => _revokeModalOpen = v" Title="Thu hồi ký xác nhận">
+    <ChildContent>
+        <div class="admin-form-grid">
+            <div class="admin-form-field admin-form-field-full">
+                <label class="admin-form-field-label is-required">Lý do thu hồi</label>
+                <input class="admin-input" @bind="_revokeReason" />
+            </div>
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _revokeModalOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmRevoke">Thu hồi</button>
+    </FooterContent>
+</AdminModal>
+
 @code {
-    private List<KanbanColumn> _columns = new();
+    private const int _pageSize = 10;
+    private const string SignatureTargetType = "patient_protocol_application";
+    private int _page = 1;
     private int _total;
+    private IReadOnlyList<ClinicalRow> _rows = Array.Empty<ClinicalRow>();
+    private IReadOnlyList<ClinicalRow> _pagedItems = Array.Empty<ClinicalRow>();
+    private string _search = string.Empty;
+    private string _departmentFilter = string.Empty;
+    private string _statusFilter = string.Empty;
+    private string _fromIso = AdminDateTimeDisplay.Today().AddDays(-30).ToString("yyyy-MM-dd");
+    private string _toIso = AdminDateTimeDisplay.Today().ToString("yyyy-MM-dd");
+
+    private bool _modalOpen;
+    private Guid? _editingApplicationId;
+    private string _patientId = string.Empty;
+    private string _patientName = string.Empty;
+    private string _patientCode = string.Empty;
+    private string _encounterCode = string.Empty;
+    private string _encounterDepartmentId = string.Empty;
+    private string _protocolVersionId = string.Empty;
+    private string _diagnosisCode = string.Empty;
+    private string _applicationStatus = "draft";
+    private string _skippedReason = string.Empty;
+    private bool _signModalOpen;
+    private bool _revokeModalOpen;
+    private bool _signatureBusy;
+    private ClinicalRow? _signingRow;
+    private string _revokeReason = string.Empty;
 
     protected override void OnInitialized()
     {
-        ClinicService.StateChanged += OnChanged;
+        Store.StateChanged += OnChanged;
         Recompute();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await TryConsumeDraftNonceAsync();
+        }
     }
 
     private void OnChanged() => InvokeAsync(() => { Recompute(); StateHasChanged(); });
 
+    private void OnFromChanged(ChangeEventArgs args)
+    {
+        _fromIso = args.Value?.ToString() ?? string.Empty;
+        Recompute();
+    }
+
+    private void OnToChanged(ChangeEventArgs args)
+    {
+        _toIso = args.Value?.ToString() ?? string.Empty;
+        Recompute();
+    }
+
     private void Recompute()
     {
-        var all = ClinicService.ListAll();
-        _total = all.Count;
-        _columns = new List<KanbanColumn>
+        var deptId = ParseGuid(_departmentFilter);
+        var from = DateOnly.TryParse(_fromIso, out var parsedFrom) ? parsedFrom : (DateOnly?)null;
+        var to = DateOnly.TryParse(_toIso, out var parsedTo) ? parsedTo : (DateOnly?)null;
+
+        _rows = Store.PatientProtocolApplications
+            .Select(a => new ClinicalRow(
+                a,
+                Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == a.PatientRefId),
+                a.EncounterRefId.HasValue ? Store.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == a.EncounterRefId.Value) : null))
+            .Where(r => string.IsNullOrEmpty(_statusFilter) || r.Application.ApplicationStatus == _statusFilter)
+            .Where(r => !deptId.HasValue || r.Encounter?.DepartmentId == deptId.Value)
+            .Where(r => !from.HasValue || (r.Application.AppliedAt.HasValue && AdminDateTimeDisplay.ToDisplayTime(r.Application.AppliedAt.Value).Date >= from.Value.ToDateTime(TimeOnly.MinValue).Date))
+            .Where(r => !to.HasValue || (r.Application.AppliedAt.HasValue && AdminDateTimeDisplay.ToDisplayTime(r.Application.AppliedAt.Value).Date <= to.Value.ToDateTime(TimeOnly.MinValue).Date))
+            .Where(MatchesSearch)
+            .OrderByDescending(r => r.Application.AppliedAt)
+            .ToList();
+        _page = 1;
+        Paginate();
+    }
+
+    private void Paginate()
+    {
+        _total = _rows.Count;
+        var totalPages = Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
+        _page = Math.Clamp(_page, 1, totalPages);
+        _pagedItems = _rows.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private bool MatchesSearch(ClinicalRow row)
+    {
+        if (string.IsNullOrWhiteSpace(_search)) return true;
+        var key = _search.Trim();
+        return PatientName(row.Patient).Contains(key, StringComparison.OrdinalIgnoreCase)
+            || PatientCode(row.Patient).Contains(key, StringComparison.OrdinalIgnoreCase)
+            || (row.Encounter?.ExternalEncounterId?.Contains(key, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (row.Application.DiagnosisCode?.Contains(key, StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+
+    private async Task TryConsumeDraftNonceAsync()
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        var nonce = query.TryGetValue("draft_nonce", out var values) ? values.FirstOrDefault() : null;
+        if (string.IsNullOrWhiteSpace(nonce)) return;
+
+        string? payloadJson;
+        try
         {
-            new(ClinicSessionStatus.DangCho, all.Where(s => s.Status == ClinicSessionStatus.DangCho).ToList()),
-            new(ClinicSessionStatus.DangThucHien, all.Where(s => s.Status == ClinicSessionStatus.DangThucHien).ToList()),
-            new(ClinicSessionStatus.HoanThanh, all.Where(s => s.Status == ClinicSessionStatus.HoanThanh).ToList()),
+            payloadJson = await JS.InvokeAsync<string?>("qlcmShell.consumeSessionJson", $"draft:{nonce}");
+        }
+        catch (JSDisconnectedException)
+        {
+            return;
+        }
+        catch
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(payloadJson)) return;
+        var payload = JsonSerializer.Deserialize<ClinicalDraftPayload>(payloadJson, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+        if (payload is null) return;
+
+        _editingApplicationId = null;
+        _patientId = string.Empty;
+        _patientName = payload.PatientName ?? string.Empty;
+        _patientCode = payload.PatientCode ?? string.Empty;
+        _encounterCode = payload.EncounterCode ?? string.Empty;
+        _encounterDepartmentId = string.Empty;
+        _protocolVersionId = string.Empty;
+        _diagnosisCode = payload.DiagnosisCode ?? string.Empty;
+        _applicationStatus = string.IsNullOrWhiteSpace(payload.ApplicationStatus) ? "draft" : payload.ApplicationStatus;
+        _skippedReason = "Bản nháp từ thao tác chat";
+        _modalOpen = true;
+        Toasts.Show("Đã nạp bản nháp", "Dữ liệu nháp chỉ đọc một lần từ sessionStorage.", ToastVariant.Success);
+        StateHasChanged();
+    }
+
+    private void OpenCreate()
+    {
+        if (!Guard.CanDo("SCR_CLINICAL_ADMIN:CREATE", "tạo áp dụng phác đồ"))
+        {
+            return;
+        }
+
+        _editingApplicationId = null;
+        _patientId = _patientName = _patientCode = _encounterCode = _encounterDepartmentId = _protocolVersionId = _diagnosisCode = _skippedReason = string.Empty;
+        _applicationStatus = "draft";
+        _modalOpen = true;
+    }
+
+    private void OpenEdit(ClinicalRow row)
+    {
+        if (!Guard.CanDo("SCR_CLINICAL_ADMIN:UPDATE", "sửa áp dụng phác đồ"))
+        {
+            return;
+        }
+
+        _editingApplicationId = row.Application.PatientProtocolApplicationId;
+        _patientId = row.Application.PatientRefId.ToString();
+        _patientName = row.Patient?.DisplayName ?? string.Empty;
+        _patientCode = row.Patient?.PatientCode ?? string.Empty;
+        _encounterCode = row.Encounter?.ExternalEncounterId ?? string.Empty;
+        _encounterDepartmentId = row.Encounter?.DepartmentId?.ToString() ?? string.Empty;
+        _protocolVersionId = row.Application.ClinicalProtocolVersionId.ToString();
+        _diagnosisCode = row.Application.DiagnosisCode ?? string.Empty;
+        _applicationStatus = row.Application.ApplicationStatus;
+        _skippedReason = row.Application.SkippedReason ?? string.Empty;
+        _modalOpen = true;
+    }
+
+    private void SaveClinical()
+    {
+        var permission = _editingApplicationId.HasValue ? "SCR_CLINICAL_ADMIN:UPDATE" : "SCR_CLINICAL_ADMIN:CREATE";
+        var action = _editingApplicationId.HasValue ? "sửa dữ liệu lâm sàng" : "tạo dữ liệu lâm sàng";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
+        if (!Guid.TryParse(_protocolVersionId, out var protocolVersionId))
+        {
+            Toasts.Show("Thiếu phác đồ", "Vui lòng chọn phiên bản phác đồ.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            var patientId = EnsurePatient();
+            var encounterId = EnsureEncounter(patientId);
+            if (_editingApplicationId.HasValue)
+            {
+                var current = Store.PatientProtocolApplications.First(a => a.PatientProtocolApplicationId == _editingApplicationId.Value);
+                Store.UpdatePatientProtocolApplication(current with
+                {
+                    PatientRefId = patientId,
+                    EncounterRefId = encounterId,
+                    ClinicalProtocolVersionId = protocolVersionId,
+                    DiagnosisCode = string.IsNullOrWhiteSpace(_diagnosisCode) ? null : _diagnosisCode.Trim(),
+                    ApplicationStatus = _applicationStatus,
+                    SkippedReason = string.IsNullOrWhiteSpace(_skippedReason) ? null : _skippedReason.Trim()
+                });
+            }
+            else
+            {
+                Store.AddPatientProtocolApplication(new Sql.PatientProtocolApplication
+                {
+                    PatientRefId = patientId,
+                    EncounterRefId = encounterId,
+                    ClinicalProtocolVersionId = protocolVersionId,
+                    DiagnosisCode = string.IsNullOrWhiteSpace(_diagnosisCode) ? null : _diagnosisCode.Trim(),
+                    ApplicationStatus = _applicationStatus,
+                    AppliedBy = UserContext.CurrentUser?.UserId,
+                    AppliedAt = DateTime.UtcNow,
+                    SkippedReason = string.IsNullOrWhiteSpace(_skippedReason) ? null : _skippedReason.Trim(),
+                    DecisionContextJson = "{\"source\":\"admin\"}"
+                });
+            }
+
+            _modalOpen = false;
+            Toasts.Show("Đã lưu dữ liệu lâm sàng", PatientName(Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == patientId)), ToastVariant.Success);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể lưu dữ liệu lâm sàng", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private Guid EnsurePatient()
+    {
+        if (Guid.TryParse(_patientId, out var existingPatientId))
+        {
+            var current = Store.PatientRefs.First(p => p.PatientRefId == existingPatientId);
+            Store.UpdatePatientRef(current with
+            {
+                DisplayName = string.IsNullOrWhiteSpace(_patientName) ? current.DisplayName : _patientName.Trim(),
+                PatientCode = string.IsNullOrWhiteSpace(_patientCode) ? current.PatientCode : _patientCode.Trim()
+            });
+            return existingPatientId;
+        }
+
+        var code = string.IsNullOrWhiteSpace(_patientCode) ? $"BN-{DateTime.UtcNow:yyyyMMddHHmmss}" : _patientCode.Trim();
+        var patient = new Sql.PatientRef
+        {
+            ExternalPatientId = code,
+            PatientCode = code,
+            DisplayName = string.IsNullOrWhiteSpace(_patientName) ? code : _patientName.Trim()
         };
+        Store.AddPatientRef(patient);
+        return patient.PatientRefId;
     }
 
-    private void Move(ClinicSession session, ClinicSessionStatus next, string actionLabel)
+    private Guid? EnsureEncounter(Guid patientId)
     {
-        ClinicService.Move(session.Id, next);
-        Toasts.Show($"{actionLabel} phiên lâm sàng", $"{session.PatientName} • {AdminEnumLabels.GetLabel(next)}", ToastVariant.Success);
+        if (string.IsNullOrWhiteSpace(_encounterCode)) return null;
+        var existing = Store.EncounterRefs.FirstOrDefault(e => e.PatientRefId == patientId && e.ExternalEncounterId == _encounterCode.Trim());
+        if (existing is not null)
+        {
+            Store.UpdateEncounterRef(existing with { DepartmentId = ParseGuid(_encounterDepartmentId) ?? existing.DepartmentId });
+            return existing.EncounterRefId;
+        }
+
+        var encounter = new Sql.EncounterRef
+        {
+            PatientRefId = patientId,
+            ExternalEncounterId = _encounterCode.Trim(),
+            DepartmentId = ParseGuid(_encounterDepartmentId),
+            StartedAt = DateTime.UtcNow
+        };
+        Store.AddEncounterRef(encounter);
+        return encounter.EncounterRefId;
     }
 
-    public void Dispose()
+    private void SyncPatientFields()
     {
-        ClinicService.StateChanged -= OnChanged;
+        if (!Guid.TryParse(_patientId, out var patientId)) return;
+        var patient = Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == patientId);
+        _patientName = patient?.DisplayName ?? string.Empty;
+        _patientCode = patient?.PatientCode ?? string.Empty;
     }
 
-    private sealed record KanbanColumn(ClinicSessionStatus Status, IReadOnlyList<ClinicSession> Sessions);
+    private async Task SetStatus(ClinicalRow row, string status)
+    {
+        if (!Guard.CanDo("SCR_CLINICAL_ADMIN:EXECUTE", "cập nhật trạng thái áp dụng phác đồ"))
+        {
+            return;
+        }
+
+        var ok = await Confirm.ShowAsync(
+            "Cập nhật trạng thái",
+            $"Chuyển áp dụng phác đồ sang \"{Lookup(Sql.MedLookups.ProtocolApplicationStatuses, status)}\"?",
+            confirmText: "Cập nhật");
+        if (!ok)
+        {
+            return;
+        }
+
+        Store.UpdatePatientProtocolApplication(row.Application with
+        {
+            ApplicationStatus = status,
+            AppliedAt = row.Application.AppliedAt ?? DateTime.UtcNow
+        });
+        Toasts.Show("Đã cập nhật trạng thái", Lookup(Sql.MedLookups.ProtocolApplicationStatuses, status), ToastVariant.Success);
+    }
+
+    private void OpenSign(ClinicalRow row)
+    {
+        if (!Guard.CanDo("SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION", "ký xác nhận hồ sơ"))
+        {
+            return;
+        }
+
+        _signingRow = row;
+        _signModalOpen = true;
+    }
+
+    private async Task ConfirmSign()
+    {
+        if (_signingRow is null || UserContext.CurrentUser is null) return;
+        _signatureBusy = true;
+        try
+        {
+            var metadata = JsonSerializer.Serialize(new
+            {
+                Page = "admin_lam_sang",
+                Patient = PatientCode(_signingRow.Patient),
+                ProtocolVersionId = _signingRow.Application.ClinicalProtocolVersionId
+            });
+            var result = await SignatureService.CreateDemoSignatureAsync(
+                SignatureTargetType,
+                _signingRow.Application.PatientProtocolApplicationId,
+                UserContext.CurrentUser.UserId,
+                UserContext.CurrentUser.Username,
+                metadata);
+
+            if (result.Result == SignatureResult.Created)
+            {
+                _signModalOpen = false;
+                Toasts.Show("Đã ký xác nhận hồ sơ", "Chữ ký demo đã được lưu.", ToastVariant.Success);
+                Recompute();
+                return;
+            }
+
+            var message = result.Result == SignatureResult.AlreadySigned
+                ? "Hồ sơ này đã có chữ ký."
+                : result.Result == SignatureResult.Unauthorized
+                    ? "Tài khoản hiện tại không có quyền ký."
+                    : "Hồ sơ không ở trạng thái có thể ký.";
+            Toasts.Show("Không thể ký", message, ToastVariant.Warning);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể ký", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _signatureBusy = false;
+        }
+    }
+
+    private void OpenRevoke(ClinicalRow row)
+    {
+        if (!Guard.CanDo("SCR_ADMIN:MANAGE_SIGNATURES", "thu hồi chữ ký demo"))
+        {
+            return;
+        }
+
+        _signingRow = row;
+        _revokeReason = string.Empty;
+        _revokeModalOpen = true;
+    }
+
+    private async Task ConfirmRevoke()
+    {
+        if (_signingRow is null || UserContext.CurrentUser is null) return;
+        if (string.IsNullOrWhiteSpace(_revokeReason))
+        {
+            Toasts.Show("Thiếu lý do", "Vui lòng nhập lý do thu hồi.", ToastVariant.Warning);
+            return;
+        }
+
+        _signatureBusy = true;
+        try
+        {
+            var result = await SignatureService.RevokeDemoSignatureAsync(
+                SignatureTargetType,
+                _signingRow.Application.PatientProtocolApplicationId,
+                UserContext.CurrentUser.UserId,
+                UserContext.CurrentUser.Username,
+                _revokeReason);
+
+            if (result == SignatureResult.Revoked)
+            {
+                _revokeModalOpen = false;
+                Toasts.Show("Đã thu hồi", "Hồ sơ đã chuyển sang trạng thái thu hồi.", ToastVariant.Success);
+                Recompute();
+                return;
+            }
+
+            Toasts.Show("Không thể thu hồi", "Hồ sơ không ở trạng thái có thể thu hồi hoặc bạn thiếu quyền.", ToastVariant.Warning);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể thu hồi", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _signatureBusy = false;
+        }
+    }
+
+    private string ProtocolVersionName(Guid versionId)
+    {
+        var version = Store.ClinicalProtocolVersions.FirstOrDefault(v => v.ClinicalProtocolVersionId == versionId);
+        if (version is null) return "—";
+        var protocol = Store.ClinicalProtocols.FirstOrDefault(p => p.ClinicalProtocolId == version.ClinicalProtocolId);
+        return $"{protocol?.ProtocolCode ?? "PD"} v{version.VersionNo} - {version.Title}";
+    }
+
+    private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+    private static string PatientName(Sql.PatientRef? patient) => patient?.DisplayName ?? patient?.PatientCode ?? "—";
+    private static string PatientCode(Sql.PatientRef? patient) => patient?.PatientCode ?? patient?.ExternalPatientId ?? "—";
+    private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
+    private static string ApplicationTone(string status) => status switch
+    {
+        "applied" => "tone-success",
+        "suggested" => "tone-primary",
+        "draft" => "tone-muted",
+        "signed" => "tone-secondary",
+        "revoked" => "tone-danger",
+        "skipped" => "tone-warning",
+        "cancelled" => "tone-danger",
+        _ => "tone-muted"
+    };
+    private Sql.SignatureRecord? SignatureFor(Guid applicationId)
+        => Store.SignatureRecords.FirstOrDefault(s =>
+            s.TargetType == SignatureTargetType &&
+            s.TargetId == applicationId);
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+
+    private sealed record ClinicalRow(Sql.PatientProtocolApplication Application, Sql.PatientRef? Patient, Sql.EncounterRef? Encounter);
+    private sealed record ClinicalDraftPayload(
+        string? Source,
+        string? ApplicationStatus,
+        string? PatientName,
+        string? PatientCode,
+        string? EncounterCode,
+        string? DiagnosisCode);
 }

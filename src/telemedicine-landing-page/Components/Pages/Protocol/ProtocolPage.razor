@@ -1,5 +1,5 @@
 @page "/phac-do-pro"
-@layout PersonaLayout
+@layout AdminLayout
 @using TelemedicineLandingPage.Services.Admin.Sql
 @using TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
@@ -35,7 +35,7 @@
                 <td>@protocol.Name</td>
                 <td>
                     <AdminBadge Tone="tone-primary">
-                        @(protocol.ProtocolType == "treatment" ? "Điều trị" : "Chẩn đoán")
+                        @Lookup(MedLookups.ProtocolTypes, protocol.ProtocolType)
                     </AdminBadge>
                 </td>
                 <td>@GetDeptName(protocol.OwnerDepartmentId)</td>
@@ -69,6 +69,9 @@
         => deptId.HasValue
             ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—"
             : "—";
+
+    private static string Lookup(IReadOnlyList<LookupEntry> entries, string? code)
+        => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
 
     public void Dispose() => Store.StateChanged -= OnChanged;
 }

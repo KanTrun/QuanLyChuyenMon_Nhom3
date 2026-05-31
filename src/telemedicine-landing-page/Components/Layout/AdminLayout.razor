@@ -5,7 +5,9 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject ICurrentUserContext UserContext
+@inject NavGate Gate
 @inject LoadingService Loading
+@inject BrowserSessionService BrowserSession
 
 @if (UserContext.CurrentUser is null)
 {
@@ -15,32 +17,44 @@
 }
 else
 {
-<div class="admin-shell" data-collapsed="@(NavState.IsSidebarCollapsed ? "true" : "false")">
-    @if (NavState.IsSidebarCollapsed)
-    {
-        <div class="admin-sidebar-overlay" @onclick="OnSidebarOverlayClick" aria-hidden="true"></div>
-    }
+    <div class="admin-shell" data-collapsed="@(NavState.IsSidebarCollapsed ? "true" : "false")">
+        @if (NavState.IsSidebarCollapsed)
+        {
+            <div class="admin-sidebar-overlay" @onclick="OnSidebarOverlayClick" aria-hidden="true"></div>
+        }
 
-    <AdminSidebar />
+        <AdminSidebar />
 
-    <div class="admin-main-column">
-        <AdminTopBar />
+        <div class="admin-main-column">
+            <AdminTopBar />
 
-        <main class="admin-content" id="main-content">
-            @Body
-        </main>
+            <main class="admin-content" id="main-content">
+                @if (_isAuthorized)
+                {
+                    @Body
+                }
+                else
+                {
+                    <section class="admin-page">
+                        <article class="admin-panel" style="padding:20px;">
+                            <h1 class="admin-page-title">Không có quyền truy cập</h1>
+                            <p class="admin-page-subtitle">Tài khoản hiện tại chưa được cấp quyền cho chức năng này. Vui lòng dùng khu vực được cấp quyền hoặc liên hệ quản trị hệ thống.</p>
+                        </article>
+                    </section>
+                }
+            </main>
 
-        <div class="admin-shell-modal-host">
-            <CommandPaletteModal />
-            <AdminConfirmDialog />
-            <AdminToast />
-            <ChatbotLauncher />
-            <ChatbotPanel />
+            <div class="admin-shell-modal-host">
+                <CommandPaletteModal />
+                <AdminConfirmDialog />
+                <AdminToast />
+                <ChatbotLauncher />
+                <ChatbotPanel />
+            </div>
         </div>
-    </div>
 
-    <AdminLoadingOverlay IsVisible="Loading.IsLoading" Message="Loading.Message" />
-</div>
+        <AdminLoadingOverlay IsVisible="Loading.IsLoading" Message="Loading.Message" />
+    </div>
 }
 
 <div id="blazor-error-ui" data-nosnippet>
@@ -53,22 +67,53 @@ else
     private DotNetObjectReference<AdminLayout>? _dotnetRef;
     private int _hotkeyHandle = -1;
     private bool _hotkeysRegistered;
+    private bool _sessionRestoreAttempted;
+    private bool _isAuthorized = true;
+    private string _currentPath = "/admin";
 
     protected override void OnInitialized()
     {
         NavState.StateChanged += OnStateChanged;
         Loading.StateChanged += OnLoadingChanged;
-
-        // Bảo vệ trang admin: nếu chưa đăng nhập → chuyển hướng đến /login
-        if (UserContext.CurrentUser is null)
+        Navigation.LocationChanged += OnLocationChanged;
+        UserContext.StateChanged += OnUserChanged;
+        if (UserContext.CurrentUser is not null)
         {
-            Navigation.NavigateTo("/login", forceLoad: false);
+            _sessionRestoreAttempted = true;
+            EvaluateRouteAccess();
+        }
+        else
+        {
+            _isAuthorized = false;
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _hotkeysRegistered)
+        if (firstRender && !_sessionRestoreAttempted)
+        {
+            _sessionRestoreAttempted = true;
+            try
+            {
+                var restored = await BrowserSession.RestoreCurrentUserAsync();
+                EvaluateRouteAccess();
+                if (!restored && UserContext.CurrentUser is null)
+                {
+                    Navigation.NavigateTo("/login", forceLoad: false);
+                    return;
+                }
+
+                StateHasChanged();
+            }
+            catch (JSDisconnectedException) { return; }
+            catch (Exception)
+            {
+                Navigation.NavigateTo("/login", forceLoad: false);
+                return;
+            }
+        }
+
+        if (_hotkeysRegistered || UserContext.CurrentUser is null)
         {
             return;
         }
@@ -79,14 +124,8 @@ else
         {
             _hotkeyHandle = await JS.InvokeAsync<int>("qlcmShell.registerHotkeys", _dotnetRef);
         }
-        catch (JSDisconnectedException)
-        {
-            // Circuit went away before interop ran; nothing to do.
-        }
-        catch (Exception)
-        {
-            // Hotkeys are non-essential. Don't break the page if interop fails.
-        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
     }
 
     [JSInvokable]
@@ -99,9 +138,9 @@ else
     [JSInvokable]
     public Task OnNavigateHotkey(int digit)
     {
-        if (NavState.HotkeyMap.TryGetValue(digit, out var url))
+        if (NavState.HotkeyMap.TryGetValue(digit, out var url) && Gate.CanAccess(url))
         {
-            Navigation.NavigateTo(url);
+            Navigation.NavigateTo(Gate.GetDisplayRoute(url));
         }
         return Task.CompletedTask;
     }
@@ -123,19 +162,49 @@ else
         return Task.CompletedTask;
     }
 
-    private void OnStateChanged()
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+    private void OnLoadingChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs args)
     {
+        EvaluateRouteAccess();
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnLoadingChanged()
+    private void OnUserChanged()
     {
+        EvaluateRouteAccess();
         InvokeAsync(StateHasChanged);
+    }
+
+    private void EvaluateRouteAccess()
+    {
+        if (UserContext.CurrentUser is null)
+        {
+            _isAuthorized = false;
+            if (_sessionRestoreAttempted)
+            {
+                Navigation.NavigateTo("/login", forceLoad: false);
+            }
+            return;
+        }
+
+        var currentUri = new Uri(Navigation.Uri);
+        _currentPath = currentUri.AbsolutePath;
+        var currentRoute = currentUri.PathAndQuery;
+        _isAuthorized = Gate.CanAccess(currentRoute);
+        if (_isAuthorized)
+        {
+            var displayRoute = Gate.GetDisplayRoute(currentRoute);
+            if (!string.Equals(displayRoute, currentRoute, StringComparison.OrdinalIgnoreCase))
+            {
+                Navigation.NavigateTo(displayRoute, replace: true);
+            }
+        }
     }
 
     private void OnSidebarOverlayClick()
     {
-        // On mobile, tapping the dimmed area collapses the sidebar back off-canvas.
         if (NavState.IsSidebarCollapsed)
         {
             NavState.ToggleSidebar();
@@ -146,6 +215,8 @@ else
     {
         NavState.StateChanged -= OnStateChanged;
         Loading.StateChanged -= OnLoadingChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+        UserContext.StateChanged -= OnUserChanged;
 
         if (_hotkeyHandle >= 0)
         {
@@ -153,14 +224,8 @@ else
             {
                 await JS.InvokeVoidAsync("qlcmShell.unregisterHotkeys", _hotkeyHandle);
             }
-            catch (JSDisconnectedException)
-            {
-                // Circuit already closed; nothing to clean up.
-            }
-            catch (Exception)
-            {
-                // Best-effort cleanup.
-            }
+            catch (JSDisconnectedException) { }
+            catch (Exception) { }
         }
 
         _dotnetRef?.Dispose();

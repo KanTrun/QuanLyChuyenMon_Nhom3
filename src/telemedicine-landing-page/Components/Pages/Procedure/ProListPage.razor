@@ -1,6 +1,4 @@
 @page "/quy-trinh-pro"
-@page "/admin/quy-trinh"
-@page "/admin/quy-trinh/phe-duyet"
 @layout PersonaLayout
 @using TelemedicineLandingPage.Services.Admin.Sql
 @using TelemedicineLandingPage.Models.Admin.Sql
@@ -8,6 +6,7 @@
 @inject ProcedureLifecycleService Lifecycle
 @inject ICurrentUserContext UserContext
 @inject IToastService Toast
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Quy trình chuyên môn | QLCM Pro</PageTitle>
@@ -22,11 +21,12 @@
     </header>
 
     <AdminDataTable TItem="ProcedureViewModel"
-                    Items="_items"
+                    Items="_pagedItems"
                     ColumnCount="5"
-                    CurrentPage="1"
-                    PageSize="50"
-                    TotalItems="_items.Count">
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_items.Count"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }">
         <HeaderTemplate>
             <th>Mã</th>
             <th>Tên quy trình</th>
@@ -64,7 +64,10 @@
 </section>
 
 @code {
+    private const int _pageSize = 10;
+    private int _page = 1;
     private IReadOnlyList<ProcedureViewModel> _items = Array.Empty<ProcedureViewModel>();
+    private IReadOnlyList<ProcedureViewModel> _pagedItems = Array.Empty<ProcedureViewModel>();
 
     protected override void OnInitialized()
     {
@@ -84,26 +87,36 @@
                 .FirstOrDefault();
             return new ProcedureViewModel(p, latest);
         }).ToList();
+        Paginate();
+    }
+
+    private void Paginate()
+    {
+        var totalPages = Math.Max(1, (int)Math.Ceiling(_items.Count / (double)_pageSize));
+        _page = Math.Clamp(_page, 1, totalPages);
+        _pagedItems = _items.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
     }
 
     private void Submit(Guid versionId)
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "gửi duyệt phiên bản")) return;
         try
         {
             Lifecycle.Submit(versionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
-            Toast.Show("Đã gửi phiên bản để phê duyệt.", "success");
+            Toast.Show("Đã gửi phiên bản để phê duyệt", null, ToastVariant.Success);
         }
-        catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
+        catch (MedDomainException ex) { Toast.Show("Không thể gửi phê duyệt", ex.Message, ToastVariant.Error); }
     }
 
     private void Publish(Guid versionId)
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "xuất bản quy trình")) return;
         try
         {
             Lifecycle.Publish(versionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
-            Toast.Show("Đã xuất bản phiên bản thành công.", "success");
+            Toast.Show("Đã xuất bản phiên bản", null, ToastVariant.Success);
         }
-        catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
+        catch (MedDomainException ex) { Toast.Show("Không thể xuất bản", ex.Message, ToastVariant.Error); }
     }
 
     private static string GetStatusTone(string? status) => status switch

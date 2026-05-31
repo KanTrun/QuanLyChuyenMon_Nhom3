@@ -40,7 +40,7 @@ public sealed class ChatbotConversationStore : IChatbotConversationStore
         var id = Guid.NewGuid();
         lock (_gate)
         {
-            _messages.Add(new ChatMessage(id, ChatRole.User, trimmed, DateTime.Now, IsStreaming: false));
+            _messages.Add(new ChatMessage(id, ChatRole.User, trimmed, DateTime.UtcNow, IsStreaming: false));
         }
         Raise();
         return id;
@@ -51,7 +51,7 @@ public sealed class ChatbotConversationStore : IChatbotConversationStore
         var id = Guid.NewGuid();
         lock (_gate)
         {
-            _messages.Add(new ChatMessage(id, ChatRole.Assistant, string.Empty, DateTime.Now, IsStreaming: true));
+            _messages.Add(new ChatMessage(id, ChatRole.Assistant, string.Empty, DateTime.UtcNow, IsStreaming: true));
             _streaming = true;
         }
         Raise();
@@ -124,7 +124,7 @@ public sealed class ChatbotConversationStore : IChatbotConversationStore
             Guid.NewGuid(),
             ChatRole.Assistant,
             GreetingText,
-            DateTime.Now,
+            DateTime.UtcNow,
             IsStreaming: false));
     }
 

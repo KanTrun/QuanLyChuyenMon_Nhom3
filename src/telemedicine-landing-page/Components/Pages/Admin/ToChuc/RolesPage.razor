@@ -4,6 +4,7 @@
 @using TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
 @inject IToastService Toast
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Vai trò | QLCM Pro</PageTitle>
@@ -17,6 +18,17 @@
         </div>
         <button class="admin-btn admin-btn-primary" @onclick="OpenCreate">Thêm vai trò</button>
     </header>
+
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Trạng thái</label>
+            <select class="admin-select" @bind="_statusFilter" @bind:after="ResetAndPaginate">
+                <option value="active">Đang hoạt động</option>
+                <option value="archived">Lưu trữ</option>
+                <option value="all">Tất cả</option>
+            </select>
+        </div>
+    </div>
 
     <AdminDataTable TItem="Role"
                     Items="_pagedItems"
@@ -62,11 +74,11 @@
     <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" Title="@_drawerTitle">
         <ChildContent>
             <div class="admin-form-group">
-                <label class="admin-label">Mã vai trò</label>
+                <label class="admin-label is-required">Mã vai trò</label>
                 <input class="admin-input" @bind="_code" placeholder="VD: PHARMACIST" />
             </div>
             <div class="admin-form-group">
-                <label class="admin-label">Tên vai trò</label>
+                <label class="admin-label is-required">Tên vai trò</label>
                 <input class="admin-input" @bind="_name" placeholder="VD: Dược sĩ" />
             </div>
             <div class="admin-form-group">
@@ -90,6 +102,7 @@
     private string _drawerTitle = "Thêm vai trò";
     private Guid? _editingRoleId;
     private string _code = "", _name = "", _desc = "";
+    private string _statusFilter = "active";
 
     protected override void OnInitialized()
     {
@@ -101,13 +114,27 @@
 
     private void Paginate()
     {
-        var all = Store.Roles.OrderBy(r => r.Name).ToList();
+        var all = Store.Roles
+            .Where(r => _statusFilter == "all" || (_statusFilter == "archived" ? r.Status != "active" : r.Status == "active"))
+            .OrderBy(r => r.Name)
+            .ToList();
         _total = all.Count;
         _pagedItems = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
     }
 
+    private void ResetAndPaginate()
+    {
+        _page = 1;
+        Paginate();
+    }
+
     private void OpenCreate()
     {
+        if (!Guard.CanDo("SCR_ORG_ROLES:CREATE", "thêm vai trò"))
+        {
+            return;
+        }
+
         _drawerTitle = "Thêm vai trò";
         _editingRoleId = null;
         _code = _name = _desc = "";
@@ -116,6 +143,11 @@
 
     private void OpenEdit(Role role)
     {
+        if (!Guard.CanDo("SCR_ORG_ROLES:UPDATE", "sửa vai trò"))
+        {
+            return;
+        }
+
         _drawerTitle = "Sửa vai trò";
         _editingRoleId = role.RoleId;
         _code = role.Code;
@@ -126,9 +158,16 @@
 
     private void SaveRole()
     {
+        var permission = _editingRoleId.HasValue ? "SCR_ORG_ROLES:UPDATE" : "SCR_ORG_ROLES:CREATE";
+        var action = _editingRoleId.HasValue ? "sửa vai trò" : "thêm vai trò";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_code) || string.IsNullOrWhiteSpace(_name))
         {
-            Toast.Show("Vui lòng nhập mã và tên vai trò.", "warning");
+            Toast.Show("Thiếu thông tin", "Vui lòng nhập mã và tên vai trò.", ToastVariant.Warning);
             return;
         }
 
@@ -151,20 +190,25 @@
                 Store.AddRole(role);
             }
             _drawerOpen = false;
-            Toast.Show("Đã lưu vai trò thành công.", "success");
+            Toast.Show("Đã lưu vai trò", "Thay đổi đã được cập nhật.", ToastVariant.Success);
         }
-        catch (MedDomainException ex) { Toast.Show(ex.Message, "error"); }
-        catch (Exception ex) { Toast.Show(ex.Message, "error"); }
+        catch (MedDomainException ex) { Toast.Show("Không thể lưu vai trò", ex.Message, ToastVariant.Error); }
+        catch (Exception ex) { Toast.Show("Không thể lưu vai trò", ex.Message, ToastVariant.Error); }
     }
 
     private void Archive(Role role)
     {
+        if (!Guard.CanDo("SCR_ORG_ROLES:DELETE", "lưu trữ vai trò"))
+        {
+            return;
+        }
+
         try
         {
             Store.ArchiveRole(role.RoleId);
-            Toast.Show($"Đã lưu trữ vai trò {role.Name}.", "success");
+            Toast.Show("Đã lưu trữ vai trò", role.Name, ToastVariant.Success);
         }
-        catch (Exception ex) { Toast.Show(ex.Message, "error"); }
+        catch (Exception ex) { Toast.Show("Không thể lưu trữ vai trò", ex.Message, ToastVariant.Error); }
     }
 
     private static string LookupStatus(string status)

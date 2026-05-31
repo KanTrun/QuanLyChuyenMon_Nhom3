@@ -1,8 +1,9 @@
 @page "/tai-nguyen"
-@layout PersonaLayout
+@layout AdminLayout
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Tài nguyên | QLCM Pro</PageTitle>
@@ -20,17 +21,20 @@
     <div class="admin-filter-bar is-compact">
         <div class="admin-filter-field">
             <label class="admin-filter-label" for="resource-search">Tìm kiếm</label>
-            <input id="resource-search" class="admin-input" type="search" placeholder="Mã hoặc tên tài nguyên" @bind="_search" @bind:event="oninput" @bind:after="Paginate" />
+            <input id="resource-search" class="admin-input" type="search" placeholder="Mã hoặc tên tài nguyên" @bind="_search" @bind:event="oninput" @bind:after="ResetAndPaginate" />
         </div>
         <div class="admin-filter-field">
             <label class="admin-filter-label" for="resource-type">Loại</label>
-            <select id="resource-type" class="admin-select" @bind="_typeFilter" @bind:after="Paginate">
+            <select id="resource-type" class="admin-select" @bind="_typeFilter" @bind:after="ResetAndPaginate">
                 <option value="">Tất cả</option>
                 @foreach (var type in Sql.MedLookups.ResourceTypes)
                 {
                     <option value="@type.Code">@type.Name</option>
                 }
             </select>
+        </div>
+        <div class="admin-filter-field" style="align-self:end;">
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="ResetFilters">Đặt lại</button>
         </div>
     </div>
 
@@ -123,15 +127,15 @@
     <ChildContent>
         <div class="admin-form-grid">
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Mã tài nguyên</label>
+                <label class="admin-form-field-label is-required">Mã tài nguyên</label>
                 <input class="admin-input" @bind="_draftCode" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Tên tài nguyên</label>
+                <label class="admin-form-field-label is-required">Tên tài nguyên</label>
                 <input class="admin-input" @bind="_draftName" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Loại</label>
+                <label class="admin-form-field-label is-required">Loại</label>
                 <select class="admin-select" @bind="_draftType">
                     @foreach (var type in Sql.MedLookups.ResourceTypes)
                     {
@@ -207,8 +211,26 @@
         _pagedItems = query.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
     }
 
+    private void ResetAndPaginate()
+    {
+        _page = 1;
+        Paginate();
+    }
+
+    private void ResetFilters()
+    {
+        _search = string.Empty;
+        _typeFilter = string.Empty;
+        ResetAndPaginate();
+    }
+
     private void OpenCreate()
     {
+        if (!Guard.CanDo("SCR_RESOURCES:CREATE", "thêm tài nguyên"))
+        {
+            return;
+        }
+
         _editingId = null;
         _draftCode = string.Empty;
         _draftName = string.Empty;
@@ -219,6 +241,11 @@
 
     private void OpenEdit(Sql.ResourceCatalogItem item)
     {
+        if (!Guard.CanDo("SCR_RESOURCES:UPDATE", "sửa tài nguyên"))
+        {
+            return;
+        }
+
         _editingId = item.ResourceId;
         _draftCode = item.ResourceCode;
         _draftName = item.Name;
@@ -235,6 +262,13 @@
 
     private void Save()
     {
+        var permission = _editingId.HasValue ? "SCR_RESOURCES:UPDATE" : "SCR_RESOURCES:CREATE";
+        var action = _editingId.HasValue ? "sửa tài nguyên" : "thêm tài nguyên";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_draftCode) || string.IsNullOrWhiteSpace(_draftName))
         {
             Toasts.Show("Thiếu thông tin", "Vui lòng nhập mã và tên tài nguyên.", ToastVariant.Warning);
@@ -275,6 +309,11 @@
 
     private void Archive(Sql.ResourceCatalogItem item)
     {
+        if (!Guard.CanDo("SCR_RESOURCES:DELETE", "lưu trữ tài nguyên"))
+        {
+            return;
+        }
+
         try
         {
             Store.RemoveResourceCatalogItem(item.ResourceId);

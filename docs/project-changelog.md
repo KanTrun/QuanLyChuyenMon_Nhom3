@@ -1,5 +1,261 @@
 # Project Changelog
 
+## 2026-05-28
+### Added
+| Item | Description |
+|---|---|
+| Account onboarding | Added dedicated `lookup_user_onboarding_status` and `med.users.onboarding_status`; registration remains insert-only while admins can approve, reject, or resubmit accounts |
+| Demo e-signature | Added immutable `med.signature_records`, SHA-256 demo hash integrity, one-signature-per-PPA guard, signing/revoke workflow, and `SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION` permission |
+| Safe chat actions | Added chat quick actions with route whitelist and nonce-only `sessionStorage` draft handoff; chat actions never mutate SQL data |
+| Hospital logo | Added tracked `wwwroot/brand/logo-hos.jpg` and applied it to intro, auth pages, admin/persona sidebars, and favicon |
+
+### Changed
+| Item | Description |
+|---|---|
+| Clinical workflow | New protocol applications start as `draft`; signing moves `application_status` from `applied` to `signed`, revocation moves to `revoked` with reason |
+| Clinical signature UX | Removed the white logo frame, restored Vietnamese accents in signature labels/messages, and aligned signature permission aliases with the UI guard |
+| Clinical signature stability | Isolated signing/revoke database work with a DbContext factory so Blazor rerenders no longer race the page data store context |
+| Login UX | Rejected onboarding users now receive a rejected-specific login result/message instead of the generic inactive account message |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 161 tests |
+
+## 2026-05-26
+### Improved
+| Item | Description |
+|---|---|
+| Ocean pre-auth entry | Reworked `/` into a clearer ocean-blue entry portal with login/register choices, product console preview and restrained card elevation |
+| Ocean auth theme | Shifted `/login` and `/register` to a cohesive ocean-blue palette with reduced glow, softer shadows and cleaner form panels |
+| Premium GSAP auth experience | Upgraded `/login` and `/register` with layered clinical glass panels, subtle 3D floating depth, stronger shadows, responsive polish and password visibility controls |
+| Auth motion reliability | Added visible-target filtering and final reveal cleanup so GSAP intro motion respects mobile breakpoints and never leaves form controls hidden after hydration |
+| Vietnam time timeline | Standardized system timeline rendering, date filters, report windows and chat/admin timestamps on Vietnam time while keeping persisted timestamps UTC |
+
+### Fixed
+| Item | Description |
+|---|---|
+| Docker/server timezone drift | Replaced direct `DateTime.Now`, `DateTime.Today` and `.ToLocalTime()` usage in runtime paths so dashboard activity and reports no longer depend on container host timezone |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 149 tests |
+| `node --check .\src\telemedicine-landing-page\wwwroot\js\animations.js` | Passed |
+| `docker compose up --build -d web` | Passed, image `quanlychuyenmon_nhom3-web:latest` rebuilt and web container healthy on `localhost:8080` |
+| Playwright screenshot smoke check | Passed, `/`, `/login` and `/register` render ocean-blue pre-auth/auth UI with restrained shadows |
+
+## 2026-05-25
+### Improved
+| Item | Description |
+|---|---|
+| QLCM intro route | Restored `/` as a professional QLCM Pro introduction page with clear login/register actions, without bringing back obsolete telemedicine landing content |
+| Auth entry pages | Aligned login/register intro panels, password visibility controls and registration feedback styling with the QLCM Pro administration experience |
+| Dashboard trend panel | Replaced the unclear blank-looking area under monthly bars with an explicit procedure-version status distribution strip and stopped the trend panel from stretching to activity height |
+| Dashboard operations chart | Added an operational chart for technical-order status, resource readiness and over-norm usage so the main dashboard uses the empty area for QLCM workflow monitoring |
+
+### Changed
+| Item | Description |
+|---|---|
+| Landing runtime cleanup | Removed obsolete public telemedicine landing content/services/styles/tests from the active Blazor runtime; `/` now serves the QLCM Pro intro while authentication stays on `/login` and `/register` |
+| Procedure action guard | `AdminActionGuard` now runs `ProcedureRuntimeGuard` after permission checks so mapped active procedures can warn/block actions by first-step role and enforcement mode |
+| Scheduled permission job | Added Hangfire recurring job to apply due scheduled permission changes and audit/notify the result |
+| Inventory snapshots | Order resource checks now use `InventoryAvailabilityService`, prefer procedure-version norms, create availability snapshots and warn on missing/inactive resources |
+| Clinical protocol suggestions | Clinical page can suggest active protocol versions by ICD/rule score, auto-select the best match and save decision context on patient protocol applications |
+| Persona route access | Persona layout filters sidebar links and blocks direct route access through `NavGate` |
+| Auth motion runtime | Auth entry animations now load GSAP 3.15.0 on demand and use GSAP timelines, matchMedia and quickTo motion helpers |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 145 tests |
+| `dotnet list .\telemedicine-landing-page.sln package --vulnerable --include-transitive` | No vulnerable packages |
+| `docker compose up --build -d web` | Passed, web rebuilt and healthy on `localhost:8080` |
+| Chrome headless smoke check | Passed, `/`, `/login`, `/register` and `/admin` render the QLCM intro/auth shell plus dashboard status and operations charts |
+| Docker auth asset check | Passed, fingerprinted `animations.js` contains GSAP 3.15.0 loader and password visibility controls render on `/login` |
+
+## 2026-05-24
+### Improved
+| Item | Description |
+|---|---|
+| Permission picker | Replaced long role-permission dropdown with searchable grouped picker, duplicate-scope badges, scope-aware department selection and concise permission labels |
+| Permission request timing | Immediate role-permission requests now normalize effective time against requested time so SQL constraints do not crash the Blazor circuit |
+| Workspace URLs | Added `/qlcm` route aliases for professional workflows so non-admin users no longer remain on `/admin` URLs for business pages |
+| Login landing | Successful login now opens the first route allowed by the user's effective permissions instead of always going to `/admin` |
+
+### Fixed
+| Item | Description |
+|---|---|
+| Organization mutations | Fixed SQL audit tracking so department create, role create, group create and user restore no longer fail after an admin save error |
+| Department dropdowns | Department selectors now disambiguate duplicate names by showing the code when names collide |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 142 tests |
+
+## 2026-05-22
+### QLCM Pro Business UI Remediation
+| Item | Description |
+|---|---|
+| Business labels | Added shared admin display helper for actions, statuses, targets, modules, permissions, notifications, units and compact JSON summaries |
+| Permission workflow | Role permissions and user overrides now submit approval requests; approval applies real role/group/user permission records and sends notifications |
+| Organization guard | SQL-backed department create/update/archive now validates duplicate codes, parent links and active children with Vietnamese errors |
+| Procedure/protocol drafts | Editing active procedures/protocols creates a new draft version with copied steps, resource norms, mappings, links and rules |
+| Resource consistency | Service norms and actual order usage now sync/filter units by resource unit group and block mismatched units |
+| Admin UI wording | Dashboard, approval inbox, notifications, audit log, screen catalog, procedure mapping and protocol rules hide raw codes/JSON from primary views |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 132 tests |
+
+### Fixed
+| Item | Description |
+|---|---|
+| Protocol workspace navigation | `/phac-do-pro` now stays inside the admin shell and keeps the Phác đồ sidebar group open when selected |
+
+## 2026-05-21
+### Fixed
+| Item | Description |
+|---|---|
+| Docker admin login | Added bootstrap migration for local `admin` so older Docker volumes locked by null-password migration are reactivated with a password |
+
+### Realtime Notifications
+| Item | Description |
+|---|---|
+| SignalR hub | Added `/hubs/notification` with user/group subscription methods and record presence hooks |
+| Notification service | Added persisted user, group and broadcast notification service over existing `med.notifications` |
+| Admin bell realtime | Admin top bar now subscribes to SignalR, joins the current user group and shows toast updates without refresh |
+| Registration alerts | Public registration now sends persisted realtime notifications to administrators with user-management permission |
+| Tests | Added notification service tests for direct user send, active-user broadcast and active group membership targeting |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 124 tests |
+
+### Workflow and Jobs Foundation
+| Item | Description |
+|---|---|
+| Workflow guard | Added generic workflow guard/definition abstractions plus procedure-version and technical-order transition tables |
+| Procedure lifecycle | Procedure version submit/publish/reject/archive/restore/withdraw now run through workflow transition guard and audit side effects |
+| Order workflow service | Technical order status transitions moved from `OrderPage` into `TechnicalOrderWorkflowService` |
+| Hangfire | Added Hangfire SQL Server storage, worker queues, `/hangfire` dashboard authorization and `IJobService` wrapper |
+| Dependency security | Added direct `Newtonsoft.Json` 13.0.4 override to remove Hangfire transitive vulnerability |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 121 tests |
+| `dotnet list .\telemedicine-landing-page.sln package --vulnerable --include-transitive` | No vulnerable packages |
+
+### Security Validation and Admin Guard
+| Item | Description |
+|---|---|
+| Password policy | Added shared password strength service, common-password list, FluentValidation validators and Identity password validator |
+| Null-password lock | Added Identity sign-in guard and SQL migration that locks active users without password hash |
+| Password UI | Register and profile password forms now show realtime strength meter and use server-side validators |
+| Admin route guard | Added current-user `AuthenticationStateProvider`, admin folder `AdminAccess` policy import and `AuthorizedComponentBase` helper |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 116 tests |
+
+### Production Architecture Foundation
+| Item | Description |
+|---|---|
+| Identity foundation | Added ASP.NET Core Identity entities/tables under `auth` schema while preserving `med.users` and dynamic RBAC as source of truth |
+| Permission claims | Added custom `permission` claims transformation, permission service, authorization requirement/handler and starter policies |
+| Password login guard | Active accounts without password hash no longer sign in through the manual SQL context |
+| Database resilience | Configured SQL retry, command timeout, pool defaults and `/health` JSON endpoint |
+| Observability | Added Serilog structured logging with console, daily JSON file and optional Seq sink; enabled request logging |
+| Docker migrations | `db-init` now runs SQL scripts from `scripts/migrations` even when the database already exists |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release --no-restore` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 112 tests |
+
+### Audit Remediation
+| Item | Description |
+|---|---|
+| Action-level permission guard | Added centralized `AdminActionGuard` and applied mutation checks across procedures, protocols, catalog, resources, orders, clinical, organization and permission approval pages |
+| Session persistence | Login now persists the current user in browser session storage and admin/persona layouts restore the user before route denial after refresh |
+| Approval workflows | Clinical protocols now start as draft and require submit then approve/publish; procedure/protocol archive/restore and order actions write explicit audit events |
+| Confirmation and rejection UX | Added confirmation for destructive/logout/status operations and replaced hardcoded permission rejection reason with reviewer-entered reason |
+| Admin data correctness | Dashboard/report/audit pages now use real active-version counts, resolved target labels, friendly protocol rule summaries and no placeholder chart |
+| Account administration | Added reset-password action, registration notification to admins and basic login lockout for repeated failed attempts |
+
+### Fixed
+| Item | Description |
+|---|---|
+| Login circuit crash | Removed duplicate `/admin/lam-sang` route ownership from the clinical workspace page so Blazor Router no longer terminates the circuit on `/login`; added a duplicate-route regression test |
+| Registration activation UX | Login now distinguishes correctly saved-but-inactive registrations from invalid credentials, and user management defaults to showing all accounts so new registrations are visible to admins |
+
+### Changed
+| Item | Description |
+|---|---|
+| Admin route ownership | `/admin/quy-trinh`, `/admin/quy-trinh/phe-duyet`, `/admin/phac-do` and `/admin/lam-sang` now render SQL-backed admin pages; `/quy-trinh-pro` and `/phac-do-pro` remain workspace routes |
+| Preferences sync | Theme and motion preferences now use explicit `ThemeBus` events and shell JS state so header/settings stay synchronized |
+| Admin CRUD filters | Added soft-archive aware filters and CRUD flows for procedures, approvals, protocols, orders, users, reports and clinical applications |
+| Audit log UX | Audit page now shows Vietnamese business descriptions by default, with raw JSON hidden inside technical details |
+| Time display | Added shared Vietnam-time formatter for admin timestamps |
+
+### Added
+| Item | Description |
+|---|---|
+| Routing and preference tests | Added route ownership, unknown admin route denial and ThemeBus set-theme/motion tests |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release` | Passed, 109 tests |
+| `docker compose build web` | Passed |
+| `docker compose up -d web` + `/admin` check | Passed, container healthy and HTTP 200 |
+| `dotnet build .\telemedicine-landing-page.sln -c Release --no-restore` | Passed after audit remediation, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed after audit remediation, 109 tests |
+
+### Unresolved Questions
+None.
+
+## 2026-05-20
+### Changed
+| Item | Description |
+|---|---|
+| User activation recovery | Trang Người dùng có nút kích hoạt lại tài khoản đã vô hiệu hóa và chặn tự vô hiệu hóa tài khoản đang đăng nhập |
+| Settings SQL sync | Trang Cài đặt đọc/ghi hồ sơ từ user SQL hiện tại, dùng khoa/phòng thật và lưu kênh thông báo vào `notification_preferences` |
+| Unified guarded navigation | Added SQL permission route guard for admin/persona routes, command palette and hotkeys; expanded nav to resources, orders, notifications, approval, screens and profile |
+| SQL notification shell | Top-bar badge/previews now read `med.notifications` for current user only; legacy in-memory notification service removed from production DI |
+| Legacy route cleanup | Removed routable legacy mock routes `/admin/lam-sang-legacy`, `/admin/quy-trinh-legacy`, `/admin/quy-trinh/phe-duyet-legacy`; removed production DI for legacy in-memory procedure/clinic/catalog/permission/protocol services |
+| Consumption report filter | `SqlReportService` now filters by SQL `department_id` and department closure tree, using `actual_resource_usages` plus resource norms |
+| No fake availability | Order resource snapshots no longer invent available stock; status is `unknown` until real inventory source exists |
+| Notification and protocol UI | Notification detail resolves business source names instead of raw source ID; protocol type uses lookup names |
+| Register hardening | Public register creates inactive users that require admin activation |
+
+### Added
+| Item | Description |
+|---|---|
+| Guard/report tests | Added tests for direct route denial, case-insensitive SQL permission, nav filtering, notification ownership, department report filter and no legacy routes |
+
+### Verification
+| Command | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release --no-restore` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-restore` | Passed, 97 tests |
+
+### Unresolved Questions
+None.
+
 ## 2026-05-19
 ### Added
 | Item | Description |
@@ -25,10 +281,10 @@
 | Notification center | Trung tâm thông báo hỗ trợ lọc mức độ, đánh dấu đã đọc, xem lần gửi và cấu hình preference |
 | Profile and lookup hardening | Sửa lỗi lưu hồ sơ với bảng SQL có trigger, làm lại UI hồ sơ theo admin style, thêm seed chuẩn hóa lookup và mở rộng unit catalog |
 
-| SQL Server alignment | Dong bo file SQL chinh voi database that `MedicalProcedureManagement`: bo sung `med.users.password_hash` va doi map dieu huong sang permission code dang co trong `med.permissions` |
-| Full SQL permission catalog | Mo rong `MedicalProcedureManagement.sql` de seed day du screen/feature/permission cho 25 route nghiep vu, them base roles va role-permission cho SYSTEM_ADMIN, quan tri khoa, lam sang, ky thuat/duoc va bao cao |
-| SQL-backed reports | Chuyen `IReportService` sang `SqlReportService` de bao cao tieu thu, KPI va activity feed doc tu bang SQL that thay vi service demo in-memory |
-| SQL-backed admin routes | Gan route admin chinh cua Quy trinh va Lam sang vao cac page doc `IMedDataStore`, chuyen page demo cu sang route `-legacy` |
+| SQL Server alignment | Đồng bộ file SQL chính với database thật `MedicalProcedureManagement`: bổ sung `med.users.password_hash` và đổi map điều hướng sang permission code đang có trong `med.permissions` |
+| Full SQL permission catalog | Mở rộng `MedicalProcedureManagement.sql` để seed đầy đủ screen/feature/permission cho 25 route nghiệp vụ, thêm base roles và role-permission cho SYSTEM_ADMIN, quản trị khoa, lâm sàng, kỹ thuật/dược và báo cáo |
+| SQL-backed reports | Chuyển `IReportService` sang `SqlReportService` để báo cáo tiêu thụ, KPI và activity feed đọc từ bảng SQL thật thay vì service demo in-memory |
+| SQL-backed admin routes | Gắn route admin chính của Quy trình và Lâm sàng vào các page đọc `IMedDataStore`, chuyển page demo cũ sang route `-legacy` |
 
 ### Verification
 | Command | Result |

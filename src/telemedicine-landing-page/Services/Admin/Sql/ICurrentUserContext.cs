@@ -20,8 +20,11 @@ public interface ICurrentUserContext
     /// <summary>Đăng nhập bằng tên đăng nhập hoặc email + mật khẩu. Trả về null nếu thất bại.</summary>
     AppUser? Login(string identifier, string password);
 
-    /// <summary>Đăng nhập chỉ bằng tên đăng nhập hoặc email (tài khoản chưa đặt mật khẩu).</summary>
-    AppUser? LoginWithoutPassword(string identifier);
+    /// <summary>Đăng nhập bằng username + password và trả về lý do khi không thành công.</summary>
+    LoginAttemptResult LoginByUsernameDetailed(string username, string password);
+
+    /// <summary>Đăng nhập chỉ bằng username (tài khoản chưa đặt mật khẩu).</summary>
+    AppUser? LoginByUsernameOnly(string username);
 
     /// <summary>Đăng xuất người dùng hiện tại.</summary>
     void SignOut();
@@ -31,4 +34,15 @@ public interface ICurrentUserContext
 
     /// <summary>Lấy danh sách quyền hiệu lực của người dùng hiện tại.</summary>
     IReadOnlyList<EffectivePermissionResolver.ResolvedPermission> GetEffectivePermissions();
+}
+
+public sealed record LoginAttemptResult(LoginAttemptStatus Status, AppUser? User = null);
+
+public enum LoginAttemptStatus
+{
+    Success,
+    InvalidCredentials,
+    Inactive,
+    Rejected,
+    PasswordNotSet
 }

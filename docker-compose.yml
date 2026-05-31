@@ -50,6 +50,7 @@ services:
       - ./scripts/seed-lookup-catalogs.sql:/scripts/02-seed-lookup-catalogs.sql:ro
       - ./scripts/seed-realistic-data.sql:/scripts/03-seed-realistic-data.sql:ro
       - ./scripts/seed-hospital-data.sql:/scripts/04-seed-hospital-data.sql:ro
+      - ./scripts/migrations:/scripts/migrations:ro
     command:
       - /bin/bash
       - -c
@@ -68,9 +69,19 @@ services:
 
         "$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" >/dev/null
 
+        run_migrations() {
+          if compgen -G "/scripts/migrations/*.sql" > /dev/null; then
+            for migration in /scripts/migrations/*.sql; do
+              echo "Running migration: $$(basename "$$migration")"
+              "$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -I -b -i "$$migration"
+            done
+          fi
+        }
+
         INITIALIZED=$$("$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -h -1 -W -Q "SET NOCOUNT ON; IF DB_ID(N'MedicalProcedureManagement') IS NULL SELECT 0 ELSE IF EXISTS (SELECT 1 FROM MedicalProcedureManagement.sys.tables t JOIN MedicalProcedureManagement.sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = N'med' AND t.name = N'departments') SELECT 1 ELSE SELECT 0")
         if [ "$$INITIALIZED" = "1" ]; then
-          echo "MedicalProcedureManagement already initialized; skipping schema and seed scripts."
+          echo "MedicalProcedureManagement already initialized; applying migrations and skipping seed scripts."
+          run_migrations
           exit 0
         fi
 
@@ -79,6 +90,7 @@ services:
         "$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -I -b -i /scripts/02-seed-lookup-catalogs.sql
         "$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -I -b -i /scripts/03-seed-realistic-data.sql
         "$$SQLCMD" -S "tcp:$$SQLSERVER_HOST,1433" -U sa -P "$$MSSQL_SA_PASSWORD" -C -I -b -i /scripts/04-seed-hospital-data.sql
+        run_migrations
         echo "Database initialization completed."
     networks:
       - qlcm-network

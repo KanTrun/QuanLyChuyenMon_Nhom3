@@ -60,10 +60,10 @@
                 <tr @onclick="() => OpenNotification(notif)" style="cursor:pointer;">
                     <td class="admin-table-cell-strong">@notif.Title</td>
                     <td>@notif.Body</td>
-                    <td>@notif.NotificationType</td>
+                    <td>@AdminBusinessDisplay.NotificationType(notif.NotificationType)</td>
                     <td><AdminBadge Tone="@SeverityTone(notif.Severity)">@Lookup(Sql.MedLookups.NotificationSeverities, notif.Severity)</AdminBadge></td>
                     <td>@(notif.ReadAt.HasValue ? "Đã đọc" : "Chưa đọc")</td>
-                    <td>@notif.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@AdminDateTimeDisplay.DateTime(notif.CreatedAt)</td>
                     <td style="text-align:right;" @onclick:stopPropagation="true">
                         @if (!notif.ReadAt.HasValue)
                         {
@@ -93,7 +93,7 @@
                         @foreach (var type in NotificationTypes())
                         {
                             <tr>
-                                <td class="admin-table-cell-strong">@type</td>
+                                <td class="admin-table-cell-strong">@AdminBusinessDisplay.NotificationType(type)</td>
                                 @foreach (var channel in Sql.MedLookups.NotificationChannels)
                                 {
                                     <td>
@@ -114,17 +114,17 @@
 <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" SizeClass="admin-drawer-wide"
              Eyebrow="Thông báo"
              Title="@(_selected?.Title ?? string.Empty)"
-             Subtitle="@(_selected is null ? null : $"{Lookup(Sql.MedLookups.NotificationSeverities, _selected.Severity)} • {_selected.CreatedAt:dd/MM/yyyy HH:mm}")">
+             Subtitle="@(_selected is null ? null : $"{Lookup(Sql.MedLookups.NotificationSeverities, _selected.Severity)} • {AdminDateTimeDisplay.DateTime(_selected.CreatedAt)}")">
     <ChildContent>
         @if (_selected is not null)
         {
             <dl class="admin-detail-grid">
                 <dt>Loại</dt>
-                <dd>@_selected.NotificationType</dd>
+                <dd>@AdminBusinessDisplay.NotificationType(_selected.NotificationType)</dd>
                 <dt>Nguồn</dt>
                 <dd>@DescribeSource(_selected)</dd>
                 <dt>Đã đọc lúc</dt>
-                <dd>@(_selected.ReadAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa đọc")</dd>
+                <dd>@(_selected.ReadAt.HasValue ? AdminDateTimeDisplay.DateTime(_selected.ReadAt) : "Chưa đọc")</dd>
             </dl>
             <p class="admin-card-meta">@_selected.Body</p>
 
@@ -139,7 +139,7 @@
                                 <tr>
                                     <td>@Lookup(Sql.MedLookups.NotificationChannels, attempt.ChannelCode)</td>
                                     <td><AdminBadge Tone="@DeliveryTone(attempt.DeliveryStatus)">@Lookup(Sql.MedLookups.DeliveryStatuses, attempt.DeliveryStatus)</AdminBadge></td>
-                                    <td>@attempt.AttemptedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@AdminDateTimeDisplay.DateTime(attempt.AttemptedAt)</td>
                                     <td>@(attempt.ErrorMessage ?? "—")</td>
                                 </tr>
                             }
@@ -332,7 +332,7 @@
             {
                 Store.UpdateNotificationPreference(existing with { IsEnabled = enabled, UpdatedAt = DateTime.UtcNow });
             }
-            Toasts.Show("Đã cập nhật cài đặt", $"{type} • {Lookup(Sql.MedLookups.NotificationChannels, channel)}", ToastVariant.Success);
+            Toasts.Show("Đã cập nhật cài đặt", $"{AdminBusinessDisplay.NotificationType(type)} • {Lookup(Sql.MedLookups.NotificationChannels, channel)}", ToastVariant.Success);
         }
         catch (Exception ex)
         {
@@ -395,7 +395,7 @@
             "permission_change" => "Yêu cầu thay đổi quyền",
             "procedure_approval" => "Quy trình cần phê duyệt",
             "order_status" => "Chỉ định kỹ thuật",
-            _ => notification.SourceType
+            _ => AdminBusinessDisplay.Source(notification.SourceType)
         };
     }
 

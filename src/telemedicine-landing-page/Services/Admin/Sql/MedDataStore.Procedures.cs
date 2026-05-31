@@ -16,6 +16,27 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void UpdateProcedure(ProfessionalProcedure proc)
+    {
+        lock (_lock)
+        {
+            var idx = _procedures.FindIndex(p => p.ProcedureId == proc.ProcedureId);
+            if (idx < 0)
+                throw MedDomainException.Constraint("PK_procedures", 547, "Quy trình không tồn tại.");
+
+            if (_procedures.Any(p => p.ProcedureId != proc.ProcedureId && p.ProcedureCode == proc.ProcedureCode))
+                throw MedDomainException.Constraint("UQ_procedures_code", 2627, $"Mã quy trình '{proc.ProcedureCode}' đã tồn tại.");
+
+            var current = _procedures[idx];
+            _procedures[idx] = proc with
+            {
+                CreatedAt = current.CreatedAt,
+                UpdatedAt = DateTime.UtcNow
+            };
+            RaiseStateChanged();
+        }
+    }
+
     public void AddProcedureVersion(ProcedureVersion ver)
     {
         lock (_lock)

@@ -1,7 +1,7 @@
 # Development Roadmap
 
 ## Current Source Status
-Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-page`, gồm landing page và module QLCM Pro. Module QLCM Pro đã chuyển từ demo/in-memory sang luồng SQL-backed qua `MedDbContext`, `IMedDataStore` và schema `MedicalProcedureManagement`.
+Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-page`, chạy trọng tâm QLCM Pro. Landing page telemedicine cũ đã được gỡ khỏi runtime; `/` là trang giới thiệu QLCM Pro trước đăng nhập/đăng ký, còn module nghiệp vụ dùng SQL-backed qua `MedDbContext`, `IMedDataStore` và schema `MedicalProcedureManagement`.
 
 ## QLCM Pro SQL Track
 | Item | Status | Output |
@@ -10,17 +10,22 @@ Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-
 | Procedure lifecycle | Complete | Version dùng lookup SQL `draft`, `pending_approval`, `active`, `superseded`, `archived` |
 | Admin workflows | Complete | Quy trình, tổ chức/khoa/phòng, người dùng, vai trò, nhóm, phân quyền, danh mục, tài nguyên, phác đồ, thông báo |
 | Clinical workflows | Complete | Bệnh nhân, lượt khám, phác đồ áp dụng, chỉ định kỹ thuật, snapshot nguồn lực và tiêu hao thực tế |
+| Audit remediation | Complete | Action guard, session restore, protocol draft/submit/publish, confirm/reject reason, audit history, dashboard/report/audit UX fixes |
+| Production architecture foundation | Complete | Identity-compatible account tables, custom permission claims/policies, SQL retry/health checks, Serilog structured logging, Docker migration runner |
+| Security validation guard | Complete | FluentValidation password commands, common-password checks, null-password lock migration, admin `AdminAccess` folder guard |
+| Workflow and jobs foundation | Complete | Workflow guards for procedure versions/orders, order status service extraction, Hangfire SQL dashboard and `IJobService` wrapper |
+| Realtime notifications | Complete | SignalR notification hub, persisted user/group/broadcast notification service, admin bell live toast updates and presence hooks |
+| Business UI remediation | Complete | Admin pages use hospital-facing labels, approval-backed permission changes, active-version drafts, resource-unit guards and compact technical details |
+| Business workflow completion | Complete | Runtime procedure guard, scheduled permission apply job, inventory snapshot service, ICD protocol suggestions and persona route gating |
 | Seed data | Complete | `scripts/seed-realistic-data.sql` nạp dữ liệu mẫu thực tế cho demo/QA |
-| Verification | Complete | Release build passed, 91 tests passed |
+| Verification | Complete | Release build/test passed, 149 tests after Vietnam time timeline fix |
 
-## Telemedicine Landing Page Track
+## Legacy Landing Cleanup Track
 | Item | Status | Output |
 |---|---|---|
-| Stack scaffold | Complete | `telemedicine-landing-page.sln`, Blazor Web App `net9.0`, xUnit tests |
-| Home UI | Complete | Hero, preview tư vấn video, danh bạ chuyên khoa, theo dõi sức khỏe, CTA tải ứng dụng |
-| Vietnamese content | Complete | UI copy, aria labels, metadata and seed data use Vietnamese with diacritics |
-| Verification | Complete | Release build passed, 4 tests passed |
-| Next | Planned | Replace placeholder CTA/store/contact URLs and run browser/Lighthouse QA |
+| Runtime removal | Complete | Removed landing sections/content service/link options/CSS from active app |
+| Entry route | Complete | `/` shows a QLCM Pro intro with login/register CTAs so users see the professional product entry first |
+| Verification | Complete | Release build/test passed, 149 tests; Docker web healthy on `localhost:8080` |
 
 ## Procedure Module Roadmap
 Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này đã có source triển khai trong Blazor app và đã được kiểm tra bằng build/test Release.
@@ -42,8 +47,8 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này �
 | Architecture blueprint | 100% |
 | Implementation plan | 100% |
 | Code implementation | 100% for implementation-plan scope |
-| Test automation | Release build/test passed, 91 tests |
-| Deployment readiness | Seed script ready; target DB execution/config remains deployment task |
+| Test automation | Release build/test passed, 149 tests after Vietnam time timeline fix |
+| Deployment readiness | Docker Compose web/sql/db-init verified locally; target DB execution/config remains deployment task |
 
 ## Dependencies
 | Dependency | Needed For |
@@ -55,7 +60,7 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này �
 | Patient/diagnosis data model | Protocol suggestions |
 
 ## Next Milestone
-Run `scripts/seed-realistic-data.sql` on the target SQL Server database, then perform browser QA against the deployed admin workflows with real connection settings.
+Run browser QA by role on target SQL Server: `SYSTEM_ADMIN`, `DEPARTMENT_ADMIN`, clinical user, technician/pharmacist and report viewer.
 
 ## Unresolved Questions
 None.

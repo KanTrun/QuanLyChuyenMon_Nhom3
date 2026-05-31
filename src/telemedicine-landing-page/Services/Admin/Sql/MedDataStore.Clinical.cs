@@ -26,6 +26,27 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void UpdateClinicalProtocol(ClinicalProtocol protocol)
+    {
+        lock (_lock)
+        {
+            var idx = _clinicalProtocols.FindIndex(p => p.ClinicalProtocolId == protocol.ClinicalProtocolId);
+            if (idx < 0)
+                throw MedDomainException.Constraint("PK_clinical_protocols", 547, "Phác đồ không tồn tại.");
+
+            if (_clinicalProtocols.Any(p => p.ClinicalProtocolId != protocol.ClinicalProtocolId && p.ProtocolCode == protocol.ProtocolCode))
+                throw MedDomainException.Constraint("UQ_clinical_protocols_code", 2627, $"Mã phác đồ '{protocol.ProtocolCode}' đã tồn tại.");
+
+            var current = _clinicalProtocols[idx];
+            _clinicalProtocols[idx] = protocol with
+            {
+                CreatedAt = current.CreatedAt,
+                UpdatedAt = DateTime.UtcNow
+            };
+            RaiseStateChanged();
+        }
+    }
+
     public void UpdateClinicalProtocolVersion(ClinicalProtocolVersion ver)
     {
         lock (_lock)
@@ -86,6 +107,37 @@ public sealed partial class MedDataStore
         {
             ValidateJson(app.DecisionContextJson, "decision_context");
             _patientProtocolApps.Add(app);
+            RaiseStateChanged();
+        }
+    }
+
+    public void UpdatePatientProtocolApplication(PatientProtocolApplication app)
+    {
+        lock (_lock)
+        {
+            ValidateJson(app.DecisionContextJson, "decision_context");
+            var idx = _patientProtocolApps.FindIndex(a => a.PatientProtocolApplicationId == app.PatientProtocolApplicationId);
+            if (idx < 0)
+                throw MedDomainException.Constraint("PK_patient_protocol_applications", 547, "Áp dụng phác đồ không tồn tại.");
+
+            _patientProtocolApps[idx] = app;
+            RaiseStateChanged();
+        }
+    }
+
+    public void AddSignatureRecord(SignatureRecord signature)
+    {
+        lock (_lock)
+        {
+            ValidateJson(signature.MetadataJson, "metadata");
+            if (_signatureRecords.Any(s =>
+                    s.TargetType == signature.TargetType &&
+                    s.TargetId == signature.TargetId))
+            {
+                throw MedDomainException.Constraint("UQ_sig_target_active", 2627, "Hồ sơ đã có chữ ký.");
+            }
+
+            _signatureRecords.Add(signature);
             RaiseStateChanged();
         }
     }

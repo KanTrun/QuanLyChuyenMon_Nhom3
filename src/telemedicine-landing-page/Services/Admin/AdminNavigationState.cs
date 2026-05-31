@@ -1,4 +1,3 @@
-using System.Globalization;
 using TelemedicineLandingPage.Models.Admin;
 using TelemedicineLandingPage.Services.Admin.Sql;
 
@@ -157,12 +156,12 @@ public sealed class AdminNavigationState : IAdminNavigationState, IDisposable
 
     private static string FormatRelative(DateTime when)
     {
-        var delta = DateTime.Now - when.ToLocalTime();
+        var delta = AdminDateTimeDisplay.Now() - AdminDateTimeDisplay.ToDisplayTime(when);
         if (delta.TotalSeconds < 90) return "Vừa xong";
         if (delta.TotalMinutes < 60) return $"{(int)delta.TotalMinutes} phút trước";
         if (delta.TotalHours < 24) return $"{(int)delta.TotalHours} giờ trước";
         if (delta.TotalDays < 7) return $"{(int)delta.TotalDays} ngày trước";
-        return when.ToLocalTime().ToString("dd/MM HH:mm", CultureInfo.GetCultureInfo("vi-VN"));
+        return AdminDateTimeDisplay.ShortDateTime(when);
     }
 
     private static IReadOnlyList<AdminNavItem> BuildNavItems()

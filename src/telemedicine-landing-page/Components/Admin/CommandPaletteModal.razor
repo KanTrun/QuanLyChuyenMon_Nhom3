@@ -1,6 +1,7 @@
 @inject IAdminNavigationState NavState
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject TelemedicineLandingPage.Services.Admin.Sql.NavGate Gate
 @implements IDisposable
 
 @if (NavState.IsPaletteOpen)
@@ -141,7 +142,8 @@
     private void Recompute()
     {
         var query = _query.Trim();
-        IEnumerable<PaletteCommand> source = NavState.Commands;
+        IEnumerable<PaletteCommand> source = NavState.Commands
+            .Where(command => string.IsNullOrEmpty(command.NavigateTo) || Gate.CanAccess(command.NavigateTo));
         if (!string.IsNullOrEmpty(query))
         {
             source = source.Where(c =>
@@ -202,9 +204,9 @@
             }
             return;
         }
-        if (!string.IsNullOrEmpty(command.NavigateTo))
+        if (!string.IsNullOrEmpty(command.NavigateTo) && Gate.CanAccess(command.NavigateTo))
         {
-            Navigation.NavigateTo(command.NavigateTo);
+            Navigation.NavigateTo(Gate.GetDisplayRoute(command.NavigateTo));
         }
     }
 

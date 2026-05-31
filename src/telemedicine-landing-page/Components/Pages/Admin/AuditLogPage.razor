@@ -1,5 +1,6 @@
 @page "/admin/nhat-ky"
 @layout AdminLayout
+@using System.Text.Json
 @using TelemedicineLandingPage.Services.Admin.Sql
 @using TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
@@ -13,24 +14,46 @@
         <div>
             <span class="admin-page-eyebrow">Hệ thống</span>
             <h1 class="admin-page-title">Nhật ký kiểm toán</h1>
-            <p class="admin-page-subtitle">Lịch sử thao tác bất biến — chỉ đọc, không thể xóa hoặc sửa.</p>
+            <p class="admin-page-subtitle">Lịch sử thao tác bất biến, hiển thị theo ngữ cảnh nghiệp vụ và giờ Việt Nam.</p>
         </div>
     </header>
 
-    <div class="admin-panel" style="margin-bottom:1rem;">
-        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
-            <select class="admin-select" style="width:auto;" @bind="_filterAction" @bind:after="ApplyFilter">
-                <option value="">Tất cả hành động</option>
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Từ ngày</label>
+            <input class="admin-input" type="date" value="@_fromIso" @onchange="OnFromChanged" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Đến ngày</label>
+            <input class="admin-input" type="date" value="@_toIso" @onchange="OnToChanged" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Hành động</label>
+            <select class="admin-select" @bind="_filterAction" @bind:after="ApplyFilter">
+                <option value="">Tất cả</option>
                 @foreach (var ac in _actionCodes)
                 {
-                    <option value="@ac">@ac</option>
+                    <option value="@ac">@ActionLabel(ac)</option>
                 }
             </select>
-            <select class="admin-select" style="width:auto;" @bind="_filterActor" @bind:after="ApplyFilter">
-                <option value="">Tất cả người dùng</option>
-                @foreach (var user in Store.Users)
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Người dùng</label>
+            <select class="admin-select" @bind="_filterActor" @bind:after="ApplyFilter">
+                <option value="">Tất cả</option>
+                @foreach (var user in Store.Users.OrderBy(u => u.FullName))
                 {
                     <option value="@user.UserId">@user.FullName</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Đối tượng</label>
+            <select class="admin-select" @bind="_filterTarget" @bind:after="ApplyFilter">
+                <option value="">Tất cả</option>
+                @foreach (var target in _targetTypes)
+                {
+                    <option value="@target">@TargetLabel(target)</option>
                 }
             </select>
         </div>
@@ -44,46 +67,36 @@
                     TotalItems="_total"
                     CurrentPageChanged="OnPageChanged"
                     EmptyTitle="Không có bản ghi"
-                    EmptyBody="Chưa có hoạt động nào được ghi nhận.">
+                    EmptyBody="Không có hoạt động phù hợp với bộ lọc hiện tại.">
         <HeaderTemplate>
             <th>#</th>
             <th>Thời gian</th>
             <th>Người thực hiện</th>
             <th>Hành động</th>
             <th>Đối tượng</th>
-            <th>Mã đối tượng</th>
+            <th>Nội dung</th>
             <th>Chi tiết</th>
         </HeaderTemplate>
         <RowTemplate Context="log">
             <tr>
                 <td>@log.AuditLogSeq</td>
-                <td>@log.OccurredAt.ToString("dd/MM/yyyy HH:mm:ss")</td>
-                <td>@GetActorName(log.ActorUserId)</td>
+                <td>@AdminDateTimeDisplay.DateTimeSeconds(log.OccurredAt)</td>
+                <td>@GetActorName(log)</td>
+                <td><AdminBadge Tone="@GetActionTone(log.ActionCode)">@ActionLabel(log.ActionCode)</AdminBadge></td>
                 <td>
-                    <AdminBadge Tone="@GetActionTone(log.ActionCode)">@log.ActionCode</AdminBadge>
+                    <div class="admin-table-cell-strong">@TargetLabel(log.TargetType)</div>
+                    <div class="admin-table-cell-muted">@ResolveTargetName(log)</div>
                 </td>
-                <td>@log.TargetType</td>
-                <td>@(log.TargetId ?? "—")</td>
+                <td>@DescribeLog(log)</td>
                 <td>
-                    @if (!string.IsNullOrWhiteSpace(log.BeforeJson) || !string.IsNullOrWhiteSpace(log.AfterJson))
+                    @if (HasTechnicalDetails(log))
                     {
                         <details>
-                            <summary style="cursor:pointer;color:var(--color-primary-deep);font-weight:600;">Xem</summary>
+                            <summary style="cursor:pointer;color:var(--color-primary-deep);font-weight:600;">Chi tiết kỹ thuật</summary>
                             <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
-                                @if (!string.IsNullOrWhiteSpace(log.BeforeJson))
-                                {
-                                    <div>
-                                        <div class="admin-form-field-hint">Trước</div>
-                                        <pre class="admin-json-block">@log.BeforeJson</pre>
-                                    </div>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(log.AfterJson))
-                                {
-                                    <div>
-                                        <div class="admin-form-field-hint">Sau</div>
-                                        <pre class="admin-json-block">@log.AfterJson</pre>
-                                    </div>
-                                }
+                                @RenderJsonBlock("Trước", log.BeforeJson)
+                                @RenderJsonBlock("Sau", log.AfterJson)
+                                @RenderJsonBlock("Metadata", log.MetadataJson)
                             </div>
                         </details>
                     }
@@ -102,45 +115,76 @@
     private const int _pageSize = 15;
     private int _total;
     private IReadOnlyList<AuditLog> _pagedItems = Array.Empty<AuditLog>();
-    private string _filterAction = "";
-    private string _filterActor = "";
+    private string _filterAction = string.Empty;
+    private string _filterActor = string.Empty;
+    private string _filterTarget = string.Empty;
+    private string _fromIso = AdminDateTimeDisplay.Today().AddDays(-30).ToString("yyyy-MM-dd");
+    private string _toIso = AdminDateTimeDisplay.Today().ToString("yyyy-MM-dd");
     private List<AuditLog> _filtered = new();
-
     private IReadOnlyList<string> _actionCodes = Array.Empty<string>();
+    private IReadOnlyList<string> _targetTypes = Array.Empty<string>();
 
     protected override void OnInitialized()
     {
         Store.StateChanged += OnChanged;
-        _actionCodes = AuditService.GetAll()
-            .Select(l => l.ActionCode)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(x => x)
-            .ToList();
+        RefreshLookups();
         ApplyFilter();
     }
 
     private void OnChanged() => InvokeAsync(() =>
     {
-        _actionCodes = AuditService.GetAll()
-            .Select(l => l.ActionCode)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(x => x)
-            .ToList();
+        RefreshLookups();
         ApplyFilter();
         StateHasChanged();
     });
 
-    private void OnPageChanged(int p) { _page = p; Paginate(); }
+    private void RefreshLookups()
+    {
+        var logs = AuditService.GetAll();
+        _actionCodes = logs.Select(l => l.ActionCode).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(ActionLabel).ToList();
+        _targetTypes = logs.Select(l => l.TargetType).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(TargetLabel).ToList();
+    }
+
+    private void OnPageChanged(int p)
+    {
+        _page = p;
+        Paginate();
+    }
+
+    private void OnFromChanged(ChangeEventArgs args)
+    {
+        _fromIso = args.Value?.ToString() ?? string.Empty;
+        ApplyFilter();
+    }
+
+    private void OnToChanged(ChangeEventArgs args)
+    {
+        _toIso = args.Value?.ToString() ?? string.Empty;
+        ApplyFilter();
+    }
 
     private void ApplyFilter()
     {
         IEnumerable<AuditLog> query = AuditService.GetAll();
 
+        if (DateOnly.TryParse(_fromIso, out var from))
+        {
+            query = query.Where(l => AdminDateTimeDisplay.ToDisplayTime(l.OccurredAt).Date >= from.ToDateTime(TimeOnly.MinValue).Date);
+        }
+
+        if (DateOnly.TryParse(_toIso, out var to))
+        {
+            query = query.Where(l => AdminDateTimeDisplay.ToDisplayTime(l.OccurredAt).Date <= to.ToDateTime(TimeOnly.MinValue).Date);
+        }
+
         if (!string.IsNullOrEmpty(_filterAction))
-            query = query.Where(l => l.ActionCode == _filterAction);
+            query = query.Where(l => string.Equals(l.ActionCode, _filterAction, StringComparison.OrdinalIgnoreCase));
 
         if (!string.IsNullOrEmpty(_filterActor) && Guid.TryParse(_filterActor, out var actorId))
             query = query.Where(l => l.ActorUserId == actorId);
+
+        if (!string.IsNullOrEmpty(_filterTarget))
+            query = query.Where(l => string.Equals(l.TargetType, _filterTarget, StringComparison.OrdinalIgnoreCase));
 
         _filtered = query.OrderByDescending(l => l.AuditLogSeq).ToList();
         _page = 1;
@@ -153,19 +197,212 @@
         _pagedItems = _filtered.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
     }
 
-    private string GetActorName(Guid? userId)
+    private string GetActorName(AuditLog log)
     {
-        if (userId is null) return "Hệ thống";
-        return Store.Users.FirstOrDefault(u => u.UserId == userId.Value)?.FullName ?? "Không xác định";
+        if (log.ActorUserId is null) return log.ActorUsername ?? "Hệ thống";
+        return Store.Users.FirstOrDefault(u => u.UserId == log.ActorUserId.Value)?.FullName
+            ?? log.ActorUsername
+            ?? "Không xác định";
     }
 
-    private static string GetActionTone(string action) => action switch
+    private string ResolveTargetName(AuditLog log)
     {
-        "create" => "tone-success",
+        if (string.IsNullOrWhiteSpace(log.TargetId))
+        {
+            return "—";
+        }
+
+        if (!Guid.TryParse(log.TargetId, out var id))
+        {
+            return log.TargetId;
+        }
+
+        return log.TargetType.ToLowerInvariant() switch
+        {
+            "procedure" or "professionalprocedure" or "professional_procedure" =>
+                Store.Procedures.FirstOrDefault(p => p.ProcedureId == id) is { } p ? $"{p.ProcedureCode} - {p.Name}" : ShortId(log.TargetId),
+            "procedureversion" or "procedure_version" =>
+                Store.ProcedureVersions.FirstOrDefault(v => v.ProcedureVersionId == id) is { } v ? $"{v.VersionLabel} - {v.Title}" : ShortId(log.TargetId),
+            "clinicalprotocol" or "clinical_protocol" =>
+                Store.ClinicalProtocols.FirstOrDefault(p => p.ClinicalProtocolId == id) is { } cp ? $"{cp.ProtocolCode} - {cp.Name}" : ShortId(log.TargetId),
+            "clinicalprotocolversion" or "clinical_protocol_version" =>
+                Store.ClinicalProtocolVersions.FirstOrDefault(v => v.ClinicalProtocolVersionId == id) is { } cv ? $"v{cv.VersionNo} - {cv.Title}" : ShortId(log.TargetId),
+            "technicalorder" or "technical_order" =>
+                Store.TechnicalOrders.FirstOrDefault(o => o.TechnicalOrderId == id) is { } o ? GetOrderName(o) : ShortId(log.TargetId),
+            "technicalservice" or "technical_service" =>
+                Store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == id) is { } svc ? $"{svc.ServiceCode} - {svc.Name}" : ShortId(log.TargetId),
+            "resourcecatalogitem" or "resource_catalog_item" =>
+                Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == id) is { } r ? $"{r.ResourceCode} - {r.Name}" : ShortId(log.TargetId),
+            "patientref" or "patient" or "patient_ref" =>
+                Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == id) is { } pt ? $"{pt.PatientCode} - {pt.DisplayName}" : ShortId(log.TargetId),
+            "encounterref" or "encounter" or "encounter_ref" =>
+                Store.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == id)?.ExternalEncounterId ?? ShortId(log.TargetId),
+            "appuser" or "user" =>
+                Store.Users.FirstOrDefault(u => u.UserId == id) is { } u ? $"{u.Username} - {u.FullName}" : ShortId(log.TargetId),
+            "role" =>
+                Store.Roles.FirstOrDefault(r => r.RoleId == id)?.Name ?? ShortId(log.TargetId),
+            "group" =>
+                Store.Groups.FirstOrDefault(g => g.GroupId == id)?.Name ?? ShortId(log.TargetId),
+            "department" =>
+                Store.Departments.FirstOrDefault(d => d.DepartmentId == id)?.Name ?? ShortId(log.TargetId),
+            _ => ShortId(log.TargetId)
+        };
+    }
+
+    private string GetOrderName(TechnicalOrder order)
+    {
+        var service = Store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == order.TechnicalServiceId)?.Name ?? "Chỉ định";
+        var patient = order.PatientRefId.HasValue
+            ? Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == order.PatientRefId.Value)?.DisplayName
+            : null;
+        return string.IsNullOrWhiteSpace(patient) ? service : $"{service} - {patient}";
+    }
+
+    private static string ShortId(string value)
+        => value.Length <= 8 ? value : value[..8];
+
+    private static string DescribeLog(AuditLog log)
+    {
+        var subject = TargetLabel(log.TargetType);
+        var changes = DescribeChange(log.BeforeJson, log.AfterJson);
+        var reason = ReadJsonValue(log.MetadataJson, "reason");
+
+        return log.ActionCode.ToLowerInvariant() switch
+        {
+            "create" => $"Tạo mới {subject}.",
+            "update" => string.IsNullOrWhiteSpace(changes) ? $"Cập nhật {subject}." : changes,
+            "archive" => $"Lưu trữ {subject}.",
+            "delete" => $"Lưu trữ hoặc xoá {subject}.",
+            "restore" => $"Khôi phục {subject}.",
+            "submit" => $"Gửi {subject} sang phê duyệt.",
+            "approve" or "publish" => $"Phê duyệt và ban hành {subject}.",
+            "reject" => string.IsNullOrWhiteSpace(reason) ? $"Từ chối {subject}." : $"Từ chối {subject}: {reason}.",
+            "revoke" or "withdraw" => string.IsNullOrWhiteSpace(reason) ? $"Thu hồi {subject}." : $"Thu hồi {subject}: {reason}.",
+            _ => $"{ActionLabel(log.ActionCode)} {subject}."
+        };
+    }
+
+    private static string DescribeChange(string? beforeJson, string? afterJson)
+    {
+        var beforeStatus = ReadJsonValue(beforeJson, "status") ?? ReadJsonValue(beforeJson, "statusCode") ?? ReadJsonValue(beforeJson, "StatusCode");
+        var afterStatus = ReadJsonValue(afterJson, "status") ?? ReadJsonValue(afterJson, "statusCode") ?? ReadJsonValue(afterJson, "StatusCode");
+        if (!string.IsNullOrWhiteSpace(beforeStatus) && !string.IsNullOrWhiteSpace(afterStatus) && beforeStatus != afterStatus)
+        {
+            return $"Đổi trạng thái từ {StatusLabel(beforeStatus)} sang {StatusLabel(afterStatus)}.";
+        }
+
+        return string.Empty;
+    }
+
+    private static string? ReadJsonValue(string? json, string propertyName)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object) return null;
+            foreach (var prop in doc.RootElement.EnumerateObject())
+            {
+                if (string.Equals(prop.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return prop.Value.ValueKind == JsonValueKind.String ? prop.Value.GetString() : prop.Value.ToString();
+                }
+            }
+        }
+        catch (JsonException) { }
+
+        return null;
+    }
+
+    private static string ActionLabel(string action) => action.ToLowerInvariant() switch
+    {
+        "create" => "Tạo mới",
+        "update" => "Cập nhật",
+        "delete" => "Xóa/lưu trữ",
+        "archive" => "Lưu trữ",
+        "restore" => "Khôi phục",
+        "submit" => "Gửi phê duyệt",
+        "approve" => "Phê duyệt",
+        "publish" => "Ban hành",
+        "complete_order" => "Hoàn thành chỉ định",
+        "cancel_order" => "Hủy chỉ định",
+        "create_order" => "Tạo chỉ định",
+        "reject" => "Từ chối",
+        "revoke" or "withdraw" => "Thu hồi",
+        "login" => "Đăng nhập",
+        "register" => "Đăng ký",
+        _ => AdminBusinessDisplay.Action(action)
+    };
+
+    private static string TargetLabel(string target) => target.ToLowerInvariant() switch
+    {
+        "procedure" or "professionalprocedure" or "professional_procedure" => "Quy trình",
+        "procedureversion" or "procedure_version" => "Phiên bản quy trình",
+        "clinicalprotocol" or "clinical_protocol" => "Phác đồ",
+        "clinicalprotocolversion" or "clinical_protocol_version" => "Phiên bản phác đồ",
+        "technicalorder" or "technical_order" => "Chỉ định kỹ thuật",
+        "patientref" or "patient" => "Bệnh nhân",
+        "encounterref" or "encounter" => "Lượt khám",
+        "appuser" or "user" => "Người dùng",
+        "role" => "Vai trò",
+        "rolepermission" or "role_permission" => "Quyền vai trò",
+        "userrole" or "user_role" => "Vai trò người dùng",
+        "userpermissionoverride" or "user_permission_override" => "Ghi đè quyền người dùng",
+        "permission_change_request" => "Yêu cầu thay đổi quyền",
+        "group" => "Nhóm",
+        "department" => "Khoa/phòng",
+        _ => AdminBusinessDisplay.Target(target)
+    };
+
+    private static string StatusLabel(string status) => status switch
+    {
+        "active" => "đang hoạt động",
+        "inactive" => "vô hiệu",
+        "archived" => "lưu trữ",
+        "draft" => "bản nháp",
+        "pending_approval" => "chờ phê duyệt",
+        "rejected" => "bị từ chối",
+        "published" => "đã ban hành",
+        "superseded" => "đã thay thế",
+        _ => AdminBusinessDisplay.Fallback(status)
+    };
+
+    private static string GetActionTone(string action) => action.ToLowerInvariant() switch
+    {
+        "create" or "restore" => "tone-success",
         "delete" or "archive" => "tone-danger",
         "approve" or "publish" => "tone-primary",
-        "reject" or "revoke" => "tone-warning",
+        "reject" or "revoke" or "withdraw" => "tone-warning",
         _ => "tone-muted"
+    };
+
+    private static bool HasTechnicalDetails(AuditLog log)
+        => !string.IsNullOrWhiteSpace(log.BeforeJson)
+           || !string.IsNullOrWhiteSpace(log.AfterJson)
+           || !string.IsNullOrWhiteSpace(log.MetadataJson);
+
+    private static RenderFragment RenderJsonBlock(string title, string? json) => builder =>
+    {
+        if (string.IsNullOrWhiteSpace(json)) return;
+        builder.OpenElement(0, "div");
+        builder.OpenElement(1, "div");
+        builder.AddAttribute(2, "class", "admin-form-field-hint");
+        builder.AddContent(3, title);
+        builder.CloseElement();
+        builder.OpenElement(4, "div");
+        builder.AddAttribute(5, "class", "admin-table-cell-muted");
+        builder.AddContent(6, AdminBusinessDisplay.JsonSummary(json));
+        builder.CloseElement();
+        builder.OpenElement(7, "details");
+        builder.OpenElement(8, "summary");
+        builder.AddContent(9, "Chi tiết kỹ thuật");
+        builder.CloseElement();
+        builder.OpenElement(10, "pre");
+        builder.AddAttribute(11, "class", "admin-json-block");
+        builder.AddContent(12, json);
+        builder.CloseElement();
+        builder.CloseElement();
+        builder.CloseElement();
     };
 
     public void Dispose() => Store.StateChanged -= OnChanged;

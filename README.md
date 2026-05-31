@@ -1,9 +1,9 @@
-# Bệnh viện số - Telemedicine Landing Page
+# QLCM Pro - Quản lý chuyên môn bệnh viện
 
 ## Tổng quan
-Dự án hiện có một landing page khám từ xa chạy bằng Blazor Web App trên `.NET 9`. Trang được thiết kế theo hướng editorial/App Store-style soft UI cho hệ thống bệnh viện: tư vấn video, danh bạ bác sĩ chuyên khoa, theo dõi sức khỏe và CTA tải ứng dụng.
+Dự án hiện chạy QLCM Pro bằng Blazor Web App trên `.NET 9`. Landing page telemedicine cũ đã được gỡ khỏi runtime; route `/` là trang giới thiệu QLCM Pro chuyên nghiệp trước khi người dùng chọn đăng nhập/đăng ký, còn luồng chính nằm ở `/admin` và các workspace nghiệp vụ.
 
-Bên cạnh trang công khai, dự án còn có module quản trị nội bộ tại `/admin` (gọi tắt là `QLCM Pro`) gồm sidebar điều hướng, bảng lệnh nhanh và các trang Tổng quan, Quy trình kỹ thuật, Phân quyền, Danh mục, Tài nguyên, Chỉ định, Phác đồ, Báo cáo, Lâm sàng, Thông báo, Cài đặt. Module dùng SQL-backed data store qua `MedDbContext`/`IMedDataStore` cho các luồng quản trị quy trình chuyên môn, RBAC, định mức tài nguyên, chỉ định kỹ thuật, phác đồ, bệnh nhân và thông báo. Trợ lý AI tích hợp Google Gemini (mô hình mặc định `gemini-2.5-flash` - free tier). Khi chưa cấu hình API key, trợ lý sẽ chạy ở chế độ demo và phản hồi bằng tiếng Việt có dấu.
+QLCM Pro gồm sidebar điều hướng, bảng lệnh nhanh và các trang Tổng quan, Quy trình kỹ thuật, Phân quyền, Danh mục, Tài nguyên, Chỉ định, Phác đồ, Báo cáo, Lâm sàng, Thông báo, Cài đặt. Module dùng SQL-backed data store qua `MedDbContext`/`IMedDataStore` cho các luồng quản trị quy trình chuyên môn, RBAC, định mức tài nguyên, chỉ định kỹ thuật, phác đồ, bệnh nhân và thông báo. Trợ lý AI tích hợp Google Gemini (mô hình mặc định `gemini-2.5-flash` - free tier). Khi chưa cấu hình API key, trợ lý sẽ chạy ở chế độ demo và phản hồi bằng tiếng Việt có dấu.
 
 ### Cấu hình trợ lý AI
 Mặc định chatbot dùng Google Gemini qua endpoint `https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse`. Lấy API key miễn phí tại [Google AI Studio](https://aistudio.google.com/apikey). Mô hình mặc định `gemini-2.5-flash` cho chất lượng tốt nhất ở free tier; có thể đổi sang `gemini-2.5-flash-lite` (quota cao hơn) hoặc `gemini-2.5-pro` (chất lượng cao nhất, quota thấp hơn) trong trang Cài đặt.
@@ -62,7 +62,7 @@ dotnet restore .\telemedicine-landing-page.sln
 dotnet run --project .\src\telemedicine-landing-page\telemedicine-landing-page.csproj
 ```
 
-Sau khi chạy, mở trình duyệt tại địa chỉ in ra trong terminal (mặc định `http://localhost:5xxx`), trang quản trị nội bộ ở `/admin`.
+Sau khi chạy, mở trình duyệt tại địa chỉ in ra trong terminal (mặc định `http://localhost:5xxx`). Route `/` hiển thị trang giới thiệu QLCM Pro; trang quản trị nội bộ ở `/admin`.
 
 ## Chạy full stack bằng Docker
 Dự án có thể chạy trọn bộ web app, SQL Server và database seed bằng Docker Compose:
@@ -72,6 +72,12 @@ docker compose up --build
 ```
 
 Sau khi container sẵn sàng, mở `http://localhost:8080`. Compose gồm:
+
+Tài khoản bootstrap local sau khi seed/migration:
+
+| Tên đăng nhập | Mật khẩu |
+|---|---|
+| `admin` | `Admin@2026` |
 
 | Service | Vai trò |
 |---|---|
@@ -112,8 +118,5 @@ dotnet build .\telemedicine-landing-page.sln -c Release
 dotnet test .\telemedicine-landing-page.sln -c Release
 ```
 
-## Cấu hình CTA
-Các link CTA nằm trong `src/telemedicine-landing-page/appsettings.json` tại section `LandingPageLinks`.
-
 ## Ghi chú phạm vi
-Landing page không lưu dữ liệu người bệnh, không có DB/CMS/API và không triển khai đặt lịch thật. Đây là lớp giao diện nền để mở rộng khi có yêu cầu tích hợp backend bệnh viện.
+Các tích hợp kho/dược/trang thiết bị ngoài hệ thống hiện được bọc qua service boundary nội bộ. Khi có API thật từ HIS/EMR/kho/dược, thay adapter tương ứng thay vì đưa logic tích hợp trực tiếp vào Razor page.

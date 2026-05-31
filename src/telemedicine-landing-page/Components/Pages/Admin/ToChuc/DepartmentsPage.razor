@@ -1,10 +1,13 @@
 @page "/admin/to-chuc/khoa-phong"
 @layout AdminLayout
+@using Microsoft.Data.SqlClient
+@using Microsoft.EntityFrameworkCore
 @using TelemedicineLandingPage.Services.Admin.Sql
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @using Dept = TelemedicineLandingPage.Models.Admin.Sql.Department
 @inject IMedDataStore Store
 @inject IToastService Toast
+@inject AdminActionGuard Guard
 @implements IDisposable
 
 <PageTitle>Khoa/Phòng | QLCM Pro</PageTitle>
@@ -18,6 +21,17 @@
         </div>
         <button class="admin-btn admin-btn-primary" @onclick="OpenCreate">Thêm khoa/phòng</button>
     </header>
+
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Trạng thái</label>
+            <select class="admin-select" @bind="_statusFilter" @bind:after="StateHasChanged">
+                <option value="active">Đang hoạt động</option>
+                <option value="archived">Lưu trữ</option>
+                <option value="all">Tất cả</option>
+            </select>
+        </div>
+    </div>
 
     <div class="admin-panel" style="padding:16px;">
         <div class="admin-table-wrapper">
@@ -62,11 +76,11 @@
     <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" Title="@_drawerTitle">
         <ChildContent>
             <div class="admin-form-group">
-                <label class="admin-label">Mã khoa/phòng</label>
+                <label class="admin-label is-required">Mã khoa/phòng</label>
                 <input class="admin-input" @bind="_editCode" placeholder="VD: KHOA-TIM" />
             </div>
             <div class="admin-form-group">
-                <label class="admin-label">Tên khoa/phòng</label>
+                <label class="admin-label is-required">Tên khoa/phòng</label>
                 <input class="admin-input" @bind="_editName" placeholder="VD: Khoa Tim mạch" />
             </div>
             <div class="admin-form-group">
@@ -75,7 +89,7 @@
                     <option value="">— Gốc —</option>
                     @foreach (var d in GetAvailableParents())
                     {
-                        <option value="@d.DepartmentId">@d.Name</option>
+                        <option value="@d.DepartmentId">@DepartmentOptionLabel(d)</option>
                     }
                 </select>
             </div>
@@ -94,6 +108,7 @@
     private string _editCode = "";
     private string _editName = "";
     private string _editParentId = "";
+    private string _statusFilter = "active";
 
     protected override void OnInitialized()
     {
@@ -104,7 +119,10 @@
 
     private IEnumerable<DepartmentRow> FlattenDepartments()
     {
-        var all = Store.Departments.OrderBy(d => d.Code).ToList();
+        var all = Store.Departments
+            .Where(d => _statusFilter == "all" || (_statusFilter == "archived" ? d.Status != "active" : d.Status == "active"))
+            .OrderBy(d => d.Code)
+            .ToList();
         foreach (var root in all.Where(d => d.ParentDepartmentId is null))
         {
             foreach (var row in FlattenFrom(root, 0, all))
@@ -128,6 +146,11 @@
 
     private void OpenCreate()
     {
+        if (!Guard.CanDo("SCR_ORG_DEPARTMENTS:CREATE", "thêm khoa/phòng"))
+        {
+            return;
+        }
+
         _drawerTitle = "Thêm khoa/phòng";
         _editingDepartmentId = null;
         _editCode = "";
@@ -138,6 +161,11 @@
 
     private void OpenEdit(Dept dept)
     {
+        if (!Guard.CanDo("SCR_ORG_DEPARTMENTS:UPDATE", "sửa khoa/phòng"))
+        {
+            return;
+        }
+
         _drawerTitle = "Sửa khoa/phòng";
         _editingDepartmentId = dept.DepartmentId;
         _editCode = dept.Code;
@@ -148,33 +176,66 @@
 
     private void Archive(Guid deptId)
     {
-        try
+        if (!Guard.CanDo("SCR_ORG_DEPARTMENTS:DELETE", "lưu trữ khoa/phòng"))
         {
-            Store.ArchiveDepartment(deptId);
-            Toast.Show("Đã lưu trữ khoa/phòng thành công.", "success");
-        }
-        catch (MedDomainException ex)
-        {
-            Toast.Show(ex.Message, "error");
-        }
-    }
-
-    private void Save()
-    {
-        if (string.IsNullOrWhiteSpace(_editCode) || string.IsNullOrWhiteSpace(_editName))
-        {
-            Toast.Show("Vui lòng nhập mã và tên khoa/phòng.", "warning");
             return;
         }
 
         try
         {
+            Store.ArchiveDepartment(deptId);
+            Toast.Show("Đã lưu trữ khoa/phòng", "Đơn vị đã được cập nhật.", ToastVariant.Success);
+        }
+        catch (MedDomainException ex)
+        {
+            Toast.Show("Không thể lưu trữ khoa/phòng", ex.Message, ToastVariant.Error);
+        }
+        catch (DbUpdateException ex)
+        {
+            Toast.Show("Không thể lưu trữ khoa/phòng", FriendlyDatabaseMessage(ex), ToastVariant.Error);
+        }
+    }
+
+    private void Save()
+    {
+        var permission = _editingDepartmentId.HasValue ? "SCR_ORG_DEPARTMENTS:UPDATE" : "SCR_ORG_DEPARTMENTS:CREATE";
+        var action = _editingDepartmentId.HasValue ? "sửa khoa/phòng" : "thêm khoa/phòng";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_editCode) || string.IsNullOrWhiteSpace(_editName))
+        {
+            Toast.Show("Thiếu thông tin", "Vui lòng nhập mã và tên khoa/phòng.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            var normalizedCode = _editCode.Trim().ToUpperInvariant();
+            var normalizedName = _editName.Trim();
             Guid? parentId = string.IsNullOrEmpty(_editParentId) ? null : Guid.Parse(_editParentId);
+            if (parentId == _editingDepartmentId)
+            {
+                Toast.Show("Đơn vị cha chưa hợp lệ", "Khoa/phòng không thể là đơn vị cha của chính nó.", ToastVariant.Warning);
+                return;
+            }
+
+            var duplicate = Store.Departments.Any(d =>
+                d.DepartmentId != _editingDepartmentId &&
+                string.Equals(d.Code, normalizedCode, StringComparison.OrdinalIgnoreCase));
+            if (duplicate)
+            {
+                Toast.Show("Mã khoa/phòng đã tồn tại", "Vui lòng dùng mã khác để tránh trùng trong cây tổ chức.", ToastVariant.Warning);
+                return;
+            }
+
             var dept = new Dept
             {
                 DepartmentId = _editingDepartmentId ?? Guid.NewGuid(),
-                Code = _editCode.Trim(),
-                Name = _editName.Trim(),
+                Code = normalizedCode,
+                Name = normalizedName,
                 ParentDepartmentId = parentId
             };
 
@@ -192,11 +253,23 @@
                 Store.AddDepartment(dept);
             }
             _drawerOpen = false;
-            Toast.Show("Đã lưu khoa/phòng thành công.", "success");
+            Toast.Show("Đã lưu khoa/phòng", "Thay đổi đã được cập nhật.", ToastVariant.Success);
         }
         catch (MedDomainException ex)
         {
-            Toast.Show(ex.Message, "error");
+            Toast.Show("Không thể lưu khoa/phòng", ex.Message, ToastVariant.Error);
+        }
+        catch (DbUpdateException ex)
+        {
+            Toast.Show("Không thể lưu khoa/phòng", FriendlyDatabaseMessage(ex), ToastVariant.Error);
+        }
+        catch (SqlException ex)
+        {
+            Toast.Show("Không thể lưu khoa/phòng", FriendlySqlMessage(ex.Number, ex.Message), ToastVariant.Error);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Toast.Show("Không thể lưu khoa/phòng", ex.Message, ToastVariant.Error);
         }
     }
 
@@ -219,10 +292,30 @@
     }
 
     private string GetDeptName(Guid? deptId)
-        => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+        => deptId.HasValue ? DepartmentOptionLabel(Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)) : "—";
+
+    private string DepartmentOptionLabel(Dept? dept)
+        => AdminBusinessDisplay.DepartmentLabel(dept, Store.Departments);
 
     private static string LookupStatus(string status)
-        => Sql.MedLookups.RecordStatuses.FirstOrDefault(s => s.Code == status)?.Name ?? status;
+        => AdminBusinessDisplay.RecordStatus(status);
+
+    private static string FriendlyDatabaseMessage(DbUpdateException ex)
+    {
+        var sql = ex.GetBaseException() as SqlException;
+        return sql is null
+            ? "Dữ liệu chưa hợp lệ, vui lòng kiểm tra lại thông tin."
+            : FriendlySqlMessage(sql.Number, sql.Message);
+    }
+
+    private static string FriendlySqlMessage(int number, string fallback) => number switch
+    {
+        2627 or 2601 => "Mã khoa/phòng đã tồn tại. Vui lòng dùng mã khác.",
+        547 => "Đơn vị cha không tồn tại hoặc đang bị ràng buộc bởi dữ liệu khác.",
+        50020 => "Cấu trúc cây tổ chức chưa hợp lệ.",
+        50021 => "Không thể lưu trữ khoa/phòng còn đơn vị con đang hoạt động.",
+        _ => string.IsNullOrWhiteSpace(fallback) ? "Dữ liệu chưa hợp lệ, vui lòng kiểm tra lại." : fallback
+    };
 
     private sealed record DepartmentRow(Dept Department, int Depth);
 

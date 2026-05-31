@@ -16,7 +16,7 @@ public sealed class AuditTrailService
     private static readonly HashSet<string> ValidActionCodes = new(StringComparer.OrdinalIgnoreCase)
     {
         "create", "update", "delete", "archive", "restore",
-        "approve", "reject", "submit", "publish", "revoke",
+        "approve", "reject", "submit", "publish", "sign", "revoke",
         "assign_role", "remove_role", "assign_permission", "remove_permission",
         "login", "logout", "switch_user",
         "create_order", "complete_order", "cancel_order",

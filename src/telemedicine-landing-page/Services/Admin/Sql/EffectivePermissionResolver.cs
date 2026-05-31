@@ -185,7 +185,7 @@ public sealed class EffectivePermissionResolver
     public bool HasPermission(Guid userId, string permissionCode, Guid? contextDepartmentId = null)
     {
         var resolved = Resolve(userId, contextDepartmentId);
-        var match = resolved.FirstOrDefault(r => r.PermissionCode == permissionCode);
-        return match is not null && match.EffectCode == "allow";
+        var match = resolved.FirstOrDefault(r => string.Equals(r.PermissionCode, permissionCode, StringComparison.OrdinalIgnoreCase));
+        return match is not null && string.Equals(match.EffectCode, "allow", StringComparison.OrdinalIgnoreCase);
     }
 }

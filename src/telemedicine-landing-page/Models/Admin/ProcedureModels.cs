@@ -29,7 +29,7 @@ public sealed record ProcedureRecord
     public DateOnly EffectiveFrom { get; init; }
     public DateOnly? EffectiveTo { get; init; }
     public IReadOnlyList<ProcedureStep> Steps { get; init; } = Array.Empty<ProcedureStep>();
-    public DateTime UpdatedAt { get; init; } = DateTime.Now;
+    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
     public string UpdatedBy { get; init; } = string.Empty;
     public string? RejectionReason { get; init; }
 }

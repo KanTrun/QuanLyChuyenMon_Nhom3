@@ -1,18 +1,31 @@
 # System Architecture
 
-## Telemedicine Landing Page Track
-Ngày 2026-05-14, repo có thêm một ứng dụng Blazor Web App riêng cho trang chủ khám từ xa tại `src/telemedicine-landing-page`.
+## Signing, Onboarding and Safe Chat Actions
+Ngày 2026-05-28, QLCM Pro có lớp ký demo và account onboarding riêng, không pollute lookup dùng chung.
+
+| Area | Decision |
+|---|---|
+| User onboarding | `med.users.onboarding_status` references `med.lookup_user_onboarding_status`; `status` still represents active/inactive runtime account state |
+| Re-registration policy | Public registration remains insert-only. Rejected email records stay in DB; admin resubmits by setting onboarding back to `submitted` |
+| Login states | `LoginAttemptStatus.Rejected` separates rejected onboarding from pending/inactive accounts |
+| Signature target | `med.signature_records` supports `patient_protocol_application` target only in v1 and enforces one signature per target |
+| Signature integrity | Demo hash uses SHA-256 over `target_type:target_id:signer_user_id:signed_at:provider_code`; demo records set `is_legally_valid = false` |
+| Signature workflow | `PatientProtocolApplicationWorkflowGuard` allows `applied -> signed` and `signed/applied -> revoked`; revoked has no outgoing transition |
+| Chat action security | Chat quick actions are whitelist-only navigation. Draft payloads are stored under `sessionStorage["draft:{nonce}"]`, URL carries `draft_nonce`, and the clinical page deletes the draft on read |
+
+## QLCM Pro Runtime Entry Track
+Ngày 2026-05-25, runtime chính của repo là QLCM Pro. Landing page telemedicine cũ đã được gỡ khỏi app surface; `/` hiển thị trang giới thiệu QLCM Pro chuyên nghiệp với lựa chọn đăng nhập/đăng ký.
 
 | Area | Decision |
 |---|---|
 | Runtime | ASP.NET Core Blazor Web App, `net9.0` |
-| Rendering | SSR-first Razor Components, không phụ thuộc JS cho nội dung chính |
-| Content source | `LandingPageContentService` seed dữ liệu chuyên khoa, chỉ số, tín hiệu tin cậy |
-| CTA config | `LandingPageLinks` trong `appsettings.json` |
-| Data persistence | Không lưu dữ liệu người bệnh trong scope landing page |
-| UI system | CSS token theo màu y tế dịu, Figtree/Noto Sans, motion nhẹ có `prefers-reduced-motion` |
+| Entry route | `/` renders QLCM Pro intro; `/login` redirects authenticated users to first allowed route |
+| Shells | `/admin` for system administration, persona workspaces for procedure/resource/order/clinical/notification tasks |
+| Data persistence | EF Core `MedDbContext` with schema `MedicalProcedureManagement` |
+| UI system | Razor Components + admin design tokens; legacy telemedicine landing CSS removed, QLCM intro CSS isolated in `css/qlcm-intro.css` |
+| Dashboard telemetry | `/admin` summarizes procedure versions, technical-order status, resource availability snapshots and over-norm usage from `IMedDataStore` |
 
-Landing page hiện chạy cùng Blazor app với module QLCM Pro. Nếu sau này tích hợp đặt lịch, tư vấn thật hoặc hồ sơ người bệnh, cần thêm API/server-side authorization và review tuân thủ dữ liệu y tế trước khi lưu PHI.
+External HIS/EMR/inventory/pharmacy integrations remain behind service boundaries so Razor pages do not depend directly on outside systems.
 
 ## QLCM Pro SQL-Backed Architecture
 Ngày 2026-05-19, module quản lý quy trình kỹ thuật chuyên môn đã được triển khai trong `src/telemedicine-landing-page` theo hướng SQL-backed.
@@ -21,10 +34,23 @@ Ngày 2026-05-19, module quản lý quy trình kỹ thuật chuyên môn đã đ
 |---|---|
 | UI | Razor Components trong `Components/Pages`, tổ chức theo Admin, Procedure, Resource, Order, Clinical, Notification |
 | Application services | Các service admin dùng `IMedDataStore`, `IProcedureLifecycleService`, `ICurrentUserContext`, `IToastService` |
+| Action authorization | `AdminActionGuard` checks `SCR_*:ACTION` permissions plus legacy aliases, then calls `ProcedureRuntimeGuard` for mapped active procedure enforcement |
+| Circuit session restore | Login writes current SQL user id to browser `sessionStorage`; admin/persona layouts restore it before route checks |
 | Persistence | Entity Framework Core `MedDbContext` map schema `MedicalProcedureManagement` |
 | SQL facade | `IMedDataStore` che chi tiết query/mutation cho identity, permissions, procedures, catalog, patients, orders, protocols, notifications |
 | Seed data | `scripts/seed-realistic-data.sql` nạp dữ liệu demo/QA có lookup hợp lệ |
 | Version lifecycle | `procedure_versions.status_code` dùng `draft`, `pending_approval`, `active`, `superseded`, `archived` |
+
+## QLCM Pro Business Completion Architecture
+Ngày 2026-05-25, các khoảng trống nghiệp vụ chính của yêu cầu QLCM được nối vào runtime.
+
+| Area | Decision |
+|---|---|
+| Scheduled permission changes | Hangfire recurring job calls `PermissionChangeRequestService.ApplyDueScheduledRequests()` every minute |
+| Procedure runtime enforcement | `ProcedureRuntimeGuard` resolves `screen_catalog`, active `procedure_versions`, `procedure_screen_mappings` and first required step role before allowing/warning/blocking actions |
+| Inventory snapshots | `InventoryAvailabilityService` creates missing `resource_availability_snapshots` from procedure-version norms first, then technical-service norms |
+| Clinical suggestions | `ClinicalProtocolSuggestionService` scores active protocol versions from ICD/gender/department/age rules and removes contraindicated protocols |
+| Persona route guard | `PersonaLayout` filters links and denies direct route access through `NavGate` |
 
 ## Docker Runtime Architecture
 Ngày 2026-05-21, repo có Docker Compose full stack để chạy app, database và seed dữ liệu từ một lệnh.
@@ -36,6 +62,57 @@ Ngày 2026-05-21, repo có Docker Compose full stack để chạy app, database 
 | `db-init` | One-shot sqlcmd runner, đợi SQL Server sẵn sàng, kiểm tra DB đã khởi tạo, chạy schema/seed scripts nếu cần |
 
 App container không dùng connection string cục bộ trong `appsettings.json`; Compose override qua `ConnectionStrings__MedDb` trỏ đến host nội bộ `sqlserver,1433`.
+
+## Production Foundation Architecture
+Ngày 2026-05-21, app có lớp production foundation đầu tiên cho auth, resilience và observability.
+
+| Area | Decision |
+|---|---|
+| Identity foundation | `ApplicationUser`/`ApplicationRole` use ASP.NET Core Identity tables in schema `auth`, linked to domain user `med.users` by `MedUserId` |
+| Dynamic RBAC bridge | `DynamicPermissionClaimsTransformation` loads effective permissions from `EffectivePermissionResolver`, caches for 5 minutes and emits `permission` claims |
+| Authorization policy | `PermissionRequirement`/`PermissionAuthorizationHandler` support policies such as `CanManageUsers`, `CanViewReports`, `CanApproveProcedures` |
+| Null password guard | `CurrentUserContext` no longer allows active accounts with `PasswordHash = NULL` to sign in |
+| SQL resilience | `MedDbContext` uses retry-on-failure, 60-second command timeout and connection pool defaults |
+| Health endpoint | `/health` returns JSON for DB context and SQL Server dependency state |
+| Structured logging | Serilog writes console and daily JSON files, with optional Seq via `Serilog:SeqServerUrl` |
+| Docker migration runner | `db-init` applies `scripts/migrations/*.sql` even when the database is already initialized |
+
+## Security Validation Guard Architecture
+Ngay 2026-05-21, app co lop security validation cho password flow va route guard.
+
+| Area | Decision |
+|---|---|
+| Password strength | `IPasswordStrengthService` centralizes minimum length, character class, unique character, username, common-password and current-hash checks |
+| FluentValidation | Register/profile password commands are validated through `IValidationService`, keeping password rules out of Razor event handlers |
+| Identity validator | `PasswordStrengthValidator` implements `IPasswordValidator<ApplicationUser>` so Identity and UI flows share the same policy |
+| Null password guard | `NullPasswordGuardSignInManager` and `CurrentUserContext` fail sign-in when `PasswordHash` is missing |
+| Admin route guard | `Components/Pages/Admin/_Imports.razor` applies `AdminAccess`; `CurrentUserAuthenticationStateProvider` maps current SQL user permissions into Blazor auth state |
+| Guard helper | `AuthorizedComponentBase` provides policy checks and access-denied redirect for guarded components |
+
+## Workflow and Jobs Architecture
+Ngay 2026-05-21, app co workflow guard va Hangfire foundation cho production jobs.
+
+| Area | Decision |
+|---|---|
+| Workflow abstraction | `IWorkflowGuard<TEntity,TState>` and `WorkflowDefinition<TState>` define transition checks and post-transition side effects |
+| Procedure version guard | `ProcedureVersionWorkflowGuard` protects draft, pending approval, active, rejected, archived and superseded transitions |
+| Technical order guard | `TechnicalOrderWorkflowGuard` protects ordered, scheduled, in-progress, completed and cancelled transitions |
+| Service extraction | `TechnicalOrderWorkflowService` owns order status mutations and audit writes; `OrderPage` delegates status changes to it |
+| Hangfire | `QlcmHangfireExtensions` configures SQL Server storage, worker queues and protected `/hangfire` dashboard |
+| Job wrapper | `IJobService` wraps enqueue, schedule, continuation and recurring job calls so application code does not depend directly on Hangfire static APIs |
+
+## Realtime Notification Architecture
+Ngay 2026-05-21, app co SignalR notification layer cho QLCM Pro.
+
+| Area | Decision |
+|---|---|
+| Hub route | `NotificationHub` is mapped at `/hubs/notification` for realtime fan-out |
+| Targeting | Clients join `user:{userId}` groups; server service persists notifications before sending realtime envelopes |
+| Service boundary | `Services.Notifications.INotificationService` exposes `SendToUserAsync`, `SendToGroupAsync` and `BroadcastAsync` |
+| Persistence | All user-targeted notifications remain in existing SQL table `med.notifications` |
+| Admin shell | `AdminTopBar` opens a SignalR client connection, rejoins after reconnect and surfaces new messages through the toast bus |
+| Presence | Hub exposes `JoinPresence` and `LeavePresence` hooks for future high-conflict record collaboration UI |
+| Scale note | Multi-instance deployment still needs Redis or SQL SignalR backplane selection before production horizontal scaling |
 
 ## Procedure Module Architecture
 Kiến trúc dưới đây là logic đang được hiện thực trong module QLCM Pro của Blazor app.
@@ -117,8 +194,9 @@ Các tích hợp kho/dược/thiết bị và auth production vẫn đi qua boun
 1. Mọi mutation qua `MedDbContext.SaveChanges` được quét từ ChangeTracker.
 2. Entity nghiệp vụ ở trạng thái Added/Modified/Deleted sinh audit log tự động với `target_type`, `target_id`, `before_json`, `after_json`.
 3. Các nghiệp vụ có ý nghĩa riêng như đăng nhập, gửi duyệt, phê duyệt, ban hành, từ chối vẫn ghi thêm action nghiệp vụ chuyên biệt.
-4. `audit_logs` là append-only; trigger SQL chặn UPDATE/DELETE.
-5. UI `/admin/nhat-ky` hiển thị toàn bộ log và JSON trước/sau, còn tab lịch sử phân quyền lọc các target liên quan quyền.
+4. Chỉ định kỹ thuật và phác đồ có thêm audit history theo đối tượng để người dùng xem ngay trong drawer nghiệp vụ.
+5. `audit_logs` là append-only; trigger SQL chặn UPDATE/DELETE.
+6. UI `/admin/nhat-ky` hiển thị toàn bộ log và JSON trước/sau, còn tab lịch sử phân quyền lọc các target liên quan quyền.
 
 ## Procedure Versioning Flow
 1. Tạo version draft từ quy trình mới hoặc copy version active.
@@ -128,6 +206,13 @@ Các tích hợp kho/dược/thiết bị và auth production vẫn đi qua boun
 5. Version cũ chuyển `superseded` khi cùng scope và còn hiệu lực.
 6. Các thao tác sau thời điểm hiệu lực dùng version mới.
 7. Lịch sử thao tác cũ vẫn tham chiếu version đã dùng tại thời điểm đó.
+
+## Clinical Protocol Versioning Flow
+1. Tạo phác đồ mới sinh phiên bản `draft`; không tự phê duyệt hoặc ban hành.
+2. Người soạn gửi phiên bản sang `pending_approval`.
+3. Người có quyền approve/publish phê duyệt và ban hành phiên bản.
+4. Phiên bản mới chuyển `active`, ghi `approved_by`, `published_by`, `effective_from`.
+5. Phiên bản active cũ cùng phác đồ chuyển `superseded`.
 
 ## Permission Change Flow
 1. Admin tạo change request gồm target, before, after, reason, effectiveAt.

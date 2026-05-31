@@ -1,10 +1,11 @@
 @page "/lam-sang"
-@page "/admin/lam-sang"
-@layout PersonaLayout
+@layout AdminLayout
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
+@inject IClinicalProtocolSuggestionService ProtocolSuggestions
 @implements IDisposable
 
 <PageTitle>Lâm sàng | QLCM Pro</PageTitle>
@@ -91,8 +92,8 @@
                                         <td class="admin-table-cell-strong">@encounter.ExternalEncounterId</td>
                                         <td>@(encounter.EncounterType ?? "—")</td>
                                         <td>@GetDeptName(encounter.DepartmentId)</td>
-                                        <td>@encounter.StartedAt?.ToString("dd/MM/yyyy HH:mm")</td>
-                                        <td>@encounter.EndedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@AdminDateTimeDisplay.DateTime(encounter.StartedAt)</td>
+                                        <td>@AdminDateTimeDisplay.DateTime(encounter.EndedAt)</td>
                                     </tr>
                                 }
                             </tbody>
@@ -143,7 +144,7 @@
                                         <td>@GetEncounterCode(app.EncounterRefId)</td>
                                         <td>@(app.DiagnosisCode ?? "—")</td>
                                         <td><AdminBadge Tone="@ProtocolAppTone(app.ApplicationStatus)">@Lookup(Sql.MedLookups.ProtocolApplicationStatuses, app.ApplicationStatus)</AdminBadge></td>
-                                        <td>@app.AppliedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@AdminDateTimeDisplay.DateTime(app.AppliedAt)</td>
                                     </tr>
                                 }
                             </tbody>
@@ -186,8 +187,27 @@
                         </div>
                     </div>
                     <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                        <button type="button" class="admin-btn admin-btn-ghost" @onclick="SuggestProtocols">Gợi ý theo ICD</button>
                         <button type="button" class="admin-btn admin-btn-primary" @onclick="ApplyProtocol">Áp dụng phác đồ</button>
                     </div>
+                    @if (_protocolSuggestions.Count > 0)
+                    {
+                        <div class="admin-table-wrapper" style="margin-top:12px;">
+                            <table class="admin-table">
+                                <thead><tr><th>Gợi ý</th><th>Điểm</th><th>Lý do</th></tr></thead>
+                                <tbody>
+                                    @foreach (var suggestion in _protocolSuggestions)
+                                    {
+                                        <tr>
+                                            <td>@suggestion.Protocol.Name v@suggestion.Version.VersionNo</td>
+                                            <td><AdminBadge Tone="tone-primary">@suggestion.Score</AdminBadge></td>
+                                            <td>@string.Join("; ", suggestion.Reasons)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
                 </div>
             }
             else
@@ -205,7 +225,7 @@
                                         <td>@GetEncounterCode(order.EncounterRefId)</td>
                                         <td>@GetDeptName(order.OrderingDepartmentId)</td>
                                         <td><AdminBadge Tone="@OrderTone(order.OrderStatus)">@Lookup(Sql.MedLookups.OrderStatuses, order.OrderStatus)</AdminBadge></td>
-                                        <td>@order.OrderedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@AdminDateTimeDisplay.DateTime(order.OrderedAt)</td>
                                     </tr>
                                 }
                             </tbody>
@@ -284,6 +304,7 @@
     private string _appEncounterId = string.Empty;
     private string _appStatus = "applied";
     private string _appDiagnosisCode = string.Empty;
+    private IReadOnlyList<ClinicalProtocolSuggestion> _protocolSuggestions = Array.Empty<ClinicalProtocolSuggestion>();
 
     protected override void OnInitialized()
     {
@@ -312,6 +333,11 @@
 
     private void OpenCreatePatient()
     {
+        if (!Guard.CanDo("SCR_CLINICAL:CREATE", "thêm bệnh nhân"))
+        {
+            return;
+        }
+
         _editingPatientId = null;
         _patientExternalId = string.Empty;
         _patientCode = string.Empty;
@@ -323,6 +349,11 @@
 
     private void OpenEditPatient(Sql.PatientRef patient)
     {
+        if (!Guard.CanDo("SCR_CLINICAL:UPDATE", "sửa bệnh nhân"))
+        {
+            return;
+        }
+
         _editingPatientId = patient.PatientRefId;
         _patientExternalId = patient.ExternalPatientId;
         _patientCode = patient.PatientCode ?? string.Empty;
@@ -334,6 +365,13 @@
 
     private void SavePatient()
     {
+        var permission = _editingPatientId.HasValue ? "SCR_CLINICAL:UPDATE" : "SCR_CLINICAL:CREATE";
+        var action = _editingPatientId.HasValue ? "sửa bệnh nhân" : "thêm bệnh nhân";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_patientExternalId))
         {
             Toasts.Show("Thiếu External ID", "Vui lòng nhập mã tham chiếu bệnh nhân.", ToastVariant.Warning);
@@ -382,6 +420,11 @@
 
     private void AddEncounter()
     {
+        if (!Guard.CanDo("SCR_CLINICAL:CREATE", "tạo lượt khám"))
+        {
+            return;
+        }
+
         if (_selected is null || string.IsNullOrWhiteSpace(_encounterExternalId))
         {
             Toasts.Show("Thiếu mã lượt khám", "Vui lòng nhập External Encounter ID.", ToastVariant.Warning);
@@ -396,7 +439,9 @@
                 ExternalEncounterId = _encounterExternalId.Trim(),
                 EncounterType = string.IsNullOrWhiteSpace(_encounterType) ? null : _encounterType.Trim(),
                 DepartmentId = ParseGuid(_encounterDepartmentId),
-                StartedAt = DateTime.TryParse(_encounterStartedAt, out var started) ? started : DateTime.UtcNow
+                StartedAt = DateTime.TryParse(_encounterStartedAt, out var started)
+                    ? AdminDateTimeDisplay.DisplayTimeToUtc(started)
+                    : DateTime.UtcNow
             });
             Toasts.Show("Đã tạo lượt khám", _encounterExternalId, ToastVariant.Success);
             ResetEncounterForm();
@@ -409,11 +454,42 @@
 
     private void ApplyProtocol()
     {
-        if (_selected is null || !Guid.TryParse(_appProtocolVersionId, out var versionId))
+        if (!Guard.CanDo("SCR_CLINICAL:EXECUTE", "áp dụng phác đồ"))
+        {
+            return;
+        }
+
+        if (_selected is null)
+        {
+            return;
+        }
+
+        if (!Guid.TryParse(_appProtocolVersionId, out var versionId))
+        {
+            RefreshProtocolSuggestions(selectBest: true, showToast: false);
+        }
+
+        if (!Guid.TryParse(_appProtocolVersionId, out versionId))
         {
             Toasts.Show("Thiếu phác đồ", "Vui lòng chọn phiên bản phác đồ.", ToastVariant.Warning);
             return;
         }
+
+        var version = Store.ClinicalProtocolVersions.FirstOrDefault(v => v.ClinicalProtocolVersionId == versionId);
+        if (!IsActiveProtocolVersion(version))
+        {
+            Toasts.Show("Phác đồ chưa hiệu lực", "Chỉ được áp dụng phiên bản phác đồ đang active và còn hiệu lực.", ToastVariant.Warning);
+            return;
+        }
+
+        var suggestion = _protocolSuggestions.FirstOrDefault(s => s.Version.ClinicalProtocolVersionId == versionId);
+        var decisionContextJson = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            source = suggestion is null ? "manual" : "protocol_suggestion",
+            score = suggestion?.Score,
+            reasons = suggestion?.Reasons ?? Array.Empty<string>(),
+            warnings = suggestion?.Warnings ?? Array.Empty<string>()
+        });
 
         try
         {
@@ -426,7 +502,7 @@
                 ApplicationStatus = _appStatus,
                 AppliedBy = UserContext.CurrentUser?.UserId,
                 AppliedAt = DateTime.UtcNow,
-                DecisionContextJson = "{\"source\":\"manual\"}"
+                DecisionContextJson = decisionContextJson
             });
             Toasts.Show("Đã áp dụng phác đồ", GetProtocolVersionName(versionId), ToastVariant.Success);
             ResetProtocolForm();
@@ -437,12 +513,54 @@
         }
     }
 
+    private void SuggestProtocols()
+    {
+        if (!Guard.CanDo("SCR_CLINICAL:EXECUTE", "gợi ý phác đồ"))
+        {
+            return;
+        }
+
+        RefreshProtocolSuggestions(selectBest: true, showToast: true);
+    }
+
+    private void RefreshProtocolSuggestions(bool selectBest, bool showToast)
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+
+        _protocolSuggestions = ProtocolSuggestions.Suggest(
+            _selected.PatientRefId,
+            ParseGuid(_appEncounterId),
+            _appDiagnosisCode);
+
+        if (_protocolSuggestions.Count == 0)
+        {
+            if (showToast)
+            {
+                Toasts.Show("Chưa có phác đồ phù hợp", "Không tìm thấy rule active khớp ICD/lượt khám hiện tại.", ToastVariant.Warning);
+            }
+            return;
+        }
+
+        if (selectBest)
+        {
+            _appProtocolVersionId = _protocolSuggestions[0].Version.ClinicalProtocolVersionId.ToString();
+        }
+
+        if (showToast)
+        {
+            Toasts.Show("Đã gợi ý phác đồ", $"{_protocolSuggestions.Count} phác đồ phù hợp, đã chọn gợi ý điểm cao nhất.", ToastVariant.Success);
+        }
+    }
+
     private void ResetEncounterForm()
     {
         _encounterExternalId = string.Empty;
         _encounterType = "outpatient";
         _encounterDepartmentId = string.Empty;
-        _encounterStartedAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
+        _encounterStartedAt = AdminDateTimeDisplay.Now().ToString("yyyy-MM-ddTHH:mm");
     }
 
     private void ResetProtocolForm()
@@ -451,6 +569,7 @@
         _appEncounterId = string.Empty;
         _appStatus = "applied";
         _appDiagnosisCode = string.Empty;
+        _protocolSuggestions = Array.Empty<ClinicalProtocolSuggestion>();
     }
 
     private void ShowEncounters() => _patientTab = "encounters";
@@ -472,6 +591,11 @@
     }
 
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    private static bool IsActiveProtocolVersion(Sql.ClinicalProtocolVersion? version)
+        => version is not null &&
+           version.StatusCode == "active" &&
+           (version.EffectiveFrom is null || version.EffectiveFrom <= DateTime.UtcNow) &&
+           (version.EffectiveTo is null || version.EffectiveTo > DateTime.UtcNow);
     private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
     private static string ProtocolAppTone(string status) => status switch
     {

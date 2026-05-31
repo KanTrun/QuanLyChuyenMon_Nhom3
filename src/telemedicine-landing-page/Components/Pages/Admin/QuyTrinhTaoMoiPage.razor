@@ -1,9 +1,11 @@
 @page "/admin/quy-trinh/tao"
+@page "/qlcm/quy-trinh/tao"
 @layout AdminLayout
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
 @inject NavigationManager Navigation
 
 <PageTitle>Tạo quy trình mới | QLCM Pro</PageTitle>
@@ -15,22 +17,22 @@
             <h1 class="admin-page-title">Tạo quy trình kỹ thuật mới</h1>
             <p class="admin-page-subtitle">Khai báo quy trình, phiên bản, bước thực hiện, định mức nguồn lực, ánh xạ màn hình và tệp đính kèm.</p>
         </div>
-        <a class="admin-btn admin-btn-ghost" href="/admin/quy-trinh">Hủy và quay lại</a>
+        <a class="admin-btn admin-btn-ghost" href="/qlcm/quy-trinh">Hủy và quay lại</a>
     </header>
 
     <article class="admin-panel">
         <h2 class="admin-panel-title">Thông tin chung</h2>
         <div class="admin-form-grid">
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Mã quy trình</label>
+                <label class="admin-form-field-label is-required">Mã quy trình</label>
                 <input class="admin-input" @bind="_code" placeholder="VD: QT-XN-CTM-02" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Tên quy trình</label>
+                <label class="admin-form-field-label is-required">Tên quy trình</label>
                 <input class="admin-input" @bind="_name" placeholder="VD: Quy trình xét nghiệm công thức máu" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Loại quy trình</label>
+                <label class="admin-form-field-label is-required">Loại quy trình</label>
                 <select class="admin-select" @bind="_procedureType">
                     @foreach (var type in Sql.MedLookups.ProcedureTypes)
                     {
@@ -49,7 +51,7 @@
                 </select>
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Nhãn phiên bản</label>
+                <label class="admin-form-field-label is-required">Nhãn phiên bản</label>
                 <input class="admin-input" @bind="_versionLabel" />
             </div>
             <div class="admin-form-field admin-form-field-full">
@@ -161,7 +163,7 @@
                         <tr>
                             <td>@GetScreenName(mapping.ScreenId)</td>
                             <td>@GetFeatureName(mapping.FeatureId)</td>
-                            <td>@(mapping.ActionCode ?? "—")</td>
+                            <td>@AdminBusinessDisplay.Action(mapping.ActionCode)</td>
                             <td>@Lookup(Sql.MedLookups.EnforcementModes, mapping.EnforcementMode)</td>
                             <td style="text-align:right;"><button type="button" class="admin-icon-btn is-danger" @onclick="() => _screenMappings.Remove(mapping)">×</button></td>
                         </tr>
@@ -176,7 +178,7 @@
                     <option value="">Chọn màn hình</option>
                     @foreach (var screen in Store.Screens.Where(s => s.Status == "active").OrderBy(s => s.ScreenCode))
                     {
-                        <option value="@screen.ScreenId">@screen.ScreenCode - @screen.Name</option>
+                        <option value="@screen.ScreenId">@screen.Name</option>
                     }
                 </select>
             </div>
@@ -186,7 +188,7 @@
                     <option value="">Không chọn</option>
                     @foreach (var feature in Store.Features.Where(f => f.Status == "active").OrderBy(f => f.FeatureCode))
                     {
-                        <option value="@feature.FeatureId">@feature.FeatureCode - @feature.Name</option>
+                        <option value="@feature.FeatureId">@feature.Name</option>
                     }
                 </select>
             </div>
@@ -210,8 +212,8 @@
                 </select>
             </div>
             <div class="admin-form-field admin-form-field-full">
-                <label class="admin-form-field-label">Rule JSON</label>
-                <input class="admin-input" @bind="_mappingRuleJson" placeholder="{&quot;requiredPermission&quot;:&quot;SCR_PROCEDURES:CREATE&quot;}" />
+                <label class="admin-form-field-label">Ghi chú kiểm soát</label>
+                <div class="admin-form-field-hint">Hệ thống tự lưu quy tắc theo màn hình, tác vụ và chế độ kiểm soát đã chọn. Chi tiết kỹ thuật không nhập ở đây.</div>
             </div>
         </div>
         <div style="display:flex;justify-content:flex-end;margin-top:10px;">
@@ -274,7 +276,7 @@
     private string _departmentId = string.Empty;
     private string _versionLabel = "v1.0";
     private string _description = string.Empty;
-    private string _summary = "{\"note\":\"Phiên bản khởi tạo\"}";
+    private string _summary = string.Empty;
 
     private readonly List<StepDraft> _steps = new()
     {
@@ -350,7 +352,7 @@
             ParseGuid(_mappingFeatureId),
             string.IsNullOrWhiteSpace(_mappingAction) ? null : _mappingAction,
             _mappingEnforcement,
-            string.IsNullOrWhiteSpace(_mappingRuleJson) ? null : _mappingRuleJson.Trim()));
+            null));
         _mappingScreenId = string.Empty;
         _mappingFeatureId = string.Empty;
         _mappingAction = "execute";
@@ -376,6 +378,11 @@
 
     private void SaveProcedure(string status)
     {
+        if (!Guard.CanDo("SCR_PROCEDURES:CREATE", "tạo quy trình"))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_code) || string.IsNullOrWhiteSpace(_name))
         {
             Toasts.Show("Thiếu thông tin quy trình", "Vui lòng nhập mã và tên quy trình.", ToastVariant.Warning);
@@ -409,7 +416,7 @@
                 StatusCode = status,
                 DepartmentId = ParseGuid(_departmentId),
                 Title = $"{proc.Name} - {_versionLabel.Trim()}",
-                Summary = string.IsNullOrWhiteSpace(_summary) ? "{}" : _summary.Trim(),
+                Summary = string.IsNullOrWhiteSpace(_summary) ? "Phiên bản khởi tạo" : _summary.Trim(),
                 CreatedBy = UserContext.CurrentUser?.UserId,
                 SubmittedBy = status == "pending_approval" ? UserContext.CurrentUser?.UserId : null,
                 SubmittedAt = status == "pending_approval" ? now : null,
@@ -471,7 +478,7 @@
             }
 
             Toasts.Show(status == "pending_approval" ? "Đã gửi phê duyệt" : "Đã lưu bản nháp", proc.Name, ToastVariant.Success);
-            Navigation.NavigateTo("/admin/quy-trinh");
+            Navigation.NavigateTo("/qlcm/quy-trinh");
         }
         catch (Exception ex)
         {

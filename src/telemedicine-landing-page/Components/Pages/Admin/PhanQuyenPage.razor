@@ -1,5 +1,6 @@
 @page "/admin/phan-quyen"
 @layout AdminLayout
+@using System.Text.Json
 @using Microsoft.EntityFrameworkCore
 @using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Models.Admin.Sql
@@ -8,6 +9,8 @@
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
+@inject PermissionChangeRequestService RequestService
 
 <PageTitle>Phân quyền | QLCM Pro</PageTitle>
 
@@ -132,7 +135,7 @@
                             {
                                 <tr>
                                     <td>@GetUserName(item.UserId)</td>
-                                    <td>@GetPermissionName(item.PermissionId)</td>
+                                    <td>@GetPermissionDisplayName(item.PermissionId)</td>
                                     <td><AdminBadge Tone="@EffectTone(item.EffectCode)">@Lookup(MedLookups.PermissionEffects, item.EffectCode)</AdminBadge></td>
                                     <td>@Lookup(MedLookups.DepartmentScopeTypes, item.DepartmentScopeType)</td>
                                     <td>@GetDeptName(item.DepartmentId)</td>
@@ -166,7 +169,7 @@
                             <option value="">Chọn quyền</option>
                             @foreach (var permission in Store.Permissions.Where(p => p.Status == "active").OrderBy(p => p.PermissionCode))
                             {
-                                <option value="@permission.PermissionId">@permission.PermissionCode</option>
+                                <option value="@permission.PermissionId">@GetPermissionDisplayName(permission.PermissionId)</option>
                             }
                         </select>
                     </div>
@@ -255,6 +258,7 @@
 
     private void SaveOverride()
     {
+        if (!Guard.CanDo("SCR_PERMISSIONS:UPDATE", "lưu ghi đè quyền")) return;
         if (!Guid.TryParse(_overrideUserId, out var userId) || !Guid.TryParse(_overridePermissionId, out var permissionId) || string.IsNullOrWhiteSpace(_overrideReason))
         {
             Toasts.Show("Thiếu thông tin ghi đè", "Chọn người dùng, quyền và nhập lý do.", ToastVariant.Warning);
@@ -274,29 +278,19 @@
                 departmentId = null;
             }
 
-            var item = new UserPermissionOverride
-            {
-                UserPermissionOverrideId = _editingOverrideId ?? Guid.NewGuid(),
-                UserId = userId,
-                PermissionId = permissionId,
-                EffectCode = _overrideEffect,
-                DepartmentScopeType = _overrideScope,
-                DepartmentId = departmentId,
-                Reason = _overrideReason.Trim(),
-                CreatedBy = UserContext.CurrentUser?.UserId
-            };
-
-            if (_editingOverrideId.HasValue)
-            {
-                var current = Store.UserPermissionOverrides.First(o => o.UserPermissionOverrideId == _editingOverrideId.Value);
-                Store.UpdateUserPermissionOverride(item with { CreatedAt = current.CreatedAt, CreatedBy = current.CreatedBy });
-                Toasts.Show("Đã cập nhật ghi đè quyền", GetPermissionName(permissionId), ToastVariant.Success);
-            }
-            else
-            {
-                Store.AddUserPermissionOverride(item);
-                Toasts.Show("Đã thêm ghi đè quyền", GetPermissionName(permissionId), ToastVariant.Success);
-            }
+            var current = _editingOverrideId.HasValue
+                ? Store.UserPermissionOverrides.FirstOrDefault(o => o.UserPermissionOverrideId == _editingOverrideId.Value)
+                : null;
+            CreateAndSubmitOverrideRequest(
+                current is null ? "grant" : "update",
+                userId,
+                permissionId,
+                _overrideEffect,
+                _overrideScope,
+                departmentId,
+                _overrideReason.Trim(),
+                current);
+            Toasts.Show("Đã gửi yêu cầu phê duyệt", GetPermissionDisplayName(permissionId), ToastVariant.Success);
 
             ResetOverrideForm();
             BuildTabs();
@@ -320,10 +314,19 @@
 
     private void RemoveOverride(UserPermissionOverride item)
     {
+        if (!Guard.CanDo("SCR_PERMISSIONS:DELETE", "thu hồi ghi đè quyền")) return;
         try
         {
-            Store.RemoveUserPermissionOverride(item.UserPermissionOverrideId);
-            Toasts.Show("Đã xóa ghi đè quyền", GetPermissionName(item.PermissionId), ToastVariant.Info);
+            CreateAndSubmitOverrideRequest(
+                "revoke",
+                item.UserId,
+                item.PermissionId,
+                item.EffectCode,
+                item.DepartmentScopeType,
+                item.DepartmentId,
+                $"Thu hồi ghi đè quyền {GetPermissionDisplayName(item.PermissionId)} của {GetUserName(item.UserId)}.",
+                item);
+            Toasts.Show("Đã gửi yêu cầu thu hồi quyền", GetPermissionDisplayName(item.PermissionId), ToastVariant.Info);
             ResetOverrideForm();
             BuildTabs();
         }
@@ -331,6 +334,50 @@
         {
             Toasts.Show("Không thể xóa ghi đè quyền", ex.Message, ToastVariant.Error);
         }
+    }
+
+    private void CreateAndSubmitOverrideRequest(string operation, Guid userId, Guid permissionId,
+        string effectCode, string scopeType, Guid? departmentId, string reason, UserPermissionOverride? before)
+    {
+        var actor = UserContext.CurrentUser?.UserId;
+        if (actor is null)
+        {
+            Toasts.Show("Không xác định người thao tác", "Vui lòng đăng nhập lại trước khi gửi yêu cầu.", ToastVariant.Warning);
+            return;
+        }
+
+        var req = RequestService.CreateDraft(
+            actor.Value,
+            "user",
+            null,
+            null,
+            userId,
+            reason,
+            DateTime.UtcNow);
+        RequestService.AddItem(req.PermissionChangeRequestId, new PermissionChangeItem
+        {
+            PermissionChangeRequestId = req.PermissionChangeRequestId,
+            PermissionId = permissionId,
+            OperationCode = operation,
+            EffectCode = effectCode,
+            DepartmentScopeType = scopeType,
+            DepartmentId = departmentId,
+            BeforeJson = before is null ? null : JsonSerializer.Serialize(new
+            {
+                before.EffectCode,
+                before.DepartmentScopeType,
+                before.DepartmentId,
+                before.Reason
+            }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                EffectCode = effectCode,
+                DepartmentScopeType = scopeType,
+                DepartmentId = departmentId,
+                Reason = reason
+            })
+        });
+        RequestService.SubmitForApproval(req.PermissionChangeRequestId, actor.Value);
     }
 
     private void ResetOverrideForm()
@@ -347,6 +394,12 @@
     private string GetUserName(Guid userId) => Store.Users.FirstOrDefault(u => u.UserId == userId)?.FullName ?? "—";
     private string GetPermissionName(Guid permissionId) => Store.Permissions.FirstOrDefault(p => p.PermissionId == permissionId)?.PermissionCode ?? "—";
     private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+    private string GetPermissionDisplayName(Guid permissionId)
+    {
+        var permission = Store.Permissions.FirstOrDefault(p => p.PermissionId == permissionId);
+        return AdminBusinessDisplay.PermissionLabel(permission, Store.Screens, Store.Features);
+    }
+
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
     private static string Lookup(IReadOnlyList<LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
     private static string EffectTone(string effect) => effect == "allow" ? "tone-success" : "tone-danger";

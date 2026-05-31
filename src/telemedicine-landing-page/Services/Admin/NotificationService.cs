@@ -69,7 +69,7 @@ public sealed class NotificationService : INotificationService
             title.Trim(),
             string.IsNullOrWhiteSpace(body) ? string.Empty : body.Trim(),
             severity,
-            DateTime.Now,
+            DateTime.UtcNow,
             IsRead: false);
         lock (_gate) _items.Insert(0, entry);
         Raise();

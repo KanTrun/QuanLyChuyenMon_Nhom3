@@ -70,6 +70,9 @@ public sealed record AppUser
     [Column("status")]
     public string Status { get; init; } = "active";
 
+    [Column("onboarding_status")]
+    public string OnboardingStatus { get; init; } = "active";
+
     [Column("created_at")]
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 

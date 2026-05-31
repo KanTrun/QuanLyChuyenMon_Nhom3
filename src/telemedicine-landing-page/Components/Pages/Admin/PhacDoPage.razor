@@ -1,9 +1,14 @@
 @page "/admin/phac-do"
+@page "/qlcm/phac-do"
 @layout AdminLayout
+@using System.Text.Json
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
+@inject AdminActionGuard Guard
+@inject IConfirmDialogService Confirm
+@inject AuditTrailService Audit
 @implements IDisposable
 
 <PageTitle>Phác đồ lâm sàng | QLCM Pro</PageTitle>
@@ -31,6 +36,14 @@
                 {
                     <option value="@type.Code">@type.Name</option>
                 }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Trạng thái</label>
+            <select class="admin-select" @bind="_statusFilter" @bind:after="Recompute">
+                <option value="active">Đang hoạt động</option>
+                <option value="archived">Lưu trữ</option>
+                <option value="all">Tất cả</option>
             </select>
         </div>
     </div>
@@ -62,6 +75,17 @@
                     <h2 class="admin-card-title">@protocol.Name</h2>
                     <p class="admin-card-meta">@protocol.ProtocolCode • @GetDeptName(protocol.OwnerDepartmentId)</p>
                     <p class="admin-card-meta">@protocol.Description</p>
+                    <div class="admin-row-actions" @onclick:stopPropagation="true">
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEditProtocol(protocol)">Sửa</button>
+                        @if (protocol.Status == "active")
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ArchiveProtocol(protocol)">Lưu trữ</button>
+                        }
+                        else
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => RestoreProtocol(protocol)">Khôi phục</button>
+                        }
+                    </div>
                 </article>
             }
         </div>
@@ -156,13 +180,19 @@
                     <h3 class="admin-panel-title">Quy tắc áp dụng</h3>
                     <div class="admin-table-wrapper">
                         <table class="admin-table">
-                            <thead><tr><th>Loại</th><th>JSON</th><th>Ưu tiên</th><th>Hoạt động</th><th></th></tr></thead>
+                            <thead><tr><th>Loại</th><th>Điều kiện áp dụng</th><th>Ưu tiên</th><th>Hoạt động</th><th></th></tr></thead>
                             <tbody>
                                 @foreach (var rule in Store.ProtocolApplicabilityRules.Where(r => r.ClinicalProtocolVersionId == _selectedVersion.ClinicalProtocolVersionId).OrderByDescending(r => r.Priority))
                                 {
                                     <tr>
                                         <td>@Lookup(Sql.MedLookups.ProtocolRuleTypes, rule.RuleType)</td>
-                                        <td><code>@rule.RuleJson</code></td>
+                                        <td>
+                                            <div>@FormatRule(rule)</div>
+                                            <details>
+                                                <summary style="cursor:pointer;">Chi tiết kỹ thuật</summary>
+                                                <code>@rule.RuleJson</code>
+                                            </details>
+                                        </td>
                                         <td>@rule.Priority</td>
                                         <td>@(rule.IsActive ? "Có" : "Không")</td>
                                         <td style="text-align:right;"><button type="button" class="admin-icon-btn is-danger" @onclick="() => RemoveRule(rule)">×</button></td>
@@ -191,8 +221,9 @@
                             <label class="admin-check-row"><input type="checkbox" @bind="_ruleActive" /> Có</label>
                         </div>
                         <div class="admin-form-field admin-form-field-full">
-                            <label class="admin-form-field-label">Rule JSON</label>
-                            <textarea class="admin-textarea" rows="4" @bind="_ruleJson"></textarea>
+                            <label class="admin-form-field-label">Giá trị điều kiện</label>
+                            <input class="admin-input" @bind="_ruleJson" placeholder="VD: I10, 18-65, Nam, Khoa Nội" />
+                            <div class="admin-form-field-hint">Nhập nội dung nghiệp vụ; hệ thống sẽ lưu thành quy tắc kỹ thuật.</div>
                         </div>
                     </div>
                     <div style="display:flex;justify-content:flex-end;margin-top:10px;">
@@ -226,6 +257,14 @@
         }
     </ChildContent>
     <FooterContent>
+        @if (_selectedVersion?.StatusCode == "draft")
+        {
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="SubmitProtocolVersion">Gửi phê duyệt</button>
+        }
+        @if (_selectedVersion?.StatusCode == "pending_approval")
+        {
+            <button type="button" class="admin-btn admin-btn-primary" @onclick="PublishProtocolVersion">Phê duyệt và ban hành</button>
+        }
         <button type="button" class="admin-btn admin-btn-primary" @onclick="() => _drawerOpen = false">Đóng</button>
     </FooterContent>
 </AdminDrawer>
@@ -234,15 +273,15 @@
     <ChildContent>
         <div class="admin-form-grid">
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Mã phác đồ</label>
+                <label class="admin-form-field-label is-required">Mã phác đồ</label>
                 <input class="admin-input" @bind="_createCode" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Tên phác đồ</label>
+                <label class="admin-form-field-label is-required">Tên phác đồ</label>
                 <input class="admin-input" @bind="_createName" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Loại</label>
+                <label class="admin-form-field-label is-required">Loại</label>
                 <select class="admin-select" @bind="_createType">
                     @foreach (var type in Sql.MedLookups.ProtocolTypes)
                     {
@@ -279,6 +318,7 @@
 @code {
     private string _search = string.Empty;
     private string _typeFilter = string.Empty;
+    private string _statusFilter = "active";
     private IReadOnlyList<Sql.ClinicalProtocol> _items = Array.Empty<Sql.ClinicalProtocol>();
 
     private bool _drawerOpen;
@@ -287,6 +327,7 @@
     private string _activeTab = "procedures";
 
     private bool _createOpen;
+    private Guid? _editingProtocolId;
     private string _createCode = string.Empty;
     private string _createName = string.Empty;
     private string _createType = "treatment_protocol";
@@ -329,6 +370,7 @@
     {
         _items = Store.ClinicalProtocols
             .Where(p => string.IsNullOrEmpty(_typeFilter) || p.ProtocolType == _typeFilter)
+            .Where(p => _statusFilter == "all" || (_statusFilter == "archived" ? p.Status != "active" : p.Status == "active"))
             .Where(p => string.IsNullOrWhiteSpace(_search)
                 || p.ProtocolCode.Contains(_search, StringComparison.OrdinalIgnoreCase)
                 || p.Name.Contains(_search, StringComparison.OrdinalIgnoreCase))
@@ -338,6 +380,12 @@
 
     private void OpenCreate()
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:CREATE", "tạo phác đồ"))
+        {
+            return;
+        }
+
+        _editingProtocolId = null;
         _createCode = string.Empty;
         _createName = string.Empty;
         _createType = Sql.MedLookups.ProtocolTypes.First().Code;
@@ -347,8 +395,32 @@
         _createOpen = true;
     }
 
+    private void OpenEditProtocol(Sql.ClinicalProtocol protocol)
+    {
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "sửa phác đồ"))
+        {
+            return;
+        }
+
+        _editingProtocolId = protocol.ClinicalProtocolId;
+        _createCode = protocol.ProtocolCode;
+        _createName = protocol.Name;
+        _createType = protocol.ProtocolType;
+        _createDepartmentId = protocol.OwnerDepartmentId?.ToString() ?? string.Empty;
+        _createDescription = protocol.Description ?? string.Empty;
+        _createSummary = LatestVersion(protocol.ClinicalProtocolId)?.Summary ?? string.Empty;
+        _createOpen = true;
+    }
+
     private void CreateProtocol()
     {
+        var permission = _editingProtocolId.HasValue ? "SCR_PROTOCOLS:UPDATE" : "SCR_PROTOCOLS:CREATE";
+        var action = _editingProtocolId.HasValue ? "sửa phác đồ" : "tạo phác đồ";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_createCode) || string.IsNullOrWhiteSpace(_createName))
         {
             Toasts.Show("Thiếu thông tin", "Vui lòng nhập mã và tên phác đồ.", ToastVariant.Warning);
@@ -357,6 +429,37 @@
 
         try
         {
+            if (_editingProtocolId.HasValue)
+            {
+                var current = Store.ClinicalProtocols.First(p => p.ClinicalProtocolId == _editingProtocolId.Value);
+                var activeVersion = Store.ClinicalProtocolVersions
+                    .Where(v => v.ClinicalProtocolId == current.ClinicalProtocolId && v.StatusCode == "active")
+                    .OrderByDescending(v => v.VersionNo)
+                    .FirstOrDefault();
+                if (activeVersion is not null)
+                {
+                    CreateDraftProtocolVersionFromActive(current, activeVersion);
+                    Toasts.Show("Đã tạo bản nháp cập nhật",
+                        "Phác đồ đang hiệu lực không bị sửa trực tiếp. Vui lòng chỉnh bản nháp rồi gửi phê duyệt.",
+                        ToastVariant.Success);
+                    _createOpen = false;
+                    Recompute();
+                    return;
+                }
+
+                Store.UpdateClinicalProtocol(current with
+                {
+                    ProtocolCode = _createCode.Trim(),
+                    Name = _createName.Trim(),
+                    ProtocolType = _createType,
+                    OwnerDepartmentId = ParseGuid(_createDepartmentId),
+                    Description = string.IsNullOrWhiteSpace(_createDescription) ? null : _createDescription.Trim()
+                });
+                Toasts.Show("Đã cập nhật phác đồ", _createName.Trim(), ToastVariant.Success);
+                _createOpen = false;
+                return;
+            }
+
             var protocol = new Sql.ClinicalProtocol
             {
                 ProtocolCode = _createCode.Trim(),
@@ -371,16 +474,11 @@
             {
                 ClinicalProtocolId = protocol.ClinicalProtocolId,
                 VersionNo = 1,
-                StatusCode = "active",
+                StatusCode = "draft",
                 Title = $"{protocol.Name} - Phiên bản 1",
                 Summary = string.IsNullOrWhiteSpace(_createSummary) ? null : _createSummary.Trim(),
                 ContentJson = "{}",
-                EffectiveFrom = DateTime.UtcNow,
-                CreatedBy = UserContext.CurrentUser?.UserId,
-                ApprovedBy = UserContext.CurrentUser?.UserId,
-                PublishedBy = UserContext.CurrentUser?.UserId,
-                ApprovedAt = DateTime.UtcNow,
-                PublishedAt = DateTime.UtcNow
+                CreatedBy = UserContext.CurrentUser?.UserId
             });
             Toasts.Show("Đã tạo phác đồ", protocol.Name, ToastVariant.Success);
             _createOpen = false;
@@ -389,6 +487,89 @@
         {
             Toasts.Show("Không thể tạo phác đồ", ex.Message, ToastVariant.Error);
         }
+    }
+
+    private void CreateDraftProtocolVersionFromActive(Sql.ClinicalProtocol protocol, Sql.ClinicalProtocolVersion activeVersion)
+    {
+        var nextNo = Store.ClinicalProtocolVersions
+            .Where(v => v.ClinicalProtocolId == protocol.ClinicalProtocolId)
+            .Select(v => v.VersionNo)
+            .DefaultIfEmpty(0)
+            .Max() + 1;
+        var draft = new Sql.ClinicalProtocolVersion
+        {
+            ClinicalProtocolId = protocol.ClinicalProtocolId,
+            VersionNo = nextNo,
+            StatusCode = "draft",
+            Title = _createName.Trim(),
+            Summary = string.IsNullOrWhiteSpace(_createSummary) ? activeVersion.Summary : _createSummary.Trim(),
+            ContentJson = activeVersion.ContentJson,
+            CreatedBy = UserContext.CurrentUser?.UserId
+        };
+        Store.AddClinicalProtocolVersion(draft);
+
+        foreach (var link in Store.ClinicalProtocolProcedures.Where(p => p.ClinicalProtocolVersionId == activeVersion.ClinicalProtocolVersionId))
+        {
+            Store.AddClinicalProtocolProcedure(link with
+            {
+                ClinicalProtocolProcedureId = Guid.NewGuid(),
+                ClinicalProtocolVersionId = draft.ClinicalProtocolVersionId,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        foreach (var rule in Store.ProtocolApplicabilityRules.Where(r => r.ClinicalProtocolVersionId == activeVersion.ClinicalProtocolVersionId))
+        {
+            Store.AddProtocolApplicabilityRule(rule with
+            {
+                ProtocolApplicabilityRuleId = Guid.NewGuid(),
+                ClinicalProtocolVersionId = draft.ClinicalProtocolVersionId,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+    }
+
+    private async Task ArchiveProtocol(Sql.ClinicalProtocol protocol)
+    {
+        if (!Guard.CanDo("SCR_PROTOCOLS:DELETE", "lưu trữ phác đồ"))
+        {
+            return;
+        }
+
+        var ok = await Confirm.ShowAsync(
+            "Lưu trữ phác đồ",
+            $"Lưu trữ phác đồ \"{protocol.Name}\"?",
+            confirmText: "Lưu trữ",
+            isDanger: true);
+        if (!ok)
+        {
+            return;
+        }
+
+        Store.UpdateClinicalProtocol(protocol with { Status = "archived" });
+        AppendAudit("archive", "clinical_protocol", protocol.ClinicalProtocolId.ToString(), protocol.OwnerDepartmentId);
+        Toasts.Show("Đã lưu trữ phác đồ", protocol.Name, ToastVariant.Info);
+    }
+
+    private async Task RestoreProtocol(Sql.ClinicalProtocol protocol)
+    {
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "khôi phục phác đồ"))
+        {
+            return;
+        }
+
+        var ok = await Confirm.ShowAsync(
+            "Khôi phục phác đồ",
+            $"Khôi phục phác đồ \"{protocol.Name}\"?",
+            confirmText: "Khôi phục");
+        if (!ok)
+        {
+            return;
+        }
+
+        Store.UpdateClinicalProtocol(protocol with { Status = "active" });
+        AppendAudit("restore", "clinical_protocol", protocol.ClinicalProtocolId.ToString(), protocol.OwnerDepartmentId);
+        Toasts.Show("Đã khôi phục phác đồ", protocol.Name, ToastVariant.Success);
     }
 
     private void OpenDetail(Sql.ClinicalProtocol protocol)
@@ -403,9 +584,19 @@
 
     private void AddProtocolProcedure()
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "thêm liên kết quy trình"))
+        {
+            return;
+        }
+
         if (_selectedVersion is null || !Guid.TryParse(_linkProcedureVersionId, out var procedureVersionId))
         {
             Toasts.Show("Thiếu quy trình", "Vui lòng chọn phiên bản quy trình.", ToastVariant.Warning);
+            return;
+        }
+        if (_selectedVersion.StatusCode != "draft")
+        {
+            Toasts.Show("Không thể sửa bản đã ban hành", "Hãy tạo bản nháp mới rồi chỉnh liên kết quy trình.", ToastVariant.Warning);
             return;
         }
 
@@ -430,6 +621,11 @@
 
     private void RemoveProtocolProcedure(Sql.ClinicalProtocolProcedure link)
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "xóa liên kết quy trình"))
+        {
+            return;
+        }
+
         try
         {
             Store.RemoveClinicalProtocolProcedure(link.ClinicalProtocolProcedureId);
@@ -443,9 +639,19 @@
 
     private void AddRule()
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "thêm rule phác đồ"))
+        {
+            return;
+        }
+
         if (_selectedVersion is null || string.IsNullOrWhiteSpace(_ruleJson))
         {
-            Toasts.Show("Thiếu rule", "Vui lòng nhập JSON rule.", ToastVariant.Warning);
+            Toasts.Show("Thiếu điều kiện", "Vui lòng nhập giá trị điều kiện áp dụng.", ToastVariant.Warning);
+            return;
+        }
+        if (_selectedVersion.StatusCode != "draft")
+        {
+            Toasts.Show("Không thể sửa bản đã ban hành", "Hãy tạo bản nháp mới rồi chỉnh quy tắc áp dụng.", ToastVariant.Warning);
             return;
         }
 
@@ -455,7 +661,7 @@
             {
                 ClinicalProtocolVersionId = _selectedVersion.ClinicalProtocolVersionId,
                 RuleType = _ruleType,
-                RuleJson = _ruleJson.Trim(),
+                RuleJson = BuildRuleJson(_ruleType, _ruleJson),
                 Priority = _rulePriority,
                 IsActive = _ruleActive
             });
@@ -470,6 +676,11 @@
 
     private void RemoveRule(Sql.ProtocolApplicabilityRule rule)
     {
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "xóa rule phác đồ"))
+        {
+            return;
+        }
+
         try
         {
             Store.RemoveProtocolApplicabilityRule(rule.ProtocolApplicabilityRuleId);
@@ -479,6 +690,89 @@
         {
             Toasts.Show("Không thể xóa rule", ex.Message, ToastVariant.Error);
         }
+    }
+
+    private async Task SubmitProtocolVersion()
+    {
+        if (_selectedVersion is null)
+        {
+            return;
+        }
+
+        if (!Guard.CanDo("SCR_PROTOCOLS:UPDATE", "gửi phê duyệt phác đồ"))
+        {
+            return;
+        }
+
+        if (_selectedVersion.StatusCode != "draft")
+        {
+            Toasts.Show("Không thể gửi phê duyệt", "Chỉ phiên bản nháp mới được gửi phê duyệt.", ToastVariant.Warning);
+            return;
+        }
+
+        var ok = await Confirm.ShowAsync(
+            "Gửi phê duyệt",
+            $"Gửi phiên bản \"{_selectedVersion.Title}\" để phê duyệt?",
+            confirmText: "Gửi");
+        if (!ok)
+        {
+            return;
+        }
+
+        Store.UpdateClinicalProtocolVersion(_selectedVersion with { StatusCode = "pending_approval" });
+        AppendAudit("submit", "clinical_protocol_version", _selectedVersion.ClinicalProtocolVersionId.ToString(), _selected?.OwnerDepartmentId);
+        Toasts.Show("Đã gửi phê duyệt", _selectedVersion.Title, ToastVariant.Success);
+    }
+
+    private async Task PublishProtocolVersion()
+    {
+        if (_selectedVersion is null || _selected is null)
+        {
+            return;
+        }
+
+        if (!Guard.CanDo("SCR_PROTOCOLS:APPROVE", "ban hành phác đồ"))
+        {
+            return;
+        }
+
+        if (_selectedVersion.StatusCode != "pending_approval")
+        {
+            Toasts.Show("Không thể ban hành", "Chỉ phiên bản đang chờ phê duyệt mới được ban hành.", ToastVariant.Warning);
+            return;
+        }
+
+        var ok = await Confirm.ShowAsync(
+            "Ban hành phác đồ",
+            $"Phê duyệt và ban hành \"{_selectedVersion.Title}\"?",
+            confirmText: "Ban hành");
+        if (!ok)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        foreach (var active in Store.ClinicalProtocolVersions
+            .Where(v => v.ClinicalProtocolId == _selectedVersion.ClinicalProtocolId
+                && v.ClinicalProtocolVersionId != _selectedVersion.ClinicalProtocolVersionId
+                && v.StatusCode == "active")
+            .ToList())
+        {
+            Store.UpdateClinicalProtocolVersion(active with { StatusCode = "superseded", EffectiveTo = now });
+        }
+
+        Store.UpdateClinicalProtocolVersion(_selectedVersion with
+        {
+            StatusCode = "active",
+            ApprovedBy = UserContext.CurrentUser?.UserId,
+            PublishedBy = UserContext.CurrentUser?.UserId,
+            ApprovedAt = now,
+            PublishedAt = now,
+            EffectiveFrom = now,
+            EffectiveTo = null
+        });
+        AppendAudit("publish", "clinical_protocol_version", _selectedVersion.ClinicalProtocolVersionId.ToString(), _selected.OwnerDepartmentId);
+        Toasts.Show("Đã ban hành phác đồ", _selectedVersion.Title, ToastVariant.Success);
     }
 
     private void ResetLinkForm()
@@ -515,6 +809,80 @@
         return $"{proc?.ProcedureCode ?? "QT"} v{version.VersionNo} - {version.Title}";
     }
 
+    private static string BuildRuleJson(string ruleType, string value)
+    {
+        var trimmed = value.Trim();
+        if (trimmed.StartsWith("{", StringComparison.Ordinal))
+        {
+            return trimmed;
+        }
+
+        var payload = ruleType switch
+        {
+            "icd" => new Dictionary<string, string> { ["icd"] = trimmed },
+            "age" => new Dictionary<string, string> { ["age"] = trimmed },
+            "gender" => new Dictionary<string, string> { ["gender"] = trimmed },
+            "department" => new Dictionary<string, string> { ["department"] = trimmed },
+            "contraindication" => new Dictionary<string, string> { ["contraindication"] = trimmed },
+            _ => new Dictionary<string, string> { ["value"] = trimmed }
+        };
+        return JsonSerializer.Serialize(payload);
+    }
+
+    private static string FormatRule(Sql.ProtocolApplicabilityRule rule)
+    {
+        if (string.IsNullOrWhiteSpace(rule.RuleJson))
+        {
+            return Lookup(Sql.MedLookups.ProtocolRuleTypes, rule.RuleType);
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(rule.RuleJson);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return Lookup(Sql.MedLookups.ProtocolRuleTypes, rule.RuleType);
+            }
+
+            var parts = new List<string>();
+            foreach (var prop in doc.RootElement.EnumerateObject())
+            {
+                if (prop.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+                {
+                    continue;
+                }
+
+                parts.Add($"{RuleFieldLabel(prop.Name)}: {JsonValueText(prop.Value)}");
+            }
+
+            return parts.Count == 0
+                ? Lookup(Sql.MedLookups.ProtocolRuleTypes, rule.RuleType)
+                : string.Join("; ", parts);
+        }
+        catch (JsonException)
+        {
+            return "Rule JSON chưa hợp lệ";
+        }
+    }
+
+    private static string RuleFieldLabel(string field) => field switch
+    {
+        "icd" or "diagnosisCode" => "ICD",
+        "ageFrom" => "Tuổi từ",
+        "ageTo" => "Tuổi đến",
+        "gender" => "Giới tính",
+        "department" or "departmentCode" => "Khoa",
+        "description" or "note" => "Mô tả",
+        _ => field
+    };
+
+    private static string JsonValueText(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.String => value.GetString() ?? string.Empty,
+        JsonValueKind.Array => string.Join(", ", value.EnumerateArray().Select(JsonValueText)),
+        _ => value.ToString()
+    };
+
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
     private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
     private static string StatusTone(string status) => status == "active" ? "tone-success" : "tone-muted";
@@ -533,6 +901,20 @@
         "cancelled" => "tone-danger",
         _ => "tone-muted"
     };
+
+    private void AppendAudit(string actionCode, string targetType, string targetId, Guid? departmentId)
+    {
+        Audit.Append(new Sql.AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = UserContext.CurrentUser?.UserId,
+            ActorUsername = UserContext.CurrentUser?.Username,
+            ActionCode = actionCode,
+            TargetType = targetType,
+            TargetId = targetId,
+            DepartmentId = departmentId
+        });
+    }
 
     public void Dispose() => Store.StateChanged -= OnChanged;
 }

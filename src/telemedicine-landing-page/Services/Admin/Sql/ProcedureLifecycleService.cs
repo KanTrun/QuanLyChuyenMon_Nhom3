@@ -1,4 +1,5 @@
 using TelemedicineLandingPage.Data;
+using TelemedicineLandingPage.Application.Workflow;
 using TelemedicineLandingPage.Models.Admin.Sql;
 
 namespace TelemedicineLandingPage.Services.Admin.Sql;
@@ -11,11 +12,21 @@ public sealed class ProcedureLifecycleService
 {
     private readonly MedDbContext _db;
     private readonly AuditTrailService _audit;
+    private readonly IWorkflowGuard<ProcedureVersion, string> _workflow;
 
     public ProcedureLifecycleService(MedDbContext db, AuditTrailService audit)
+        : this(db, audit, new ProcedureVersionWorkflowGuard(audit))
+    {
+    }
+
+    public ProcedureLifecycleService(
+        MedDbContext db,
+        AuditTrailService audit,
+        IWorkflowGuard<ProcedureVersion, string> workflow)
     {
         _db = db;
         _audit = audit;
+        _workflow = workflow;
     }
 
     /// <summary>Tạo phiên bản mới cho quy trình (trạng thái draft).</summary>
@@ -53,6 +64,8 @@ public sealed class ProcedureLifecycleService
     public void Submit(Guid versionId, Guid submittedBy)
     {
         var ver = GetVersionOrThrow(versionId);
+        EnsureTransition(ver, "pending_approval", "CK_procedure_version_submit", 50020,
+            "Chỉ có thể gửi phiên bản đang ở trạng thái draft.");
         if (ver.StatusCode != "draft")
             throw MedDomainException.Constraint("CK_procedure_version_submit", 50020,
                 "Chỉ có thể gửi phiên bản ở trạng thái bản nháp.");
@@ -71,6 +84,7 @@ public sealed class ProcedureLifecycleService
         };
         _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(updated);
         _db.SaveChanges();
+        _workflow.OnTransitioned(updated, ver.StatusCode, updated.StatusCode, submittedBy);
 
         _audit.Append(new AuditLog
         {
@@ -86,6 +100,8 @@ public sealed class ProcedureLifecycleService
     public void Publish(Guid versionId, Guid approvedBy)
     {
         var ver = GetVersionOrThrow(versionId);
+        EnsureTransition(ver, "active", "CK_procedure_version_publish", 50022,
+            "Chỉ có thể xuất bản phiên bản đang chờ phê duyệt.");
         if (ver.StatusCode != "pending_approval")
             throw MedDomainException.Constraint("CK_procedure_version_publish", 50022,
                 "Chỉ có thể xuất bản phiên bản đang chờ phê duyệt.");
@@ -117,6 +133,12 @@ public sealed class ProcedureLifecycleService
         _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(published);
         _db.SaveChanges();
 
+        foreach (var old in currentPublished)
+        {
+            _workflow.OnTransitioned(old, "active", "superseded", approvedBy, $"Superseded by {versionId}");
+        }
+        _workflow.OnTransitioned(published, ver.StatusCode, published.StatusCode, approvedBy);
+
         _audit.Append(new AuditLog
         {
             CorrelationId = Guid.NewGuid(),
@@ -131,6 +153,8 @@ public sealed class ProcedureLifecycleService
     public void Reject(Guid versionId, Guid rejectedBy, string reason)
     {
         var ver = GetVersionOrThrow(versionId);
+        EnsureTransition(ver, "rejected", "CK_procedure_version_reject", 50023,
+            "Chỉ có thể từ chối phiên bản đang chờ phê duyệt.");
         if (ver.StatusCode != "pending_approval")
             throw MedDomainException.Constraint("CK_procedure_version_reject", 50023,
                 "Chỉ có thể từ chối phiên bản đang chờ phê duyệt.");
@@ -142,6 +166,7 @@ public sealed class ProcedureLifecycleService
         };
         _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(rejected);
         _db.SaveChanges();
+        _workflow.OnTransitioned(rejected, ver.StatusCode, rejected.StatusCode, rejectedBy, reason);
 
         _audit.Append(new AuditLog
         {
@@ -158,6 +183,8 @@ public sealed class ProcedureLifecycleService
     public void Withdraw(Guid versionId, Guid withdrawnBy, string reason)
     {
         var ver = GetVersionOrThrow(versionId);
+        EnsureTransition(ver, "archived", "CK_procedure_version_withdraw", 50024,
+            "Chỉ có thể thu hồi phiên bản active.");
         if (ver.StatusCode != "active")
             throw MedDomainException.Constraint("CK_procedure_version_withdraw", 50024,
                 "Chỉ có thể thu hồi phiên bản đã xuất bản.");
@@ -170,6 +197,7 @@ public sealed class ProcedureLifecycleService
         };
         _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(withdrawn);
         _db.SaveChanges();
+        _workflow.OnTransitioned(withdrawn, ver.StatusCode, withdrawn.StatusCode, withdrawnBy, reason);
 
         _audit.Append(new AuditLog
         {
@@ -182,6 +210,58 @@ public sealed class ProcedureLifecycleService
     }
 
     /// <summary>Lấy phiên bản đang hoạt động của quy trình.</summary>
+    public void Archive(Guid versionId, Guid archivedBy, string? reason = null)
+    {
+        var ver = GetVersionOrThrow(versionId);
+        EnsureTransition(ver, "archived", "CK_procedure_version_archive", 50025,
+            "Không thể lưu trữ phiên bản từ trạng thái hiện tại.");
+
+        var archived = ver with
+        {
+            StatusCode = "archived",
+            EffectiveTo = DateTime.UtcNow,
+            ChangeReason = reason ?? ver.ChangeReason
+        };
+        _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(archived);
+        _db.SaveChanges();
+        _workflow.OnTransitioned(archived, ver.StatusCode, archived.StatusCode, archivedBy, reason);
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = archivedBy,
+            ActionCode = "archive",
+            TargetType = "procedure_version",
+            TargetId = versionId.ToString()
+        });
+    }
+
+    public void RestoreDraft(Guid versionId, Guid restoredBy, string? reason = null)
+    {
+        var ver = GetVersionOrThrow(versionId);
+        EnsureTransition(ver, "draft", "CK_procedure_version_restore", 50026,
+            "Chi co the khoi phuc phien ban archived hoac rejected ve draft.");
+
+        var restored = ver with
+        {
+            StatusCode = "draft",
+            EffectiveTo = null,
+            ChangeReason = reason ?? ver.ChangeReason
+        };
+        _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(restored);
+        _db.SaveChanges();
+        _workflow.OnTransitioned(restored, ver.StatusCode, restored.StatusCode, restoredBy, reason);
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = restoredBy,
+            ActionCode = "restore",
+            TargetType = "procedure_version",
+            TargetId = versionId.ToString()
+        });
+    }
+
     public ProcedureVersion? GetActiveVersion(Guid procedureId)
     {
         return _db.ProcedureVersions
@@ -203,5 +283,18 @@ public sealed class ProcedureLifecycleService
                    .FirstOrDefault(v => v.ProcedureVersionId == versionId)
                ?? throw MedDomainException.Constraint("FK_procedure_version", 547,
                    "Phiên bản quy trình không tồn tại.");
+    }
+
+    private void EnsureTransition(
+        ProcedureVersion version,
+        string targetState,
+        string constraintName,
+        int errorNumber,
+        string message)
+    {
+        if (!_workflow.CanTransition(version.StatusCode, targetState))
+        {
+            throw MedDomainException.Constraint(constraintName, errorNumber, message);
+        }
     }
 }

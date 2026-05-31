@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using System.Text.Json;
+using TelemedicineLandingPage.Models.Auth;
 using TelemedicineLandingPage.Models.Admin.Sql;
 
 namespace TelemedicineLandingPage.Data;
@@ -8,7 +11,7 @@ namespace TelemedicineLandingPage.Data;
 /// DbContext kết nối SQL Server — schema med.
 /// Ánh xạ toàn bộ bảng trong cơ sở dữ liệu MedicalProcedureManagement.
 /// </summary>
-public class MedDbContext : DbContext
+public class MedDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
 {
     private static readonly JsonSerializerOptions AuditJsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -20,10 +23,10 @@ public class MedDbContext : DbContext
     // === Tổ chức & Danh tính ===
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<DepartmentClosureEdge> DepartmentClosure => Set<DepartmentClosureEdge>();
-    public DbSet<AppUser> Users => Set<AppUser>();
-    public DbSet<Role> Roles => Set<Role>();
+    public new DbSet<AppUser> Users => Set<AppUser>();
+    public new DbSet<Role> Roles => Set<Role>();
     public DbSet<Group> Groups => Set<Group>();
-    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public new DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<UserGroupMember> UserGroupMembers => Set<UserGroupMember>();
 
     // === Quyền hạn ===
@@ -67,6 +70,7 @@ public class MedDbContext : DbContext
     public DbSet<ClinicalProtocolProcedure> ClinicalProtocolProcedures => Set<ClinicalProtocolProcedure>();
     public DbSet<ProtocolApplicabilityRule> ProtocolApplicabilityRules => Set<ProtocolApplicabilityRule>();
     public DbSet<PatientProtocolApplication> PatientProtocolApplications => Set<PatientProtocolApplication>();
+    public DbSet<SignatureRecord> SignatureRecords => Set<SignatureRecord>();
 
     // === Thông báo ===
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
@@ -76,6 +80,24 @@ public class MedDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<ApplicationUser>().ToTable("identity_users", "auth");
+        modelBuilder.Entity<ApplicationRole>().ToTable("identity_roles", "auth");
+        modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("identity_user_roles", "auth");
+        modelBuilder.Entity<IdentityUserClaim<Guid>>().ToTable("identity_user_claims", "auth");
+        modelBuilder.Entity<IdentityUserLogin<Guid>>().ToTable("identity_user_logins", "auth");
+        modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("identity_role_claims", "auth");
+        modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("identity_user_tokens", "auth");
+        modelBuilder.Entity<IdentityUserLogin<Guid>>(entity =>
+        {
+            entity.Property(e => e.LoginProvider).HasMaxLength(128);
+            entity.Property(e => e.ProviderKey).HasMaxLength(128);
+        });
+        modelBuilder.Entity<IdentityUserToken<Guid>>(entity =>
+        {
+            entity.Property(e => e.LoginProvider).HasMaxLength(128);
+            entity.Property(e => e.Name).HasMaxLength(128);
+        });
 
         // DepartmentClosureEdge: composite key
         modelBuilder.Entity<DepartmentClosureEdge>()
@@ -91,6 +113,9 @@ public class MedDbContext : DbContext
         modelBuilder.Entity<AuditLog>()
             .ToTable("audit_logs", "med", table => table.HasTrigger("TR_audit_logs_immutable"));
 
+        modelBuilder.Entity<SignatureRecord>()
+            .ToTable("signature_records", "med", table => table.HasTrigger("TR_signature_records_immutable"));
+
         modelBuilder.Entity<ActualResourceUsage>()
             .ToTable("actual_resource_usages", "med", table => table.HasTrigger("TR_actual_resource_usages_set_final"));
     }
@@ -98,13 +123,29 @@ public class MedDbContext : DbContext
     public override int SaveChanges()
     {
         AddAutomaticAuditLogs();
-        return base.SaveChanges();
+        try
+        {
+            return base.SaveChanges();
+        }
+        catch
+        {
+            ChangeTracker.Clear();
+            throw;
+        }
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         AddAutomaticAuditLogs();
-        return base.SaveChangesAsync(cancellationToken);
+        try
+        {
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            ChangeTracker.Clear();
+            throw;
+        }
     }
 
     private void AddAutomaticAuditLogs()
@@ -199,10 +240,11 @@ public class MedDbContext : DbContext
     private static Guid? TryGetDepartmentId(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
     {
         var departmentProperty = entry.Properties.FirstOrDefault(p =>
-            string.Equals(p.Metadata.Name, "DepartmentId", StringComparison.OrdinalIgnoreCase) ||
+            !p.Metadata.IsPrimaryKey() &&
+            (string.Equals(p.Metadata.Name, "DepartmentId", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(p.Metadata.Name, "OwnerDepartmentId", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(p.Metadata.Name, "PrimaryDepartmentId", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(p.Metadata.Name, "OrderingDepartmentId", StringComparison.OrdinalIgnoreCase));
+            string.Equals(p.Metadata.Name, "OrderingDepartmentId", StringComparison.OrdinalIgnoreCase)));
 
         return departmentProperty?.CurrentValue as Guid?;
     }

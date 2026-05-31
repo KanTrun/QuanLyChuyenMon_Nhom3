@@ -51,7 +51,7 @@ public sealed class PermissionService : IPermissionService
         var next = record with
         {
             Id = record.Id == Guid.Empty ? Guid.NewGuid() : record.Id,
-            UpdatedAt = DateTime.Now,
+            UpdatedAt = DateTime.UtcNow,
         };
         lock (_gate)
         {
@@ -69,7 +69,7 @@ public sealed class PermissionService : IPermissionService
         {
             var index = _roles.FindIndex(r => r.Id == id);
             if (index < 0) throw new KeyNotFoundException($"Không tìm thấy vai trò {id}.");
-            next = updated with { Id = id, UpdatedAt = DateTime.Now };
+            next = updated with { Id = id, UpdatedAt = DateTime.UtcNow };
             _roles[index] = next;
         }
         Raise();
@@ -113,7 +113,7 @@ public sealed class PermissionService : IPermissionService
             _roles[index] = previous with
             {
                 Permissions = grants.ToList(),
-                UpdatedAt = DateTime.Now,
+                UpdatedAt = DateTime.UtcNow,
             };
 
             logEntry = new PermissionChangeLog(
@@ -126,7 +126,7 @@ public sealed class PermissionService : IPermissionService
                 Reason: string.IsNullOrWhiteSpace(reason) ? "Không có ghi chú" : reason,
                 ChangedBy: string.IsNullOrWhiteSpace(changedBy) ? "Hệ thống" : changedBy,
                 EffectiveAt: effectiveAt,
-                AppliedAt: DateTime.Now);
+                AppliedAt: DateTime.UtcNow);
             _changeLog.Add(logEntry);
         }
         Raise();
@@ -159,8 +159,8 @@ public sealed class PermissionService : IPermissionService
                 AfterJson: afterJson,
                 Reason: string.IsNullOrWhiteSpace(reason) ? "Cập nhật phân quyền tài khoản" : reason,
                 ChangedBy: string.IsNullOrWhiteSpace(changedBy) ? "Hệ thống" : changedBy,
-                EffectiveAt: DateTime.Now,
-                AppliedAt: DateTime.Now));
+                EffectiveAt: DateTime.UtcNow,
+                AppliedAt: DateTime.UtcNow));
 
             RecomputeMemberCountsLocked();
         }
@@ -254,7 +254,7 @@ public sealed class PermissionService : IPermissionService
                 Email = "admin@benhvien.vn",
                 Department = Department.HanhChinh,
                 RoleIds = new[] { adminRole.Id },
-                LastLogin = DateTime.Now.AddMinutes(-20),
+                LastLogin = DateTime.UtcNow.AddMinutes(-20),
             },
             new()
             {
@@ -262,7 +262,7 @@ public sealed class PermissionService : IPermissionService
                 Email = "bs.noi01@benhvien.vn",
                 Department = Department.NoiTiet,
                 RoleIds = new[] { doctorRole.Id },
-                LastLogin = DateTime.Now.AddHours(-2),
+                LastLogin = DateTime.UtcNow.AddHours(-2),
             },
             new()
             {
@@ -270,7 +270,7 @@ public sealed class PermissionService : IPermissionService
                 Email = "tk.noi@benhvien.vn",
                 Department = Department.NoiTiet,
                 RoleIds = new[] { managerRole.Id },
-                LastLogin = DateTime.Now.AddHours(-1),
+                LastLogin = DateTime.UtcNow.AddHours(-1),
             },
         };
 

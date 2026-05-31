@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Admin.Sql;
 using TelemedicineLandingPage.Services.Admin.Sql;
@@ -21,6 +22,17 @@ public static class TestDbHelper
         var db = new MedDbContext(options);
         SeedTestData(db);
         return db;
+    }
+
+    public static (MedDbContext Context, IDbContextFactory<MedDbContext> Factory) CreateSeededContextWithFactory()
+    {
+        var options = new DbContextOptionsBuilder<MedDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString(), new InMemoryDatabaseRoot())
+            .Options;
+
+        var db = new MedDbContext(options);
+        SeedTestData(db);
+        return (db, new TestDbContextFactory(options));
     }
 
     /// <summary>Seed dữ liệu tương đương MedDataStoreSeed vào in-memory database.</summary>
@@ -58,7 +70,8 @@ public static class TestDbHelper
             Username = "admin",
             FullName = "Quản trị viên hệ thống",
             Email = "admin@bv.vn",
-            PrimaryDepartmentId = MedDataStoreSeed.RootDeptId
+            PrimaryDepartmentId = MedDataStoreSeed.RootDeptId,
+            PasswordHash = BootstrapAdminDefaults.PasswordHash
         });
         db.UserRoles.Add(new UserRole { UserId = MedDataStoreSeed.AdminUserId, RoleId = MedDataStoreSeed.RoleSysAdminId });
 
@@ -87,5 +100,17 @@ public static class TestDbHelper
         );
 
         db.SaveChanges();
+    }
+
+    private sealed class TestDbContextFactory : IDbContextFactory<MedDbContext>
+    {
+        private readonly DbContextOptions<MedDbContext> _options;
+
+        public TestDbContextFactory(DbContextOptions<MedDbContext> options)
+        {
+            _options = options;
+        }
+
+        public MedDbContext CreateDbContext() => new(_options);
     }
 }

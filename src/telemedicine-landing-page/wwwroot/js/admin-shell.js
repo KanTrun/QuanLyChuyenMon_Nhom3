@@ -117,6 +117,24 @@
         return setTheme(current === 'dark' ? 'light' : 'dark');
     }
 
+    function setMotionPreference(enabled) {
+        var next = enabled === false ? 'off' : 'on';
+        document.documentElement.setAttribute('data-motion', next);
+        try {
+            window.localStorage.setItem('qlcm.motion', next);
+        } catch (_) { /* ignore */ }
+        return next;
+    }
+
+    function getMotionPreference() {
+        try {
+            var stored = window.localStorage.getItem('qlcm.motion');
+            if (stored === 'off') return false;
+            if (stored === 'on') return true;
+        } catch (_) { /* ignore */ }
+        return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+
     function enterFullscreen() {
         var el = document.documentElement;
         if (el.requestFullscreen) {
@@ -252,10 +270,34 @@
         }
     }
 
+    function setSessionJson(key, json) {
+        if (!key || typeof json !== 'string') return false;
+        try {
+            window.sessionStorage.setItem(key, json);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function consumeSessionJson(key) {
+        if (!key) return null;
+        try {
+            var value = window.sessionStorage.getItem(key);
+            if (value !== null) {
+                window.sessionStorage.removeItem(key);
+            }
+            return value;
+        } catch (_) {
+            return null;
+        }
+    }
+
     // Apply the saved/preferred theme as early as possible so the first paint matches.
     try {
         var initial = getThemePreference();
         document.documentElement.setAttribute('data-theme', initial);
+        setMotionPreference(getMotionPreference());
     } catch (_) { /* ignore */ }
 
     root.qlcmShell = {
@@ -264,6 +306,8 @@
         getThemePreference: getThemePreference,
         setTheme: setTheme,
         toggleTheme: toggleTheme,
+        setMotionPreference: setMotionPreference,
+        getMotionPreference: getMotionPreference,
         enterFullscreen: enterFullscreen,
         exitFullscreen: exitFullscreen,
         isFullscreen: isFullscreen,
@@ -272,6 +316,8 @@
         downloadCsv: downloadCsv,
         registerOutsideClick: registerOutsideClick,
         unregisterOutsideClick: unregisterOutsideClick,
+        setSessionJson: setSessionJson,
+        consumeSessionJson: consumeSessionJson,
         scrollToBottom: scrollToBottom,
         isAtBottom: isAtBottom,
         autoGrowTextarea: autoGrowTextarea,
