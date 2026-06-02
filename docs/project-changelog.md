@@ -8,6 +8,7 @@
 | Prompt context builder | Added mandatory core rules, permission-filtered routes and aggregate-only operational snapshot |
 | Local chatbot privacy guard | Blocks likely patient identifiers and medical-advice prompts before any external API transport |
 | Drawn clinical signature | Added Signature Pad powered canvas capture inside the clinical signing confirmation modal |
+| Clinical workspace export | Added self-contained HTML export for `/lam-sang` covering patients, encounters, applied protocols and related technical orders |
 
 ### Changed
 | Item | Description |
@@ -38,8 +39,9 @@
 | `dotnet test .\telemedicine-landing-page.sln -c Release --filter "FullyQualifiedName~ProcedureVersionDisplaySelectorTests\|FullyQualifiedName~CurrentUserAuthenticationStateProviderTests"` | Passed, 12/12 tests |
 | `dotnet test .\telemedicine-landing-page.sln -c Release --filter "FullyQualifiedName~GeminiChatbotClientTests\|FullyQualifiedName~CurrentUserAuthenticationStateProviderTests"` | Passed, 11/11 tests |
 | `dotnet test .\telemedicine-landing-page.sln -c Release --no-build --filter "FullyQualifiedName~Chatbot"` | Passed, 42/42 tests |
-| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 192/192 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 194/194 tests |
 | `docker compose up --build -d web` | Passed, web image rebuilt and container healthy on `localhost:8080` |
+| `Invoke-WebRequest http://localhost:8080/` | Passed, HTTP 200 |
 | Playwright Docker login smoke | Passed, `admin` login reaches `/admin`; reload stays on `/admin`; no circuit exception in logs |
 | `dotnet list .\telemedicine-landing-page.sln package --vulnerable --include-transitive` | Clean, no vulnerable packages |
 | `docker compose config` | Passed, configuration valid |

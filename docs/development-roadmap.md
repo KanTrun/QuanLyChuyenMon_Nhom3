@@ -9,7 +9,7 @@ Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-
 | SQL data access | Complete | `IMedDataStore` có đủ create/update/remove cho identity, permissions, procedures, patients, technical catalog, orders, protocols và notifications |
 | Procedure lifecycle | Complete | Version dùng lookup SQL `draft`, `pending_approval`, `active`, `superseded`, `archived` |
 | Admin workflows | Complete | Quy trình, tổ chức/khoa/phòng, người dùng, vai trò, nhóm, phân quyền, danh mục, tài nguyên, phác đồ, thông báo |
-| Clinical workflows | Complete | Bệnh nhân, lượt khám, phác đồ áp dụng, chỉ định kỹ thuật, snapshot nguồn lực và tiêu hao thực tế |
+| Clinical workflows | Complete | Bệnh nhân, lượt khám, phác đồ áp dụng, chỉ định kỹ thuật, export HTML hồ sơ, snapshot nguồn lực và tiêu hao thực tế |
 | Audit remediation | Complete | Action guard, session restore, protocol draft/submit/publish, confirm/reject reason, audit history, dashboard/report/audit UX fixes |
 | Production architecture foundation | Complete | Identity-compatible account tables, custom permission claims/policies, SQL retry/health checks, Serilog structured logging, Docker migration runner |
 | Security validation guard | Complete | FluentValidation password commands, common-password checks, null-password lock migration, admin layout/NavGate route guard |
@@ -19,7 +19,7 @@ Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-
 | Business workflow completion | Complete | Runtime procedure guard, scheduled permission apply job, inventory snapshot service, ICD protocol suggestions and persona route gating |
 | Grounded chatbot safety | Complete | Core QLCM knowledge catalog, permission-scoped aggregate context, local privacy guard, header-based Gemini auth, per-circuit AI settings and manual user-owned key policy |
 | Seed data | Complete | `scripts/seed-realistic-data.sql` nạp dữ liệu mẫu thực tế cho demo/QA |
-| Verification | Complete | Release build `0 warnings, 0 errors`; chatbot `42/42`; full solution `192/192`; Docker web healthy and login/reload smoke passed; package vulnerability scan clean; Docker Compose config valid |
+| Verification | Complete | Release build `0 warnings, 0 errors`; chatbot `42/42`; full solution `194/194`; Docker web healthy and login/reload smoke passed; package vulnerability scan clean; Docker Compose config valid |
 
 ## Legacy Landing Cleanup Track
 | Item | Status | Output |
@@ -48,7 +48,7 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này �
 | Architecture blueprint | 100% |
 | Implementation plan | 100% |
 | Code implementation | 100% for implementation-plan scope |
-| Test automation | Release build `0 warnings, 0 errors`; chatbot `42/42`; full solution `175/175`; package vulnerability scan clean |
+| Test automation | Release build `0 warnings, 0 errors`; chatbot `42/42`; full solution `194/194`; package vulnerability scan clean |
 | Deployment readiness | Docker Compose config valid; web/sql/db-init verified locally; re-check stable Gemini model before production rollout |
 
 ## Dependencies
