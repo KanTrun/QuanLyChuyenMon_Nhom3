@@ -246,6 +246,21 @@
         el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden';
     }
 
+    function getSignaturePenColor() {
+        try {
+            var styles = window.getComputedStyle(document.documentElement);
+            var ink = styles.getPropertyValue('--signature-pad-ink').trim();
+            if (ink) {
+                return ink;
+            }
+            ink = styles.getPropertyValue('--color-ink').trim();
+            if (ink) {
+                return ink;
+            }
+        } catch (_) { /* ignore */ }
+        return '#1f2937';
+    }
+
     function resizeSignatureCanvas(canvas, pad) {
         var ratio = Math.max(window.devicePixelRatio || 1, 1);
         var rect = canvas.getBoundingClientRect();
@@ -270,7 +285,7 @@
             ctx.lineWidth = 2;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.strokeStyle = '#1f2937';
+            ctx.strokeStyle = getSignaturePenColor();
         }
 
         function point(event) {
@@ -337,7 +352,7 @@
         var pad = window.SignaturePad
             ? new window.SignaturePad(canvas, {
                 backgroundColor: 'rgba(255, 255, 255, 0)',
-                penColor: '#1f2937',
+                penColor: getSignaturePenColor(),
                 minWidth: 0.8,
                 maxWidth: 2.4,
                 throttle: 12

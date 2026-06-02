@@ -65,22 +65,24 @@ public sealed class NavGate
         if (_userContext.CurrentUser is null)
             return Array.Empty<AdminNavItem>();
 
+        var isSystemAdmin = IsSystemAdmin();
+
         var result = new List<AdminNavItem>();
         foreach (var item in items)
         {
-            var canAccessParent = CanAccess(item.Url);
+            var canAccessParent = CanAccess(item.Url, isSystemAdmin);
 
             if (item.Children is { Count: > 0 } children)
             {
-                var filteredChildren = children.Where(c => CanAccess(c.Url)).Select(ToDisplayItem).ToList();
+                var filteredChildren = children.Where(c => CanAccess(c.Url, isSystemAdmin)).Select(child => ToDisplayItem(child, isSystemAdmin)).ToList();
                 if (canAccessParent || filteredChildren.Count > 0)
                 {
-                    result.Add(ToDisplayItem(item with { Children = filteredChildren }));
+                    result.Add(ToDisplayItem(item with { Children = filteredChildren }, isSystemAdmin));
                 }
             }
             else if (canAccessParent)
             {
-                result.Add(ToDisplayItem(item));
+                result.Add(ToDisplayItem(item, isSystemAdmin));
             }
         }
 
@@ -89,12 +91,7 @@ public sealed class NavGate
 
     public string GetDisplayRoute(string route)
     {
-        if (_userContext.CurrentUser is null || IsSystemAdmin())
-        {
-            return route;
-        }
-
-        return RewriteRoute(route, AdminToWorkspaceRouteMap);
+        return GetDisplayRoute(route, IsSystemAdmin());
     }
 
     public string GetFirstAccessibleRoute(IReadOnlyList<AdminNavItem> items, string fallbackRoute = "/AccessDenied")
@@ -105,8 +102,13 @@ public sealed class NavGate
 
     public bool CanAccess(string route)
     {
+        return CanAccess(route, IsSystemAdmin());
+    }
+
+    private bool CanAccess(string route, bool isSystemAdmin)
+    {
         if (_userContext.CurrentUser is null) return false;
-        if (IsSystemAdmin()) return true;
+        if (isSystemAdmin) return true;
 
         var normalizedRoute = ToPermissionRoute(NormalizeRoute(route));
         var matchedPermissions = GetRoutePermissionCodes(normalizedRoute);
@@ -149,9 +151,22 @@ public sealed class NavGate
     }
 
     private AdminNavItem ToDisplayItem(AdminNavItem item)
+        => ToDisplayItem(item, IsSystemAdmin());
+
+    private AdminNavItem ToDisplayItem(AdminNavItem item, bool isSystemAdmin)
     {
-        var children = item.Children?.Select(ToDisplayItem).ToList();
-        return item with { Url = GetDisplayRoute(item.Url), Children = children };
+        var children = item.Children?.Select(child => ToDisplayItem(child, isSystemAdmin)).ToList();
+        return item with { Url = GetDisplayRoute(item.Url, isSystemAdmin), Children = children };
+    }
+
+    private string GetDisplayRoute(string route, bool isSystemAdmin)
+    {
+        if (_userContext.CurrentUser is null || isSystemAdmin)
+        {
+            return route;
+        }
+
+        return RewriteRoute(route, AdminToWorkspaceRouteMap);
     }
 
     private static AdminNavItem? GetFirstNavigableItem(IReadOnlyList<AdminNavItem> items)

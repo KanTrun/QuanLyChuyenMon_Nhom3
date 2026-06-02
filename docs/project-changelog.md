@@ -21,6 +21,7 @@
 | Admin interaction timing | Shortened shared motion tokens so admin modals, drawers and button feedback feel immediate |
 | Department archive filter | Renamed the Khoa/Phong status selector to an explicit archive filter and shows active/archive counts |
 | Signature realtime refresh | Added data-store refresh after sign/revoke mutations so clinical status/buttons update without page reload |
+| Admin navigation permissions | Cached effective SQL permissions per current user so sidebar filtering and route checks stop re-querying the database on every click |
 
 ### Fixed
 | Item | Description |
@@ -31,6 +32,7 @@
 | Docker login bootstrap | Local admin bootstrap migration now resets the documented Docker password hash for existing volumes |
 | Chatbot DI startup | Typed Gemini/Anthropic chatbot clients now use an explicit DI constructor so admin login no longer crashes when an API key is configured |
 | Admin reload guard | Admin route access moved from server folder authorization to layout/NavGate checks so browser session restore can run before redirect decisions |
+| Dark-mode signature ink | Signature canvas ink now follows the active theme so the drawn signature remains visible in dark mode |
 
 ### Verification
 | Check | Result |

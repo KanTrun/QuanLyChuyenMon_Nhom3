@@ -13,6 +13,8 @@ public sealed class CurrentUserContext : ICurrentUserContext
 {
     private readonly MedDbContext _db;
     private readonly EffectivePermissionResolver _resolver;
+    private Guid? _cachedPermissionUserId;
+    private IReadOnlyList<EffectivePermissionResolver.ResolvedPermission>? _cachedPermissions;
 
     public event Action? StateChanged;
 
@@ -29,6 +31,7 @@ public sealed class CurrentUserContext : ICurrentUserContext
         var user = _db.Users.FirstOrDefault(u => u.UserId == userId && u.Status == "active" && u.OnboardingStatus == "active")
             ?? throw new InvalidOperationException("Người dùng không tồn tại hoặc đã bị vô hiệu hóa.");
         CurrentUser = user;
+        ClearPermissionCache();
         StateChanged?.Invoke();
     }
 
@@ -68,6 +71,7 @@ public sealed class CurrentUserContext : ICurrentUserContext
             return new LoginAttemptResult(LoginAttemptStatus.Inactive);
 
         CurrentUser = candidate;
+        ClearPermissionCache();
         StateChanged?.Invoke();
         return new LoginAttemptResult(LoginAttemptStatus.Success, candidate);
     }
@@ -81,19 +85,37 @@ public sealed class CurrentUserContext : ICurrentUserContext
     public void SignOut()
     {
         CurrentUser = null;
+        ClearPermissionCache();
         StateChanged?.Invoke();
     }
 
     public bool HasPermission(string permissionCode)
     {
         if (CurrentUser is null) return false;
-        return _resolver.HasPermission(CurrentUser.UserId, permissionCode);
+        return GetEffectivePermissions().Any(permission =>
+            string.Equals(permission.PermissionCode, permissionCode, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(permission.EffectCode, "allow", StringComparison.OrdinalIgnoreCase));
     }
 
     public IReadOnlyList<EffectivePermissionResolver.ResolvedPermission> GetEffectivePermissions()
     {
         if (CurrentUser is null) return Array.Empty<EffectivePermissionResolver.ResolvedPermission>();
-        return _resolver.Resolve(CurrentUser.UserId);
+
+        if (_cachedPermissions is not null && _cachedPermissionUserId == CurrentUser.UserId)
+        {
+            return _cachedPermissions;
+        }
+
+        var permissions = _resolver.Resolve(CurrentUser.UserId).ToArray();
+        _cachedPermissionUserId = CurrentUser.UserId;
+        _cachedPermissions = permissions;
+        return permissions;
+    }
+
+    private void ClearPermissionCache()
+    {
+        _cachedPermissionUserId = null;
+        _cachedPermissions = null;
     }
 
     /// <summary>Mã hóa mật khẩu bằng SHA256.</summary>

@@ -26,6 +26,7 @@
 
     /* ── Surface & Background (Soft UI) ── */
     --color-ink: #2D3748;
+   --signature-pad-ink: #2D3748;
     --color-muted: #718096;
     --color-subtle: #A0AEC0;
     --color-page: #F7FAFC; /* Clean, very light blue/gray */
@@ -109,6 +110,7 @@
 
     /* Text */
     --color-ink: #F1F5F9;
+   --signature-pad-ink: #F8FAFC;
     --color-muted: #CBD5E1;
     --color-subtle: #94A3B8;
 
