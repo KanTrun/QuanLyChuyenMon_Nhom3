@@ -6,6 +6,8 @@
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
 @inject IClinicalProtocolSuggestionService ProtocolSuggestions
+@inject IClinicalExportService ExportService
+@inject IJSRuntime JS
 @implements IDisposable
 
 <PageTitle>Lâm sàng | QLCM Pro</PageTitle>
@@ -17,7 +19,10 @@
             <h1 class="admin-page-title">Bệnh nhân, lượt khám và phác đồ</h1>
             <p class="admin-page-subtitle">Quản lý hồ sơ tham chiếu, lượt khám, phác đồ đã áp dụng và chỉ định kỹ thuật liên quan.</p>
         </div>
-        <button type="button" class="admin-btn admin-btn-primary" @onclick="OpenCreatePatient">Thêm bệnh nhân</button>
+        <div class="admin-row-actions">
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="ExportClinicalReport">Xuất hồ sơ</button>
+            <button type="button" class="admin-btn admin-btn-primary" @onclick="OpenCreatePatient">Thêm bệnh nhân</button>
+        </div>
     </header>
 
     <AdminDataTable TItem="Sql.PatientRef"
@@ -329,6 +334,31 @@
         var totalPages = Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
         _page = Math.Clamp(_page, 1, totalPages);
         _pagedPatients = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private async Task ExportClinicalReport()
+    {
+        if (!Guard.HasPermission("SCR_CLINICAL:VIEW", "PERM_CLINICAL_view"))
+        {
+            Toasts.Show("Không có quyền", "Tài khoản hiện tại không được phép xuất hồ sơ lâm sàng.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            var generatedAt = DateTime.UtcNow;
+            var html = ExportService.BuildWorkspaceHtmlReport(generatedAt);
+            var fileName = $"qlcm-lam-sang-{AdminDateTimeDisplay.ToDisplayTime(generatedAt):yyyyMMdd-HHmm}.html";
+            var downloaded = await JS.InvokeAsync<bool>("qlcmShell.downloadFile", fileName, html, "text/html;charset=utf-8");
+            Toasts.Show(
+                downloaded ? "Đã xuất hồ sơ lâm sàng" : "Không thể tải tệp",
+                downloaded ? "Mở file HTML để xem, in hoặc lưu PDF từ trình duyệt." : "Trình duyệt từ chối thao tác tải tệp.",
+                downloaded ? ToastVariant.Success : ToastVariant.Warning);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể xuất hồ sơ", ex.Message, ToastVariant.Error);
+        }
     }
 
     private void OpenCreatePatient()

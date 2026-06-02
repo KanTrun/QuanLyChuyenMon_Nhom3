@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 using TelemedicineLandingPage.Models.Admin;
-using Sql = TelemedicineLandingPage.Models.Admin.Sql;
+using ModelsSql = TelemedicineLandingPage.Models.Admin.Sql;
 using TelemedicineLandingPage.Services.Admin.Sql;
 
 namespace TelemedicineLandingPage.Services.Admin;
@@ -56,7 +56,7 @@ public sealed class ClinicalExportService(IMedDataStore store) : IClinicalExport
     private static void AppendSummaryCard(StringBuilder html, string label, int value)
         => html.AppendLine($"<div class=\"card\"><div class=\"muted\">{Text(label)}</div><div class=\"value\">{value}</div></div>");
 
-    private void AppendPatient(StringBuilder html, Sql.PatientRef patient)
+    private void AppendPatient(StringBuilder html, ModelsSql.PatientRef patient)
     {
         html.AppendLine("<section class=\"patient\">");
         html.AppendLine($"<h2>{Text(DisplayPatient(patient))}</h2>");
@@ -65,7 +65,7 @@ public sealed class ClinicalExportService(IMedDataStore store) : IClinicalExport
         AppendRow(html, "Ma ngoai", patient.ExternalPatientId);
         AppendRow(html, "Nguon", patient.SourceSystemCode);
         AppendRow(html, "Ngay sinh", patient.BirthDate?.ToString("dd/MM/yyyy"));
-        AppendRow(html, "Gioi tinh", Lookup(Sql.MedLookups.Genders, patient.GenderCode));
+        AppendRow(html, "Gioi tinh", Lookup(ModelsSql.MedLookups.Genders, patient.GenderCode));
         AppendRow(html, "Ngay tao", AdminDateTimeDisplay.DateTime(patient.CreatedAt));
         html.AppendLine("</tbody></table>");
 
@@ -108,7 +108,7 @@ public sealed class ClinicalExportService(IMedDataStore store) : IClinicalExport
                 ProtocolVersionName(a.ClinicalProtocolVersionId),
                 EncounterCode(a.EncounterRefId),
                 a.DiagnosisCode,
-                Lookup(Sql.MedLookups.ProtocolApplicationStatuses, a.ApplicationStatus),
+                Lookup(ModelsSql.MedLookups.ProtocolApplicationStatuses, a.ApplicationStatus),
                 AdminDateTimeDisplay.DateTime(a.AppliedAt),
                 string.IsNullOrWhiteSpace(a.SkippedReason) ? a.DecisionContextJson : a.SkippedReason
             });
@@ -128,7 +128,7 @@ public sealed class ClinicalExportService(IMedDataStore store) : IClinicalExport
                 ServiceName(o.TechnicalServiceId),
                 EncounterCode(o.EncounterRefId),
                 DepartmentName(o.OrderingDepartmentId),
-                Lookup(Sql.MedLookups.OrderStatuses, o.OrderStatus),
+                Lookup(ModelsSql.MedLookups.OrderStatuses, o.OrderStatus),
                 AdminDateTimeDisplay.DateTime(o.OrderedAt),
                 AdminDateTimeDisplay.DateTime(o.CompletedAt)
             });
@@ -167,9 +167,13 @@ public sealed class ClinicalExportService(IMedDataStore store) : IClinicalExport
 
     private string DepartmentName(Guid? id) => id.HasValue ? store.Departments.FirstOrDefault(d => d.DepartmentId == id.Value)?.Name ?? "-" : "-";
     private string EncounterCode(Guid? id) => id.HasValue ? store.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == id.Value)?.ExternalEncounterId ?? "-" : "-";
-    private string ServiceName(Guid id) => store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == id)?.Name ?? "-";
-    private static string DisplayPatient(Sql.PatientRef patient) => patient.DisplayName ?? patient.PatientCode ?? patient.ExternalPatientId;
-    private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "-";
+    private string ServiceName(Guid id)
+    {
+        var service = store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == id);
+        return service is null ? "-" : $"{service.ServiceCode} - {service.Name}";
+    }
+    private static string DisplayPatient(ModelsSql.PatientRef patient) => patient.DisplayName ?? patient.PatientCode ?? patient.ExternalPatientId;
+    private static string Lookup(IReadOnlyList<ModelsSql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "-";
     private static string Blank(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
     private static string Text(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
 }

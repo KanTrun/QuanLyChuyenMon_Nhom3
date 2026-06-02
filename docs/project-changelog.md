@@ -24,6 +24,7 @@
 ### Fixed
 | Item | Description |
 |---|---|
+| Clinical sign confirm responsiveness | Removed the heavy PNG data-url roundtrip from the sign confirmation click path so the modal no longer feels frozen while validating the drawn signature |
 | Procedure filters | Procedure list now displays the version matching selected status/department filters and searches visible version, department and status text |
 | Session restore | Protected `/qlcm` aliases and persona workspace routes now receive pending restore auth state so page reload can restore `sessionStorage` before redirecting |
 | Docker login bootstrap | Local admin bootstrap migration now resets the documented Docker password hash for existing volumes |
