@@ -76,6 +76,19 @@ public sealed class RoutingIntegrityTests
     }
 
     [Fact]
+    public void ResourcePage_ShowsArchiveFilterAndDefaultsToActive()
+    {
+        var root = FindRepositoryRoot();
+        var resourcePage = File.ReadAllText(Path.Combine(root, "src", "telemedicine-landing-page", "Components", "Pages", "Resource", "ResourcePage.razor"));
+
+        Assert.Contains("resource-status", resourcePage);
+        Assert.Contains("ActiveResourceCount", resourcePage);
+        Assert.Contains("ArchivedResourceCount", resourcePage);
+        Assert.Contains("_statusFilter = \"active\"", resourcePage);
+        Assert.Contains("_statusFilter == \"all\"", resourcePage);
+    }
+
+    [Fact]
     public void RazorPageRoutes_AreUniqueAcrossComponents()
     {
         var root = FindRepositoryRoot();

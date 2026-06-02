@@ -33,6 +33,14 @@
                 }
             </select>
         </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="resource-status">Bộ lọc lưu trữ</label>
+            <select id="resource-status" class="admin-select" @bind="_statusFilter" @bind:after="ResetAndPaginate">
+                <option value="active">Đang hoạt động (@ActiveResourceCount)</option>
+                <option value="archived">Đã lưu trữ (@ArchivedResourceCount)</option>
+                <option value="all">Tất cả tài nguyên (@Store.ResourceCatalog.Count)</option>
+            </select>
+        </div>
         <div class="admin-filter-field" style="align-self:end;">
             <button type="button" class="admin-btn admin-btn-ghost" @onclick="ResetFilters">Đặt lại</button>
         </div>
@@ -63,7 +71,10 @@
                 <td style="text-align:right;" @onclick:stopPropagation="true">
                     <div class="admin-row-actions">
                         <button type="button" class="admin-icon-btn" title="Sửa" @onclick="() => OpenEdit(item)">✎</button>
-                        <button type="button" class="admin-icon-btn is-danger" title="Lưu trữ" @onclick="() => Archive(item)">×</button>
+                        @if (item.Status == "active")
+                        {
+                            <button type="button" class="admin-icon-btn is-danger" title="Lưu trữ" @onclick="() => Archive(item)">×</button>
+                        }
                     </div>
                 </td>
             </tr>
@@ -167,7 +178,10 @@
     private int _total;
     private string _search = string.Empty;
     private string _typeFilter = string.Empty;
+    private string _statusFilter = "active";
     private IReadOnlyList<Sql.ResourceCatalogItem> _pagedItems = Array.Empty<Sql.ResourceCatalogItem>();
+    private int ActiveResourceCount => Store.ResourceCatalog.Count(r => r.Status == "active");
+    private int ArchivedResourceCount => Store.ResourceCatalog.Count(r => r.Status != "active");
 
     private bool _detailOpen;
     private Sql.ResourceCatalogItem? _selected;
@@ -199,6 +213,8 @@
     {
         var query = Store.ResourceCatalog
             .Where(r => string.IsNullOrEmpty(_typeFilter) || r.ResourceType == _typeFilter)
+            .Where(r => _statusFilter == "all"
+                || (_statusFilter == "archived" ? r.Status != "active" : r.Status == _statusFilter))
             .Where(r => string.IsNullOrWhiteSpace(_search)
                 || r.ResourceCode.Contains(_search, StringComparison.OrdinalIgnoreCase)
                 || r.Name.Contains(_search, StringComparison.OrdinalIgnoreCase))
@@ -221,6 +237,7 @@
     {
         _search = string.Empty;
         _typeFilter = string.Empty;
+        _statusFilter = "active";
         ResetAndPaginate();
     }
 
