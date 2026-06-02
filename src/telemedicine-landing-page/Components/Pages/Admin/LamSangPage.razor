@@ -619,8 +619,8 @@
         _signatureBusy = true;
         try
         {
-            var signatureImage = await JS.InvokeAsync<string?>("qlcmShell.getSignaturePadDataUrl", SignatureCanvasId);
-            if (string.IsNullOrWhiteSpace(signatureImage))
+            var hasSignature = await JS.InvokeAsync<bool>("qlcmShell.hasSignaturePadInk", SignatureCanvasId);
+            if (!hasSignature)
             {
                 Toasts.Show("Thiếu chữ ký", "Vui lòng ký trực tiếp trong bảng trước khi xác nhận.", ToastVariant.Warning);
                 return;
@@ -631,7 +631,7 @@
                 Page = "admin_lam_sang",
                 Patient = PatientCode(_signingRow.Patient),
                 ProtocolVersionId = _signingRow.Application.ClinicalProtocolVersionId,
-                SignatureImageDataUrl = signatureImage
+                SignatureCaptured = true
             });
             var result = await SignatureService.CreateDemoSignatureAsync(
                 SignatureTargetType,

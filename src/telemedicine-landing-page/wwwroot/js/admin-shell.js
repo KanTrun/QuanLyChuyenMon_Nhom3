@@ -168,13 +168,13 @@
         return false;
     }
 
-    function downloadCsv(filename, content) {
+    function downloadFile(filename, content, contentType) {
         try {
-            var blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
+            var blob = new Blob([content], { type: contentType || 'application/octet-stream' });
             var url = window.URL.createObjectURL(blob);
             var a = document.createElement('a');
             a.href = url;
-            a.download = filename || 'bao-cao.csv';
+            a.download = filename || 'qlcm-export';
             a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
@@ -184,9 +184,13 @@
             }, 0);
             return true;
         } catch (err) {
-            console && console.warn && console.warn('qlcmShell downloadCsv error:', err);
+            console && console.warn && console.warn('qlcmShell downloadFile error:', err);
             return false;
         }
+    }
+
+    function downloadCsv(filename, content) {
+        return downloadFile(filename || 'bao-cao.csv', content, 'text/csv;charset=utf-8');
     }
 
     function lockBodyScroll(lock) {
@@ -352,6 +356,12 @@
         return entry.pad.toDataURL('image/png');
     }
 
+    function hasSignaturePadInk(canvasId) {
+        var entry = state.signaturePads.get(canvasId);
+        if (!entry || !entry.pad) return false;
+        return !entry.pad.isEmpty();
+    }
+
     function clearSignaturePad(canvasId) {
         var entry = state.signaturePads.get(canvasId);
         if (!entry || !entry.pad) return false;
@@ -441,6 +451,7 @@
         isFullscreen: isFullscreen,
         focusElement: focusElement,
         lockBodyScroll: lockBodyScroll,
+        downloadFile: downloadFile,
         downloadCsv: downloadCsv,
         registerOutsideClick: registerOutsideClick,
         unregisterOutsideClick: unregisterOutsideClick,
@@ -451,6 +462,7 @@
         autoGrowTextarea: autoGrowTextarea,
         initSignaturePad: initSignaturePad,
         getSignaturePadDataUrl: getSignaturePadDataUrl,
+        hasSignaturePadInk: hasSignaturePadInk,
         clearSignaturePad: clearSignaturePad,
         disposeSignaturePad: disposeSignaturePad,
     };
