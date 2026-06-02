@@ -19,6 +19,11 @@ public sealed class MedDbDataStore : IMedDataStore
     // Sự kiện thay đổi trạng thái (giữ tương thích giao diện)
     public event Action? StateChanged;
     private void RaiseStateChanged() => StateChanged?.Invoke();
+    public void Refresh()
+    {
+        _db.ChangeTracker.Clear();
+        RaiseStateChanged();
+    }
 
     // === Đọc dữ liệu — truy vấn trực tiếp từ SQL Server ===
     public IReadOnlyList<Department> Departments => _db.Departments.ToList();

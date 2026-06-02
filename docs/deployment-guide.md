@@ -39,6 +39,15 @@ The bootstrap migration reactivates this local admin account when an older Docke
 | `DB_PORT` | `14333` | Host port for SQL Server |
 | `MSSQL_SA_PASSWORD` | `QlcmDev_ChangeMe_2026!` | Local SQL Server SA password |
 | `CHATBOT_API_KEY` | empty | Optional Gemini API key |
+| `CHATBOT_PROVIDER` | `Gemini` | Chatbot provider (`Gemini` or `Anthropic`) |
+| `CHATBOT_MODEL` | `gemini-2.5-flash` | Provider-compatible model |
+
+### Chatbot Credential and Privacy Guard
+Create a user-owned Gemini key manually in [Google AI Studio](https://aistudio.google.com/api-keys), restrict the key to Gemini API, and inject it only through environment variables or user-secrets. Never commit a key.
+
+Free-tier prompts and responses may be used to improve Google products. The runtime privacy guard blocks likely patient identifiers and medical-advice prompts locally before transport. Treat this as a supplemental guard, not permission to send sensitive data. Keep chatbot usage limited to sanitized software-operation guidance. Do not send patient records, prescriptions, case details, notification content, or audit payloads.
+
+`gemini-2.5-flash` remains the stable default. Re-check [Gemini models](https://ai.google.dev/gemini-api/docs/models) and [deprecations](https://ai.google.dev/gemini-api/docs/deprecations) before production rollout.
 
 The app container uses:
 

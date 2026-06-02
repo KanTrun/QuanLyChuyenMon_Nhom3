@@ -106,11 +106,11 @@
                         <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEdit(row)">Sửa</button>
                         <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SetStatus(row, "skipped")'>Bỏ qua</button>
                         <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => SetStatus(row, "applied")'>Áp dụng</button>
-                        @if (row.Application.ApplicationStatus == "applied")
+                        @if (row.Application.ApplicationStatus == "applied" && CanCurrentUserSign())
                         {
                             <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => OpenSign(row)">Ký</button>
                         }
-                        @if (row.Application.ApplicationStatus == "signed")
+                        @if (row.Application.ApplicationStatus == "signed" && CanCurrentUserRevoke())
                         {
                             <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenRevoke(row)">Thu hồi</button>
                         }
@@ -191,7 +191,7 @@
     </FooterContent>
 </AdminModal>
 
-<AdminModal IsOpen="_signModalOpen" IsOpenChanged="v => _signModalOpen = v" Title="Ký xác nhận hồ sơ">
+<AdminModal IsOpen="_signModalOpen" IsOpenChanged="SetSignModalOpen" Title="Ký xác nhận hồ sơ">
     <ChildContent>
         @if (_signingRow is not null)
         {
@@ -205,10 +205,15 @@
                 <dt>Nhà cung cấp</dt>
                 <dd>Demo - chưa có giá trị pháp lý</dd>
             </dl>
+            <div class="signature-pad-panel">
+                <label class="admin-form-field-label is-required" for="@SignatureCanvasId">Chữ ký điện tử</label>
+                <canvas id="@SignatureCanvasId" class="signature-pad-canvas" aria-label="Vùng vẽ chữ ký điện tử"></canvas>
+            </div>
         }
     </ChildContent>
     <FooterContent>
-        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _signModalOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="ClearSignaturePad">Xóa chữ ký</button>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="CloseSignModal">Hủy</button>
         <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">Ký xác nhận</button>
     </FooterContent>
 </AdminModal>
@@ -231,6 +236,7 @@
 @code {
     private const int _pageSize = 10;
     private const string SignatureTargetType = "patient_protocol_application";
+    private const string SignatureCanvasId = "clinical-signature-pad";
     private int _page = 1;
     private int _total;
     private IReadOnlyList<ClinicalRow> _rows = Array.Empty<ClinicalRow>();
@@ -255,6 +261,7 @@
     private bool _signModalOpen;
     private bool _revokeModalOpen;
     private bool _signatureBusy;
+    private bool _signaturePadReady;
     private ClinicalRow? _signingRow;
     private string _revokeReason = string.Empty;
 
@@ -269,6 +276,11 @@
         if (firstRender)
         {
             await TryConsumeDraftNonceAsync();
+        }
+
+        if (_signModalOpen && !_signaturePadReady)
+        {
+            await InitializeSignaturePadAsync();
         }
     }
 
@@ -543,7 +555,62 @@
         }
 
         _signingRow = row;
+        _signaturePadReady = false;
         _signModalOpen = true;
+    }
+
+    private async Task SetSignModalOpen(bool open)
+    {
+        if (!open)
+        {
+            await CloseSignModal();
+            return;
+        }
+
+        _signModalOpen = true;
+        _signaturePadReady = false;
+    }
+
+    private async Task InitializeSignaturePadAsync()
+    {
+        try
+        {
+            _signaturePadReady = await JS.InvokeAsync<bool>("qlcmShell.initSignaturePad", SignatureCanvasId);
+        }
+        catch (JSDisconnectedException)
+        {
+            _signaturePadReady = false;
+        }
+        catch (Exception ex)
+        {
+            _signaturePadReady = false;
+            Toasts.Show("Không thể mở bảng ký", ex.Message, ToastVariant.Warning);
+        }
+    }
+
+    private async Task ClearSignaturePad()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("qlcmShell.clearSignaturePad", SignatureCanvasId);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể xóa chữ ký", ex.Message, ToastVariant.Warning);
+        }
+    }
+
+    private async Task CloseSignModal()
+    {
+        _signModalOpen = false;
+        _signaturePadReady = false;
+        try
+        {
+            await JS.InvokeVoidAsync("qlcmShell.disposeSignaturePad", SignatureCanvasId);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
     }
 
     private async Task ConfirmSign()
@@ -552,11 +619,19 @@
         _signatureBusy = true;
         try
         {
+            var signatureImage = await JS.InvokeAsync<string?>("qlcmShell.getSignaturePadDataUrl", SignatureCanvasId);
+            if (string.IsNullOrWhiteSpace(signatureImage))
+            {
+                Toasts.Show("Thiếu chữ ký", "Vui lòng ký trực tiếp trong bảng trước khi xác nhận.", ToastVariant.Warning);
+                return;
+            }
+
             var metadata = JsonSerializer.Serialize(new
             {
                 Page = "admin_lam_sang",
                 Patient = PatientCode(_signingRow.Patient),
-                ProtocolVersionId = _signingRow.Application.ClinicalProtocolVersionId
+                ProtocolVersionId = _signingRow.Application.ClinicalProtocolVersionId,
+                SignatureImageDataUrl = signatureImage
             });
             var result = await SignatureService.CreateDemoSignatureAsync(
                 SignatureTargetType,
@@ -567,7 +642,8 @@
 
             if (result.Result == SignatureResult.Created)
             {
-                _signModalOpen = false;
+                await CloseSignModal();
+                Store.Refresh();
                 Toasts.Show("Đã ký xác nhận hồ sơ", "Chữ ký demo đã được lưu.", ToastVariant.Success);
                 Recompute();
                 return;
@@ -624,6 +700,7 @@
             if (result == SignatureResult.Revoked)
             {
                 _revokeModalOpen = false;
+                Store.Refresh();
                 Toasts.Show("Đã thu hồi", "Hồ sơ đã chuyển sang trạng thái thu hồi.", ToastVariant.Success);
                 Recompute();
                 return;
@@ -669,6 +746,15 @@
         => Store.SignatureRecords.FirstOrDefault(s =>
             s.TargetType == SignatureTargetType &&
             s.TargetId == applicationId);
+    private bool CanCurrentUserSign()
+        => IsCurrentAdmin()
+           || UserContext.HasPermission("SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION")
+           || UserContext.HasPermission("SCR_CLINICAL:EXECUTE")
+           || UserContext.HasPermission("PERM_CLINICAL_execute");
+    private bool CanCurrentUserRevoke()
+        => IsCurrentAdmin() || UserContext.HasPermission("SCR_ADMIN:MANAGE_SIGNATURES");
+    private bool IsCurrentAdmin()
+        => string.Equals(UserContext.CurrentUser?.Username, "admin", StringComparison.OrdinalIgnoreCase);
 
     public void Dispose() => Store.StateChanged -= OnChanged;
 

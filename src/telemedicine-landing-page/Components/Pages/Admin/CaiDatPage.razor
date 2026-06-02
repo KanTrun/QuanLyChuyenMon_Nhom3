@@ -1,5 +1,6 @@
 @page "/admin/cai-dat"
 @layout AdminLayout
+@using Microsoft.Extensions.Options
 @using TelemedicineLandingPage.Models.Admin.Sql
 @using TelemedicineLandingPage.Services.Admin.Sql
 @inject IUserPreferencesService Preferences
@@ -9,6 +10,8 @@
 @inject IToastService Toasts
 @inject BrowserSessionService BrowserSession
 @inject IConfirmDialogService Confirm
+@inject IOptionsMonitor<ChatbotOptions> ChatbotConfig
+@inject IChatbotPrivacyGuard ChatbotPrivacy
 @inject NavigationManager Navigation
 @implements IDisposable
 
@@ -99,11 +102,10 @@
             <div class="admin-form-field">
                 <label class="admin-form-field-label" for="cd-ai-model">Mô hình</label>
                 <select id="cd-ai-model" class="admin-select" @bind="_aiModel">
-                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                    <option value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5</option>
-                    <option value="gpt-4o-mini">GPT-4o mini</option>
+                    @foreach (var model in ChatbotModelCatalog.ForProvider(ChatbotConfig.CurrentValue.Provider))
+                    {
+                        <option value="@model.Value">@model.Label</option>
+                    }
                 </select>
             </div>
             <div class="admin-form-field admin-form-field-full">
@@ -111,6 +113,10 @@
                 <textarea id="cd-ai-prompt" class="admin-textarea" rows="5" @bind="_aiPrompt"></textarea>
             </div>
         </div>
+        <p class="admin-page-subtitle">
+            Provider hiện tại: @ChatbotConfig.CurrentValue.Provider. Chỉ dùng trợ lý cho hướng dẫn vận hành không định danh;
+            không nhập dữ liệu bệnh nhân hoặc yêu cầu tư vấn y khoa.
+        </p>
         <div style="display:flex; justify-content:flex-end; gap:8px;">
             <button type="button" class="admin-btn admin-btn-primary" @onclick="SaveUiPreferences">Lưu cấu hình giao diện/AI</button>
         </div>
@@ -161,7 +167,10 @@
         _theme = Preferences.Current.Theme;
         _density = Preferences.Current.Density;
         _animationsEnabled = Preferences.Current.AnimationsEnabled;
-        _aiModel = Preferences.Current.AiModel;
+        _aiModel = ChatbotModelCatalog.Resolve(
+            ChatbotConfig.CurrentValue.Provider,
+            ChatbotConfig.CurrentValue.Model,
+            Preferences.Current.AiModel);
         _aiPrompt = Preferences.Current.AiSystemPrompt;
     }
 
@@ -245,6 +254,15 @@
 
     private void SaveUiPreferences()
     {
+        if (!string.IsNullOrWhiteSpace(_aiPrompt) && !ChatbotPrivacy.CanSend(_aiPrompt, out _))
+        {
+            Toasts.Show(
+                "Không thể lưu tùy chỉnh AI",
+                "Không nhập dữ liệu bệnh nhân hoặc yêu cầu tư vấn y khoa vào câu lệnh trợ lý.",
+                ToastVariant.Warning);
+            return;
+        }
+
         var current = Preferences.Current;
         Preferences.Update(current with
         {

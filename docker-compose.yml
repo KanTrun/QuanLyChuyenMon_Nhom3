@@ -8,6 +8,8 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__MedDb: "Server=sqlserver,1433;Database=MedicalProcedureManagement;User Id=sa;Password=${MSSQL_SA_PASSWORD:-QlcmDev_ChangeMe_2026!};TrustServerCertificate=True;Encrypt=False;"
       Chatbot__ApiKey: ${CHATBOT_API_KEY:-}
+      Chatbot__Provider: ${CHATBOT_PROVIDER:-Gemini}
+      Chatbot__Model: ${CHATBOT_MODEL:-gemini-2.5-flash}
     depends_on:
       db-init:
         condition: service_completed_successfully

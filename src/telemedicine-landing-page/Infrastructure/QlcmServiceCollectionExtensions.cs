@@ -66,7 +66,7 @@ public static class QlcmServiceCollectionExtensions
     public static IServiceCollection AddQlcmDatabase(this IServiceCollection services, string connectionString)
     {
         services.AddDbContext<MedDbContext>(ConfigureMedDbContext);
-        services.AddDbContextFactory<MedDbContext>(ConfigureMedDbContext, ServiceLifetime.Scoped, ServiceLifetime.Singleton);
+        services.AddDbContextFactory<MedDbContext>(ConfigureMedDbContext, ServiceLifetime.Scoped);
 
         services.AddHealthChecks()
             .AddDbContextCheck<MedDbContext>("med-db")
@@ -151,7 +151,7 @@ public static class QlcmServiceCollectionExtensions
         services.AddScoped<AdminActionGuard>();
         services.AddScoped<BrowserSessionService>();
         services.AddScoped<NavGate>();
-        services.AddSingleton<IUserPreferencesService, UserPreferencesService>();
+        services.AddScoped<IUserPreferencesService, UserPreferencesService>();
         services.AddScoped<IReportService, SqlReportService>();
         services.AddScoped<LoadingService>();
         services.AddScoped<IAdminNavigationState, AdminNavigationState>();
@@ -165,23 +165,33 @@ public static class QlcmServiceCollectionExtensions
 
     public static IServiceCollection AddQlcmChatbot(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<ChatbotOptions>(configuration.GetSection(ChatbotOptions.SectionName));
+        services.AddOptions<ChatbotOptions>()
+            .Bind(configuration.GetSection(ChatbotOptions.SectionName))
+            .Validate(options => ChatbotModelCatalog.IsKnownProvider(options.Provider),
+                "Chatbot provider must be Gemini or Anthropic.")
+            .Validate(options => ChatbotModelCatalog.IsSupportedModel(options.Provider, options.Model),
+                "Chatbot model must be compatible with the configured provider.")
+            .Validate(options => ChatbotModelCatalog.IsAllowedBaseUrl(options.Provider, options.BaseUrl),
+                "Chatbot BaseUrl must be the official HTTPS endpoint for the configured provider.")
+            .ValidateOnStart();
+        services.AddScoped<IChatbotContextBuilder, QlcmChatbotContextBuilder>();
+        services.AddScoped<IChatbotPrivacyGuard, ChatbotPrivacyGuard>();
         var opts = configuration.GetSection(ChatbotOptions.SectionName).Get<ChatbotOptions>() ?? new ChatbotOptions();
         if (string.IsNullOrWhiteSpace(opts.ApiKey))
         {
-            services.AddSingleton<IChatbotClient, DemoChatbotClient>();
+            services.AddScoped<IChatbotClient, DemoChatbotClient>();
         }
         else if (string.Equals(opts.Provider, "Anthropic", StringComparison.OrdinalIgnoreCase))
         {
             services.AddHttpClient<AnthropicChatbotClient>(ConfigureChatbotHttpClient)
                 .AddQlcmExternalResilience();
-            services.AddSingleton<IChatbotClient>(sp => sp.GetRequiredService<AnthropicChatbotClient>());
+            services.AddScoped<IChatbotClient>(sp => sp.GetRequiredService<AnthropicChatbotClient>());
         }
         else
         {
             services.AddHttpClient<GeminiChatbotClient>(ConfigureChatbotHttpClient)
                 .AddQlcmExternalResilience();
-            services.AddSingleton<IChatbotClient>(sp => sp.GetRequiredService<GeminiChatbotClient>());
+            services.AddScoped<IChatbotClient>(sp => sp.GetRequiredService<GeminiChatbotClient>());
         }
 
         services.AddScoped<IChatbotConversationStore, ChatbotConversationStore>();

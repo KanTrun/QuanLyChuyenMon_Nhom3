@@ -8,6 +8,10 @@ QLCM Pro gồm sidebar điều hướng, bảng lệnh nhanh và các trang Tổ
 ### Cấu hình trợ lý AI
 Mặc định chatbot dùng Google Gemini qua endpoint `https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse`. Lấy API key miễn phí tại [Google AI Studio](https://aistudio.google.com/apikey). Mô hình mặc định `gemini-2.5-flash` cho chất lượng tốt nhất ở free tier; có thể đổi sang `gemini-2.5-flash-lite` (quota cao hơn) hoặc `gemini-2.5-pro` (chất lượng cao nhất, quota thấp hơn) trong trang Cài đặt.
 
+API key phải do chủ tài khoản tự tạo và giới hạn cho Gemini API. Không tự động đăng ký, thu thập hoặc ghi key vào source. Theo [Gemini API Terms](https://ai.google.dev/gemini-api/terms#unpaid-services), dữ liệu free tier có thể được dùng để cải thiện sản phẩm; không nhập dữ liệu bệnh nhân, dữ liệu bí mật hoặc yêu cầu tư vấn y khoa vào chatbot. Trợ lý chỉ hỗ trợ vận hành phần mềm không định danh. Privacy guard cục bộ chặn nội dung có dấu hiệu định danh bệnh nhân hoặc yêu cầu tư vấn y khoa trước khi gửi tới API ngoài; đây là lớp bảo vệ bổ sung, không thay thế quy tắc không nhập dữ liệu nhạy cảm.
+
+`gemini-2.5-flash` là model stable. Trước khi triển khai production cần kiểm tra lại [Gemini models](https://ai.google.dev/gemini-api/docs/models) và [deprecations](https://ai.google.dev/gemini-api/docs/deprecations), vì lịch model có thể thay đổi.
+
 Nạp `ApiKey` qua biến môi trường hoặc `dotnet user-secrets` (không đặt trực tiếp vào `appsettings.json`):
 
 ```powershell
@@ -93,6 +97,8 @@ Có thể đổi cấu hình qua biến môi trường hoặc file `.env` cục 
 | `DB_PORT` | `14333` | Port SQL Server trên máy host |
 | `MSSQL_SA_PASSWORD` | `QlcmDev_ChangeMe_2026!` | Mật khẩu SA cho SQL Server local |
 | `CHATBOT_API_KEY` | rỗng | API key Gemini tuỳ chọn |
+| `CHATBOT_PROVIDER` | `Gemini` | Provider chatbot (`Gemini` hoặc `Anthropic`) |
+| `CHATBOT_MODEL` | `gemini-2.5-flash` | Model tương thích provider |
 
 Muốn tạo lại DB sạch:
 
@@ -116,7 +122,11 @@ Script tạo dữ liệu mẫu cho khoa phòng, người dùng, vai trò, quyề
 ```powershell
 dotnet build .\telemedicine-landing-page.sln -c Release
 dotnet test .\telemedicine-landing-page.sln -c Release
+dotnet list .\telemedicine-landing-page.sln package --vulnerable --include-transitive
+docker compose config
 ```
+
+Kết quả xác minh ngày `2026-06-02`: build Release đạt `0 warnings, 0 errors`; chatbot đạt `42/42`; toàn solution đạt `175/175`; package vulnerability scan sạch; `docker compose config` hợp lệ.
 
 ## Ghi chú phạm vi
 Các tích hợp kho/dược/trang thiết bị ngoài hệ thống hiện được bọc qua service boundary nội bộ. Khi có API thật từ HIS/EMR/kho/dược, thay adapter tương ứng thay vì đưa logic tích hợp trực tiếp vào Razor page.

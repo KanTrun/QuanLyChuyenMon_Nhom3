@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Runtime.CompilerServices;
 using TelemedicineLandingPage.Models.Chatbot;
 using TelemedicineLandingPage.Services.Admin;
@@ -82,44 +81,25 @@ public sealed class DemoChatbotClient : IChatbotClient
 
     private static string ComposeReply(string userInput)
     {
-        var normalized = (userInput ?? string.Empty).Trim().ToLower(CultureInfo.InvariantCulture);
+        var normalized = QlcmChatbotKnowledgeCatalog.Normalize(userInput);
 
         if (string.IsNullOrEmpty(normalized))
         {
-            return "Bạn vui lòng nhập câu hỏi cụ thể nhé. Tôi có thể hỗ trợ về quy trình kỹ thuật, phân quyền, danh mục, phác đồ, báo cáo và cài đặt.";
+            return "Bạn vui lòng nhập câu hỏi cụ thể nhé. Tôi có thể hỗ trợ về tài khoản, quy trình kỹ thuật, phân quyền, tài nguyên, chỉ định, phác đồ, báo cáo, chữ ký demo và cài đặt.";
         }
 
         if (Contains(normalized, "chao") || Contains(normalized, "xin chao") || Contains(normalized, "hello"))
         {
-            return "Xin chào! Rất vui được hỗ trợ bạn. Bạn có thể hỏi tôi về **quy trình kỹ thuật**, **phân quyền**, **phác đồ điều trị**, **báo cáo tiêu thụ** hoặc các cài đặt trong hệ thống QLCM Pro.";
+            return "Xin chào! Rất vui được hỗ trợ bạn. Bạn có thể hỏi tôi về **tài khoản**, **quy trình kỹ thuật**, **phân quyền**, **tài nguyên**, **chỉ định**, **phác đồ**, **báo cáo** hoặc **chữ ký demo** trong QLCM Pro.";
         }
 
-        if (Contains(normalized, "quy trinh") || Contains(normalized, "quytrinh"))
+        var topic = QlcmChatbotKnowledgeCatalog.FindRelevant(normalized, limit: 1).FirstOrDefault();
+        if (topic is not null)
         {
-            return "Để quản lý **Quy trình kỹ thuật**, bạn có thể:\n- Mở mục `Quy trình` ở thanh điều hướng\n- Bấm `Tạo quy trình mới` để khởi tạo\n- Vào tab `Phê duyệt` để duyệt các quy trình đang chờ";
+            return topic.DemoReply;
         }
 
-        if (Contains(normalized, "phan quyen") || Contains(normalized, "phanquyen"))
-        {
-            return "Trang **Phân quyền** chia làm ba tab: *Vai trò*, *Tài khoản* và *Lịch sử thay đổi*. Mọi thay đổi ma trận quyền đều được ghi nhận kèm lý do để truy vết.";
-        }
-
-        if (Contains(normalized, "phac do") || Contains(normalized, "phacdo"))
-        {
-            return "Mục **Phác đồ** liệt kê các phác đồ điều trị theo chuyên khoa. Bạn có thể:\n- Lọc theo loại phác đồ\n- Mở thẻ phác đồ để xem chống chỉ định\n- Bấm `Áp dụng cho bệnh nhân` để ghi nhận lượt áp dụng";
-        }
-
-        if (Contains(normalized, "bao cao") || Contains(normalized, "baocao"))
-        {
-            return "Trang **Báo cáo** tổng hợp 4 nhóm chỉ tiêu. Báo cáo tiêu thụ vật tư có biểu đồ top sai lệch và hỗ trợ `Xuất CSV` để mở bằng Excel.";
-        }
-
-        if (Contains(normalized, "cai dat") || Contains(normalized, "caidat") || Contains(normalized, "settings"))
-        {
-            return "Vào **Cài đặt** để cập nhật hồ sơ, giao diện, kênh thông báo và *Trợ lý AI*. Sau khi đổi mô hình hoặc câu lệnh hệ thống, hãy bấm `Lưu cấu hình`.";
-        }
-
-        return "Tôi đã ghi nhận câu hỏi. Trong chế độ demo, tôi gợi ý bạn xem các mục **Quy trình**, **Phác đồ** hoặc **Báo cáo** trên thanh điều hướng để tra cứu nhanh.";
+        return "Tôi đã ghi nhận câu hỏi. Trong chế độ demo, hãy hỏi theo chủ đề **tài khoản**, **quy trình**, **phân quyền**, **tài nguyên**, **chỉ định**, **phác đồ**, **báo cáo**, **thông báo**, **chữ ký demo** hoặc **cài đặt**.";
     }
 
     private static bool Contains(string source, string needle) =>

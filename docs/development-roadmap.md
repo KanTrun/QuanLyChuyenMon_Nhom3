@@ -12,20 +12,21 @@ Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-
 | Clinical workflows | Complete | Bệnh nhân, lượt khám, phác đồ áp dụng, chỉ định kỹ thuật, snapshot nguồn lực và tiêu hao thực tế |
 | Audit remediation | Complete | Action guard, session restore, protocol draft/submit/publish, confirm/reject reason, audit history, dashboard/report/audit UX fixes |
 | Production architecture foundation | Complete | Identity-compatible account tables, custom permission claims/policies, SQL retry/health checks, Serilog structured logging, Docker migration runner |
-| Security validation guard | Complete | FluentValidation password commands, common-password checks, null-password lock migration, admin `AdminAccess` folder guard |
+| Security validation guard | Complete | FluentValidation password commands, common-password checks, null-password lock migration, admin layout/NavGate route guard |
 | Workflow and jobs foundation | Complete | Workflow guards for procedure versions/orders, order status service extraction, Hangfire SQL dashboard and `IJobService` wrapper |
 | Realtime notifications | Complete | SignalR notification hub, persisted user/group/broadcast notification service, admin bell live toast updates and presence hooks |
 | Business UI remediation | Complete | Admin pages use hospital-facing labels, approval-backed permission changes, active-version drafts, resource-unit guards and compact technical details |
 | Business workflow completion | Complete | Runtime procedure guard, scheduled permission apply job, inventory snapshot service, ICD protocol suggestions and persona route gating |
+| Grounded chatbot safety | Complete | Core QLCM knowledge catalog, permission-scoped aggregate context, local privacy guard, header-based Gemini auth, per-circuit AI settings and manual user-owned key policy |
 | Seed data | Complete | `scripts/seed-realistic-data.sql` nạp dữ liệu mẫu thực tế cho demo/QA |
-| Verification | Complete | Release build/test passed, 149 tests after Vietnam time timeline fix |
+| Verification | Complete | Release build `0 warnings, 0 errors`; chatbot `42/42`; full solution `192/192`; Docker web healthy and login/reload smoke passed; package vulnerability scan clean; Docker Compose config valid |
 
 ## Legacy Landing Cleanup Track
 | Item | Status | Output |
 |---|---|---|
 | Runtime removal | Complete | Removed landing sections/content service/link options/CSS from active app |
 | Entry route | Complete | `/` shows a QLCM Pro intro with login/register CTAs so users see the professional product entry first |
-| Verification | Complete | Release build/test passed, 149 tests; Docker web healthy on `localhost:8080` |
+| Verification | Complete | Covered by current Release verification: full solution `192/192`; Docker Compose config valid |
 
 ## Procedure Module Roadmap
 Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này đã có source triển khai trong Blazor app và đã được kiểm tra bằng build/test Release.
@@ -47,8 +48,8 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này �
 | Architecture blueprint | 100% |
 | Implementation plan | 100% |
 | Code implementation | 100% for implementation-plan scope |
-| Test automation | Release build/test passed, 149 tests after Vietnam time timeline fix |
-| Deployment readiness | Docker Compose web/sql/db-init verified locally; target DB execution/config remains deployment task |
+| Test automation | Release build `0 warnings, 0 errors`; chatbot `42/42`; full solution `175/175`; package vulnerability scan clean |
+| Deployment readiness | Docker Compose config valid; web/sql/db-init verified locally; re-check stable Gemini model before production rollout |
 
 ## Dependencies
 | Dependency | Needed For |

@@ -79,6 +79,21 @@ public class ChatbotServiceTests
         Assert.Equal("Demo nội bộ", service.ProviderLabel);
     }
 
+    [Fact]
+    public async Task SendAsync_SensitivePatientContent_IsBlockedBeforeTransport()
+    {
+        var store = new ChatbotConversationStore();
+        var client = new RecordingChatbotClient(new[] { "should not stream" });
+        var service = new ChatbotService(client, store);
+
+        await service.SendAsync("Chẩn đoán cho bệnh nhân BN-12345", CancellationToken.None);
+
+        Assert.Null(client.LastConversation);
+        Assert.Equal(ChatbotPrivacyGuard.BlockedUserMarker, service.Messages[^2].Content);
+        Assert.Contains("không thể gửi", service.Messages[^1].Content, StringComparison.OrdinalIgnoreCase);
+        Assert.False(service.IsStreaming);
+    }
+
     private sealed class RecordingChatbotClient : IChatbotClient
     {
         private readonly string[] _chunks;

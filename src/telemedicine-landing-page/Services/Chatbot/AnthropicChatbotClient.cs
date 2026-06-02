@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using TelemedicineLandingPage.Models.Chatbot;
 using TelemedicineLandingPage.Services.Admin;
@@ -21,15 +22,27 @@ public sealed class AnthropicChatbotClient : IChatbotClient
     private readonly HttpClient _http;
     private readonly IOptionsMonitor<ChatbotOptions> _options;
     private readonly IUserPreferencesService _preferences;
+    private readonly IChatbotContextBuilder _contextBuilder;
 
+    [ActivatorUtilitiesConstructor]
     public AnthropicChatbotClient(
         HttpClient http,
         IOptionsMonitor<ChatbotOptions> options,
         IUserPreferencesService preferences)
+        : this(http, options, preferences, new CoreOnlyChatbotContextBuilder())
+    {
+    }
+
+    public AnthropicChatbotClient(
+        HttpClient http,
+        IOptionsMonitor<ChatbotOptions> options,
+        IUserPreferencesService preferences,
+        IChatbotContextBuilder contextBuilder)
     {
         _http = http;
         _options = options;
         _preferences = preferences;
+        _contextBuilder = contextBuilder;
     }
 
     public string ProviderLabel => "Anthropic Claude";
@@ -41,8 +54,8 @@ public sealed class AnthropicChatbotClient : IChatbotClient
         var opts = _options.CurrentValue;
         var prefs = _preferences.Current;
 
-        var model = !string.IsNullOrWhiteSpace(prefs.AiModel) ? prefs.AiModel : opts.Model;
-        var system = !string.IsNullOrWhiteSpace(prefs.AiSystemPrompt) ? prefs.AiSystemPrompt : opts.SystemPrompt;
+        var model = ChatbotModelCatalog.Resolve(opts.Provider, opts.Model, prefs.AiModel);
+        var system = _contextBuilder.BuildSystemPrompt(conversation, opts.SystemPrompt, prefs.AiSystemPrompt);
         var temperature = Math.Round(Math.Clamp(prefs.AiTemperature, 0d, 1d), 2);
 
         var messages = conversation

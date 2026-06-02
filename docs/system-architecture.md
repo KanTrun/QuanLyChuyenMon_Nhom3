@@ -1,5 +1,20 @@
 # System Architecture
 
+## Grounded Chatbot Safety Architecture
+Ngày 2026-06-02, chatbot QLCM có grounding bắt buộc và privacy guard cục bộ cho API ngoài.
+
+| Area | Decision |
+|---|---|
+| Core knowledge | `QlcmChatbotKnowledgeCatalog` lưu workflow, terminology, boundary và disclaimer bắt buộc; prompt tùy chỉnh không thể thay thế core rules |
+| Retrieval | Demo và live context chọn topic liên quan bằng normalize không dấu; live prompt thêm route được phép và snapshot tổng hợp không định danh |
+| Permission scope | `QlcmChatbotContextBuilder` dùng `NavGate.Filter()` nên chỉ mô tả route user hiện tại có quyền mở |
+| Data minimization | Snapshot chỉ gồm count quy trình, version active, dịch vụ kỹ thuật, phác đồ active và yêu cầu đổi quyền lên lịch |
+| Privacy guard | `ChatbotPrivacyGuard` chặn local prompt có dấu hiệu định danh bệnh nhân hoặc yêu cầu tư vấn y khoa; nội dung gốc không vào conversation gửi ngoài |
+| Secret handling | Gemini key gửi qua header `x-goog-api-key`, không còn nằm trong URL |
+| External API policy | Chỉ dùng Gemini key do user tự tạo; free tier không nhận dữ liệu bệnh nhân hoặc yêu cầu tư vấn y khoa; re-check stable model trước production |
+| Lifetime isolation | AI preferences và chatbot client dùng scoped lifetime theo Blazor circuit |
+| Safe actions | Quick action tiếp tục whitelist route, kiểm tra `NavGate.CanAccess()` và chỉ điều hướng/tạo draft nonce |
+
 ## Signing, Onboarding and Safe Chat Actions
 Ngày 2026-05-28, QLCM Pro có lớp ký demo và account onboarding riêng, không pollute lookup dùng chung.
 
@@ -86,7 +101,7 @@ Ngay 2026-05-21, app co lop security validation cho password flow va route guard
 | FluentValidation | Register/profile password commands are validated through `IValidationService`, keeping password rules out of Razor event handlers |
 | Identity validator | `PasswordStrengthValidator` implements `IPasswordValidator<ApplicationUser>` so Identity and UI flows share the same policy |
 | Null password guard | `NullPasswordGuardSignInManager` and `CurrentUserContext` fail sign-in when `PasswordHash` is missing |
-| Admin route guard | `Components/Pages/Admin/_Imports.razor` applies `AdminAccess`; `CurrentUserAuthenticationStateProvider` maps current SQL user permissions into Blazor auth state |
+| Admin route guard | Admin/persona layouts restore `sessionStorage` first, then `NavGate` enforces route access; `CurrentUserAuthenticationStateProvider` maps current SQL user permissions into Blazor auth state |
 | Guard helper | `AuthorizedComponentBase` provides policy checks and access-denied redirect for guarded components |
 
 ## Workflow and Jobs Architecture

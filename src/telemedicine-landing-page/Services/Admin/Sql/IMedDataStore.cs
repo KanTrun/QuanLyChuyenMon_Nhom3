@@ -10,6 +10,7 @@ public interface IMedDataStore
 {
     // Sự kiện thay đổi trạng thái
     event Action? StateChanged;
+    void Refresh();
 
     // === Đọc dữ liệu ===
     IReadOnlyList<Department> Departments { get; }
