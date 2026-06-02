@@ -425,4 +425,36 @@ public sealed class MedDataStoreTests
         Assert.NotNull(log);
         Assert.Null(log!.DepartmentId);
     }
+
+    [Fact]
+    public void MedDbDataStore_RefreshClearsTrackedRowsAndRaisesStateChanged()
+    {
+        var (db, factory) = TestDbHelper.CreateSeededContextWithFactory();
+        using var _ = db;
+        var app = new PatientProtocolApplication
+        {
+            PatientRefId = Guid.NewGuid(),
+            ClinicalProtocolVersionId = Guid.NewGuid(),
+            ApplicationStatus = "applied",
+            AppliedAt = DateTime.UtcNow
+        };
+        db.PatientProtocolApplications.Add(app);
+        db.SaveChanges();
+        var store = new MedDbDataStore(db);
+        var raised = false;
+        store.StateChanged += () => raised = true;
+
+        Assert.Equal("applied", store.PatientProtocolApplications.Single(a => a.PatientProtocolApplicationId == app.PatientProtocolApplicationId).ApplicationStatus);
+        using (var externalDb = factory.CreateDbContext())
+        {
+            var external = externalDb.PatientProtocolApplications.Single(a => a.PatientProtocolApplicationId == app.PatientProtocolApplicationId);
+            externalDb.Entry(external).CurrentValues.SetValues(external with { ApplicationStatus = "signed" });
+            externalDb.SaveChanges();
+        }
+
+        store.Refresh();
+
+        Assert.True(raised);
+        Assert.Equal("signed", store.PatientProtocolApplications.Single(a => a.PatientProtocolApplicationId == app.PatientProtocolApplicationId).ApplicationStatus);
+    }
 }

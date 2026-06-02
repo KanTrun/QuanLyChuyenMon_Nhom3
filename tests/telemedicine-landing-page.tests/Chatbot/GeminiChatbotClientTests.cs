@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using TelemedicineLandingPage.Models.Chatbot;
 using TelemedicineLandingPage.Services.Admin;
@@ -10,6 +11,42 @@ namespace telemedicine_landing_page.tests.Chatbot;
 
 public class GeminiChatbotClientTests
 {
+    [Fact]
+    public void ServiceProvider_CreatesTypedGeminiClientWithContextBuilderRegistered()
+    {
+        var services = CreateClientServices("Gemini");
+        services.AddHttpClient<GeminiChatbotClient>(http =>
+            {
+                http.BaseAddress = new Uri("https://generativelanguage.googleapis.com");
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => new StatusHandler(HttpStatusCode.OK));
+
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+
+        var client = scope.ServiceProvider.GetRequiredService<GeminiChatbotClient>();
+
+        Assert.NotNull(client);
+    }
+
+    [Fact]
+    public void ServiceProvider_CreatesTypedAnthropicClientWithContextBuilderRegistered()
+    {
+        var services = CreateClientServices("Anthropic");
+        services.AddHttpClient<AnthropicChatbotClient>(http =>
+            {
+                http.BaseAddress = new Uri("https://api.anthropic.com");
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => new StatusHandler(HttpStatusCode.OK));
+
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+
+        var client = scope.ServiceProvider.GetRequiredService<AnthropicChatbotClient>();
+
+        Assert.NotNull(client);
+    }
+
     [Fact]
     public async Task StreamReplyAsync_ShapesRequestAndConcatenatesSseDeltas()
     {
@@ -108,7 +145,9 @@ public class GeminiChatbotClientTests
             uri.Contains("/v1beta/models/gemini-2.5-flash:streamGenerateContent", StringComparison.Ordinal),
             $"Expected streamGenerateContent path, got URI: {uri}");
         Assert.Contains("alt=sse", uri, StringComparison.Ordinal);
-        Assert.Contains("key=test-api-key", uri, StringComparison.Ordinal);
+        Assert.DoesNotContain("key=", uri, StringComparison.Ordinal);
+        Assert.True(handler.LastRequest.Headers.TryGetValues("x-goog-api-key", out var keyValues));
+        Assert.Equal("test-api-key", keyValues.Single());
 
         Assert.NotNull(handler.LastBody);
         using var body = JsonDocument.Parse(handler.LastBody!);
@@ -118,7 +157,8 @@ public class GeminiChatbotClientTests
             .GetProperty("parts")[0]
             .GetProperty("text")
             .GetString();
-        Assert.Equal("Trợ lý nội bộ.", systemText);
+        Assert.Contains("trợ lý vận hành nội bộ", systemText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Trợ lý nội bộ.", systemText, StringComparison.Ordinal);
 
         var contents = root.GetProperty("contents");
         Assert.Equal(2, contents.GetArrayLength());
@@ -218,5 +258,32 @@ public class GeminiChatbotClientTests
         public T Get(string? name) => _value;
 
         public IDisposable? OnChange(Action<T, string?> listener) => null;
+    }
+
+    private static ServiceCollection CreateClientServices(string provider)
+    {
+        var services = new ServiceCollection();
+        services.AddOptions();
+        services.Configure<ChatbotOptions>(options =>
+        {
+            options.Provider = provider;
+            options.Model = provider == "Anthropic" ? "claude-sonnet-4-5-20250929" : "gemini-2.5-flash";
+            options.BaseUrl = provider == "Anthropic"
+                ? "https://api.anthropic.com"
+                : "https://generativelanguage.googleapis.com";
+            options.ApiKey = "test-api-key";
+        });
+        services.AddScoped<IUserPreferencesService, UserPreferencesService>();
+        services.AddScoped<IChatbotContextBuilder, TestChatbotContextBuilder>();
+        return services;
+    }
+
+    private sealed class TestChatbotContextBuilder : IChatbotContextBuilder
+    {
+        public string BuildSystemPrompt(
+            IReadOnlyList<ChatMessage> conversation,
+            string? configuredPrompt,
+            string? userPrompt)
+            => configuredPrompt ?? userPrompt ?? "Test chatbot context.";
     }
 }

@@ -47,10 +47,7 @@ BEGIN
     SET
         status = N'active',
         deleted_at = NULL,
-        password_hash = CASE
-            WHEN password_hash IS NULL OR LTRIM(RTRIM(password_hash)) = N'' THEN @AdminPasswordHash
-            ELSE password_hash
-        END,
+        password_hash = @AdminPasswordHash,
         updated_at = SYSUTCDATETIME()
     WHERE user_id = @AdminUserId;
 END

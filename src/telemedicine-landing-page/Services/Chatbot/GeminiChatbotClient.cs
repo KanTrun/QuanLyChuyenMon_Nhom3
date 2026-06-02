@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using TelemedicineLandingPage.Models.Chatbot;
 using TelemedicineLandingPage.Services.Admin;
@@ -22,15 +23,27 @@ public sealed class GeminiChatbotClient : IChatbotClient
     private readonly HttpClient _http;
     private readonly IOptionsMonitor<ChatbotOptions> _options;
     private readonly IUserPreferencesService _preferences;
+    private readonly IChatbotContextBuilder _contextBuilder;
 
+    [ActivatorUtilitiesConstructor]
     public GeminiChatbotClient(
         HttpClient http,
         IOptionsMonitor<ChatbotOptions> options,
         IUserPreferencesService preferences)
+        : this(http, options, preferences, new CoreOnlyChatbotContextBuilder())
+    {
+    }
+
+    public GeminiChatbotClient(
+        HttpClient http,
+        IOptionsMonitor<ChatbotOptions> options,
+        IUserPreferencesService preferences,
+        IChatbotContextBuilder contextBuilder)
     {
         _http = http;
         _options = options;
         _preferences = preferences;
+        _contextBuilder = contextBuilder;
     }
 
     public string ProviderLabel => "Google Gemini";
@@ -42,8 +55,8 @@ public sealed class GeminiChatbotClient : IChatbotClient
         var opts = _options.CurrentValue;
         var prefs = _preferences.Current;
 
-        var model = !string.IsNullOrWhiteSpace(prefs.AiModel) ? prefs.AiModel : opts.Model;
-        var system = !string.IsNullOrWhiteSpace(prefs.AiSystemPrompt) ? prefs.AiSystemPrompt : opts.SystemPrompt;
+        var model = ChatbotModelCatalog.Resolve(opts.Provider, opts.Model, prefs.AiModel);
+        var system = _contextBuilder.BuildSystemPrompt(conversation, opts.SystemPrompt, prefs.AiSystemPrompt);
         var temperature = Math.Round(Math.Clamp(prefs.AiTemperature, 0d, 1d), 2);
 
         var contents = conversation
@@ -105,11 +118,11 @@ public sealed class GeminiChatbotClient : IChatbotClient
         {
             var requestUri = string.Format(
                 CultureInfo.InvariantCulture,
-                "/v1beta/models/{0}:streamGenerateContent?alt=sse&key={1}",
-                Uri.EscapeDataString(model),
-                Uri.EscapeDataString(opts.ApiKey));
+                "/v1beta/models/{0}:streamGenerateContent?alt=sse",
+                Uri.EscapeDataString(model));
 
             var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
+            request.Headers.TryAddWithoutValidation("x-goog-api-key", opts.ApiKey);
             request.Headers.Accept.Clear();
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
 

@@ -103,6 +103,7 @@ public sealed partial class MedDataStore : IMedDataStore
     public IReadOnlyList<NotificationDeliveryAttempt> NotificationDeliveryAttempts => _deliveryAttempts;
 
     private void RaiseStateChanged() => StateChanged?.Invoke();
+    public void Refresh() => RaiseStateChanged();
 
     /// <summary>Kiểm tra JSON hợp lệ (tương đương ISJSON = 1).</summary>
     internal static void ValidateJson(string? json, string fieldName)

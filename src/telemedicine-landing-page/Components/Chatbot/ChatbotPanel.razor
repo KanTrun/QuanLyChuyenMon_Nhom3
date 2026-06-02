@@ -3,6 +3,8 @@
 @inject IChatbotService Chatbot
 @inject IUserPreferencesService Preferences
 @inject IConfirmDialogService Confirm
+@inject IToastService Toasts
+@inject NavGate Gate
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
@@ -210,6 +212,11 @@
         {
             return;
         }
+        if (!Gate.CanAccess(action.Route))
+        {
+            Toasts.Show("Không có quyền truy cập", "Tài khoản hiện tại không thể mở trang lâm sàng.", ToastVariant.Warning);
+            return;
+        }
 
         var stored = await SafeInvokeWithResultAsync<bool>("qlcmShell.setSessionJson", $"draft:{nonce}", payload);
         if (stored != true)
@@ -218,7 +225,7 @@
         }
 
         NavState.CloseChatbot();
-        Navigation.NavigateTo($"{action.Route}?draft_nonce={Uri.EscapeDataString(nonce)}");
+        Navigation.NavigateTo($"{Gate.GetDisplayRoute(action.Route)}?draft_nonce={Uri.EscapeDataString(nonce)}");
     }
 
     private void NavigateSafe(string route)
@@ -227,9 +234,14 @@
         {
             return;
         }
+        if (!Gate.CanAccess(action.Route))
+        {
+            Toasts.Show("Không có quyền truy cập", "Tài khoản hiện tại không thể mở trang này.", ToastVariant.Warning);
+            return;
+        }
 
         NavState.CloseChatbot();
-        Navigation.NavigateTo(action.Route);
+        Navigation.NavigateTo(Gate.GetDisplayRoute(action.Route));
     }
 
     private async Task OnClearAsync()

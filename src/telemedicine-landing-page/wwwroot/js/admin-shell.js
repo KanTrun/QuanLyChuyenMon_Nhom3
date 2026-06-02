@@ -10,6 +10,7 @@
     var state = {
         nextHandleId: 1,
         handles: new Map(),
+        signaturePads: new Map(),
     };
 
     function getDigit(event) {
@@ -241,6 +242,133 @@
         el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden';
     }
 
+    function resizeSignatureCanvas(canvas, pad) {
+        var ratio = Math.max(window.devicePixelRatio || 1, 1);
+        var rect = canvas.getBoundingClientRect();
+        var data = pad && typeof pad.toData === 'function' ? pad.toData() : null;
+        canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+        canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+        var ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.scale(ratio, ratio);
+        }
+        if (pad && data && typeof pad.fromData === 'function') {
+            pad.clear();
+            pad.fromData(data);
+        }
+    }
+
+    function createFallbackSignaturePad(canvas) {
+        var drawing = false;
+        var hasInk = false;
+        var ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#1f2937';
+        }
+
+        function point(event) {
+            var rect = canvas.getBoundingClientRect();
+            var source = event.touches && event.touches.length ? event.touches[0] : event;
+            return { x: source.clientX - rect.left, y: source.clientY - rect.top };
+        }
+
+        function start(event) {
+            if (!ctx) return;
+            event.preventDefault();
+            drawing = true;
+            var p = point(event);
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+        }
+
+        function move(event) {
+            if (!drawing || !ctx) return;
+            event.preventDefault();
+            var p = point(event);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+            hasInk = true;
+        }
+
+        function end(event) {
+            if (!drawing) return;
+            event.preventDefault();
+            drawing = false;
+        }
+
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mousemove', move);
+        canvas.addEventListener('mouseup', end);
+        canvas.addEventListener('mouseleave', end);
+        canvas.addEventListener('touchstart', start, { passive: false });
+        canvas.addEventListener('touchmove', move, { passive: false });
+        canvas.addEventListener('touchend', end, { passive: false });
+
+        return {
+            clear: function () {
+                if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                hasInk = false;
+            },
+            isEmpty: function () { return !hasInk; },
+            toDataURL: function () { return canvas.toDataURL('image/png'); },
+            dispose: function () {
+                canvas.removeEventListener('mousedown', start);
+                canvas.removeEventListener('mousemove', move);
+                canvas.removeEventListener('mouseup', end);
+                canvas.removeEventListener('mouseleave', end);
+                canvas.removeEventListener('touchstart', start);
+                canvas.removeEventListener('touchmove', move);
+                canvas.removeEventListener('touchend', end);
+            }
+        };
+    }
+
+    function initSignaturePad(canvasId) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) return false;
+        disposeSignaturePad(canvasId);
+        var pad = window.SignaturePad
+            ? new window.SignaturePad(canvas, {
+                backgroundColor: 'rgba(255, 255, 255, 0)',
+                penColor: '#1f2937',
+                minWidth: 0.8,
+                maxWidth: 2.4,
+                throttle: 12
+            })
+            : createFallbackSignaturePad(canvas);
+        resizeSignatureCanvas(canvas, pad);
+        var resize = function () { resizeSignatureCanvas(canvas, pad); };
+        window.addEventListener('resize', resize);
+        state.signaturePads.set(canvasId, { canvas: canvas, pad: pad, resize: resize });
+        return true;
+    }
+
+    function getSignaturePadDataUrl(canvasId) {
+        var entry = state.signaturePads.get(canvasId);
+        if (!entry || !entry.pad || entry.pad.isEmpty()) return null;
+        return entry.pad.toDataURL('image/png');
+    }
+
+    function clearSignaturePad(canvasId) {
+        var entry = state.signaturePads.get(canvasId);
+        if (!entry || !entry.pad) return false;
+        entry.pad.clear();
+        return true;
+    }
+
+    function disposeSignaturePad(canvasId) {
+        var entry = state.signaturePads.get(canvasId);
+        if (!entry) return;
+        window.removeEventListener('resize', entry.resize);
+        if (entry.pad && typeof entry.pad.dispose === 'function') {
+            entry.pad.dispose();
+        }
+        state.signaturePads.delete(canvasId);
+    }
+
     var outsideClickHandlers = new Map();
 
     function registerOutsideClick(elementId, dotnetRef, methodName) {
@@ -321,5 +449,9 @@
         scrollToBottom: scrollToBottom,
         isAtBottom: isAtBottom,
         autoGrowTextarea: autoGrowTextarea,
+        initSignaturePad: initSignaturePad,
+        getSignaturePadDataUrl: getSignaturePadDataUrl,
+        clearSignaturePad: clearSignaturePad,
+        disposeSignaturePad: disposeSignaturePad,
     };
 })(window);

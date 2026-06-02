@@ -24,11 +24,11 @@
 
     <div class="admin-filter-bar">
         <div class="admin-filter-field">
-            <label class="admin-filter-label">Trạng thái</label>
+            <label class="admin-filter-label">Bộ lọc lưu trữ</label>
             <select class="admin-select" @bind="_statusFilter" @bind:after="StateHasChanged">
-                <option value="active">Đang hoạt động</option>
-                <option value="archived">Lưu trữ</option>
-                <option value="all">Tất cả</option>
+                <option value="active">Đang hoạt động (@ActiveDepartmentCount)</option>
+                <option value="archived">Đã lưu trữ (@ArchivedDepartmentCount)</option>
+                <option value="all">Tất cả khoa/phòng (@Store.Departments.Count)</option>
             </select>
         </div>
     </div>
@@ -109,6 +109,8 @@
     private string _editName = "";
     private string _editParentId = "";
     private string _statusFilter = "active";
+    private int ActiveDepartmentCount => Store.Departments.Count(d => d.Status == "active");
+    private int ArchivedDepartmentCount => Store.Departments.Count(d => d.Status != "active");
 
     protected override void OnInitialized()
     {

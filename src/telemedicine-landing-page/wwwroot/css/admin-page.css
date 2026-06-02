@@ -1074,6 +1074,24 @@
     font-weight: 600;
 }
 
+.signature-pad-panel {
+    display: grid;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.signature-pad-canvas {
+    width: 100%;
+    height: 220px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    background:
+        linear-gradient(transparent calc(100% - 34px), rgba(91, 155, 213, 0.16) calc(100% - 34px), rgba(91, 155, 213, 0.16) calc(100% - 33px), transparent calc(100% - 33px)),
+        var(--color-surface);
+    cursor: crosshair;
+    touch-action: none;
+}
+
 .admin-step-list {
     list-style: none;
     margin: 0;

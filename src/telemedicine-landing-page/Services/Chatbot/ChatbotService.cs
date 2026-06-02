@@ -14,13 +14,23 @@ public sealed class ChatbotService : IChatbotService, IDisposable
 
     private readonly IChatbotClient _client;
     private readonly IChatbotConversationStore _store;
+    private readonly IChatbotPrivacyGuard _privacyGuard;
     private readonly object _gate = new();
     private CancellationTokenSource? _streamCts;
 
     public ChatbotService(IChatbotClient client, IChatbotConversationStore store)
+        : this(client, store, new ChatbotPrivacyGuard())
+    {
+    }
+
+    public ChatbotService(
+        IChatbotClient client,
+        IChatbotConversationStore store,
+        IChatbotPrivacyGuard privacyGuard)
     {
         _client = client;
         _store = store;
+        _privacyGuard = privacyGuard;
         _store.StateChanged += OnStoreChanged;
     }
 
@@ -36,7 +46,17 @@ public sealed class ChatbotService : IChatbotService, IDisposable
     {
         if (string.IsNullOrWhiteSpace(userInput)) return;
 
-        _store.AppendUser(userInput.Trim());
+        var trimmed = userInput.Trim();
+        if (!_privacyGuard.CanSend(trimmed, out var localReply))
+        {
+            _store.AppendUser(ChatbotPrivacyGuard.BlockedUserMarker);
+            var blockedAssistantId = _store.AppendAssistantPlaceholder();
+            _store.ReplaceAssistantContent(blockedAssistantId, localReply ?? FailureFallback);
+            _store.MarkStreamingComplete(blockedAssistantId);
+            return;
+        }
+
+        _store.AppendUser(trimmed);
         var assistantId = _store.AppendAssistantPlaceholder();
 
         CancellationTokenSource linkedCts;

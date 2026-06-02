@@ -26,7 +26,7 @@ public sealed class CurrentUserAuthenticationStateProvider : AuthenticationState
         if (user is null)
         {
             var path = new Uri(_navigation.Uri).AbsolutePath;
-            if (path.StartsWith("/admin", StringComparison.OrdinalIgnoreCase))
+            if (IsSessionRestorePath(path))
             {
                 return new ClaimsPrincipal(new ClaimsIdentity(
                     new[] { new Claim("qlcm_auth_state", "pending_session_restore") },
@@ -52,6 +52,27 @@ public sealed class CurrentUserAuthenticationStateProvider : AuthenticationState
 
         return new ClaimsPrincipal(new ClaimsIdentity(claims, "QLCM"));
     }
+
+    public static bool IsSessionRestorePath(string path)
+    {
+        if (StartsWithRouteSegment(path, "/admin") ||
+            StartsWithRouteSegment(path, "/qlcm"))
+        {
+            return true;
+        }
+
+        return path.Equals("/phe-duyet", StringComparison.OrdinalIgnoreCase) ||
+            path.Equals("/quy-trinh-pro", StringComparison.OrdinalIgnoreCase) ||
+            path.Equals("/tai-nguyen", StringComparison.OrdinalIgnoreCase) ||
+            path.Equals("/dieu-phoi", StringComparison.OrdinalIgnoreCase) ||
+            path.Equals("/phac-do-pro", StringComparison.OrdinalIgnoreCase) ||
+            path.Equals("/lam-sang", StringComparison.OrdinalIgnoreCase) ||
+            path.Equals("/thong-bao", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool StartsWithRouteSegment(string path, string prefix)
+        => path.Equals(prefix, StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase);
 
     private void OnUserChanged()
         => NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());

@@ -252,16 +252,14 @@
     private void Recompute()
     {
         var deptId = Guid.TryParse(_departmentId, out var parsedDept) ? parsedDept : (Guid?)null;
+        var search = _search.Trim();
         _rows = Store.ProcedureVersions
             .Select(v => BuildRow(v.ProcedureVersionId))
             .Where(r => r is not null)
             .Cast<ApprovalRow>()
             .Where(r => string.IsNullOrEmpty(_status) || r.Version.StatusCode == _status)
             .Where(r => !deptId.HasValue || (r.Version.DepartmentId ?? r.Procedure.OwnerDepartmentId) == deptId.Value)
-            .Where(r => string.IsNullOrWhiteSpace(_search)
-                || r.Procedure.ProcedureCode.Contains(_search, StringComparison.OrdinalIgnoreCase)
-                || r.Procedure.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
-                || r.Version.Title.Contains(_search, StringComparison.OrdinalIgnoreCase))
+            .Where(r => MatchesSearch(r, search))
             .OrderByDescending(r => r.Version.SubmittedAt ?? r.Version.CreatedAt)
             .ToList();
         Paginate();
@@ -408,7 +406,27 @@
         _selected = _rows.FirstOrDefault(r => r.Version.ProcedureVersionId == versionId);
     }
 
+    private bool MatchesSearch(ApprovalRow row, string search)
+    {
+        if (string.IsNullOrWhiteSpace(search))
+        {
+            return true;
+        }
+
+        return Contains(row.Procedure.ProcedureCode, search)
+            || Contains(row.Procedure.Name, search)
+            || Contains(row.Procedure.Description, search)
+            || Contains(row.Version.VersionLabel, search)
+            || Contains(row.Version.Title, search)
+            || Contains(row.Version.Summary, search)
+            || Contains(row.Version.ChangeReason, search)
+            || Contains(GetDeptName(row.Version.DepartmentId ?? row.Procedure.OwnerDepartmentId), search)
+            || Contains(StatusLabel(row.Version.StatusCode), search)
+            || Contains(row.Version.StatusCode, search);
+    }
+
     private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+    private static bool Contains(string? value, string search) => value?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false;
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
     private static string VersionLabel(Sql.ProcedureVersion version) => version.VersionLabel ?? $"v{version.VersionNo}";
     private static string StatusLabel(string status) => Sql.MedLookups.VersionStatuses.FirstOrDefault(s => s.Code == status)?.Name ?? status;

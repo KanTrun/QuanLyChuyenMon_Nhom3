@@ -1,5 +1,48 @@
 # Project Changelog
 
+## 2026-06-02
+### Added
+| Item | Description |
+|---|---|
+| Grounded chatbot catalog | Added curated QLCM workflow knowledge with accent-insensitive topic retrieval for live and demo assistance |
+| Prompt context builder | Added mandatory core rules, permission-filtered routes and aggregate-only operational snapshot |
+| Local chatbot privacy guard | Blocks likely patient identifiers and medical-advice prompts before any external API transport |
+| Drawn clinical signature | Added Signature Pad powered canvas capture inside the clinical signing confirmation modal |
+
+### Changed
+| Item | Description |
+|---|---|
+| Gemini API auth | Sends key through `x-goog-api-key` header instead of URL query |
+| AI settings isolation | Uses scoped per-circuit preferences and chatbot clients; user customization supplements but cannot replace core grounding |
+| Provider-safe models | Removes unsupported OpenAI picker option and clamps model choice to configured provider catalog |
+| Safe chat actions | Checks `NavGate.CanAccess()` and rewrites workspace route before navigation |
+| External API guardrails | Documents manual user-owned Gemini keys, free-tier no-patient-data/no-medical-advice boundary and stable model re-check before production |
+| Admin interaction timing | Shortened shared motion tokens so admin modals, drawers and button feedback feel immediate |
+| Department archive filter | Renamed the Khoa/Phong status selector to an explicit archive filter and shows active/archive counts |
+| Signature realtime refresh | Added data-store refresh after sign/revoke mutations so clinical status/buttons update without page reload |
+
+### Fixed
+| Item | Description |
+|---|---|
+| Procedure filters | Procedure list now displays the version matching selected status/department filters and searches visible version, department and status text |
+| Session restore | Protected `/qlcm` aliases and persona workspace routes now receive pending restore auth state so page reload can restore `sessionStorage` before redirecting |
+| Docker login bootstrap | Local admin bootstrap migration now resets the documented Docker password hash for existing volumes |
+| Chatbot DI startup | Typed Gemini/Anthropic chatbot clients now use an explicit DI constructor so admin login no longer crashes when an API key is configured |
+| Admin reload guard | Admin route access moved from server folder authorization to layout/NavGate checks so browser session restore can run before redirect decisions |
+
+### Verification
+| Check | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --filter "FullyQualifiedName~ProcedureVersionDisplaySelectorTests\|FullyQualifiedName~CurrentUserAuthenticationStateProviderTests"` | Passed, 12/12 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --filter "FullyQualifiedName~GeminiChatbotClientTests\|FullyQualifiedName~CurrentUserAuthenticationStateProviderTests"` | Passed, 11/11 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build --filter "FullyQualifiedName~Chatbot"` | Passed, 42/42 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 192/192 tests |
+| `docker compose up --build -d web` | Passed, web image rebuilt and container healthy on `localhost:8080` |
+| Playwright Docker login smoke | Passed, `admin` login reaches `/admin`; reload stays on `/admin`; no circuit exception in logs |
+| `dotnet list .\telemedicine-landing-page.sln package --vulnerable --include-transitive` | Clean, no vulnerable packages |
+| `docker compose config` | Passed, configuration valid |
+
 ## 2026-05-28
 ### Added
 | Item | Description |
