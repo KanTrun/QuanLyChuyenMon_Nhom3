@@ -175,6 +175,45 @@ public sealed class ClinicalExportServiceTests
     }
 
     [Fact]
+    public void BuildPatientDossierHtmlReport_RendersSavedSignatureImageEvenWhenIntegrityWarningExists()
+    {
+        var store = new MedDataStore();
+        var app = new PatientProtocolApplication
+        {
+            PatientRefId = MedDataStoreSeed.PatientMauId,
+            EncounterRefId = MedDataStoreSeed.EncounterMauId,
+            ClinicalProtocolVersionId = MedDataStoreSeed.ProtocolThaVersionId,
+            DiagnosisCode = "I10",
+            ApplicationStatus = "signed",
+            AppliedAt = new DateTime(2026, 6, 2, 8, 0, 0, DateTimeKind.Utc)
+        };
+        store.AddPatientProtocolApplication(app);
+        var signedAt = new DateTime(2026, 6, 2, 8, 30, 0, DateTimeKind.Utc);
+        var metadata = JsonSerializer.Serialize(new { SignatureImageDataUrl = ValidPngDataUrl });
+        store.AddSignatureRecord(new SignatureRecord
+        {
+            TargetType = "patient_protocol_application",
+            TargetId = app.PatientProtocolApplicationId,
+            SignerUserId = MedDataStoreSeed.AdminUserId,
+            SignerUsername = "admin",
+            ProviderCode = "demo",
+            IsLegallyValid = false,
+            SignatureHash = "tampered-signature-hash",
+            SignedAt = signedAt,
+            MetadataJson = metadata
+        });
+        var service = new ClinicalExportService(store);
+
+        var html = service.BuildPatientDossierHtmlReport(
+            MedDataStoreSeed.PatientMauId,
+            new DateTime(2026, 6, 2, 9, 0, 0, DateTimeKind.Utc));
+
+        Assert.Contains(ValidPngDataUrl, html);
+        Assert.Contains("signature-warning", html);
+        Assert.DoesNotContain("signature-stamp-name\">admin", html);
+    }
+
+    [Fact]
     public void BuildPatientDossierHtmlReport_EscapesPatientTextAndRejectsNonPngEvidence()
     {
         var store = new MedDataStore();

@@ -63,7 +63,7 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
         html.AppendLine("<title>H\u1ed3 s\u01a1 l\u00e2m s\u00e0ng</title>");
         html.AppendLine("<style>");
         html.AppendLine("@page{size:A4;margin:16mm 14mm 18mm}*{box-sizing:border-box}body{font-family:\"Times New Roman\",serif;margin:0;color:#111827;background:#fff;font-size:13px;line-height:1.45}");
-        html.AppendLine(".document-header{display:flex;gap:14px;align-items:center;border-bottom:2px solid #0f3b69;padding-bottom:10px}.logo{width:68px;height:68px;object-fit:contain}.logo-fallback{width:68px;height:68px;border:1px solid #98a2b3;display:flex;align-items:center;justify-content:center;font-weight:700}.hospital{font-size:16px;font-weight:700;text-transform:uppercase}.muted{color:#667085}.document-title{text-align:center;margin:18px 0 4px;font-size:22px}.document-meta{text-align:center;margin:0 0 16px}.document-section{margin-top:16px;break-inside:avoid}.document-section h2{font-size:15px;margin:0 0 7px;text-transform:uppercase}h3{font-size:14px;margin:12px 0 6px}table{width:100%;border-collapse:collapse;margin:6px 0 12px}th,td{border:1px solid #98a2b3;padding:6px;text-align:left;vertical-align:top}th{background:#f2f4f7}.empty{color:#98a2b3;font-style:italic}.signature-evidence{border:1px solid #98a2b3;padding:10px;margin-top:10px;break-inside:avoid}.signature-image{display:block;max-width:320px;max-height:120px;margin-top:8px;border-bottom:1px solid #344054}.signature-stamp{width:260px;min-height:96px;margin-top:10px;border:2px solid #0f3b69;border-radius:8px;padding:10px;text-align:center;color:#0f3b69}.signature-stamp-title{font-weight:700;text-transform:uppercase;letter-spacing:.04em}.signature-stamp-name{font-size:20px;font-weight:700;margin:8px 0 4px}.signature-stamp-meta{font-size:12px;color:#344054}.revoked{color:#b42318;font-weight:700}.document-footer{margin-top:22px;border-top:1px solid #98a2b3;padding-top:8px;font-size:12px}");
+        html.AppendLine(".document-header{display:flex;gap:14px;align-items:center;border-bottom:2px solid #0f3b69;padding-bottom:10px}.logo{width:68px;height:68px;object-fit:contain}.logo-fallback{width:68px;height:68px;border:1px solid #98a2b3;display:flex;align-items:center;justify-content:center;font-weight:700}.hospital{font-size:16px;font-weight:700;text-transform:uppercase}.muted{color:#667085}.document-title{text-align:center;margin:18px 0 4px;font-size:22px}.document-meta{text-align:center;margin:0 0 16px}.document-section{margin-top:16px;break-inside:avoid}.document-section h2{font-size:15px;margin:0 0 7px;text-transform:uppercase}h3{font-size:14px;margin:12px 0 6px}table{width:100%;border-collapse:collapse;margin:6px 0 12px}th,td{border:1px solid #98a2b3;padding:6px;text-align:left;vertical-align:top}th{background:#f2f4f7}.empty{color:#98a2b3;font-style:italic}.signature-evidence{border:1px solid #98a2b3;padding:10px;margin-top:10px;break-inside:avoid}.signature-image{display:block;max-width:320px;max-height:120px;margin-top:8px;border-bottom:1px solid #344054}.signature-warning{margin:8px 0 0;color:#b54708;font-size:12px}.signature-stamp{width:260px;min-height:96px;margin-top:10px;border:2px solid #0f3b69;border-radius:8px;padding:10px;text-align:center;color:#0f3b69}.signature-stamp-title{font-weight:700;text-transform:uppercase;letter-spacing:.04em}.signature-stamp-name{font-size:20px;font-weight:700;margin:8px 0 4px}.signature-stamp-meta{font-size:12px;color:#344054}.revoked{color:#b42318;font-weight:700}.document-footer{margin-top:22px;border-top:1px solid #98a2b3;padding-top:8px;font-size:12px}");
         html.AppendLine("</style></head><body>");
         html.AppendLine("<header class=\"document-header\">");
         AppendLogo(html);
@@ -230,10 +230,14 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
         AppendRow(html, "Th\u1eddi \u0111i\u1ec3m k\u00fd", AdminDateTimeDisplay.DateTime(signature.SignedAt));
         AppendRow(html, "Nh\u00e0 cung c\u1ea5p", signature.ProviderCode);
         html.AppendLine("</tbody></table>");
-        if (SignatureService.HasValidIntegrity(signature) &&
-            TryReadSignatureImageDataUrl(signature.MetadataJson, out var imageDataUrl))
+        var hasValidIntegrity = SignatureService.HasValidIntegrity(signature);
+        if (TryReadSignatureImageDataUrl(signature.MetadataJson, out var imageDataUrl))
         {
             html.AppendLine($"<img class=\"signature-image\" src=\"{Text(imageDataUrl)}\" alt=\"B\u1eb1ng ch\u1ee9ng ch\u1eef k\u00fd\">");
+            if (!hasValidIntegrity)
+            {
+                html.AppendLine("<p class=\"signature-warning\">C\u1ea3nh b\u00e1o: hash x\u00e1c th\u1ef1c ch\u1eef k\u00fd kh\u00f4ng kh\u1edbp metadata hi\u1ec7n t\u1ea1i.</p>");
+            }
         }
         else
         {
@@ -248,7 +252,7 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
         html.AppendLine("<div class=\"signature-stamp-title\">Đã ký điện tử</div>");
         html.AppendLine($"<div class=\"signature-stamp-name\">{Text(signature.SignerUsername)}</div>");
         html.AppendLine($"<div class=\"signature-stamp-meta\">{Text(AdminDateTimeDisplay.DateTime(signature.SignedAt))}</div>");
-        html.AppendLine("<div class=\"signature-stamp-meta\">Chữ ký demo - hồ sơ QLCM Pro</div>");
+        html.AppendLine("<div class=\"signature-stamp-meta\">Xác nhận ký điện tử - hồ sơ QLCM Pro</div>");
         html.AppendLine("</div>");
     }
 

@@ -26,13 +26,14 @@
 | Clinical status safety | Signed/revoked clinical application states are protected behind signature workflow guards |
 | Docker chatbot availability | Teammates can use chatbot from Docker localhost by configuring Compose environment instead of editing app files |
 | Clinical PDF signature fallback | Clinical PDF now renders a visible electronic signature stamp when legacy/demo signature records have no PNG evidence image |
+| Clinical PDF drawn signature | Clinical PDF now prints the saved drawn PNG signature whenever signature metadata contains valid image evidence |
 
 ### Verification
 | Check | Result |
 |---|---|
 | `dotnet build .\telemedicine-landing-page.sln -c Release --no-restore` | Passed, 0 warnings, 0 errors |
 | `dotnet test .\telemedicine-landing-page.sln -c Release --no-build --filter "ArchiveGroup\|Approve_GroupPermissionForArchivedGroup"` | Passed, 3/3 tests |
-| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 218/218 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 219/219 tests |
 | `dotnet list .\src\telemedicine-landing-page\telemedicine-landing-page.csproj package --vulnerable --include-transitive` | Clean, no vulnerable packages |
 | `docker compose config --quiet` | Passed, configuration valid |
 | `docker compose up --build -d web` | Passed, web image rebuilt and healthy on `localhost:8080` |
