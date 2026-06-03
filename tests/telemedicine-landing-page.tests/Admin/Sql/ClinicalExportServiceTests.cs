@@ -137,6 +137,44 @@ public sealed class ClinicalExportServiceTests
     }
 
     [Fact]
+    public void BuildPatientDossierHtmlReport_RendersVisibleSignatureStampWhenImageIsMissing()
+    {
+        var store = new MedDataStore();
+        var app = new PatientProtocolApplication
+        {
+            PatientRefId = MedDataStoreSeed.PatientMauId,
+            EncounterRefId = MedDataStoreSeed.EncounterMauId,
+            ClinicalProtocolVersionId = MedDataStoreSeed.ProtocolThaVersionId,
+            DiagnosisCode = "I10",
+            ApplicationStatus = "applied",
+            AppliedAt = new DateTime(2026, 6, 2, 8, 0, 0, DateTimeKind.Utc)
+        };
+        store.AddPatientProtocolApplication(app);
+        var signedAt = new DateTime(2026, 6, 2, 8, 30, 0, DateTimeKind.Utc);
+        var legacyHash = LegacyHash(app.PatientProtocolApplicationId, signedAt);
+        store.AddSignatureRecord(new SignatureRecord
+        {
+            TargetType = "patient_protocol_application",
+            TargetId = app.PatientProtocolApplicationId,
+            SignerUserId = MedDataStoreSeed.AdminUserId,
+            SignerUsername = "admin",
+            ProviderCode = "demo",
+            IsLegallyValid = false,
+            SignatureHash = legacyHash,
+            SignedAt = signedAt
+        });
+        var service = new ClinicalExportService(store);
+
+        var html = service.BuildPatientDossierHtmlReport(
+            MedDataStoreSeed.PatientMauId,
+            new DateTime(2026, 6, 2, 9, 0, 0, DateTimeKind.Utc));
+
+        Assert.Contains("X\u00e1c nh\u1eadn ch\u1eef k\u00fd", html);
+        Assert.Contains("\u0110\u00e3 k\u00fd \u0111i\u1ec7n t\u1eed", html);
+        Assert.Contains("signature-stamp-name\">admin", html);
+    }
+
+    [Fact]
     public void BuildPatientDossierHtmlReport_EscapesPatientTextAndRejectsNonPngEvidence()
     {
         var store = new MedDataStore();
@@ -184,6 +222,12 @@ public sealed class ClinicalExportServiceTests
     private static string MetadataBoundHash(Guid targetId, DateTime signedAt, string metadataJson)
     {
         var payload = $"patient_protocol_application:{targetId}:{MedDataStoreSeed.AdminUserId}:{signedAt:O}:demo:{metadataJson}";
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
+    }
+
+    private static string LegacyHash(Guid targetId, DateTime signedAt)
+    {
+        var payload = $"patient_protocol_application:{targetId}:{MedDataStoreSeed.AdminUserId}:{signedAt:O}:demo";
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
     }
 }
