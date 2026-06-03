@@ -134,6 +134,12 @@ public sealed class ClinicalExportServiceTests
 
         Assert.Contains("X\u00e1c nh\u1eadn ch\u1eef k\u00fd", html);
         Assert.Contains(ValidPngDataUrl, html);
+        Assert.Contains("signature-layout", html);
+        Assert.Contains("signature-visual", html);
+        Assert.Contains("Ch\u1eef k\u00fd ng\u01b0\u1eddi x\u00e1c nh\u1eadn", html);
+        Assert.Contains("signature-note", html);
+        Assert.Contains("QLCM Pro", html);
+        Assert.DoesNotContain(">demo<", html);
     }
 
     [Fact]
@@ -210,6 +216,7 @@ public sealed class ClinicalExportServiceTests
 
         Assert.Contains(ValidPngDataUrl, html);
         Assert.Contains("filter:brightness(0)", html);
+        Assert.Contains("signature-image-wrap", html);
         Assert.DoesNotContain("signature-warning", html);
         Assert.DoesNotContain("signature-stamp-name\">admin", html);
     }

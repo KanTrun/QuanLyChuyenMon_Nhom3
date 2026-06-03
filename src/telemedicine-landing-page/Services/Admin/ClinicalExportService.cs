@@ -63,7 +63,7 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
         html.AppendLine("<title>H\u1ed3 s\u01a1 l\u00e2m s\u00e0ng</title>");
         html.AppendLine("<style>");
         html.AppendLine("@page{size:A4;margin:16mm 14mm 18mm}*{box-sizing:border-box}body{font-family:\"Times New Roman\",serif;margin:0;color:#111827;background:#fff;font-size:13px;line-height:1.45}");
-        html.AppendLine(".document-header{display:flex;gap:14px;align-items:center;border-bottom:2px solid #0f3b69;padding-bottom:10px}.logo{width:68px;height:68px;object-fit:contain}.logo-fallback{width:68px;height:68px;border:1px solid #98a2b3;display:flex;align-items:center;justify-content:center;font-weight:700}.hospital{font-size:16px;font-weight:700;text-transform:uppercase}.muted{color:#667085}.document-title{text-align:center;margin:18px 0 4px;font-size:22px}.document-meta{text-align:center;margin:0 0 16px}.document-section{margin-top:16px;break-inside:avoid}.document-section h2{font-size:15px;margin:0 0 7px;text-transform:uppercase}h3{font-size:14px;margin:12px 0 6px}table{width:100%;border-collapse:collapse;margin:6px 0 12px}th,td{border:1px solid #98a2b3;padding:6px;text-align:left;vertical-align:top}th{background:#f2f4f7}.empty{color:#98a2b3;font-style:italic}.signature-evidence{border:1px solid #98a2b3;padding:10px;margin-top:10px;break-inside:avoid}.signature-image{display:block;max-width:320px;max-height:120px;margin-top:8px;border-bottom:1px solid #344054;filter:brightness(0) contrast(10);opacity:1}.signature-stamp{width:260px;min-height:96px;margin-top:10px;border:2px solid #0f3b69;border-radius:8px;padding:10px;text-align:center;color:#0f3b69}.signature-stamp-title{font-weight:700;text-transform:uppercase;letter-spacing:.04em}.signature-stamp-name{font-size:20px;font-weight:700;margin:8px 0 4px}.signature-stamp-meta{font-size:12px;color:#344054}.revoked{color:#b42318;font-weight:700}.document-footer{margin-top:22px;border-top:1px solid #98a2b3;padding-top:8px;font-size:12px}");
+        html.AppendLine(".document-header{display:flex;gap:14px;align-items:center;border-bottom:2px solid #0f3b69;padding-bottom:10px}.logo{width:68px;height:68px;object-fit:contain}.logo-fallback{width:68px;height:68px;border:1px solid #98a2b3;display:flex;align-items:center;justify-content:center;font-weight:700}.hospital{font-size:16px;font-weight:700;text-transform:uppercase}.muted{color:#667085}.document-title{text-align:center;margin:18px 0 4px;font-size:22px}.document-meta{text-align:center;margin:0 0 16px}.document-section{margin-top:16px;break-inside:avoid}.document-section h2{font-size:15px;margin:0 0 7px;text-transform:uppercase}h3{font-size:14px;margin:12px 0 6px}table{width:100%;border-collapse:collapse;margin:6px 0 12px}th,td{border:1px solid #98a2b3;padding:6px;text-align:left;vertical-align:top}th{background:#f2f4f7}.empty{color:#98a2b3;font-style:italic}.signature-evidence{border:1px solid #98a2b3;padding:12px 14px;margin-top:12px;break-inside:avoid;background:#fff}.signature-heading{font-size:15px;margin:0 0 4px;text-transform:uppercase}.signature-summary{margin:0 0 10px;color:#475467}.signature-layout{display:grid;grid-template-columns:minmax(0,1fr) 315px;gap:18px;align-items:end}.signature-meta{margin:0}.signature-visual{border:1px solid #d0d5dd;border-radius:6px;padding:10px 12px 8px;background:#fff;min-height:154px;display:flex;flex-direction:column;justify-content:flex-end}.signature-image-wrap{height:108px;display:flex;align-items:center;justify-content:flex-start;overflow:visible}.signature-image{display:block;max-width:285px;max-height:104px;width:auto;height:auto;object-fit:contain;filter:brightness(0) contrast(10);opacity:1}.signature-line{border-top:1px solid #344054;margin-top:7px;padding-top:4px;text-align:center;font-size:12px;color:#344054}.signature-note{margin:8px 0 0;color:#475467;font-size:12px}.signature-stamp{width:100%;min-height:108px;border:2px solid #0f3b69;border-radius:8px;padding:12px;text-align:center;color:#0f3b69;display:flex;flex-direction:column;justify-content:center}.signature-stamp-title{font-weight:700;text-transform:uppercase;letter-spacing:.04em}.signature-stamp-name{font-size:20px;font-weight:700;margin:8px 0 4px}.signature-stamp-meta{font-size:12px;color:#344054}.revoked{color:#b42318;font-weight:700}.document-footer{margin-top:22px;border-top:1px solid #98a2b3;padding-top:8px;font-size:12px}");
         html.AppendLine("</style></head><body>");
         html.AppendLine("<header class=\"document-header\">");
         AppendLogo(html);
@@ -212,7 +212,8 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
         var signature = SignatureFor(app.PatientProtocolApplicationId);
 
         html.AppendLine("<article class=\"signature-evidence\">");
-        html.AppendLine($"<h3>X\u00e1c nh\u1eadn ch\u1eef k\u00fd: {Text(ProtocolVersionName(app.ClinicalProtocolVersionId))}</h3>");
+        html.AppendLine("<h3 class=\"signature-heading\">X\u00e1c nh\u1eadn ch\u1eef k\u00fd \u0111i\u1ec7n t\u1eed</h3>");
+        html.AppendLine($"<p class=\"signature-summary\">Ph\u00e1c \u0111\u1ed3 \u0111\u01b0\u1ee3c x\u00e1c nh\u1eadn: <strong>{Text(ProtocolVersionName(app.ClinicalProtocolVersionId))}</strong>. B\u1eb1ng ch\u1ee9ng k\u00fd \u0111\u01b0\u1ee3c l\u01b0u k\u00e8m h\u1ed3 s\u01a1 l\u00e2m s\u00e0ng tr\u00ean QLCM Pro.</p>");
         if (app.ApplicationStatus == "revoked")
         {
             html.AppendLine("<p class=\"revoked\">CH\u1eee K\u00dd \u0110\u00c3 THU H\u1ed2I</p>");
@@ -225,19 +226,30 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
             return;
         }
 
-        html.AppendLine("<table><tbody>");
+        html.AppendLine("<div class=\"signature-layout\">");
+        html.AppendLine("<div>");
+        html.AppendLine("<table class=\"signature-meta\"><tbody>");
         AppendRow(html, "Ng\u01b0\u1eddi k\u00fd", signature.SignerUsername);
         AppendRow(html, "Th\u1eddi \u0111i\u1ec3m k\u00fd", AdminDateTimeDisplay.DateTime(signature.SignedAt));
-        AppendRow(html, "Nh\u00e0 cung c\u1ea5p", signature.ProviderCode);
+        AppendRow(html, "H\u00ecnh th\u1ee9c x\u00e1c nh\u1eadn", "Ch\u1eef k\u00fd \u0111i\u1ec7n t\u1eed n\u1ed9i b\u1ed9");
+        AppendRow(html, "Nh\u00e0 cung c\u1ea5p", ProviderName(signature.ProviderCode));
         html.AppendLine("</tbody></table>");
+        html.AppendLine("<p class=\"signature-note\">Vi\u1ec7c k\u00fd x\u00e1c nh\u1eadn th\u1ec3 hi\u1ec7n ng\u01b0\u1eddi k\u00fd \u0111\u00e3 ki\u1ec3m tra v\u00e0 ch\u1ea5p thu\u1eadn n\u1ed9i dung \u00e1p d\u1ee5ng ph\u00e1c \u0111\u1ed3 trong h\u1ed3 s\u01a1 n\u00e0y.</p>");
+        html.AppendLine("</div>");
+        html.AppendLine("<div class=\"signature-visual\" aria-label=\"V\u00f9ng ch\u1eef k\u00fd \u0111i\u1ec7n t\u1eed\">");
         if (TryReadSignatureImageDataUrl(signature.MetadataJson, out var imageDataUrl))
         {
-            html.AppendLine($"<img class=\"signature-image\" src=\"{Text(imageDataUrl)}\" alt=\"B\u1eb1ng ch\u1ee9ng ch\u1eef k\u00fd\">");
+            html.AppendLine("<div class=\"signature-image-wrap\">");
+            html.AppendLine($"<img class=\"signature-image\" src=\"{Text(imageDataUrl)}\" alt=\"Ch\u1eef k\u00fd ng\u01b0\u1eddi x\u00e1c nh\u1eadn\">");
+            html.AppendLine("</div>");
+            html.AppendLine("<div class=\"signature-line\">Ch\u1eef k\u00fd ng\u01b0\u1eddi x\u00e1c nh\u1eadn</div>");
         }
         else
         {
             AppendSignatureStamp(html, signature);
         }
+        html.AppendLine("</div>");
+        html.AppendLine("</div>");
         html.AppendLine("</article>");
     }
 
@@ -409,6 +421,10 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
         var service = store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == id);
         return service is null ? "-" : $"{service.ServiceCode} - {service.Name}";
     }
+    private static string ProviderName(string? code)
+        => string.Equals(code, "demo", StringComparison.OrdinalIgnoreCase)
+            ? "QLCM Pro - k\u00fd \u0111i\u1ec7n t\u1eed n\u1ed9i b\u1ed9"
+            : Blank(code);
     private static string DisplayPatient(ModelsSql.PatientRef patient) => patient.DisplayName ?? patient.PatientCode ?? patient.ExternalPatientId;
     private static string Lookup(IReadOnlyList<ModelsSql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "-";
     private static string Blank(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
