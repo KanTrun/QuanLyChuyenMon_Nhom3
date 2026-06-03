@@ -99,6 +99,8 @@ Có thể đổi cấu hình qua biến môi trường hoặc file `.env` cục 
 | `CHATBOT_API_KEY` | rỗng | API key Gemini tuỳ chọn |
 | `CHATBOT_PROVIDER` | `Gemini` | Provider chatbot (`Gemini` hoặc `Anthropic`) |
 | `CHATBOT_MODEL` | `gemini-2.5-flash` | Model tương thích provider |
+| `CHATBOT_BASE_URL` | `https://generativelanguage.googleapis.com` | Endpoint provider cho container web |
+| `CHATBOT_MAX_TOKENS` | `4096` | Giới hạn output chatbot để giảm trả lời bị cắt giữa chừng |
 
 Muốn tạo lại DB sạch:
 
@@ -126,7 +128,7 @@ dotnet list .\telemedicine-landing-page.sln package --vulnerable --include-trans
 docker compose config
 ```
 
-Kết quả xác minh ngày `2026-06-02`: build Release đạt `0 warnings, 0 errors`; chatbot đạt `42/42`; toàn solution đạt `175/175`; package vulnerability scan sạch; `docker compose config` hợp lệ.
+Kết quả xác minh ngày `2026-06-03`: build Release đạt `0 warnings, 0 errors`; toàn solution đạt `216/216`; package vulnerability scan sạch; `docker compose config` hợp lệ; Docker web healthy; browser smoke đạt cho login, reload, sidebar, filter lưu trữ và chatbot.
 
 ## Ghi chú phạm vi
 Các tích hợp kho/dược/trang thiết bị ngoài hệ thống hiện được bọc qua service boundary nội bộ. Khi có API thật từ HIS/EMR/kho/dược, thay adapter tương ứng thay vì đưa logic tích hợp trực tiếp vào Razor page.

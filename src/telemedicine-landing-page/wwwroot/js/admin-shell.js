@@ -11,6 +11,7 @@
         nextHandleId: 1,
         handles: new Map(),
         signaturePads: new Map(),
+        scrollTrackers: new WeakMap(),
     };
 
     function getDigit(event) {
@@ -202,15 +203,44 @@
         }
     }
 
-    function scrollToBottom(selector, smooth) {
-        if (!selector) return false;
-        var el = document.querySelector(selector);
-        if (!el) return false;
+    function normalizeScrollThreshold(threshold) {
+        return (typeof threshold === 'number' && threshold >= 0) ? threshold : 24;
+    }
+
+    function isElementAtBottom(el, threshold) {
+        return (el.scrollHeight - el.scrollTop - el.clientHeight) <= normalizeScrollThreshold(threshold);
+    }
+
+    function getScrollTracker(el, threshold) {
+        var tracker = state.scrollTrackers.get(el);
+        if (tracker) {
+            tracker.threshold = normalizeScrollThreshold(threshold);
+            return tracker;
+        }
+
+        tracker = {
+            pinned: isElementAtBottom(el, threshold),
+            threshold: normalizeScrollThreshold(threshold),
+        };
+        el.addEventListener('scroll', function () {
+            tracker.pinned = isElementAtBottom(el, tracker.threshold);
+        }, { passive: true });
+        state.scrollTrackers.set(el, tracker);
+        return tracker;
+    }
+
+    function scrollElementToBottom(el, smooth) {
         try {
             if (smooth && typeof el.scrollTo === 'function') {
                 el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
             } else {
-                el.scrollTop = el.scrollHeight;
+                var previousBehavior = el.style.scrollBehavior;
+                try {
+                    el.style.scrollBehavior = 'auto';
+                    el.scrollTop = el.scrollHeight;
+                } finally {
+                    el.style.scrollBehavior = previousBehavior;
+                }
             }
             return true;
         } catch (_) {
@@ -218,12 +248,33 @@
         }
     }
 
+    function scrollToBottom(selector, smooth) {
+        if (!selector) return false;
+        var el = document.querySelector(selector);
+        if (!el) return false;
+        var tracker = getScrollTracker(el);
+        tracker.pinned = true;
+        return scrollElementToBottom(el, smooth);
+    }
+
+    function scrollToBottomIfPinned(selector, threshold, smooth) {
+        if (!selector) return false;
+        var el = document.querySelector(selector);
+        if (!el) return false;
+        // Native scroll events update this before the Blazor scroll callback
+        // returns, so a manual upward scroll wins against streaming renders.
+        var tracker = getScrollTracker(el, threshold);
+        if (!tracker.pinned) return false;
+        return scrollElementToBottom(el, smooth);
+    }
+
     function isAtBottom(selector, threshold) {
         if (!selector) return true;
         var el = document.querySelector(selector);
         if (!el) return true;
-        var t = (typeof threshold === 'number' && threshold >= 0) ? threshold : 24;
-        return (el.scrollHeight - el.scrollTop - el.clientHeight) <= t;
+        var tracker = getScrollTracker(el, threshold);
+        tracker.pinned = isElementAtBottom(el, threshold);
+        return tracker.pinned;
     }
 
     function autoGrowTextarea(selector, maxRows) {
@@ -473,6 +524,7 @@
         setSessionJson: setSessionJson,
         consumeSessionJson: consumeSessionJson,
         scrollToBottom: scrollToBottom,
+        scrollToBottomIfPinned: scrollToBottomIfPinned,
         isAtBottom: isAtBottom,
         autoGrowTextarea: autoGrowTextarea,
         initSignaturePad: initSignaturePad,

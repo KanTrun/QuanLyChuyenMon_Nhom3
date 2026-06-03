@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>TelemedicineLandingPage</RootNamespace>
     <AssemblyName>TelemedicineLandingPage</AssemblyName>
+    <UserSecretsId>qlcm-pro-telemedicine-landing-page</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

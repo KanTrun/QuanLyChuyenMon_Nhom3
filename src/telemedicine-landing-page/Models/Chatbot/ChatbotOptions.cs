@@ -13,7 +13,7 @@ public sealed class ChatbotOptions
     public string Model { get; set; } = "gemini-2.5-flash";
     public string BaseUrl { get; set; } = "https://generativelanguage.googleapis.com";
     public string ApiKey { get; set; } = string.Empty;
-    public int MaxTokens { get; set; } = 1024;
+    public int MaxTokens { get; set; } = 4096;
     public string AnthropicVersion { get; set; } = "2023-06-01";
     public int RequestTimeoutSeconds { get; set; } = 90;
 

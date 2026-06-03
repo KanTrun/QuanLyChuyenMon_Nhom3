@@ -70,9 +70,9 @@
                 <td>@Store.TechnicalResourceNorms.Count(n => n.ResourceId == item.ResourceId) dịch vụ</td>
                 <td style="text-align:right;" @onclick:stopPropagation="true">
                     <div class="admin-row-actions">
-                        <button type="button" class="admin-icon-btn" title="Sửa" @onclick="() => OpenEdit(item)">✎</button>
                         @if (item.Status == "active")
                         {
+                            <button type="button" class="admin-icon-btn" title="Sửa" @onclick="() => OpenEdit(item)">✎</button>
                             <button type="button" class="admin-icon-btn is-danger" title="Lưu trữ" @onclick="() => Archive(item)">×</button>
                         }
                     </div>
@@ -308,7 +308,7 @@
             if (_editingId.HasValue)
             {
                 var current = Store.ResourceCatalog.First(r => r.ResourceId == _editingId.Value);
-                Store.UpdateResourceCatalogItem(item with { CreatedAt = current.CreatedAt });
+                Store.UpdateResourceCatalogItem(item with { Status = current.Status, CreatedAt = current.CreatedAt });
                 Toasts.Show("Đã cập nhật tài nguyên", item.Name, ToastVariant.Success);
             }
             else

@@ -44,7 +44,7 @@ public class ChatbotOptionsTests
         Assert.Equal("gemini-2.5-flash", opts.Model);
         Assert.Equal("https://generativelanguage.googleapis.com", opts.BaseUrl);
         Assert.Equal(string.Empty, opts.ApiKey);
-        Assert.Equal(1024, opts.MaxTokens);
+        Assert.Equal(4096, opts.MaxTokens);
         Assert.Equal("2023-06-01", opts.AnthropicVersion);
         Assert.Equal(90, opts.RequestTimeoutSeconds);
         Assert.False(string.IsNullOrWhiteSpace(opts.SystemPrompt));

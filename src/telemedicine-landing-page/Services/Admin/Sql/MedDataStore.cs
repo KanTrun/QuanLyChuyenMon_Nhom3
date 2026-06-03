@@ -103,7 +103,7 @@ public sealed partial class MedDataStore : IMedDataStore
     public IReadOnlyList<NotificationDeliveryAttempt> NotificationDeliveryAttempts => _deliveryAttempts;
 
     private void RaiseStateChanged() => StateChanged?.Invoke();
-    public void Refresh() => RaiseStateChanged();
+    public void Refresh(bool publish = false) => RaiseStateChanged();
 
     /// <summary>Kiểm tra JSON hợp lệ (tương đương ISJSON = 1).</summary>
     internal static void ValidateJson(string? json, string fieldName)
@@ -124,4 +124,5 @@ public sealed partial class MedDataStore : IMedDataStore
             throw MedDomainException.Constraint(
                 constraintName, 50002, "Ngày kết thúc phải sau ngày bắt đầu.");
     }
+
 }

@@ -19,9 +19,20 @@
         <button class="admin-btn admin-btn-primary" @onclick="OpenCreate">Thêm nhóm</button>
     </header>
 
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="group-status">Bộ lọc lưu trữ</label>
+            <select id="group-status" class="admin-select" @bind="_statusFilter" @bind:after="ResetAndPaginate">
+                <option value="active">Đang hoạt động (@ActiveGroupCount)</option>
+                <option value="archived">Đã lưu trữ (@ArchivedGroupCount)</option>
+                <option value="all">Tất cả nhóm (@Store.Groups.Count)</option>
+            </select>
+        </div>
+    </div>
+
     <AdminDataTable TItem="Sql.Group"
                     Items="_pagedItems"
-                    ColumnCount="6"
+                    ColumnCount="7"
                     CurrentPage="_page"
                     PageSize="_pageSize"
                     TotalItems="_total"
@@ -33,6 +44,7 @@
             <th>Thành viên</th>
             <th>Quyền</th>
             <th>Trạng thái</th>
+            <th></th>
         </HeaderTemplate>
         <RowTemplate Context="grp">
             <tr @onclick="() => OpenDetail(grp)" style="cursor:pointer;">
@@ -42,6 +54,12 @@
                 <td>@Store.UserGroupMembers.Count(m => m.GroupId == grp.GroupId)</td>
                 <td>@Store.GroupPermissions.Count(p => p.GroupId == grp.GroupId)</td>
                 <td><AdminBadge Tone="@StatusTone(grp.Status)">@Lookup(Sql.MedLookups.RecordStatuses, grp.Status)</AdminBadge></td>
+                <td style="text-align:right;" @onclick:stopPropagation="true">
+                    @if (grp.Status == "active")
+                    {
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => Archive(grp)">Lưu trữ</button>
+                    }
+                </td>
             </tr>
         </RowTemplate>
     </AdminDataTable>
@@ -70,6 +88,13 @@
                 <button type="button" class="@PermissionsTabClass" @onclick="ShowPermissions">Quyền</button>
             </div>
 
+            @if (!SelectedGroupIsActive)
+            {
+                <p class="admin-table-cell-muted" style="margin:12px 0 0;">
+                    Nhóm đã lưu trữ ở chế độ chỉ đọc. Không thể thêm/xóa thành viên hoặc quyền nhóm.
+                </p>
+            }
+
             @if (_activeTab == "members")
             {
                 <div class="admin-panel" style="padding:14px;">
@@ -84,27 +109,39 @@
                                         <td>@GetUserName(member.UserId)</td>
                                         <td>@GetUserDepartment(member.UserId)</td>
                                         <td>@member.EffectiveFrom.ToString("dd/MM/yyyy")</td>
-                                        <td style="text-align:right;"><button type="button" class="admin-icon-btn is-danger" @onclick="() => RemoveMember(member)">×</button></td>
+                                        <td style="text-align:right;">
+                                            @if (SelectedGroupIsActive)
+                                            {
+                                                <button type="button" class="admin-icon-btn is-danger" @onclick="() => RemoveMember(member)">×</button>
+                                            }
+                                            else
+                                            {
+                                                <span class="admin-table-cell-muted">Khóa</span>
+                                            }
+                                        </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
                     </div>
-                    <div class="admin-form-grid" style="margin-top:14px;">
-                        <div class="admin-form-field">
-                            <label class="admin-form-field-label">Thêm thành viên</label>
-                            <select class="admin-select" @bind="_memberUserId">
-                                <option value="">Chọn người dùng</option>
-                                @foreach (var user in Store.Users.Where(u => u.Status == "active").OrderBy(u => u.Username))
-                                {
-                                    <option value="@user.UserId">@user.Username - @user.FullName</option>
-                                }
-                            </select>
+                    @if (SelectedGroupIsActive)
+                    {
+                        <div class="admin-form-grid" style="margin-top:14px;">
+                            <div class="admin-form-field">
+                                <label class="admin-form-field-label">Thêm thành viên</label>
+                                <select class="admin-select" @bind="_memberUserId">
+                                    <option value="">Chọn người dùng</option>
+                                    @foreach (var user in Store.Users.Where(u => u.Status == "active").OrderBy(u => u.Username))
+                                    {
+                                        <option value="@user.UserId">@user.Username - @user.FullName</option>
+                                    }
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    <div style="display:flex;justify-content:flex-end;margin-top:10px;">
-                        <button type="button" class="admin-btn admin-btn-primary" @onclick="AddMember">Thêm thành viên</button>
-                    </div>
+                        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                            <button type="button" class="admin-btn admin-btn-primary" @onclick="AddMember">Thêm thành viên</button>
+                        </div>
+                    }
                 </div>
             }
             else
@@ -123,60 +160,72 @@
                                         <td>@Lookup(Sql.MedLookups.DepartmentScopeTypes, perm.DepartmentScopeType)</td>
                                         <td>@GetDeptName(perm.DepartmentId)</td>
                                         <td>@(perm.Reason ?? "—")</td>
-                                        <td style="text-align:right;"><button type="button" class="admin-icon-btn is-danger" @onclick="() => RemoveGroupPermission(perm)">×</button></td>
+                                        <td style="text-align:right;">
+                                            @if (SelectedGroupIsActive)
+                                            {
+                                                <button type="button" class="admin-icon-btn is-danger" @onclick="() => RemoveGroupPermission(perm)">×</button>
+                                            }
+                                            else
+                                            {
+                                                <span class="admin-table-cell-muted">Khóa</span>
+                                            }
+                                        </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
                     </div>
 
-                    <div class="admin-form-grid" style="margin-top:14px;">
-                        <div class="admin-form-field">
-                            <label class="admin-form-field-label">Quyền</label>
-                            <select class="admin-select" @bind="_permissionId">
-                                <option value="">Chọn quyền</option>
-                                @foreach (var permission in Store.Permissions.Where(p => p.Status == "active").OrderBy(p => p.PermissionCode))
-                                {
-                                    <option value="@permission.PermissionId">@permission.PermissionCode</option>
-                                }
-                            </select>
+                    @if (SelectedGroupIsActive)
+                    {
+                        <div class="admin-form-grid" style="margin-top:14px;">
+                            <div class="admin-form-field">
+                                <label class="admin-form-field-label">Quyền</label>
+                                <select class="admin-select" @bind="_permissionId">
+                                    <option value="">Chọn quyền</option>
+                                    @foreach (var permission in Store.Permissions.Where(p => p.Status == "active").OrderBy(p => p.PermissionCode))
+                                    {
+                                        <option value="@permission.PermissionId">@permission.PermissionCode</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="admin-form-field">
+                                <label class="admin-form-field-label">Hiệu lực</label>
+                                <select class="admin-select" @bind="_effectCode">
+                                    @foreach (var effect in Sql.MedLookups.PermissionEffects)
+                                    {
+                                        <option value="@effect.Code">@effect.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="admin-form-field">
+                                <label class="admin-form-field-label">Phạm vi</label>
+                                <select class="admin-select" @bind="_scopeType">
+                                    @foreach (var scope in Sql.MedLookups.DepartmentScopeTypes)
+                                    {
+                                        <option value="@scope.Code">@scope.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="admin-form-field">
+                                <label class="admin-form-field-label">Khoa</label>
+                                <select class="admin-select" @bind="_permissionDepartmentId">
+                                    <option value="">Không chọn</option>
+                                    @foreach (var dept in DepartmentOptions())
+                                    {
+                                        <option value="@dept.DepartmentId">@DepartmentOptionLabel(dept)</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="admin-form-field admin-form-field-full">
+                                <label class="admin-form-field-label">Lý do</label>
+                                <input class="admin-input" @bind="_permissionReason" />
+                            </div>
                         </div>
-                        <div class="admin-form-field">
-                            <label class="admin-form-field-label">Hiệu lực</label>
-                            <select class="admin-select" @bind="_effectCode">
-                                @foreach (var effect in Sql.MedLookups.PermissionEffects)
-                                {
-                                    <option value="@effect.Code">@effect.Name</option>
-                                }
-                            </select>
+                        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                            <button type="button" class="admin-btn admin-btn-primary" @onclick="AddGroupPermission">Thêm quyền nhóm</button>
                         </div>
-                        <div class="admin-form-field">
-                            <label class="admin-form-field-label">Phạm vi</label>
-                            <select class="admin-select" @bind="_scopeType">
-                                @foreach (var scope in Sql.MedLookups.DepartmentScopeTypes)
-                                {
-                                    <option value="@scope.Code">@scope.Name</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="admin-form-field">
-                            <label class="admin-form-field-label">Khoa</label>
-                            <select class="admin-select" @bind="_permissionDepartmentId">
-                                <option value="">Không chọn</option>
-                                @foreach (var dept in DepartmentOptions())
-                                {
-                                    <option value="@dept.DepartmentId">@DepartmentOptionLabel(dept)</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="admin-form-field admin-form-field-full">
-                            <label class="admin-form-field-label">Lý do</label>
-                            <input class="admin-input" @bind="_permissionReason" />
-                        </div>
-                    </div>
-                    <div style="display:flex;justify-content:flex-end;margin-top:10px;">
-                        <button type="button" class="admin-btn admin-btn-primary" @onclick="AddGroupPermission">Thêm quyền nhóm</button>
-                    </div>
+                    }
                 </div>
             }
         }
@@ -223,7 +272,10 @@
     private const int _pageSize = 10;
     private int _page = 1;
     private int _total;
+    private string _statusFilter = "active";
     private IReadOnlyList<Sql.Group> _pagedItems = Array.Empty<Sql.Group>();
+    private int ActiveGroupCount => Store.Groups.Count(g => g.Status == "active");
+    private int ArchivedGroupCount => Store.Groups.Count(g => g.Status != "active");
 
     private bool _createOpen;
     private string _code = string.Empty;
@@ -244,6 +296,7 @@
 
     private string MembersTabClass => _activeTab == "members" ? "admin-tab is-active" : "admin-tab";
     private string PermissionsTabClass => _activeTab == "permissions" ? "admin-tab is-active" : "admin-tab";
+    private bool SelectedGroupIsActive => _selected?.Status == "active";
 
     protected override void OnInitialized()
     {
@@ -263,11 +316,21 @@
 
     private void Paginate()
     {
-        var all = Store.Groups.OrderBy(g => g.Name).ToList();
+        var all = Store.Groups
+            .Where(g => _statusFilter == "all"
+                || (_statusFilter == "archived" ? g.Status != "active" : g.Status == _statusFilter))
+            .OrderBy(g => g.Name)
+            .ToList();
         _total = all.Count;
         var totalPages = Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
         _page = Math.Clamp(_page, 1, totalPages);
         _pagedItems = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void ResetAndPaginate()
+    {
+        _page = 1;
+        Paginate();
     }
 
     private void OpenCreate()
@@ -321,9 +384,31 @@
         _drawerOpen = true;
     }
 
+    private void Archive(Sql.Group group)
+    {
+        if (!Guard.CanDo("SCR_ORG_GROUPS:DELETE", "lưu trữ nhóm"))
+        {
+            return;
+        }
+
+        try
+        {
+            Store.ArchiveGroup(group.GroupId);
+            Toasts.Show("Đã lưu trữ nhóm", group.Name, ToastVariant.Info);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể lưu trữ nhóm", ex.Message, ToastVariant.Error);
+        }
+    }
+
     private void AddMember()
     {
         if (!Guard.CanDo("SCR_ORG_GROUPS:UPDATE", "thêm thành viên nhóm"))
+        {
+            return;
+        }
+        if (!EnsureSelectedGroupCanMutate("thêm thành viên"))
         {
             return;
         }
@@ -357,6 +442,10 @@
         {
             return;
         }
+        if (!EnsureGroupCanMutate(member.GroupId, "xóa thành viên"))
+        {
+            return;
+        }
 
         try
         {
@@ -372,6 +461,10 @@
     private void AddGroupPermission()
     {
         if (!Guard.CanDo("SCR_ORG_GROUPS:UPDATE", "thêm quyền nhóm"))
+        {
+            return;
+        }
+        if (!EnsureSelectedGroupCanMutate("thêm quyền"))
         {
             return;
         }
@@ -420,6 +513,10 @@
         {
             return;
         }
+        if (!EnsureGroupCanMutate(permission.GroupId, "xóa quyền"))
+        {
+            return;
+        }
 
         try
         {
@@ -444,6 +541,20 @@
 
     private void ShowMembers() => _activeTab = "members";
     private void ShowPermissions() => _activeTab = "permissions";
+
+    private bool EnsureSelectedGroupCanMutate(string action)
+        => _selected is not null && EnsureGroupCanMutate(_selected.GroupId, action);
+
+    private bool EnsureGroupCanMutate(Guid groupId, string action)
+    {
+        if (Store.Groups.FirstOrDefault(g => g.GroupId == groupId)?.Status == "active")
+        {
+            return true;
+        }
+
+        Toasts.Show("Nhóm đã lưu trữ", $"Không thể {action} trên nhóm đã lưu trữ.", ToastVariant.Warning);
+        return false;
+    }
 
     private IReadOnlyList<Sql.Department> DepartmentOptions()
         => AdminBusinessDisplay.ActiveDepartmentsForSelection(Store.Departments);

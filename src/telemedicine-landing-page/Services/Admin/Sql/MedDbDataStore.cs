@@ -10,19 +10,30 @@ namespace TelemedicineLandingPage.Services.Admin.Sql;
 public sealed class MedDbDataStore : IMedDataStore
 {
     private readonly MedDbContext _db;
+    private readonly IMedDataChangeBus _changeBus;
 
-    public MedDbDataStore(MedDbContext db)
+    public MedDbDataStore(MedDbContext db, IMedDataChangeBus? changeBus = null)
     {
         _db = db;
+        _changeBus = changeBus ?? new MedDataChangeBus();
     }
 
     // Sự kiện thay đổi trạng thái (giữ tương thích giao diện)
     public event Action? StateChanged;
-    private void RaiseStateChanged() => StateChanged?.Invoke();
-    public void Refresh()
+    private void RaiseStateChanged()
+    {
+        StateChanged?.Invoke();
+        _changeBus.Publish();
+    }
+
+    public void Refresh(bool publish = false)
     {
         _db.ChangeTracker.Clear();
-        RaiseStateChanged();
+        StateChanged?.Invoke();
+        if (publish)
+        {
+            _changeBus.Publish();
+        }
     }
 
     // === Đọc dữ liệu — truy vấn trực tiếp từ SQL Server ===
@@ -170,8 +181,37 @@ public sealed class MedDbDataStore : IMedDataStore
         _db.SaveChanges();
         RaiseStateChanged();
     }
+    public void ArchiveGroup(Guid groupId)
+    {
+        var existing = _db.Groups.FirstOrDefault(g => g.GroupId == groupId)
+            ?? throw new InvalidOperationException("Nhom khong ton tai.");
+        var now = DateTime.UtcNow;
+        _db.Groups.Entry(existing).CurrentValues.SetValues(existing with
+        {
+            Status = "archived",
+            UpdatedAt = now
+        });
+        var activeMemberships = _db.UserGroupMembers.Where(m => m.GroupId == groupId && m.EffectiveTo == null).ToList();
+        foreach (var membership in activeMemberships)
+        {
+            _db.UserGroupMembers.Entry(membership).CurrentValues.SetValues(membership with { EffectiveTo = now });
+        }
+        var activePermissions = _db.GroupPermissions.Where(p => p.GroupId == groupId && p.EffectiveTo == null).ToList();
+        foreach (var permission in activePermissions)
+        {
+            _db.GroupPermissions.Entry(permission).CurrentValues.SetValues(permission with { EffectiveTo = now });
+        }
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void AddUserRole(UserRole userRole) { _db.UserRoles.Add(userRole); _db.SaveChanges(); RaiseStateChanged(); }
-    public void AddUserGroupMember(UserGroupMember member) { _db.UserGroupMembers.Add(member); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddUserGroupMember(UserGroupMember member)
+    {
+        EnsureActiveGroup(member.GroupId);
+        _db.UserGroupMembers.Add(member);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void RemoveUserRole(Guid userRoleId)
     {
         var existing = _db.UserRoles.FirstOrDefault(r => r.UserRoleId == userRoleId)
@@ -184,6 +224,7 @@ public sealed class MedDbDataStore : IMedDataStore
     {
         var existing = _db.UserGroupMembers.FirstOrDefault(m => m.UserGroupMemberId == membershipId)
             ?? throw new InvalidOperationException("Thành viên nhóm không tồn tại.");
+        EnsureActiveGroup(existing.GroupId);
         _db.UserGroupMembers.Remove(existing);
         _db.SaveChanges();
         RaiseStateChanged();
@@ -201,12 +242,19 @@ public sealed class MedDbDataStore : IMedDataStore
         _db.SaveChanges();
         RaiseStateChanged();
     }
-    public void AddGroupPermission(GroupPermission gp) { _db.GroupPermissions.Add(gp); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddGroupPermission(GroupPermission gp)
+    {
+        EnsureActiveGroup(gp.GroupId);
+        _db.GroupPermissions.Add(gp);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void AddUserPermissionOverride(UserPermissionOverride upo) { _db.UserPermissionOverrides.Add(upo); _db.SaveChanges(); RaiseStateChanged(); }
     public void RemoveGroupPermission(Guid groupPermissionId)
     {
         var existing = _db.GroupPermissions.FirstOrDefault(p => p.GroupPermissionId == groupPermissionId)
             ?? throw new InvalidOperationException("Quyền nhóm không tồn tại.");
+        EnsureActiveGroup(existing.GroupId);
         _db.GroupPermissions.Remove(existing);
         _db.SaveChanges();
         RaiseStateChanged();
@@ -229,6 +277,21 @@ public sealed class MedDbDataStore : IMedDataStore
     }
 
     public void AppendAudit(AuditLog log) { _db.AuditLogs.Add(log); _db.SaveChanges(); }
+
+    private Group EnsureActiveGroup(Guid groupId)
+    {
+        var group = _db.Groups.FirstOrDefault(g => g.GroupId == groupId)
+            ?? throw MedDomainException.Constraint("PK_groups", 547, "Nhom khong ton tai.");
+        if (group.Status != "active")
+        {
+            throw MedDomainException.Constraint(
+                "CK_groups_active_mutation",
+                50022,
+                "Nhom da luu tru khong cho phep thay doi thanh vien/quyen.");
+        }
+
+        return group;
+    }
 
     public void AddPermissionChangeRequest(PermissionChangeRequest req) { _db.PermissionChangeRequests.Add(req); _db.SaveChanges(); RaiseStateChanged(); }
     public void UpdatePermissionChangeRequest(PermissionChangeRequest updated)
@@ -392,9 +455,16 @@ public sealed class MedDbDataStore : IMedDataStore
     public void AddClinicalProtocolVersion(ClinicalProtocolVersion ver) { _db.ClinicalProtocolVersions.Add(ver); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddClinicalProtocolProcedure(ClinicalProtocolProcedure cpp) { _db.ClinicalProtocolProcedures.Add(cpp); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProtocolApplicabilityRule(ProtocolApplicabilityRule rule) { _db.ProtocolApplicabilityRules.Add(rule); _db.SaveChanges(); RaiseStateChanged(); }
-    public void AddPatientProtocolApplication(PatientProtocolApplication app) { _db.PatientProtocolApplications.Add(app); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddPatientProtocolApplication(PatientProtocolApplication app)
+    {
+        ValidateManualProtocolApplicationStatus(app.ApplicationStatus);
+        _db.PatientProtocolApplications.Add(app);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void UpdatePatientProtocolApplication(PatientProtocolApplication app)
     {
+        ValidateManualProtocolApplicationStatus(app.ApplicationStatus);
         var existing = _db.PatientProtocolApplications.FirstOrDefault(a => a.PatientProtocolApplicationId == app.PatientProtocolApplicationId)
             ?? throw new InvalidOperationException("Áp dụng phác đồ không tồn tại.");
         _db.PatientProtocolApplications.Entry(existing).CurrentValues.SetValues(app);
@@ -549,6 +619,15 @@ public sealed class MedDbDataStore : IMedDataStore
         {
             throw MedDomainException.Constraint("FK_groups_department", 547,
                 "Khoa/phòng của nhóm không tồn tại hoặc đã lưu trữ.");
+        }
+    }
+
+    private static void ValidateManualProtocolApplicationStatus(string status)
+    {
+        if (string.Equals(status, "signed", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "revoked", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Trang thai ky va thu hoi chi duoc cap nhat qua quy trinh chu ky.");
         }
     }
 }

@@ -125,7 +125,8 @@
             .Where(d => _statusFilter == "all" || (_statusFilter == "archived" ? d.Status != "active" : d.Status == "active"))
             .OrderBy(d => d.Code)
             .ToList();
-        foreach (var root in all.Where(d => d.ParentDepartmentId is null))
+        var visibleIds = all.Select(d => d.DepartmentId).ToHashSet();
+        foreach (var root in all.Where(d => d.ParentDepartmentId is null || !visibleIds.Contains(d.ParentDepartmentId.Value)))
         {
             foreach (var row in FlattenFrom(root, 0, all))
             {

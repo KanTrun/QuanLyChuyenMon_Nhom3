@@ -9,6 +9,8 @@
 @inject LoadingService Loading
 @inject BrowserSessionService BrowserSession
 
+<RealtimeDataRefreshBridge />
+
 @if (UserContext.CurrentUser is null)
 {
     <div class="admin-auth-redirect" style="display:flex;align-items:center;justify-content:center;height:100vh;">

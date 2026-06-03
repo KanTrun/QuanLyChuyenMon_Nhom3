@@ -145,7 +145,7 @@
     private string _currentUserName = "Đang tải...";
     private string _userInitials = "..";
     private HubConnection? _notificationHub;
-    private Guid? _notificationUserId;
+    private string? _notificationSessionToken;
     private string ProfileUrl => Gate.GetDisplayRoute("/admin/ho-so");
 
     private static readonly Dictionary<string, (string Parent, string Current)> BreadcrumbMap = new(StringComparer.OrdinalIgnoreCase)
@@ -426,24 +426,32 @@
         {
             if (_notificationHub.State == HubConnectionState.Disconnected)
             {
-                _notificationUserId = null;
+                _notificationSessionToken = null;
                 await _notificationHub.StartAsync();
             }
 
-            if (_notificationHub.State == HubConnectionState.Connected && _notificationUserId != user.UserId)
+            var sessionToken = await BrowserSession.GetCurrentSessionTokenAsync();
+            if (string.IsNullOrWhiteSpace(sessionToken))
             {
-                if (_notificationUserId is Guid previousUserId)
+                _notificationSessionToken = null;
+                return;
+            }
+
+            if (_notificationHub.State == HubConnectionState.Connected &&
+                !string.Equals(_notificationSessionToken, sessionToken, StringComparison.Ordinal))
+            {
+                if (!string.IsNullOrWhiteSpace(_notificationSessionToken))
                 {
-                    await _notificationHub.InvokeAsync("LeaveUserGroup", previousUserId.ToString("D"));
+                    await _notificationHub.InvokeAsync("LeaveUserGroup", _notificationSessionToken);
                 }
 
-                await _notificationHub.InvokeAsync("JoinUserGroup", user.UserId.ToString("D"));
-                _notificationUserId = user.UserId;
+                await _notificationHub.InvokeAsync("JoinUserGroup", sessionToken);
+                _notificationSessionToken = sessionToken;
             }
         }
         catch (Exception)
         {
-            _notificationUserId = null;
+            _notificationSessionToken = null;
         }
     }
 
@@ -465,12 +473,15 @@
 
         hub.Reconnected += async _ =>
         {
-            var current = UserContext.CurrentUser;
-            _notificationUserId = null;
-            if (current is not null)
+            _notificationSessionToken = null;
+            if (UserContext.CurrentUser is not null)
             {
-                await hub.InvokeAsync("JoinUserGroup", current.UserId.ToString("D"));
-                _notificationUserId = current.UserId;
+                var sessionToken = await BrowserSession.GetCurrentSessionTokenAsync();
+                if (!string.IsNullOrWhiteSpace(sessionToken))
+                {
+                    await hub.InvokeAsync("JoinUserGroup", sessionToken);
+                    _notificationSessionToken = sessionToken;
+                }
             }
         };
 

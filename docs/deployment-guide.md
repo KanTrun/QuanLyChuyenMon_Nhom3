@@ -41,9 +41,13 @@ The bootstrap migration reactivates this local admin account when an older Docke
 | `CHATBOT_API_KEY` | empty | Optional Gemini API key |
 | `CHATBOT_PROVIDER` | `Gemini` | Chatbot provider (`Gemini` or `Anthropic`) |
 | `CHATBOT_MODEL` | `gemini-2.5-flash` | Provider-compatible model |
+| `CHATBOT_BASE_URL` | `https://generativelanguage.googleapis.com` | Provider endpoint mapped into `Chatbot:BaseUrl` |
+| `CHATBOT_MAX_TOKENS` | `4096` | Bounded chatbot output budget for longer grounded answers |
 
 ### Chatbot Credential and Privacy Guard
 Create a user-owned Gemini key manually in [Google AI Studio](https://aistudio.google.com/api-keys), restrict the key to Gemini API, and inject it only through environment variables or user-secrets. Never commit a key.
+
+For Docker teammates, put the key in local `.env` as `CHATBOT_API_KEY`; Compose maps `CHATBOT_API_KEY`, `CHATBOT_PROVIDER`, `CHATBOT_MODEL`, `CHATBOT_BASE_URL`, and `CHATBOT_MAX_TOKENS` into the web container. Do not edit files inside the running container.
 
 Free-tier prompts and responses may be used to improve Google products. The runtime privacy guard blocks likely patient identifiers and medical-advice prompts locally before transport. Treat this as a supplemental guard, not permission to send sensitive data. Keep chatbot usage limited to sanitized software-operation guidance. Do not send patient records, prescriptions, case details, notification content, or audit payloads.
 

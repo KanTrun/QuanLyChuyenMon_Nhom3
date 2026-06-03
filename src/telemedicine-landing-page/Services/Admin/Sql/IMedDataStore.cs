@@ -10,7 +10,7 @@ public interface IMedDataStore
 {
     // Sự kiện thay đổi trạng thái
     event Action? StateChanged;
-    void Refresh();
+    void Refresh(bool publish = false);
 
     // === Đọc dữ liệu ===
     IReadOnlyList<Department> Departments { get; }
@@ -66,6 +66,7 @@ public interface IMedDataStore
     void UpdateRole(Role role);
     void ArchiveRole(Guid roleId);
     void AddGroup(Group group);
+    void ArchiveGroup(Guid groupId);
     void AddUserRole(UserRole userRole);
     void RemoveUserRole(Guid userRoleId);
     void AddUserGroupMember(UserGroupMember member);

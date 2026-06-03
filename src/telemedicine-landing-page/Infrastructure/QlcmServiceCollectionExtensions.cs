@@ -134,6 +134,9 @@ public static class QlcmServiceCollectionExtensions
 
     public static IServiceCollection AddQlcmAdminServices(this IServiceCollection services)
     {
+        services.AddDataProtection();
+        services.AddSingleton<IMedDataChangeBus, MedDataChangeBus>();
+        services.AddSingleton<BrowserSessionTokenService>();
         services.AddScoped<IMedDataStore, MedDbDataStore>();
         services.AddScoped<EffectivePermissionResolver>();
         services.AddScoped<AuditTrailService>();

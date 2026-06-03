@@ -12,9 +12,13 @@ namespace TelemedicineLandingPage.Application.Signature;
 public sealed class SignatureService : ISignatureService
 {
     public const string PatientProtocolApplicationTarget = "patient_protocol_application";
+    public const int MaxSignatureImageBytes = 256 * 1024;
+    public const int MaxMetadataJsonChars = 384 * 1024;
     private const string DemoProviderCode = "demo";
+    private const string PngDataUrlPrefix = "data:image/png;base64,";
     private const string SignPermission = "SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION";
     private const string RevokePermission = "SCR_ADMIN:MANAGE_SIGNATURES";
+    private static readonly byte[] PngHeader = [137, 80, 78, 71, 13, 10, 26, 10];
     private static readonly string[] SignPermissionAliases =
     [
         SignPermission,
@@ -64,6 +68,7 @@ public sealed class SignatureService : ISignatureService
         if (!_workflow.CanTransition(target.ApplicationStatus, "signed"))
             return (SignatureResult.InvalidState, null);
 
+        var validatedMetadataJson = ValidateMetadata(metadataJson);
         var signedAt = DateTime.UtcNow;
         var correlationId = Guid.NewGuid();
         var record = new SignatureRecord
@@ -75,8 +80,8 @@ public sealed class SignatureService : ISignatureService
             ProviderCode = DemoProviderCode,
             IsLegallyValid = false,
             SignedAt = signedAt,
-            SignatureHash = ComputeHash(targetType, targetId, signerUserId, signedAt, DemoProviderCode),
-            MetadataJson = metadataJson,
+            SignatureHash = ComputeHash(targetType, targetId, signerUserId, signedAt, DemoProviderCode, validatedMetadataJson),
+            MetadataJson = validatedMetadataJson,
             CorrelationId = correlationId
         };
 
@@ -168,10 +173,25 @@ public sealed class SignatureService : ISignatureService
     }
 
     public bool VerifyIntegrity(SignatureRecord record)
-        => string.Equals(
+        => HasValidIntegrity(record);
+
+    public static bool HasValidIntegrity(SignatureRecord record)
+    {
+        var metadataBoundHash = ComputeHash(
+            record.TargetType,
+            record.TargetId,
+            record.SignerUserId,
+            record.SignedAt,
+            record.ProviderCode,
+            record.MetadataJson);
+        if (string.Equals(record.SignatureHash, metadataBoundHash, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return string.Equals(
             record.SignatureHash,
-            ComputeHash(record.TargetType, record.TargetId, record.SignerUserId, record.SignedAt, record.ProviderCode),
+            ComputeLegacyHash(record.TargetType, record.TargetId, record.SignerUserId, record.SignedAt, record.ProviderCode),
             StringComparison.OrdinalIgnoreCase);
+    }
 
     private bool CanSign(Guid signerUserId, string signerUsername)
         => IsAdmin(signerUsername) || SignPermissionAliases.Any(permission => _permissions.HasPermission(signerUserId, permission));
@@ -190,9 +210,105 @@ public sealed class SignatureService : ISignatureService
         Guid targetId,
         Guid signerUserId,
         DateTime signedAt,
+        string providerCode,
+        string? metadataJson)
+        => Hash($"{LegacyPayload(targetType, targetId, signerUserId, signedAt, providerCode)}:{metadataJson ?? string.Empty}");
+
+    private static string ComputeLegacyHash(
+        string targetType,
+        Guid targetId,
+        Guid signerUserId,
+        DateTime signedAt,
         string providerCode)
+        => Hash(LegacyPayload(targetType, targetId, signerUserId, signedAt, providerCode));
+
+    private static string LegacyPayload(
+        string targetType,
+        Guid targetId,
+        Guid signerUserId,
+        DateTime signedAt,
+        string providerCode)
+        => $"{targetType}:{targetId}:{signerUserId}:{signedAt:O}:{providerCode}";
+
+    private static string Hash(string payload)
+        => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
+
+    private static string? ValidateMetadata(string? metadataJson)
     {
-        var payload = $"{targetType}:{targetId}:{signerUserId}:{signedAt:O}:{providerCode}";
-        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(metadataJson))
+            return null;
+        if (metadataJson.Length > MaxMetadataJsonChars)
+            throw new InvalidOperationException("Metadata chu ky vuot qua kich thuoc cho phep.");
+
+        try
+        {
+            using var document = JsonDocument.Parse(metadataJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                throw new InvalidOperationException("Metadata chu ky phai la mot JSON object.");
+
+            var hasSignatureImage = TryGetProperty(document.RootElement, "SignatureImageDataUrl", out var image);
+            if (hasSignatureImage)
+            {
+                ValidatePngDataUrl(image.GetString());
+            }
+            if (TryGetProperty(document.RootElement, "SignatureCaptured", out var captured) &&
+                captured.ValueKind == JsonValueKind.True &&
+                !hasSignatureImage)
+            {
+                throw new InvalidOperationException("Metadata chu ky thieu anh PNG da chup.");
+            }
+
+            return metadataJson;
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException("Metadata chu ky khong phai JSON hop le.", ex);
+        }
+    }
+
+    private static void ValidatePngDataUrl(string? dataUrl)
+    {
+        if (string.IsNullOrWhiteSpace(dataUrl) ||
+            !dataUrl.StartsWith(PngDataUrlPrefix, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Anh chu ky phai la PNG data URL.");
+        }
+
+        var base64 = dataUrl[PngDataUrlPrefix.Length..];
+        var maxBase64Chars = ((MaxSignatureImageBytes + 2) / 3) * 4;
+        if (base64.Length == 0 || base64.Length > maxBase64Chars)
+            throw new InvalidOperationException("Anh chu ky vuot qua kich thuoc cho phep.");
+
+        byte[] imageBytes;
+        try
+        {
+            imageBytes = Convert.FromBase64String(base64);
+        }
+        catch (FormatException ex)
+        {
+            throw new InvalidOperationException("Anh chu ky PNG khong hop le.", ex);
+        }
+
+        if (imageBytes.Length > MaxSignatureImageBytes ||
+            imageBytes.Length < PngHeader.Length ||
+            !imageBytes.AsSpan(0, PngHeader.Length).SequenceEqual(PngHeader))
+        {
+            throw new InvalidOperationException("Anh chu ky PNG khong hop le.");
+        }
+    }
+
+    private static bool TryGetProperty(JsonElement element, string name, out JsonElement value)
+    {
+        foreach (var property in element.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                value = property.Value;
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
     }
 }

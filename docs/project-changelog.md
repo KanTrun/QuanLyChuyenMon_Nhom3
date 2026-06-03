@@ -1,5 +1,43 @@
 # Project Changelog
 
+## 2026-06-03
+### Added
+| Item | Description |
+|---|---|
+| Browser session token | Added Data Protection-backed browser session token restore and SignalR user-group validation |
+| Realtime data refresh bridge | Added in-process data-change bus so SQL mutations refresh other active Blazor circuits on one web instance |
+| Professional clinical dossier | Added selected-patient A4 export with hospital logo/name, ordered clinical sections, signature evidence and revoked-state handling |
+| Docker chatbot config | Added Compose `.env` support for `CHATBOT_BASE_URL` and `CHATBOT_MAX_TOKENS` |
+
+### Changed
+| Item | Description |
+|---|---|
+| Sidebar responsiveness | Collapsed sidebar groups now expose clickable flyouts and avoid delayed navigation feedback |
+| Archive lifecycle | Procedure/service/resource/department/group archive filters now show archived records consistently; archived groups become read-only |
+| Signature integrity | Drawn PNG metadata is validated and bound into signature verification while keeping legacy verification compatible |
+| Chatbot streaming UX | Long answers preserve manual scroll position, show new-content affordance and surface Gemini truncation/safety notices |
+
+### Fixed
+| Item | Description |
+|---|---|
+| Dark signature visibility | Signature pad ink follows dark theme so signatures remain visible |
+| Reload access flash | Session restore runs through token validation before admin/persona route denial, avoiding AccessDenied flash on F5 |
+| Archived group mutation | Archived groups cannot receive new members or group permissions through UI, SQL store, in-memory store or permission-change apply path |
+| Clinical status safety | Signed/revoked clinical application states are protected behind signature workflow guards |
+| Docker chatbot availability | Teammates can use chatbot from Docker localhost by configuring Compose environment instead of editing app files |
+
+### Verification
+| Check | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release --no-restore` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build --filter "ArchiveGroup\|Approve_GroupPermissionForArchivedGroup"` | Passed, 3/3 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 216/216 tests |
+| `dotnet list .\src\telemedicine-landing-page\telemedicine-landing-page.csproj package --vulnerable --include-transitive` | Clean, no vulnerable packages |
+| `docker compose config --quiet` | Passed, configuration valid |
+| `docker compose up --build -d web` | Passed, web image rebuilt and healthy on `localhost:8080` |
+| Browser Docker smoke | Passed, login/reload, dark signature token, collapsed sidebar child click, archive filters and chatbot grounded reply |
+| Code review | High archived-group mutation finding fixed and retested |
+
 ## 2026-06-02
 ### Added
 | Item | Description |

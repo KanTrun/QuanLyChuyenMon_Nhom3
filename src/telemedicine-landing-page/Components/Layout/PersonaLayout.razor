@@ -8,6 +8,8 @@
 @inject NavGate Gate
 @implements IDisposable
 
+<RealtimeDataRefreshBridge />
+
 @if (UserContext.CurrentUser is null)
 {
     <div style="display:flex;align-items:center;justify-content:center;height:100vh;">

@@ -242,6 +242,52 @@ public sealed class MedDataStoreTests
         Assert.NotNull(roleAfter.EffectiveTo);
     }
 
+    [Fact]
+    public void ArchiveGroup_ExpiresAssignmentsAndRejectsArchivedMutation()
+    {
+        var store = CreateStore();
+        var groupId = Guid.NewGuid();
+
+        store.AddGroup(new Group
+        {
+            GroupId = groupId,
+            Code = "GROUP-ARCHIVE-GUARD",
+            Name = "Nhom kiem thu luu tru",
+            DepartmentId = MedDataStoreSeed.DeptNoiId
+        });
+        store.AddUserGroupMember(new UserGroupMember
+        {
+            UserId = MedDataStoreSeed.AdminUserId,
+            GroupId = groupId
+        });
+        store.AddGroupPermission(new GroupPermission
+        {
+            GroupId = groupId,
+            PermissionId = MedDataStoreSeed.PermManagePermId
+        });
+
+        var membershipId = store.UserGroupMembers.First(m => m.GroupId == groupId).UserGroupMemberId;
+        var groupPermissionId = store.GroupPermissions.First(p => p.GroupId == groupId).GroupPermissionId;
+
+        store.ArchiveGroup(groupId);
+
+        Assert.NotNull(store.UserGroupMembers.First(m => m.UserGroupMemberId == membershipId).EffectiveTo);
+        Assert.NotNull(store.GroupPermissions.First(p => p.GroupPermissionId == groupPermissionId).EffectiveTo);
+
+        AssertArchivedMutationRejected(() => store.AddUserGroupMember(new UserGroupMember
+        {
+            UserId = MedDataStoreSeed.AdminUserId,
+            GroupId = groupId
+        }));
+        AssertArchivedMutationRejected(() => store.RemoveUserGroupMember(membershipId));
+        AssertArchivedMutationRejected(() => store.AddGroupPermission(new GroupPermission
+        {
+            GroupId = groupId,
+            PermissionId = MedDataStoreSeed.PermViewDashId
+        }));
+        AssertArchivedMutationRejected(() => store.RemoveGroupPermission(groupPermissionId));
+    }
+
     // === 10. Duplicate code constraint ===
     [Fact]
     public void AddDepartment_DuplicateCode_Throws()
@@ -456,5 +502,11 @@ public sealed class MedDataStoreTests
 
         Assert.True(raised);
         Assert.Equal("signed", store.PatientProtocolApplications.Single(a => a.PatientProtocolApplicationId == app.PatientProtocolApplicationId).ApplicationStatus);
+    }
+
+    private static void AssertArchivedMutationRejected(Action action)
+    {
+        var ex = Assert.Throws<MedDomainException>(action);
+        Assert.Equal(50022, ex.SqlErrorNumber);
     }
 }

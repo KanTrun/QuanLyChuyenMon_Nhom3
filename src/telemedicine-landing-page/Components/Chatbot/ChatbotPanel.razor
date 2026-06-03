@@ -89,15 +89,15 @@
 
     private string _draft = string.Empty;
     private bool _showNewChip;
-    private int _lastMessageCount;
     private bool _stickToBottom = true;
+    private bool _forceScrollToBottom;
+    private bool _hasPendingChatbotUpdate;
     private bool _wasOpen;
 
     protected override void OnInitialized()
     {
         NavState.StateChanged += OnStateChanged;
         Chatbot.StateChanged += OnChatbotChanged;
-        _lastMessageCount = Chatbot.Messages.Count;
         _wasOpen = NavState.IsChatbotOpen;
     }
 
@@ -105,14 +105,10 @@
 
     private void OnChatbotChanged()
     {
-        var count = Chatbot.Messages.Count;
-        if (count != _lastMessageCount)
+        _hasPendingChatbotUpdate = true;
+        if (NavState.IsChatbotOpen && !_stickToBottom)
         {
-            _lastMessageCount = count;
-            if (NavState.IsChatbotOpen && !_stickToBottom)
-            {
-                _showNewChip = true;
-            }
+            _showNewChip = true;
         }
         InvokeAsync(StateHasChanged);
     }
@@ -127,6 +123,8 @@
 
         var openingNow = !_wasOpen;
         _wasOpen = true;
+        var hasPendingChatbotUpdate = _hasPendingChatbotUpdate;
+        _hasPendingChatbotUpdate = false;
 
         if (openingNow)
         {
@@ -135,9 +133,23 @@
             _showNewChip = false;
         }
 
-        if (_stickToBottom)
+        if (firstRender || openingNow || _forceScrollToBottom)
         {
-            await SafeInvokeAsync("qlcmShell.scrollToBottom", MessagesSelector, !firstRender);
+            _forceScrollToBottom = false;
+            await SafeInvokeAsync("qlcmShell.scrollToBottom", MessagesSelector, false);
+        }
+        else if (_stickToBottom)
+        {
+            var followed = await SafeInvokeBoolAsync("qlcmShell.scrollToBottomIfPinned", MessagesSelector, 24, false);
+            if (!followed)
+            {
+                _stickToBottom = false;
+                if (hasPendingChatbotUpdate && !_showNewChip)
+                {
+                    _showNewChip = true;
+                    StateHasChanged();
+                }
+            }
         }
 
         await SafeInvokeAsync("qlcmShell.autoGrowTextarea", TextareaSelector, 5);
@@ -158,7 +170,7 @@
     {
         _stickToBottom = true;
         _showNewChip = false;
-        await SafeInvokeAsync("qlcmShell.scrollToBottom", MessagesSelector, true);
+        await SafeInvokeAsync("qlcmShell.scrollToBottom", MessagesSelector, false);
     }
 
     private async Task OnSendAsync()
@@ -170,6 +182,7 @@
         var text = _draft;
         _draft = string.Empty;
         _stickToBottom = true;
+        _forceScrollToBottom = true;
         _showNewChip = false;
         StateHasChanged();
         await SafeInvokeAsync("qlcmShell.autoGrowTextarea", TextareaSelector, 5);
@@ -192,7 +205,6 @@
     private void UsePrompt(string prompt)
     {
         _draft = prompt;
-        _stickToBottom = true;
     }
 
     private async Task OpenClinicalDraftAsync()
@@ -254,6 +266,7 @@
         await Chatbot.ClearAsync();
         _draft = string.Empty;
         _stickToBottom = true;
+        _forceScrollToBottom = true;
         _showNewChip = false;
     }
 

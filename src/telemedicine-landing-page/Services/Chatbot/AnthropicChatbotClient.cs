@@ -24,7 +24,6 @@ public sealed class AnthropicChatbotClient : IChatbotClient
     private readonly IUserPreferencesService _preferences;
     private readonly IChatbotContextBuilder _contextBuilder;
 
-    [ActivatorUtilitiesConstructor]
     public AnthropicChatbotClient(
         HttpClient http,
         IOptionsMonitor<ChatbotOptions> options,
@@ -33,6 +32,7 @@ public sealed class AnthropicChatbotClient : IChatbotClient
     {
     }
 
+    [ActivatorUtilitiesConstructor]
     public AnthropicChatbotClient(
         HttpClient http,
         IOptionsMonitor<ChatbotOptions> options,

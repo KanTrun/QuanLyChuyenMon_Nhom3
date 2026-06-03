@@ -104,8 +104,8 @@
                 <td style="text-align:right;">
                     <div class="admin-row-actions">
                         <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEdit(row)">Sửa</button>
-                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SetStatus(row, "skipped")'>Bỏ qua</button>
-                        <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => SetStatus(row, "applied")'>Áp dụng</button>
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" disabled="@IsSignatureProtectedStatus(row.Application.ApplicationStatus)" @onclick='() => SetStatus(row, "skipped")'>Bỏ qua</button>
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" disabled="@IsSignatureProtectedStatus(row.Application.ApplicationStatus)" @onclick='() => SetStatus(row, "applied")'>Áp dụng</button>
                         @if (row.Application.ApplicationStatus == "applied" && CanCurrentUserSign())
                         {
                             <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => OpenSign(row)">Ký</button>
@@ -172,8 +172,12 @@
             </div>
             <div class="admin-form-field">
                 <label class="admin-form-field-label">Trạng thái</label>
-                <select class="admin-select" @bind="_applicationStatus">
-                    @foreach (var status in Sql.MedLookups.ProtocolApplicationStatuses)
+                <select class="admin-select" @bind="_applicationStatus" disabled="@IsSignatureProtectedStatus(_applicationStatus)">
+                    @if (IsSignatureProtectedStatus(_applicationStatus))
+                    {
+                        <option value="@_applicationStatus">@Lookup(Sql.MedLookups.ProtocolApplicationStatuses, _applicationStatus)</option>
+                    }
+                    @foreach (var status in OrdinaryApplicationStatuses)
                     {
                         <option value="@status.Code">@status.Name</option>
                     }
@@ -373,7 +377,7 @@
         _encounterDepartmentId = string.Empty;
         _protocolVersionId = string.Empty;
         _diagnosisCode = payload.DiagnosisCode ?? string.Empty;
-        _applicationStatus = string.IsNullOrWhiteSpace(payload.ApplicationStatus) ? "draft" : payload.ApplicationStatus;
+        _applicationStatus = OrdinaryStatusOrDefault(payload.ApplicationStatus, "draft");
         _skippedReason = "Bản nháp từ thao tác chat";
         _modalOpen = true;
         Toasts.Show("Đã nạp bản nháp", "Dữ liệu nháp chỉ đọc một lần từ sessionStorage.", ToastVariant.Success);
@@ -432,6 +436,7 @@
         {
             var patientId = EnsurePatient();
             var encounterId = EnsureEncounter(patientId);
+            var applicationStatus = StatusForOrdinarySave();
             if (_editingApplicationId.HasValue)
             {
                 var current = Store.PatientProtocolApplications.First(a => a.PatientProtocolApplicationId == _editingApplicationId.Value);
@@ -441,7 +446,7 @@
                     EncounterRefId = encounterId,
                     ClinicalProtocolVersionId = protocolVersionId,
                     DiagnosisCode = string.IsNullOrWhiteSpace(_diagnosisCode) ? null : _diagnosisCode.Trim(),
-                    ApplicationStatus = _applicationStatus,
+                    ApplicationStatus = applicationStatus,
                     SkippedReason = string.IsNullOrWhiteSpace(_skippedReason) ? null : _skippedReason.Trim()
                 });
             }
@@ -453,7 +458,7 @@
                     EncounterRefId = encounterId,
                     ClinicalProtocolVersionId = protocolVersionId,
                     DiagnosisCode = string.IsNullOrWhiteSpace(_diagnosisCode) ? null : _diagnosisCode.Trim(),
-                    ApplicationStatus = _applicationStatus,
+                    ApplicationStatus = applicationStatus,
                     AppliedBy = UserContext.CurrentUser?.UserId,
                     AppliedAt = DateTime.UtcNow,
                     SkippedReason = string.IsNullOrWhiteSpace(_skippedReason) ? null : _skippedReason.Trim(),
@@ -525,6 +530,13 @@
 
     private async Task SetStatus(ClinicalRow row, string status)
     {
+        if (IsSignatureProtectedStatus(row.Application.ApplicationStatus) ||
+            !IsOrdinaryApplicationStatus(status))
+        {
+            Toasts.Show("Khong the cap nhat", "Trang thai ky va thu hoi chi duoc thuc hien qua quy trinh chu ky.", ToastVariant.Warning);
+            return;
+        }
+
         if (!Guard.CanDo("SCR_CLINICAL_ADMIN:EXECUTE", "cập nhật trạng thái áp dụng phác đồ"))
         {
             return;
@@ -619,8 +631,8 @@
         _signatureBusy = true;
         try
         {
-            var hasSignature = await JS.InvokeAsync<bool>("qlcmShell.hasSignaturePadInk", SignatureCanvasId);
-            if (!hasSignature)
+            var signatureImageDataUrl = await JS.InvokeAsync<string?>("qlcmShell.getSignaturePadDataUrl", SignatureCanvasId);
+            if (string.IsNullOrWhiteSpace(signatureImageDataUrl))
             {
                 Toasts.Show("Thiếu chữ ký", "Vui lòng ký trực tiếp trong bảng trước khi xác nhận.", ToastVariant.Warning);
                 return;
@@ -631,7 +643,8 @@
                 Page = "admin_lam_sang",
                 Patient = PatientCode(_signingRow.Patient),
                 ProtocolVersionId = _signingRow.Application.ClinicalProtocolVersionId,
-                SignatureCaptured = true
+                SignatureCaptured = true,
+                SignatureImageDataUrl = signatureImageDataUrl
             });
             var result = await SignatureService.CreateDemoSignatureAsync(
                 SignatureTargetType,
@@ -643,7 +656,7 @@
             if (result.Result == SignatureResult.Created)
             {
                 await CloseSignModal();
-                Store.Refresh();
+                Store.Refresh(publish: true);
                 Toasts.Show("Đã ký xác nhận hồ sơ", "Chữ ký demo đã được lưu.", ToastVariant.Success);
                 Recompute();
                 return;
@@ -700,7 +713,7 @@
             if (result == SignatureResult.Revoked)
             {
                 _revokeModalOpen = false;
-                Store.Refresh();
+                Store.Refresh(publish: true);
                 Toasts.Show("Đã thu hồi", "Hồ sơ đã chuyển sang trạng thái thu hồi.", ToastVariant.Success);
                 Recompute();
                 return;
@@ -731,6 +744,26 @@
     private static string PatientCode(Sql.PatientRef? patient) => patient?.PatientCode ?? patient?.ExternalPatientId ?? "—";
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
     private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
+    private static readonly IReadOnlyList<Sql.LookupEntry> OrdinaryApplicationStatuses =
+        Sql.MedLookups.ProtocolApplicationStatuses.Where(status => !IsSignatureProtectedStatus(status.Code)).ToList();
+    private string StatusForOrdinarySave()
+    {
+        var currentStatus = _editingApplicationId.HasValue
+            ? Store.PatientProtocolApplications.FirstOrDefault(a => a.PatientProtocolApplicationId == _editingApplicationId.Value)?.ApplicationStatus
+            : null;
+        if (IsSignatureProtectedStatus(currentStatus))
+            return currentStatus!;
+
+        return OrdinaryStatusOrDefault(_applicationStatus, currentStatus ?? "draft");
+    }
+    private static string OrdinaryStatusOrDefault(string? status, string fallback)
+        => IsOrdinaryApplicationStatus(status) ? status! : fallback;
+    private static bool IsOrdinaryApplicationStatus(string? status)
+        => !string.IsNullOrWhiteSpace(status) &&
+           !IsSignatureProtectedStatus(status) &&
+           Sql.MedLookups.ProtocolApplicationStatuses.Any(entry => entry.Code == status);
+    private static bool IsSignatureProtectedStatus(string? status)
+        => status is "signed" or "revoked";
     private static string ApplicationTone(string status) => status switch
     {
         "applied" => "tone-success",

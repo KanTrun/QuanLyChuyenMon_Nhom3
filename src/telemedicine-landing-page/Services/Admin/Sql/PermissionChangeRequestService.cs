@@ -9,11 +9,13 @@ public sealed partial class PermissionChangeRequestService
 {
     private readonly MedDbContext _db;
     private readonly AuditTrailService _audit;
+    private readonly IMedDataChangeBus? _changeBus;
 
-    public PermissionChangeRequestService(MedDbContext db, AuditTrailService audit)
+    public PermissionChangeRequestService(MedDbContext db, AuditTrailService audit, IMedDataChangeBus? changeBus = null)
     {
         _db = db;
         _audit = audit;
+        _changeBus = changeBus;
     }
 
     /// <summary>Tạo yêu cầu thay đổi quyền mới (trạng thái: bản nháp).</summary>
@@ -50,6 +52,7 @@ public sealed partial class PermissionChangeRequestService
         };
         _db.PermissionChangeRequests.Add(request);
         _db.SaveChanges();
+        PublishChange();
         return request;
     }
 
@@ -81,6 +84,7 @@ public sealed partial class PermissionChangeRequestService
             TargetType = "permission_change_request",
             TargetId = requestId.ToString()
         });
+        PublishChange();
     }
 
     /// <summary>Phê duyệt yêu cầu (pending_approval → applied hoặc scheduled).</summary>
@@ -121,6 +125,7 @@ public sealed partial class PermissionChangeRequestService
             TargetType = "permission_change_request",
             TargetId = requestId.ToString()
         });
+        PublishChange();
     }
 
     /// <summary>Từ chối yêu cầu (pending_approval → rejected).</summary>
@@ -145,6 +150,7 @@ public sealed partial class PermissionChangeRequestService
             TargetId = requestId.ToString(),
             MetadataJson = JsonSerializer.Serialize(new { reason })
         });
+        PublishChange();
     }
 
     /// <summary>Hủy yêu cầu (draft hoặc scheduled → cancelled).</summary>
@@ -167,6 +173,7 @@ public sealed partial class PermissionChangeRequestService
             TargetType = "permission_change_request",
             TargetId = requestId.ToString()
         });
+        PublishChange();
     }
 
     /// <summary>Thêm mục thay đổi vào yêu cầu (chỉ khi trạng thái draft).</summary>
@@ -179,6 +186,7 @@ public sealed partial class PermissionChangeRequestService
 
         _db.PermissionChangeItems.Add(item with { PermissionChangeRequestId = requestId });
         _db.SaveChanges();
+        PublishChange();
     }
 
     /// <summary>Lấy tất cả yêu cầu thay đổi quyền.</summary>
@@ -226,6 +234,11 @@ public sealed partial class PermissionChangeRequestService
             });
         }
 
+        if (dueRequests.Count > 0)
+        {
+            PublishChange();
+        }
+
         return dueRequests.Count;
     }
 
@@ -236,4 +249,6 @@ public sealed partial class PermissionChangeRequestService
                ?? throw MedDomainException.Constraint("FK_permission_change_request", 547,
                    "Yêu cầu thay đổi quyền không tồn tại.");
     }
+
+    private void PublishChange() => _changeBus?.Publish();
 }

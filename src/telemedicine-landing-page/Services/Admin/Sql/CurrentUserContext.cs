@@ -13,17 +13,20 @@ public sealed class CurrentUserContext : ICurrentUserContext
 {
     private readonly MedDbContext _db;
     private readonly EffectivePermissionResolver _resolver;
+    private readonly IMedDataChangeBus? _changeBus;
     private Guid? _cachedPermissionUserId;
     private IReadOnlyList<EffectivePermissionResolver.ResolvedPermission>? _cachedPermissions;
+    private long _cachedPermissionRevision = -1;
 
     public event Action? StateChanged;
 
     public AppUser? CurrentUser { get; private set; }
 
-    public CurrentUserContext(MedDbContext db, EffectivePermissionResolver resolver)
+    public CurrentUserContext(MedDbContext db, EffectivePermissionResolver resolver, IMedDataChangeBus? changeBus = null)
     {
         _db = db;
         _resolver = resolver;
+        _changeBus = changeBus;
     }
 
     public void SetCurrentUser(Guid userId)
@@ -101,7 +104,10 @@ public sealed class CurrentUserContext : ICurrentUserContext
     {
         if (CurrentUser is null) return Array.Empty<EffectivePermissionResolver.ResolvedPermission>();
 
-        if (_cachedPermissions is not null && _cachedPermissionUserId == CurrentUser.UserId)
+        var revision = _changeBus?.Revision ?? 0;
+        if (_cachedPermissions is not null &&
+            _cachedPermissionUserId == CurrentUser.UserId &&
+            _cachedPermissionRevision == revision)
         {
             return _cachedPermissions;
         }
@@ -109,6 +115,7 @@ public sealed class CurrentUserContext : ICurrentUserContext
         var permissions = _resolver.Resolve(CurrentUser.UserId).ToArray();
         _cachedPermissionUserId = CurrentUser.UserId;
         _cachedPermissions = permissions;
+        _cachedPermissionRevision = revision;
         return permissions;
     }
 
@@ -116,6 +123,7 @@ public sealed class CurrentUserContext : ICurrentUserContext
     {
         _cachedPermissionUserId = null;
         _cachedPermissions = null;
+        _cachedPermissionRevision = -1;
     }
 
     /// <summary>Mã hóa mật khẩu bằng SHA256.</summary>

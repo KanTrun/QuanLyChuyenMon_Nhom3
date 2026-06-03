@@ -18,8 +18,9 @@ Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-
 | Business UI remediation | Complete | Admin pages use hospital-facing labels, approval-backed permission changes, active-version drafts, resource-unit guards and compact technical details |
 | Business workflow completion | Complete | Runtime procedure guard, scheduled permission apply job, inventory snapshot service, ICD protocol suggestions and persona route gating |
 | Grounded chatbot safety | Complete | Core QLCM knowledge catalog, permission-scoped aggregate context, local privacy guard, header-based Gemini auth, per-circuit AI settings and manual user-owned key policy |
+| System-wide remediation | Complete | Dark signature visibility, archive filters/lifecycle, collapsed sidebar responsiveness, token-bound realtime session, professional clinical dossier export, Docker chatbot config |
 | Seed data | Complete | `scripts/seed-realistic-data.sql` nạp dữ liệu mẫu thực tế cho demo/QA |
-| Verification | Complete | Release build `0 warnings, 0 errors`; chatbot `42/42`; full solution `194/194`; Docker web healthy and login/reload smoke passed; package vulnerability scan clean; Docker Compose config valid |
+| Verification | Complete | Release build `0 warnings, 0 errors`; full solution `216/216`; Docker web healthy and login/reload/sidebar/filter/chatbot smoke passed; package vulnerability scan clean; Docker Compose config valid |
 
 ## Legacy Landing Cleanup Track
 | Item | Status | Output |
@@ -48,7 +49,7 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này �
 | Architecture blueprint | 100% |
 | Implementation plan | 100% |
 | Code implementation | 100% for implementation-plan scope |
-| Test automation | Release build `0 warnings, 0 errors`; chatbot `42/42`; full solution `194/194`; package vulnerability scan clean |
+| Test automation | Release build `0 warnings, 0 errors`; full solution `216/216`; package vulnerability scan clean |
 | Deployment readiness | Docker Compose config valid; web/sql/db-init verified locally; re-check stable Gemini model before production rollout |
 
 ## Dependencies

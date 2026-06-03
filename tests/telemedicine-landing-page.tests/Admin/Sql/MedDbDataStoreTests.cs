@@ -89,4 +89,77 @@ public sealed class MedDbDataStoreTests
         Assert.Equal(547, ex.SqlErrorNumber);
         Assert.Contains("Khoa/phòng", ex.Message);
     }
+
+    [Fact]
+    public void ArchiveGroup_ExpiresAssignmentsAndRejectsArchivedMutation()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var store = new MedDbDataStore(db);
+        var groupId = Guid.NewGuid();
+
+        store.AddGroup(new Group
+        {
+            GroupId = groupId,
+            Code = "GROUP-ARCHIVE-GUARD",
+            Name = "Nhom kiem thu luu tru",
+            DepartmentId = MedDataStoreSeed.DeptNoiId
+        });
+        store.AddUserGroupMember(new UserGroupMember
+        {
+            UserId = MedDataStoreSeed.AdminUserId,
+            GroupId = groupId
+        });
+        store.AddGroupPermission(new GroupPermission
+        {
+            GroupId = groupId,
+            PermissionId = MedDataStoreSeed.PermManagePermId
+        });
+
+        var membershipId = store.UserGroupMembers.First(m => m.GroupId == groupId).UserGroupMemberId;
+        var groupPermissionId = store.GroupPermissions.First(p => p.GroupId == groupId).GroupPermissionId;
+
+        store.ArchiveGroup(groupId);
+
+        Assert.NotNull(store.UserGroupMembers.First(m => m.UserGroupMemberId == membershipId).EffectiveTo);
+        Assert.NotNull(store.GroupPermissions.First(p => p.GroupPermissionId == groupPermissionId).EffectiveTo);
+
+        AssertArchivedMutationRejected(() => store.AddUserGroupMember(new UserGroupMember
+        {
+            UserId = MedDataStoreSeed.AdminUserId,
+            GroupId = groupId
+        }));
+        AssertArchivedMutationRejected(() => store.RemoveUserGroupMember(membershipId));
+        AssertArchivedMutationRejected(() => store.AddGroupPermission(new GroupPermission
+        {
+            GroupId = groupId,
+            PermissionId = MedDataStoreSeed.PermViewDashId
+        }));
+        AssertArchivedMutationRejected(() => store.RemoveGroupPermission(groupPermissionId));
+    }
+
+    [Theory]
+    [InlineData("signed")]
+    [InlineData("revoked")]
+    public void AddPatientProtocolApplication_ProtectedSignatureStatus_Throws(string status)
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var store = new MedDbDataStore(db);
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            store.AddPatientProtocolApplication(new PatientProtocolApplication
+            {
+                PatientRefId = MedDataStoreSeed.PatientMauId,
+                ClinicalProtocolVersionId = MedDataStoreSeed.ProtocolThaVersionId,
+                ApplicationStatus = status,
+                AppliedAt = DateTime.UtcNow
+            }));
+
+        Assert.Contains("quy trinh chu ky", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void AssertArchivedMutationRejected(Action action)
+    {
+        var ex = Assert.Throws<MedDomainException>(action);
+        Assert.Equal(50022, ex.SqlErrorNumber);
+    }
 }

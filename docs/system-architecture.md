@@ -1,5 +1,19 @@
 # System Architecture
 
+## System-Wide Remediation Architecture
+Ngày 2026-06-03, QLCM Pro được harden cho session, realtime, archive lifecycle, clinical export và Docker chatbot.
+
+| Area | Decision |
+|---|---|
+| Browser session restore | `BrowserSessionService` stores an expiring Data Protection token instead of a raw user id; legacy `qlcm_uid` is cleared |
+| SignalR membership | `NotificationHub` validates token-derived active/onboarded user identity before joining `user:{id}` or presence groups |
+| Permission cache invalidation | `CurrentUserContext` permission cache is keyed by `MedDataChangeBus.Revision` so SQL changes invalidate cached rights |
+| Cross-circuit refresh | `IMedDataChangeBus` is singleton and `RealtimeDataRefreshBridge` refreshes scoped stores on active circuits; scope remains one web instance |
+| Archive lifecycle | Archived departments/resources/services/groups stay visible through archive filters; archived group membership and permissions are expired and future mutation is blocked |
+| Clinical signing | Drawn PNG signature metadata is validated, stored and hash-bound; direct signed/revoked status writes are guarded |
+| Clinical export | `ClinicalExportService` renders selected-patient A4 HTML dossier with logo, root hospital name, ordered sections, escaped values and signature/revocation evidence |
+| Chatbot runtime | Gemini/Anthropic typed clients receive the rich context builder through DI, stream truncation notices, and Docker maps provider endpoint/output-token settings |
+
 ## Grounded Chatbot Safety Architecture
 Ngày 2026-06-02, chatbot QLCM có grounding bắt buộc và privacy guard cục bộ cho API ngoài.
 

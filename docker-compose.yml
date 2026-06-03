@@ -10,6 +10,8 @@ services:
       Chatbot__ApiKey: ${CHATBOT_API_KEY:-}
       Chatbot__Provider: ${CHATBOT_PROVIDER:-Gemini}
       Chatbot__Model: ${CHATBOT_MODEL:-gemini-2.5-flash}
+      Chatbot__BaseUrl: ${CHATBOT_BASE_URL:-https://generativelanguage.googleapis.com}
+      Chatbot__MaxTokens: ${CHATBOT_MAX_TOKENS:-4096}
     depends_on:
       db-init:
         condition: service_completed_successfully

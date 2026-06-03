@@ -25,7 +25,6 @@ public sealed class GeminiChatbotClient : IChatbotClient
     private readonly IUserPreferencesService _preferences;
     private readonly IChatbotContextBuilder _contextBuilder;
 
-    [ActivatorUtilitiesConstructor]
     public GeminiChatbotClient(
         HttpClient http,
         IOptionsMonitor<ChatbotOptions> options,
@@ -34,6 +33,7 @@ public sealed class GeminiChatbotClient : IChatbotClient
     {
     }
 
+    [ActivatorUtilitiesConstructor]
     public GeminiChatbotClient(
         HttpClient http,
         IOptionsMonitor<ChatbotOptions> options,
@@ -186,11 +186,12 @@ public sealed class GeminiChatbotClient : IChatbotClient
                 var payloadText = line[5..].TrimStart();
                 if (payloadText.Length == 0) continue;
 
-                if (!TryParseSseEvent(payloadText, out var delta, out var stop))
+                if (!TryParseSseEvent(payloadText, out var delta, out var notice, out var stop))
                 {
                     continue;
                 }
                 if (!string.IsNullOrEmpty(delta)) yield return delta!;
+                if (!string.IsNullOrEmpty(notice)) yield return notice!;
                 if (stop) yield break;
             }
         }
@@ -221,20 +222,36 @@ public sealed class GeminiChatbotClient : IChatbotClient
         }
     }
 
-    private static bool TryParseSseEvent(string payloadText, out string? delta, out bool stop)
+    private static bool TryParseSseEvent(
+        string payloadText,
+        out string? delta,
+        out string? notice,
+        out bool stop)
     {
         delta = null;
+        notice = null;
         stop = false;
         try
         {
             using var doc = JsonDocument.Parse(payloadText);
             var root = doc.RootElement;
 
-            if (!root.TryGetProperty("candidates", out var candidates)
-                || candidates.ValueKind != JsonValueKind.Array
+            if (!root.TryGetProperty("candidates", out var candidates))
+            {
+                if (TryCreatePromptFeedbackNotice(root, out notice))
+                {
+                    stop = true;
+                    return true;
+                }
+                return false;
+            }
+
+            if (candidates.ValueKind != JsonValueKind.Array
                 || candidates.GetArrayLength() == 0)
             {
-                return false;
+                notice = CreateNoCandidateNotice(root);
+                stop = true;
+                return true;
             }
 
             var candidate = candidates[0];
@@ -266,6 +283,7 @@ public sealed class GeminiChatbotClient : IChatbotClient
                 if (!string.IsNullOrEmpty(reason)
                     && !string.Equals(reason, "FINISH_REASON_UNSPECIFIED", StringComparison.Ordinal))
                 {
+                    notice = CreateFinishReasonNotice(reason);
                     stop = true;
                 }
             }
@@ -276,5 +294,47 @@ public sealed class GeminiChatbotClient : IChatbotClient
         {
             return false;
         }
+    }
+
+    private static string? CreateFinishReasonNotice(string reason)
+        => reason switch
+        {
+            "STOP" => null,
+            "MAX_TOKENS" =>
+                "[Gemini đã dừng vì chạm giới hạn MAX_TOKENS. Hãy yêu cầu trợ lý tiếp tục phần còn lại.]",
+            "SAFETY" =>
+                "[Gemini đã dừng phản hồi vì bộ lọc an toàn (SAFETY). Hãy diễn đạt lại yêu cầu và không nhập dữ liệu nhạy cảm.]",
+            _ => string.Format(
+                CultureInfo.InvariantCulture,
+                "[Gemini đã dừng phản hồi: {0}. Hãy diễn đạt lại yêu cầu.]",
+                reason),
+        };
+
+    private static string CreateNoCandidateNotice(JsonElement root)
+    {
+        if (TryCreatePromptFeedbackNotice(root, out var notice))
+        {
+            return notice!;
+        }
+
+        return "[Gemini không trả về phương án phản hồi. Hãy thử diễn đạt lại yêu cầu.]";
+    }
+
+    private static bool TryCreatePromptFeedbackNotice(JsonElement root, out string? notice)
+    {
+        notice = null;
+        if (!root.TryGetProperty("promptFeedback", out var feedback)
+            || !feedback.TryGetProperty("blockReason", out var reasonProp)
+            || reasonProp.ValueKind != JsonValueKind.String
+            || reasonProp.GetString() is not { Length: > 0 } reason)
+        {
+            return false;
+        }
+
+        notice = string.Format(
+            CultureInfo.InvariantCulture,
+            "[Gemini không trả về phương án phản hồi vì câu hỏi bị chặn ({0}). Hãy diễn đạt lại yêu cầu.]",
+            reason);
+        return true;
     }
 }

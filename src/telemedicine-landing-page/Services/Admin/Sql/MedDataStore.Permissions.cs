@@ -64,6 +64,7 @@ public sealed partial class MedDataStore
     {
         lock (_lock)
         {
+            EnsureActiveGroup(gp.GroupId);
             ValidateDates(gp.EffectiveFrom, gp.EffectiveTo, "CK_group_permissions_dates");
             ValidateJson(gp.ScopeRuleJson, "scope_rule");
             _groupPermissions.Add(gp);
@@ -75,9 +76,11 @@ public sealed partial class MedDataStore
     {
         lock (_lock)
         {
-            var removed = _groupPermissions.RemoveAll(p => p.GroupPermissionId == groupPermissionId);
-            if (removed == 0)
+            var existing = _groupPermissions.FirstOrDefault(p => p.GroupPermissionId == groupPermissionId);
+            if (existing is null)
                 throw MedDomainException.Constraint("PK_group_permissions", 547, "Quyền nhóm không tồn tại.");
+            EnsureActiveGroup(existing.GroupId);
+            _groupPermissions.Remove(existing);
             RaiseStateChanged();
         }
     }

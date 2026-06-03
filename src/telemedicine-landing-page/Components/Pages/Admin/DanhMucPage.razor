@@ -80,8 +80,11 @@
                 <td>@Store.TechnicalResourceNorms.Count(n => n.TechnicalServiceId == svc.TechnicalServiceId)</td>
                 <td style="text-align:right;" @onclick:stopPropagation="true">
                     <div class="admin-row-actions">
-                        <button type="button" class="admin-icon-btn" title="Sửa" @onclick="() => OpenEdit(svc)">✎</button>
-                        <button type="button" class="admin-icon-btn is-danger" title="Lưu trữ" @onclick="() => Archive(svc)">×</button>
+                        @if (svc.Status == "active")
+                        {
+                            <button type="button" class="admin-icon-btn" title="Sửa" @onclick="() => OpenEdit(svc)">✎</button>
+                            <button type="button" class="admin-icon-btn is-danger" title="Lưu trữ" @onclick="() => Archive(svc)">×</button>
+                        }
                     </div>
                 </td>
             </tr>
@@ -127,7 +130,10 @@
                                     <td>@LookupUnit(norm.UnitCode)</td>
                                     <td>@(norm.IsRequired ? "Có" : "Không")</td>
                                     <td style="text-align:right;">
-                                        <button type="button" class="admin-icon-btn is-danger" title="Xóa định mức" @onclick="() => RemoveNorm(norm)">×</button>
+                                        @if (_selected.Status == "active")
+                                        {
+                                            <button type="button" class="admin-icon-btn is-danger" title="Xóa định mức" @onclick="() => RemoveNorm(norm)">×</button>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -139,47 +145,53 @@
                     </table>
                 </div>
 
-                <div class="admin-form-grid" style="margin-top:14px;">
-                    <div class="admin-form-field">
-                        <label class="admin-form-field-label">Tài nguyên</label>
-                        <select class="admin-select" @bind="_normResourceId" @bind:after="SyncNormUnit">
-                            <option value="">Chọn tài nguyên</option>
-                            @foreach (var resource in Store.ResourceCatalog.Where(r => r.Status == "active").OrderBy(r => r.ResourceCode))
-                            {
-                                <option value="@resource.ResourceId">@resource.Name</option>
-                            }
-                        </select>
+                @if (_selected.Status == "active")
+                {
+                    <div class="admin-form-grid" style="margin-top:14px;">
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Tài nguyên</label>
+                            <select class="admin-select" @bind="_normResourceId" @bind:after="SyncNormUnit">
+                                <option value="">Chọn tài nguyên</option>
+                                @foreach (var resource in Store.ResourceCatalog.Where(r => r.Status == "active").OrderBy(r => r.ResourceCode))
+                                {
+                                    <option value="@resource.ResourceId">@resource.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Số lượng</label>
+                            <input class="admin-input" type="number" min="0" step="0.01" @bind="_normQuantity" />
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Đơn vị</label>
+                            <select class="admin-select" @bind="_normUnit">
+                                @foreach (var unit in UnitOptionsForNorm())
+                                {
+                                    <option value="@unit.Code">@unit.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label">Bắt buộc</label>
+                            <label class="admin-check-row"><input type="checkbox" @bind="_normRequired" /> Có</label>
+                        </div>
+                        <div class="admin-form-field admin-form-field-full">
+                            <label class="admin-form-field-label">Ghi chú</label>
+                            <input class="admin-input" @bind="_normNote" />
+                        </div>
                     </div>
-                    <div class="admin-form-field">
-                        <label class="admin-form-field-label">Số lượng</label>
-                        <input class="admin-input" type="number" min="0" step="0.01" @bind="_normQuantity" />
+                    <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                        <button type="button" class="admin-btn admin-btn-primary" @onclick="AddNorm">Thêm định mức</button>
                     </div>
-                    <div class="admin-form-field">
-                        <label class="admin-form-field-label">Đơn vị</label>
-                        <select class="admin-select" @bind="_normUnit">
-                            @foreach (var unit in UnitOptionsForNorm())
-                            {
-                                <option value="@unit.Code">@unit.Name</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="admin-form-field">
-                        <label class="admin-form-field-label">Bắt buộc</label>
-                        <label class="admin-check-row"><input type="checkbox" @bind="_normRequired" /> Có</label>
-                    </div>
-                    <div class="admin-form-field admin-form-field-full">
-                        <label class="admin-form-field-label">Ghi chú</label>
-                        <input class="admin-input" @bind="_normNote" />
-                    </div>
-                </div>
-                <div style="display:flex;justify-content:flex-end;margin-top:10px;">
-                    <button type="button" class="admin-btn admin-btn-primary" @onclick="AddNorm">Thêm định mức</button>
-                </div>
+                }
             </div>
         }
     </ChildContent>
     <FooterContent>
-        <button type="button" class="admin-btn admin-btn-ghost" @onclick="@(() => OpenEdit(_selected!))">Sửa dịch vụ</button>
+        @if (_selected?.Status == "active")
+        {
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="@(() => OpenEdit(_selected))">Sửa dịch vụ</button>
+        }
         <button type="button" class="admin-btn admin-btn-primary" @onclick="() => _drawerOpen = false">Đóng</button>
     </FooterContent>
 </AdminDrawer>
@@ -385,7 +397,7 @@
             if (_editingId.HasValue)
             {
                 var current = Store.TechnicalServices.First(s => s.TechnicalServiceId == _editingId.Value);
-                Store.UpdateTechnicalService(service with { CreatedAt = current.CreatedAt, CreatedBy = current.CreatedBy });
+                Store.UpdateTechnicalService(service with { Status = current.Status, CreatedAt = current.CreatedAt, CreatedBy = current.CreatedBy });
                 Toasts.Show("Đã cập nhật dịch vụ", service.Name, ToastVariant.Success);
             }
             else
@@ -437,7 +449,13 @@
             return;
         }
 
-        if (_selected is null || !Guid.TryParse(_normResourceId, out var resourceId) || _normQuantity < 0)
+        if (_selected?.Status != "active")
+        {
+            Toasts.Show("Dịch vụ đã lưu trữ", "Không thể thay đổi định mức của dịch vụ đã lưu trữ.", ToastVariant.Warning);
+            return;
+        }
+
+        if (!Guid.TryParse(_normResourceId, out var resourceId) || _normQuantity < 0)
         {
             Toasts.Show("Định mức chưa hợp lệ", "Chọn tài nguyên và nhập số lượng không âm.", ToastVariant.Warning);
             return;
@@ -476,6 +494,12 @@
     {
         if (!Guard.CanDo("SCR_CATALOG:UPDATE", "xóa định mức dịch vụ"))
         {
+            return;
+        }
+
+        if (_selected?.Status != "active")
+        {
+            Toasts.Show("Dịch vụ đã lưu trữ", "Không thể thay đổi định mức của dịch vụ đã lưu trữ.", ToastVariant.Warning);
             return;
         }
 

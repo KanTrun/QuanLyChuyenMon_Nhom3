@@ -11,6 +11,7 @@
 @inject IToastService Toast
 @inject IValidationService Validation
 @inject IPasswordStrengthService PasswordStrengthService
+@implements IDisposable
 
 <PageTitle>Hồ sơ cá nhân | QLCM Pro</PageTitle>
 
@@ -159,8 +160,15 @@
 
     protected override void OnInitialized()
     {
+        UserContext.StateChanged += OnUserChanged;
         LoadUserData();
     }
+
+    private void OnUserChanged() => _ = InvokeAsync(() =>
+    {
+        LoadUserData();
+        StateHasChanged();
+    });
 
     private void LoadUserData()
     {
@@ -292,5 +300,10 @@
 
         Toast.Show("Mật khẩu chưa hợp lệ", errors[0], ToastVariant.Warning);
         return false;
+    }
+
+    public void Dispose()
+    {
+        UserContext.StateChanged -= OnUserChanged;
     }
 }

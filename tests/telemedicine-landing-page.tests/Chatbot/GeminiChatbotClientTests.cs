@@ -12,39 +12,53 @@ namespace telemedicine_landing_page.tests.Chatbot;
 public class GeminiChatbotClientTests
 {
     [Fact]
-    public void ServiceProvider_CreatesTypedGeminiClientWithContextBuilderRegistered()
+    public async Task ServiceProvider_CreatesTypedGeminiClientWithInjectedContextBuilder()
     {
         var services = CreateClientServices("Gemini");
+        var handler = new RecordingHandler(CreateGeminiSse("Gemini ready.", "STOP"));
         services.AddHttpClient<GeminiChatbotClient>(http =>
             {
                 http.BaseAddress = new Uri("https://generativelanguage.googleapis.com");
             })
-            .ConfigurePrimaryHttpMessageHandler(() => new StatusHandler(HttpStatusCode.OK));
+            .ConfigurePrimaryHttpMessageHandler(() => handler);
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
 
         var client = scope.ServiceProvider.GetRequiredService<GeminiChatbotClient>();
+        var combined = await CollectAsync(client.StreamReplyAsync(CreateUserConversation(), CancellationToken.None));
 
-        Assert.NotNull(client);
+        Assert.Equal("Gemini ready.", combined);
+        Assert.NotNull(handler.LastBody);
+        using var body = JsonDocument.Parse(handler.LastBody!);
+        var system = body.RootElement.GetProperty("system_instruction")
+            .GetProperty("parts")[0]
+            .GetProperty("text")
+            .GetString();
+        Assert.Equal(TestChatbotContextBuilder.SystemPrompt, system);
     }
 
     [Fact]
-    public void ServiceProvider_CreatesTypedAnthropicClientWithContextBuilderRegistered()
+    public async Task ServiceProvider_CreatesTypedAnthropicClientWithInjectedContextBuilder()
     {
         var services = CreateClientServices("Anthropic");
+        var handler = new RecordingHandler(CreateAnthropicSse("Anthropic ready."));
         services.AddHttpClient<AnthropicChatbotClient>(http =>
             {
                 http.BaseAddress = new Uri("https://api.anthropic.com");
             })
-            .ConfigurePrimaryHttpMessageHandler(() => new StatusHandler(HttpStatusCode.OK));
+            .ConfigurePrimaryHttpMessageHandler(() => handler);
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
 
         var client = scope.ServiceProvider.GetRequiredService<AnthropicChatbotClient>();
+        var combined = await CollectAsync(client.StreamReplyAsync(CreateUserConversation(), CancellationToken.None));
 
-        Assert.NotNull(client);
+        Assert.Equal("Anthropic ready.", combined);
+        Assert.NotNull(handler.LastBody);
+        using var body = JsonDocument.Parse(handler.LastBody!);
+        Assert.Equal(TestChatbotContextBuilder.SystemPrompt, body.RootElement.GetProperty("system").GetString());
     }
 
     [Fact]
@@ -203,6 +217,116 @@ public class GeminiChatbotClientTests
         Assert.Contains("Trợ lý", combined, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("MAX_TOKENS")]
+    [InlineData("SAFETY")]
+    public async Task StreamReplyAsync_FinishReasonYieldsActionableNotice(string finishReason)
+    {
+        var sse = CreateGeminiSse(string.Empty, finishReason);
+        var client = CreateDirectGeminiClient(new RecordingHandler(sse));
+
+        var combined = await CollectAsync(client.StreamReplyAsync(CreateUserConversation(), CancellationToken.None));
+
+        Assert.Contains(finishReason, combined, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task StreamReplyAsync_MetadataOnlyChunkDoesNotStopFollowingContent()
+    {
+        var sse = CreateGeminiSse(new { usageMetadata = new { totalTokenCount = 12 } }) +
+            CreateGeminiSse("Xin chào.", "STOP");
+        var client = CreateDirectGeminiClient(new RecordingHandler(sse));
+
+        var combined = await CollectAsync(client.StreamReplyAsync(CreateUserConversation(), CancellationToken.None));
+
+        Assert.Equal("Xin chào.", combined);
+    }
+
+    [Fact]
+    public async Task StreamReplyAsync_PromptSafetyBlockYieldsNoCandidateNotice()
+    {
+        var sse = CreateGeminiSse(new
+        {
+            candidates = Array.Empty<object>(),
+            promptFeedback = new { blockReason = "SAFETY" },
+        });
+        var client = CreateDirectGeminiClient(new RecordingHandler(sse));
+
+        var combined = await CollectAsync(client.StreamReplyAsync(CreateUserConversation(), CancellationToken.None));
+
+        Assert.Contains("không trả về phương án", combined, StringComparison.Ordinal);
+        Assert.Contains("SAFETY", combined, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task StreamReplyAsync_EmptyCandidatesYieldNoCandidateNotice()
+    {
+        var sse = CreateGeminiSse(new { candidates = Array.Empty<object>() });
+        var client = CreateDirectGeminiClient(new RecordingHandler(sse));
+
+        var combined = await CollectAsync(client.StreamReplyAsync(CreateUserConversation(), CancellationToken.None));
+
+        Assert.Contains("không trả về phương án", combined, StringComparison.Ordinal);
+    }
+
+    private static GeminiChatbotClient CreateDirectGeminiClient(HttpMessageHandler handler)
+    {
+        var http = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://generativelanguage.googleapis.com"),
+        };
+        var monitor = new StaticOptionsMonitor<ChatbotOptions>(new ChatbotOptions
+        {
+            ApiKey = "test-api-key",
+        });
+        return new GeminiChatbotClient(http, monitor, new UserPreferencesService());
+    }
+
+    private static ChatMessage[] CreateUserConversation()
+        => [new ChatMessage(Guid.NewGuid(), ChatRole.User, "test", DateTime.Now)];
+
+    private static async Task<string> CollectAsync(IAsyncEnumerable<string> stream)
+    {
+        var combined = new StringBuilder();
+        await foreach (var chunk in stream)
+        {
+            combined.Append(chunk);
+        }
+        return combined.ToString();
+    }
+
+    private static string CreateGeminiSse(string text, string finishReason)
+        => CreateGeminiSse(new
+        {
+            candidates = new[]
+            {
+                new
+                {
+                    content = new
+                    {
+                        role = "model",
+                        parts = new[] { new { text } },
+                    },
+                    finishReason,
+                },
+            },
+        });
+
+    private static string CreateGeminiSse(object payload)
+        => $"data: {JsonSerializer.Serialize(payload)}{Environment.NewLine}{Environment.NewLine}";
+
+    private static string CreateAnthropicSse(string text)
+    {
+        var delta = JsonSerializer.Serialize(new
+        {
+            type = "content_block_delta",
+            delta = new { type = "text_delta", text },
+        });
+        var stop = JsonSerializer.Serialize(new { type = "message_stop" });
+        return $"data: {delta}{Environment.NewLine}{Environment.NewLine}" +
+            $"data: {stop}{Environment.NewLine}{Environment.NewLine}";
+    }
+
     private sealed class RecordingHandler : HttpMessageHandler
     {
         private readonly string _sseBody;
@@ -280,10 +404,12 @@ public class GeminiChatbotClientTests
 
     private sealed class TestChatbotContextBuilder : IChatbotContextBuilder
     {
+        public const string SystemPrompt = "Injected rich chatbot context.";
+
         public string BuildSystemPrompt(
             IReadOnlyList<ChatMessage> conversation,
             string? configuredPrompt,
             string? userPrompt)
-            => configuredPrompt ?? userPrompt ?? "Test chatbot context.";
+            => SystemPrompt;
     }
 }

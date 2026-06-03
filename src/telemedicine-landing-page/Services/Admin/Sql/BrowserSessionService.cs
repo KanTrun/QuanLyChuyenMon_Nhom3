@@ -1,19 +1,26 @@
 using Microsoft.JSInterop;
+using TelemedicineLandingPage.Services.Auth;
 
 namespace TelemedicineLandingPage.Services.Admin.Sql;
 
-/// <summary>Persists the current user id in browser session storage for Blazor circuit reloads.</summary>
+/// <summary>Persists a protected browser session token for Blazor circuit reloads.</summary>
 public sealed class BrowserSessionService
 {
-    private const string CurrentUserKey = "qlcm_uid";
+    private const string SessionTokenKey = "qlcm_session";
+    private const string LegacyCurrentUserKey = "qlcm_uid";
 
     private readonly IJSRuntime _js;
     private readonly ICurrentUserContext _userContext;
+    private readonly BrowserSessionTokenService _tokens;
 
-    public BrowserSessionService(IJSRuntime js, ICurrentUserContext userContext)
+    public BrowserSessionService(
+        IJSRuntime js,
+        ICurrentUserContext userContext,
+        BrowserSessionTokenService tokens)
     {
         _js = js;
         _userContext = userContext;
+        _tokens = tokens;
     }
 
     public async Task PersistCurrentUserAsync()
@@ -24,19 +31,23 @@ public sealed class BrowserSessionService
             return;
         }
 
-        await _js.InvokeVoidAsync("sessionStorage.setItem", CurrentUserKey, userId.Value.ToString());
+        await _js.InvokeVoidAsync("sessionStorage.setItem", SessionTokenKey, _tokens.IssueToken(userId.Value));
+        await ClearLegacyCurrentUserAsync();
     }
 
     public async Task<bool> RestoreCurrentUserAsync()
     {
+        await ClearLegacyCurrentUserAsync();
+
         if (_userContext.CurrentUser is not null)
         {
             return true;
         }
 
-        var rawUserId = await _js.InvokeAsync<string?>("sessionStorage.getItem", CurrentUserKey);
-        if (!Guid.TryParse(rawUserId, out var userId))
+        var token = await _js.InvokeAsync<string?>("sessionStorage.getItem", SessionTokenKey);
+        if (!_tokens.TryValidateToken(token, out var userId))
         {
+            await ClearAsync();
             return false;
         }
 
@@ -52,6 +63,20 @@ public sealed class BrowserSessionService
         }
     }
 
+    public async Task<string?> GetCurrentSessionTokenAsync()
+    {
+        await ClearLegacyCurrentUserAsync();
+
+        var token = await _js.InvokeAsync<string?>("sessionStorage.getItem", SessionTokenKey);
+        if (_tokens.TryValidateToken(token, out _))
+        {
+            return token;
+        }
+
+        await ClearAsync();
+        return null;
+    }
+
     public async Task SignOutAsync()
     {
         _userContext.SignOut();
@@ -59,5 +84,11 @@ public sealed class BrowserSessionService
     }
 
     public async Task ClearAsync()
-        => await _js.InvokeVoidAsync("sessionStorage.removeItem", CurrentUserKey);
+    {
+        await _js.InvokeVoidAsync("sessionStorage.removeItem", SessionTokenKey);
+        await ClearLegacyCurrentUserAsync();
+    }
+
+    private async Task ClearLegacyCurrentUserAsync()
+        => await _js.InvokeVoidAsync("sessionStorage.removeItem", LegacyCurrentUserKey);
 }

@@ -117,6 +117,30 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void ArchiveGroup(Guid groupId)
+    {
+        lock (_lock)
+        {
+            var idx = _groups.FindIndex(g => g.GroupId == groupId);
+            if (idx < 0)
+                throw MedDomainException.Constraint("PK_groups", 547, "Nhom khong ton tai.");
+
+            _groups[idx] = _groups[idx] with { Status = "archived", UpdatedAt = DateTime.UtcNow };
+            var now = DateTime.UtcNow;
+            for (var i = 0; i < _userGroupMembers.Count; i++)
+            {
+                if (_userGroupMembers[i].GroupId == groupId && _userGroupMembers[i].EffectiveTo is null)
+                    _userGroupMembers[i] = _userGroupMembers[i] with { EffectiveTo = now };
+            }
+            for (var i = 0; i < _groupPermissions.Count; i++)
+            {
+                if (_groupPermissions[i].GroupId == groupId && _groupPermissions[i].EffectiveTo is null)
+                    _groupPermissions[i] = _groupPermissions[i] with { EffectiveTo = now };
+            }
+            RaiseStateChanged();
+        }
+    }
+
     public void AddUserRole(UserRole userRole)
     {
         lock (_lock)
@@ -142,6 +166,7 @@ public sealed partial class MedDataStore
     {
         lock (_lock)
         {
+            EnsureActiveGroup(member.GroupId);
             ValidateDates(member.EffectiveFrom, member.EffectiveTo, "CK_user_group_members_dates");
             _userGroupMembers.Add(member);
             RaiseStateChanged();
@@ -152,10 +177,25 @@ public sealed partial class MedDataStore
     {
         lock (_lock)
         {
-            var removed = _userGroupMembers.RemoveAll(m => m.UserGroupMemberId == membershipId);
-            if (removed == 0)
+            var existing = _userGroupMembers.FirstOrDefault(m => m.UserGroupMemberId == membershipId);
+            if (existing is null)
                 throw MedDomainException.Constraint("PK_user_group_members", 547, "Thành viên nhóm không tồn tại.");
+            EnsureActiveGroup(existing.GroupId);
+            _userGroupMembers.Remove(existing);
             RaiseStateChanged();
+        }
+    }
+
+    private void EnsureActiveGroup(Guid groupId)
+    {
+        var group = _groups.FirstOrDefault(g => g.GroupId == groupId)
+            ?? throw MedDomainException.Constraint("PK_groups", 547, "Nhom khong ton tai.");
+        if (group.Status != "active")
+        {
+            throw MedDomainException.Constraint(
+                "CK_groups_active_mutation",
+                50022,
+                "Nhom da luu tru khong cho phep thay doi thanh vien/quyen.");
         }
     }
 }

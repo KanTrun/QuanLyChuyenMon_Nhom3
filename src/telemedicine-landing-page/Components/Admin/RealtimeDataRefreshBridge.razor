@@ -1,0 +1,30 @@
+@using TelemedicineLandingPage.Services.Admin.Sql
+@inject IMedDataStore Store
+@inject IMedDataChangeBus ChangeBus
+@implements IDisposable
+
+@code {
+    private bool _disposed;
+
+    protected override void OnInitialized()
+    {
+        ChangeBus.Changed += OnDataChanged;
+    }
+
+    private void OnDataChanged()
+    {
+        _ = InvokeAsync(() =>
+        {
+            if (!_disposed)
+            {
+                Store.Refresh();
+            }
+        });
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        ChangeBus.Changed -= OnDataChanged;
+    }
+}

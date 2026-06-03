@@ -197,6 +197,39 @@ public sealed class PermissionChangeRequestServiceTests : IDisposable
         Assert.NotNull(permission.EffectiveTo);
     }
 
+    [Fact]
+    public void Approve_GroupPermissionForArchivedGroup_Throws50022()
+    {
+        var groupId = Guid.NewGuid();
+        _db.Groups.Add(new Group
+        {
+            GroupId = groupId,
+            Code = "GROUP-ARCHIVED-REQUEST",
+            Name = "Nhom da luu tru",
+            Status = "archived"
+        });
+        _db.SaveChanges();
+        var req = _svc.CreateDraft(
+            MedDataStoreSeed.AdminUserId, "group",
+            null, groupId, null,
+            "Cap quyen nhom da luu tru", DateTime.UtcNow);
+        _svc.AddItem(req.PermissionChangeRequestId, new PermissionChangeItem
+        {
+            PermissionChangeRequestId = req.PermissionChangeRequestId,
+            PermissionId = MedDataStoreSeed.PermManagePermId,
+            OperationCode = "grant",
+            EffectCode = "allow",
+            DepartmentScopeType = "global"
+        });
+        _svc.SubmitForApproval(req.PermissionChangeRequestId, MedDataStoreSeed.AdminUserId);
+
+        var ex = Assert.Throws<MedDomainException>(() =>
+            _svc.Approve(req.PermissionChangeRequestId, _testApproverId));
+
+        Assert.Equal(50022, ex.SqlErrorNumber);
+        Assert.Empty(_db.GroupPermissions.Where(p => p.GroupId == groupId));
+    }
+
     // === 8. Approve: scheduled mode ===
     [Fact]
     public void Approve_Scheduled_SetsScheduledStatus()

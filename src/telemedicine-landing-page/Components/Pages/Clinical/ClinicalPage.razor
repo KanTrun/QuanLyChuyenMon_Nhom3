@@ -180,7 +180,7 @@
                         <div class="admin-form-field">
                             <label class="admin-form-field-label">Trạng thái</label>
                             <select class="admin-select" @bind="_appStatus">
-                                @foreach (var status in Sql.MedLookups.ProtocolApplicationStatuses)
+                                @foreach (var status in OrdinaryApplicationStatuses)
                                 {
                                     <option value="@status.Code">@status.Name</option>
                                 }
@@ -242,6 +242,7 @@
     </ChildContent>
     <FooterContent>
         <button type="button" class="admin-btn admin-btn-ghost" @onclick="@(() => OpenEditPatient(_selected!))">Sửa bệnh nhân</button>
+        <button type="button" class="admin-btn admin-btn-ghost" disabled="@(_selected is null)" @onclick="ExportSelectedPatientDossier">Xu&#7845;t h&#7891; s&#417; &#273;ang ch&#7885;n</button>
         <button type="button" class="admin-btn admin-btn-primary" @onclick="() => _drawerOpen = false">Đóng</button>
     </FooterContent>
 </AdminDrawer>
@@ -358,6 +359,36 @@
         catch (Exception ex)
         {
             Toasts.Show("Không thể xuất hồ sơ", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private async Task ExportSelectedPatientDossier()
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+        if (!Guard.HasPermission("SCR_CLINICAL:VIEW", "PERM_CLINICAL_view"))
+        {
+            Toasts.Show("Khong co quyen", "Tai khoan hien tai khong duoc phep xuat ho so lam sang.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            var generatedAt = DateTime.UtcNow;
+            var html = ExportService.BuildPatientDossierHtmlReport(_selected.PatientRefId, generatedAt);
+            var patientCode = SafeFileNamePart(_selected.PatientCode ?? _selected.ExternalPatientId);
+            var fileName = $"qlcm-ho-so-{patientCode}-{AdminDateTimeDisplay.ToDisplayTime(generatedAt):yyyyMMdd-HHmm}.html";
+            var downloaded = await JS.InvokeAsync<bool>("qlcmShell.downloadFile", fileName, html, "text/html;charset=utf-8");
+            Toasts.Show(
+                downloaded ? "Da xuat ho so benh nhan" : "Khong the tai tep",
+                downloaded ? "Mo file HTML de xem, in hoac luu PDF tu trinh duyet." : "Trinh duyet tu choi thao tac tai tep.",
+                downloaded ? ToastVariant.Success : ToastVariant.Warning);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Khong the xuat ho so", ex.Message, ToastVariant.Error);
         }
     }
 
@@ -493,6 +524,11 @@
         {
             return;
         }
+        if (!IsOrdinaryApplicationStatus(_appStatus))
+        {
+            Toasts.Show("Khong the ap dung", "Trang thai ky va thu hoi chi duoc thuc hien qua quy trinh chu ky.", ToastVariant.Warning);
+            return;
+        }
 
         if (!Guid.TryParse(_appProtocolVersionId, out var versionId))
         {
@@ -621,6 +657,21 @@
     }
 
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    private static readonly IReadOnlyList<Sql.LookupEntry> OrdinaryApplicationStatuses =
+        Sql.MedLookups.ProtocolApplicationStatuses.Where(status => !IsSignatureProtectedStatus(status.Code)).ToList();
+    private static bool IsOrdinaryApplicationStatus(string? status)
+        => !string.IsNullOrWhiteSpace(status) &&
+           !IsSignatureProtectedStatus(status) &&
+           Sql.MedLookups.ProtocolApplicationStatuses.Any(entry => entry.Code == status);
+    private static bool IsSignatureProtectedStatus(string? status)
+        => status is "signed" or "revoked";
+    private static string SafeFileNamePart(string? value)
+    {
+        var safe = new string((value ?? string.Empty)
+            .Where(c => char.IsLetterOrDigit(c) || c is '-' or '_')
+            .ToArray());
+        return string.IsNullOrWhiteSpace(safe) ? "benh-nhan" : safe;
+    }
     private static bool IsActiveProtocolVersion(Sql.ClinicalProtocolVersion? version)
         => version is not null &&
            version.StatusCode == "active" &&

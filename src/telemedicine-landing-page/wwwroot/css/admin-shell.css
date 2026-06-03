@@ -362,6 +362,41 @@
     padding: 14px 10px;
 }
 
+@media (min-width: 901px) {
+    .admin-shell[data-collapsed="true"] .admin-sidebar {
+        overflow: visible;
+        z-index: 40;
+    }
+
+    .admin-shell[data-collapsed="true"] .admin-nav-group {
+        position: relative;
+    }
+
+    .admin-shell[data-collapsed="true"] .admin-nav-group[open] > .admin-nav-children {
+        position: absolute;
+        top: 0;
+        left: calc(100% + 8px);
+        z-index: 41;
+        display: flex;
+        min-width: 220px;
+        margin: 0;
+        padding: 8px;
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-card);
+        background: var(--color-surface);
+        box-shadow: var(--shadow-strong);
+    }
+
+    .admin-shell[data-collapsed="true"] .admin-nav-children .admin-nav-link {
+        justify-content: flex-start;
+        padding: 8px 12px;
+    }
+
+    .admin-shell[data-collapsed="true"] .admin-nav-children .admin-nav-label {
+        display: block;
+    }
+}
+
 /* ── Top bar ─────────────────────────────────────── */
 
 .admin-topbar {

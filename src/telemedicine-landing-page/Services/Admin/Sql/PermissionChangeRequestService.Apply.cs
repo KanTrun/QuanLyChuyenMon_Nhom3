@@ -88,6 +88,7 @@ public sealed partial class PermissionChangeRequestService
     {
         var groupId = req.TargetGroupId
             ?? throw MissingTarget("nhóm");
+        EnsureActiveGroup(groupId);
         var existing = _db.GroupPermissions.FirstOrDefault(p =>
             p.GroupId == groupId &&
             p.PermissionId == item.PermissionId &&
@@ -125,6 +126,19 @@ public sealed partial class PermissionChangeRequestService
             ScopeRuleJson = item.ScopeRuleJson,
             Reason = req.Reason
         });
+    }
+
+    private void EnsureActiveGroup(Guid groupId)
+    {
+        var group = _db.Groups.FirstOrDefault(g => g.GroupId == groupId)
+            ?? throw MissingTarget("nhóm");
+        if (group.Status != "active")
+        {
+            throw MedDomainException.Constraint(
+                "CK_groups_active_mutation",
+                50022,
+                "Nhom da luu tru khong cho phep thay doi thanh vien/quyen.");
+        }
     }
 
     private void ApplyUserPermission(PermissionChangeRequest req, PermissionChangeItem item,
