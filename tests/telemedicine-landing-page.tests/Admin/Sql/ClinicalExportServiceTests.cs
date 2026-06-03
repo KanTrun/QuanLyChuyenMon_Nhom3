@@ -89,11 +89,50 @@ public sealed class ClinicalExportServiceTests
             MedDataStoreSeed.PatientMauId,
             new DateTime(2026, 6, 2, 9, 0, 0, DateTimeKind.Utc));
 
-        Assert.Contains("/brand/logo-hos.jpg", html);
+        Assert.Contains("data:image/jpeg;base64,", html);
+        Assert.DoesNotContain("/brand/logo-hos.jpg", html);
         Assert.Contains("B\u1ec7nh vi\u1ec7n \u0110a khoa", html);
         Assert.Contains("H\u1ed2 S\u01a0 L\u00c2M S\u00c0NG", html);
         Assert.Contains("I. TH\u00d4NG TIN NG\u01af\u1edcI B\u1ec6NH", html);
         Assert.Contains("CH\u1eee K\u00dd \u0110\u00c3 THU H\u1ed2I", html);
+        Assert.Contains(ValidPngDataUrl, html);
+    }
+
+    [Fact]
+    public void BuildPatientDossierHtmlReport_IncludesSignatureEvidenceWhenSignatureExistsOnAppliedRecord()
+    {
+        var store = new MedDataStore();
+        var app = new PatientProtocolApplication
+        {
+            PatientRefId = MedDataStoreSeed.PatientMauId,
+            EncounterRefId = MedDataStoreSeed.EncounterMauId,
+            ClinicalProtocolVersionId = MedDataStoreSeed.ProtocolThaVersionId,
+            DiagnosisCode = "I10",
+            ApplicationStatus = "applied",
+            AppliedAt = new DateTime(2026, 6, 2, 8, 0, 0, DateTimeKind.Utc)
+        };
+        store.AddPatientProtocolApplication(app);
+        var signedAt = new DateTime(2026, 6, 2, 8, 30, 0, DateTimeKind.Utc);
+        var metadata = JsonSerializer.Serialize(new { SignatureImageDataUrl = ValidPngDataUrl });
+        store.AddSignatureRecord(new SignatureRecord
+        {
+            TargetType = "patient_protocol_application",
+            TargetId = app.PatientProtocolApplicationId,
+            SignerUserId = MedDataStoreSeed.AdminUserId,
+            SignerUsername = "admin",
+            ProviderCode = "demo",
+            IsLegallyValid = false,
+            SignatureHash = MetadataBoundHash(app.PatientProtocolApplicationId, signedAt, metadata),
+            SignedAt = signedAt,
+            MetadataJson = metadata
+        });
+        var service = new ClinicalExportService(store);
+
+        var html = service.BuildPatientDossierHtmlReport(
+            MedDataStoreSeed.PatientMauId,
+            new DateTime(2026, 6, 2, 9, 0, 0, DateTimeKind.Utc));
+
+        Assert.Contains("X\u00e1c nh\u1eadn ch\u1eef k\u00fd", html);
         Assert.Contains(ValidPngDataUrl, html);
     }
 
