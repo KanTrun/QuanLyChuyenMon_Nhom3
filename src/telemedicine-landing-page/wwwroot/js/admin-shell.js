@@ -419,7 +419,31 @@
     function getSignaturePadDataUrl(canvasId) {
         var entry = state.signaturePads.get(canvasId);
         if (!entry || !entry.pad || entry.pad.isEmpty()) return null;
-        return entry.pad.toDataURL('image/png');
+        return normalizeSignatureDataUrl(entry.canvas);
+    }
+
+    function normalizeSignatureDataUrl(canvas) {
+        try {
+            var normalized = document.createElement('canvas');
+            normalized.width = canvas.width;
+            normalized.height = canvas.height;
+            var ctx = normalized.getContext('2d');
+            if (!ctx) return canvas.toDataURL('image/png');
+
+            ctx.drawImage(canvas, 0, 0);
+            var image = ctx.getImageData(0, 0, normalized.width, normalized.height);
+            for (var i = 0; i < image.data.length; i += 4) {
+                if (image.data[i + 3] === 0) continue;
+                image.data[i] = 17;
+                image.data[i + 1] = 24;
+                image.data[i + 2] = 39;
+                image.data[i + 3] = Math.max(image.data[i + 3], 190);
+            }
+            ctx.putImageData(image, 0, 0);
+            return normalized.toDataURL('image/png');
+        } catch (_) {
+            return canvas.toDataURL('image/png');
+        }
     }
 
     function hasSignaturePadInk(canvasId) {

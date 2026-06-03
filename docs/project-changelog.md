@@ -27,6 +27,7 @@
 | Docker chatbot availability | Teammates can use chatbot from Docker localhost by configuring Compose environment instead of editing app files |
 | Clinical PDF signature fallback | Clinical PDF now renders a visible electronic signature stamp when legacy/demo signature records have no PNG evidence image |
 | Clinical PDF drawn signature | Clinical PDF now prints the saved drawn PNG signature whenever signature metadata contains valid image evidence |
+| Printable signature ink | Clinical PDF and new signature captures normalize drawn signatures to dark ink so dark-mode signatures remain visible on white paper |
 
 ### Verification
 | Check | Result |

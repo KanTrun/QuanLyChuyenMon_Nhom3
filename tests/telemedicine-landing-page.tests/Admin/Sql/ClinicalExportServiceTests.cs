@@ -175,7 +175,7 @@ public sealed class ClinicalExportServiceTests
     }
 
     [Fact]
-    public void BuildPatientDossierHtmlReport_RendersSavedSignatureImageEvenWhenIntegrityWarningExists()
+    public void BuildPatientDossierHtmlReport_RendersSavedSignatureImageEvenWhenIntegrityHashDoesNotMatch()
     {
         var store = new MedDataStore();
         var app = new PatientProtocolApplication
@@ -209,7 +209,8 @@ public sealed class ClinicalExportServiceTests
             new DateTime(2026, 6, 2, 9, 0, 0, DateTimeKind.Utc));
 
         Assert.Contains(ValidPngDataUrl, html);
-        Assert.Contains("signature-warning", html);
+        Assert.Contains("filter:brightness(0)", html);
+        Assert.DoesNotContain("signature-warning", html);
         Assert.DoesNotContain("signature-stamp-name\">admin", html);
     }
 
