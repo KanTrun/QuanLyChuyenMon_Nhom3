@@ -12,6 +12,18 @@ services:
       Chatbot__Model: ${CHATBOT_MODEL:-gemini-2.5-flash}
       Chatbot__BaseUrl: ${CHATBOT_BASE_URL:-https://generativelanguage.googleapis.com}
       Chatbot__MaxTokens: ${CHATBOT_MAX_TOKENS:-4096}
+      SmartCa__Enabled: ${SMARTCA_ENABLED:-false}
+      SmartCa__BaseUrl: ${SMARTCA_BASE_URL:-https://rmgateway.vnptit.vn}
+      SmartCa__ApiPrefix: ${SMARTCA_API_PREFIX:-/sca/sp769}
+      SmartCa__SpId: ${SMARTCA_SP_ID:-}
+      SmartCa__SpPassword: ${SMARTCA_SP_PASSWORD:-}
+      SmartCa__DefaultUserId: ${SMARTCA_DEFAULT_USER_ID:-}
+      SmartCa__DefaultSerialNumber: ${SMARTCA_DEFAULT_SERIAL_NUMBER:-}
+      SmartCa__DefaultSignerUserId: ${SMARTCA_SIGNER_USER_ID:-}
+      SmartCa__DefaultSignerUsername: ${SMARTCA_SIGNER_USERNAME:-}
+      SmartCa__UserBindingsJson: ${SMARTCA_USER_BINDINGS_JSON:-}
+      SmartCa__CallbackUrl: ${SMARTCA_CALLBACK_URL:-}
+      SmartCa__RequestTimeoutSeconds: ${SMARTCA_REQUEST_TIMEOUT_SECONDS:-45}
     depends_on:
       db-init:
         condition: service_completed_successfully

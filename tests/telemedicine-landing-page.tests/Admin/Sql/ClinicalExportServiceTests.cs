@@ -181,6 +181,49 @@ public sealed class ClinicalExportServiceTests
     }
 
     [Fact]
+    public void BuildPatientDossierHtmlReport_RendersSmartCaCertificateEvidence()
+    {
+        var store = new MedDataStore();
+        var app = new PatientProtocolApplication
+        {
+            PatientRefId = MedDataStoreSeed.PatientMauId,
+            EncounterRefId = MedDataStoreSeed.EncounterMauId,
+            ClinicalProtocolVersionId = MedDataStoreSeed.ProtocolThaVersionId,
+            DiagnosisCode = "I10",
+            ApplicationStatus = "signed",
+            AppliedAt = new DateTime(2026, 6, 4, 8, 0, 0, DateTimeKind.Utc)
+        };
+        store.AddPatientProtocolApplication(app);
+        var signedAt = new DateTime(2026, 6, 4, 8, 30, 0, DateTimeKind.Utc);
+        store.AddSignatureRecord(new SignatureRecord
+        {
+            TargetType = "patient_protocol_application",
+            TargetId = app.PatientProtocolApplicationId,
+            SignerUserId = MedDataStoreSeed.AdminUserId,
+            SignerUsername = "admin",
+            ProviderCode = "vnpt-smartca-sandbox",
+            IsLegallyValid = true,
+            SignatureHash = "smartca-hash",
+            SignedAt = signedAt,
+            CertificateSubject = "CN=QLCM SmartCA Sandbox",
+            CertificateSerial = "54010101sandbox",
+            CertificateExpiry = new DateTime(2027, 6, 4, 0, 0, 0, DateTimeKind.Utc),
+            MetadataJson = "{\"Provider\":\"vnpt-smartca-sandbox\"}"
+        });
+        var service = new ClinicalExportService(store);
+
+        var html = service.BuildPatientDossierHtmlReport(
+            MedDataStoreSeed.PatientMauId,
+            new DateTime(2026, 6, 4, 9, 0, 0, DateTimeKind.Utc));
+
+        Assert.Contains("VNPT SmartCA sandbox", html);
+        Assert.Contains("Ch\u1eef k&#253; s\u1ed1 CA", html);
+        Assert.Contains("54010101sandbox", html);
+        Assert.Contains("CN=QLCM SmartCA Sandbox", html);
+        Assert.Contains("C&#243;", html);
+    }
+
+    [Fact]
     public void BuildPatientDossierHtmlReport_RendersSavedSignatureImageEvenWhenIntegrityHashDoesNotMatch()
     {
         var store = new MedDataStore();

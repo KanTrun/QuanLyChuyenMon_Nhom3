@@ -95,9 +95,13 @@
                 <td>
                     <div class="admin-row-actions">
                         <AdminBadge Tone="@ApplicationTone(row.Application.ApplicationStatus)">@Lookup(Sql.MedLookups.ProtocolApplicationStatuses, row.Application.ApplicationStatus)</AdminBadge>
-                        @if (SignatureFor(row.Application.PatientProtocolApplicationId) is not null)
+                        @if (SignatureFor(row.Application.PatientProtocolApplicationId) is { } signature)
                         {
-                            <AdminBadge Tone="tone-secondary">Chữ ký demo</AdminBadge>
+                            <AdminBadge Tone="tone-secondary">@SignatureBadgeLabel(signature)</AdminBadge>
+                        }
+                        else if (PendingSmartCaFor(row.Application.PatientProtocolApplicationId) is { } transaction)
+                        {
+                            <AdminBadge Tone="@SmartCaStatusTone(transaction.TransactionStatus)">SmartCA @SmartCaStatusText(transaction.TransactionStatus)</AdminBadge>
                         }
                     </div>
                 </td>
@@ -209,18 +213,58 @@
                 <dt>Thời điểm</dt>
                 <dd>@AdminDateTimeDisplay.DateTime(DateTime.UtcNow)</dd>
                 <dt>Nhà cung cấp</dt>
-                <dd>Demo - chưa có giá trị pháp lý</dd>
+                <dd>@(_smartCaReadiness?.DisplayStatus ?? "SmartCA sandbox đang kiểm tra")</dd>
             </dl>
-            <div class="signature-pad-panel">
-                <label class="admin-form-field-label is-required" for="@SignatureCanvasId">Chữ ký điện tử</label>
-                <canvas id="@SignatureCanvasId" class="signature-pad-canvas" aria-label="Vùng vẽ chữ ký điện tử"></canvas>
+            <div class="signature-provider-grid">
+                <section class="signature-provider-panel signature-provider-panel-ca">
+                    <div class="signature-provider-heading">
+                        <span class="signature-provider-kicker">VNPT SmartCA</span>
+                        <strong>Sandbox CA</strong>
+                    </div>
+                    <p class="signature-provider-copy">Gửi hash hồ sơ đến CA, người ký xác nhận trên ứng dụng SmartCA, sau đó hệ thống lấy chữ ký và khóa trạng thái hồ sơ.</p>
+                    @if (_smartCaReadiness?.Ready == true)
+                    {
+                        <dl class="signature-transaction-grid">
+                            <dt>Thuê bao CA</dt>
+                            <dd>@(_smartCaReadiness.DefaultUserId ?? "Theo binding tài khoản")</dd>
+                            <dt>Gateway</dt>
+                            <dd>@_smartCaReadiness.BaseUrl@_smartCaReadiness.ApiPrefix</dd>
+                            <dt>Giao dịch</dt>
+                            <dd>@(_smartCaTransaction?.ExternalTransactionCode ?? "Chưa gửi")</dd>
+                            <dt>Trạng thái</dt>
+                            <dd>@SmartCaStatusText(_smartCaTransaction?.TransactionStatus)</dd>
+                        </dl>
+                        <div class="signature-provider-actions">
+                            <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="StartSmartCaSign">Gửi yêu cầu SmartCA</button>
+                            <button type="button" class="admin-btn admin-btn-ghost" disabled="@(_signatureBusy || _smartCaTransaction is null)" @onclick="RefreshSmartCaSign">Kiểm tra trạng thái</button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="signature-config-warning">
+                            <strong>Chưa bật được SmartCA sandbox</strong>
+                            <span>Cấu hình Docker/env còn thiếu: @MissingSmartCaFields()</span>
+                        </div>
+                    }
+                </section>
+                <section class="signature-provider-panel">
+                    <div class="signature-provider-heading">
+                        <span class="signature-provider-kicker">Nội bộ</span>
+                        <strong>Ký demo không pháp lý</strong>
+                    </div>
+                    <p class="signature-provider-copy">Dùng khi chưa có credential CA. Chữ ký vẽ tay được lưu làm bằng chứng demo và không thay thế chữ ký số CA.</p>
+                    <div class="signature-pad-panel">
+                        <label class="admin-form-field-label is-required" for="@SignatureCanvasId">Chữ ký demo</label>
+                        <canvas id="@SignatureCanvasId" class="signature-pad-canvas" aria-label="Vùng vẽ chữ ký demo"></canvas>
+                    </div>
+                </section>
             </div>
         }
     </ChildContent>
     <FooterContent>
-        <button type="button" class="admin-btn admin-btn-ghost" @onclick="ClearSignaturePad">Xóa chữ ký</button>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="ClearSignaturePad">Xóa chữ ký demo</button>
         <button type="button" class="admin-btn admin-btn-ghost" @onclick="CloseSignModal">Hủy</button>
-        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">Ký xác nhận</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">Ký demo</button>
     </FooterContent>
 </AdminModal>
 
@@ -269,6 +313,8 @@
     private bool _signatureBusy;
     private bool _signaturePadReady;
     private ClinicalRow? _signingRow;
+    private SmartCaReadiness? _smartCaReadiness;
+    private Sql.SignatureTransactionRecord? _smartCaTransaction;
     private string _revokeReason = string.Empty;
 
     protected override void OnInitialized()
@@ -561,7 +607,7 @@
         Toasts.Show("Đã cập nhật trạng thái", Lookup(Sql.MedLookups.ProtocolApplicationStatuses, status), ToastVariant.Success);
     }
 
-    private void OpenSign(ClinicalRow row)
+    private async Task OpenSign(ClinicalRow row)
     {
         if (!Guard.CanDo("SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION", "ký xác nhận hồ sơ"))
         {
@@ -569,6 +615,11 @@
         }
 
         _signingRow = row;
+        _smartCaReadiness = SignatureService.GetSmartCaReadiness();
+        _smartCaTransaction = await SignatureService.GetLatestSmartCaTransactionAsync(
+            SignatureTargetType,
+            row.Application.PatientProtocolApplicationId,
+            UserContext.CurrentUser?.UserId);
         _signaturePadReady = false;
         _signModalOpen = true;
     }
@@ -582,6 +633,7 @@
         }
 
         _signModalOpen = true;
+        _smartCaReadiness = SignatureService.GetSmartCaReadiness();
         _signaturePadReady = false;
     }
 
@@ -674,6 +726,81 @@
         catch (Exception ex)
         {
             Toasts.Show("Không thể ký", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _signatureBusy = false;
+        }
+    }
+
+    private async Task StartSmartCaSign()
+    {
+        if (_signingRow is null || UserContext.CurrentUser is null) return;
+        _signatureBusy = true;
+        try
+        {
+            var metadata = JsonSerializer.Serialize(new
+            {
+                Page = "admin_lam_sang",
+                Mode = "smartca_sandbox",
+                ProtocolVersionId = _signingRow.Application.ClinicalProtocolVersionId,
+                PatientCode = PatientCode(_signingRow.Patient)
+            });
+            var result = await SignatureService.StartSmartCaSignatureAsync(
+                SignatureTargetType,
+                _signingRow.Application.PatientProtocolApplicationId,
+                UserContext.CurrentUser.UserId,
+                UserContext.CurrentUser.Username,
+                metadata);
+
+            _smartCaTransaction = result.Transaction ?? _smartCaTransaction;
+            Store.Refresh(publish: true);
+
+            if (result.Result == SignatureResult.PendingExternalConfirmation)
+            {
+                Toasts.Show("Đã gửi yêu cầu SmartCA", "Người ký mở ứng dụng SmartCA để xác nhận, sau đó bấm kiểm tra trạng thái.", ToastVariant.Success);
+                return;
+            }
+
+            Toasts.Show("Không thể gửi SmartCA", SmartCaResultMessage(result.Result), ToastVariant.Warning);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể gửi SmartCA", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _signatureBusy = false;
+        }
+    }
+
+    private async Task RefreshSmartCaSign()
+    {
+        if (_smartCaTransaction is null || UserContext.CurrentUser is null) return;
+        _signatureBusy = true;
+        try
+        {
+            var result = await SignatureService.RefreshSmartCaSignatureAsync(
+                _smartCaTransaction.SignatureTransactionId,
+                UserContext.CurrentUser.UserId,
+                UserContext.CurrentUser.Username);
+
+            _smartCaTransaction = result.Transaction ?? _smartCaTransaction;
+            Store.Refresh(publish: true);
+
+            if (result.Result == SignatureResult.Created)
+            {
+                await CloseSignModal();
+                Toasts.Show("SmartCA đã ký hồ sơ", "Chữ ký CA đã được lưu và hồ sơ chuyển sang trạng thái đã ký.", ToastVariant.Success);
+                Recompute();
+                return;
+            }
+
+            Toasts.Show("Trạng thái SmartCA", SmartCaResultMessage(result.Result), SmartCaToastVariant(result.Result));
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể kiểm tra SmartCA", ex.Message, ToastVariant.Error);
         }
         finally
         {
@@ -814,6 +941,63 @@
         => Store.SignatureRecords.FirstOrDefault(s =>
             s.TargetType == SignatureTargetType &&
             s.TargetId == applicationId);
+    private Sql.SignatureTransactionRecord? PendingSmartCaFor(Guid applicationId)
+        => Store.SignatureTransactions
+            .Where(t => t.TargetType == SignatureTargetType &&
+                        t.TargetId == applicationId &&
+                        t.ProviderCode == SmartCaOptions.SandboxProviderCode &&
+                        t.TransactionStatus is "created" or "waiting")
+            .OrderByDescending(t => t.RequestedAt)
+            .FirstOrDefault();
+    private static string SignatureBadgeLabel(Sql.SignatureRecord signature)
+        => signature.ProviderCode == SmartCaOptions.SandboxProviderCode
+            ? "SmartCA sandbox"
+            : "Chữ ký demo";
+    private static string SmartCaStatusText(string? status)
+        => status switch
+        {
+            "created" => "đã tạo",
+            "waiting" => "chờ xác nhận",
+            "signed" => "đã ký",
+            "rejected" => "bị từ chối",
+            "expired" => "hết hạn",
+            "failed" => "lỗi",
+            "unknown" => "chưa rõ",
+            _ => "chưa gửi"
+        };
+    private static string SmartCaStatusTone(string? status)
+        => status switch
+        {
+            "signed" => "tone-success",
+            "rejected" or "expired" or "failed" => "tone-danger",
+            "waiting" or "created" => "tone-warning",
+            _ => "tone-muted"
+        };
+    private string MissingSmartCaFields()
+        => _smartCaReadiness is null || _smartCaReadiness.MissingFields.Count == 0
+            ? "SMARTCA_ENABLED, SMARTCA_SP_ID, SMARTCA_SP_PASSWORD, SMARTCA_DEFAULT_USER_ID, SMARTCA_SIGNER_USER_ID"
+            : string.Join(", ", _smartCaReadiness.MissingFields);
+    private static string SmartCaResultMessage(SignatureResult result)
+        => result switch
+        {
+            SignatureResult.PendingExternalConfirmation => "Giao dịch đang chờ người ký xác nhận trên SmartCA.",
+            SignatureResult.ProviderNotConfigured => "SmartCA sandbox chưa được cấu hình đủ trong Docker/env.",
+            SignatureResult.AlreadySigned => "Hồ sơ này đã có chữ ký.",
+            SignatureResult.Unauthorized => "Tài khoản hiện tại không có quyền ký.",
+            SignatureResult.InvalidState => "Hồ sơ không ở trạng thái có thể ký.",
+            SignatureResult.ExternalProviderRejected => "Người ký đã từ chối giao dịch SmartCA.",
+            SignatureResult.ExternalProviderExpired => "Giao dịch SmartCA đã hết hạn.",
+            SignatureResult.ExternalProviderFailed => "SmartCA chưa trả kết quả hợp lệ hoặc đang lỗi.",
+            _ => "Không thể xử lý giao dịch ký số."
+        };
+    private static ToastVariant SmartCaToastVariant(SignatureResult result)
+        => result switch
+        {
+            SignatureResult.PendingExternalConfirmation => ToastVariant.Info,
+            SignatureResult.ExternalProviderRejected or SignatureResult.ExternalProviderExpired => ToastVariant.Warning,
+            SignatureResult.ExternalProviderFailed => ToastVariant.Error,
+            _ => ToastVariant.Warning
+        };
     private bool CanCurrentUserSign()
         => IsCurrentAdmin()
            || UserContext.HasPermission("SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION")

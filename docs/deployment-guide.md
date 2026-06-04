@@ -43,6 +43,23 @@ The bootstrap migration reactivates this local admin account when an older Docke
 | `CHATBOT_MODEL` | `gemini-2.5-flash` | Provider-compatible model |
 | `CHATBOT_BASE_URL` | `https://generativelanguage.googleapis.com` | Provider endpoint mapped into `Chatbot:BaseUrl` |
 | `CHATBOT_MAX_TOKENS` | `4096` | Bounded chatbot output budget for longer grounded answers |
+| `SMARTCA_ENABLED` | `false` | Enable VNPT SmartCA sandbox signing |
+| `SMARTCA_BASE_URL` | `https://rmgateway.vnptit.vn` | VNPT SmartCA sandbox gateway |
+| `SMARTCA_API_PREFIX` | `/sca/sp769` | SmartCA integrated API prefix |
+| `SMARTCA_SP_ID` | empty | VNPT-issued SP account, never commit |
+| `SMARTCA_SP_PASSWORD` | empty | VNPT-issued SP password, never commit |
+| `SMARTCA_DEFAULT_USER_ID` | empty | Sandbox subscriber CCCD/MST used for signing |
+| `SMARTCA_DEFAULT_SERIAL_NUMBER` | empty | Optional certificate serial when subscriber has multiple certificates |
+| `SMARTCA_SIGNER_USER_ID` | empty | App user id allowed to use `SMARTCA_DEFAULT_USER_ID` |
+| `SMARTCA_SIGNER_USERNAME` | empty | App username allowed to use `SMARTCA_DEFAULT_USER_ID` |
+| `SMARTCA_USER_BINDINGS_JSON` | empty | Multi-user binding JSON, e.g. `[{"appUsername":"admin","subscriberId":"012345678901","serialNumber":"optional"}]` |
+| `SMARTCA_CALLBACK_URL` | empty | Reserved for public callback URL; current UI uses polling |
+| `SMARTCA_REQUEST_TIMEOUT_SECONDS` | `45` | HTTP timeout for SmartCA calls |
+
+### VNPT SmartCA Sandbox
+Enable SmartCA by setting `SMARTCA_ENABLED=true`, `SMARTCA_SP_ID`, `SMARTCA_SP_PASSWORD`, and a signer binding in local `.env`. For a single sandbox subscriber, set `SMARTCA_DEFAULT_USER_ID` plus either `SMARTCA_SIGNER_USER_ID` or `SMARTCA_SIGNER_USERNAME`. For multiple clinicians, use `SMARTCA_USER_BINDINGS_JSON` and map each app user to the VNPT subscriber id and optional certificate serial. The web container calls VNPT from server-side only; SP secrets and subscriber ids are never sent to the browser.
+
+The clinical signing UI sends a canonical SHA-256 hash to SmartCA, shows the returned transaction code, and lets the same app user poll status after confirming in the SmartCA app. QLCM writes the final immutable `med.signature_records` row only after SmartCA returns a signature for the expected document id and certificate evidence with subject, serial, and expiry. Pending state is stored in `med.signature_transactions`.
 
 ### Chatbot Credential and Privacy Guard
 Create a user-owned Gemini key manually in [Google AI Studio](https://aistudio.google.com/api-keys), restrict the key to Gemini API, and inject it only through environment variables or user-secrets. Never commit a key.
@@ -69,7 +86,7 @@ Scripts run in order:
 4. `scripts/seed-hospital-data.sql`
 5. `scripts/migrations/*.sql`
 
-Current migrations add Identity bootstrap, onboarding status, demo signatures, and related permissions. They are written to run on existing Docker volumes.
+Current migrations add Identity bootstrap, onboarding status, demo signatures, SmartCA signature transactions, and related permissions. They are written to run on existing Docker volumes.
 
 To rebuild a fresh database:
 

@@ -1074,6 +1074,92 @@
     font-weight: 600;
 }
 
+.signature-provider-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+    margin-top: 16px;
+}
+
+.signature-provider-panel {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+    background: var(--color-surface);
+    padding: 14px;
+    min-width: 0;
+}
+
+.signature-provider-panel-ca {
+    border-color: rgba(40, 167, 69, 0.34);
+    background: linear-gradient(180deg, rgba(40, 167, 69, 0.08), var(--color-surface) 42%);
+}
+
+.signature-provider-heading {
+    display: grid;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+
+.signature-provider-heading strong {
+    color: var(--color-ink);
+    font-size: 1rem;
+}
+
+.signature-provider-kicker {
+    color: var(--color-muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.signature-provider-copy {
+    color: var(--color-muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin: 0 0 12px;
+}
+
+.signature-transaction-grid {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 8px 12px;
+    margin: 0 0 12px;
+    font-size: 0.86rem;
+}
+
+.signature-transaction-grid dt {
+    color: var(--color-muted);
+}
+
+.signature-transaction-grid dd {
+    color: var(--color-ink);
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.signature-provider-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.signature-config-warning {
+    display: grid;
+    gap: 6px;
+    border: 1px solid rgba(245, 158, 11, 0.36);
+    border-radius: 8px;
+    background: rgba(245, 158, 11, 0.08);
+    color: var(--color-ink);
+    padding: 10px 12px;
+    font-size: 0.86rem;
+}
+
+.signature-config-warning span {
+    color: var(--color-muted);
+    overflow-wrap: anywhere;
+}
+
 .signature-pad-panel {
     display: grid;
     gap: 8px;
@@ -1090,6 +1176,12 @@
         var(--color-surface);
     cursor: crosshair;
     touch-action: none;
+}
+
+@media (max-width: 860px) {
+    .signature-provider-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .admin-step-list {

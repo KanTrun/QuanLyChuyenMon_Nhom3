@@ -73,6 +73,7 @@ public sealed class MedDbDataStore : IMedDataStore
     public IReadOnlyList<ProtocolApplicabilityRule> ProtocolApplicabilityRules => _db.ProtocolApplicabilityRules.ToList();
     public IReadOnlyList<PatientProtocolApplication> PatientProtocolApplications => _db.PatientProtocolApplications.ToList();
     public IReadOnlyList<SignatureRecord> SignatureRecords => _db.SignatureRecords.ToList();
+    public IReadOnlyList<SignatureTransactionRecord> SignatureTransactions => _db.SignatureTransactions.ToList();
     public IReadOnlyList<NotificationPreference> NotificationPreferences => _db.NotificationPreferences.ToList();
     public IReadOnlyList<MedNotification> Notifications => _db.Notifications.ToList();
     public IReadOnlyList<NotificationDeliveryAttempt> NotificationDeliveryAttempts => _db.NotificationDeliveryAttempts.ToList();
@@ -497,6 +498,15 @@ public sealed class MedDbDataStore : IMedDataStore
     }
 
     public void AddSignatureRecord(SignatureRecord signature) { _db.SignatureRecords.Add(signature); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddSignatureTransaction(SignatureTransactionRecord transaction) { _db.SignatureTransactions.Add(transaction); _db.SaveChanges(); RaiseStateChanged(); }
+    public void UpdateSignatureTransaction(SignatureTransactionRecord transaction)
+    {
+        var existing = _db.SignatureTransactions.FirstOrDefault(t => t.SignatureTransactionId == transaction.SignatureTransactionId)
+            ?? throw new InvalidOperationException("Giao dịch ký số không tồn tại.");
+        _db.SignatureTransactions.Entry(existing).CurrentValues.SetValues(transaction with { UpdatedAt = DateTime.UtcNow });
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void AddNotificationPreference(NotificationPreference pref) { _db.NotificationPreferences.Add(pref); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddNotification(MedNotification notification) { _db.Notifications.Add(notification); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddNotificationDeliveryAttempt(NotificationDeliveryAttempt attempt) { _db.NotificationDeliveryAttempts.Add(attempt); _db.SaveChanges(); RaiseStateChanged(); }

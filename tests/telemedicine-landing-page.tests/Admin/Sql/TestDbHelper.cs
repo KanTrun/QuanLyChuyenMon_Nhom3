@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage;
 using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Admin.Sql;
@@ -17,6 +18,7 @@ public static class TestDbHelper
     {
         var options = new DbContextOptionsBuilder<MedDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .ConfigureWarnings(w => w.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning))
             .Options;
 
         var db = new MedDbContext(options);
@@ -28,6 +30,7 @@ public static class TestDbHelper
     {
         var options = new DbContextOptionsBuilder<MedDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString(), new InMemoryDatabaseRoot())
+            .ConfigureWarnings(w => w.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning))
             .Options;
 
         var db = new MedDbContext(options);

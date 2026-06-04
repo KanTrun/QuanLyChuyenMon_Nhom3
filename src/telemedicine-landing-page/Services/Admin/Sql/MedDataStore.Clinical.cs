@@ -141,4 +141,28 @@ public sealed partial class MedDataStore
             RaiseStateChanged();
         }
     }
+
+    public void AddSignatureTransaction(SignatureTransactionRecord transaction)
+    {
+        lock (_lock)
+        {
+            ValidateJson(transaction.MetadataJson, "metadata");
+            _signatureTransactions.Add(transaction);
+            RaiseStateChanged();
+        }
+    }
+
+    public void UpdateSignatureTransaction(SignatureTransactionRecord transaction)
+    {
+        lock (_lock)
+        {
+            ValidateJson(transaction.MetadataJson, "metadata");
+            var idx = _signatureTransactions.FindIndex(t => t.SignatureTransactionId == transaction.SignatureTransactionId);
+            if (idx < 0)
+                throw MedDomainException.Constraint("PK_signature_transactions", 547, "Giao dịch ký số không tồn tại.");
+
+            _signatureTransactions[idx] = transaction with { UpdatedAt = DateTime.UtcNow };
+            RaiseStateChanged();
+        }
+    }
 }

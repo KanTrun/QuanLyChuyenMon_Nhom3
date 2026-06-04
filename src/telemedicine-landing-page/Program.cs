@@ -16,7 +16,7 @@ builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddSignalR();
 builder.Services.AddQlcmDatabase(medDbConnectionString);
 builder.Services.AddQlcmIdentityAndAuthorization();
-builder.Services.AddQlcmAdminServices();
+builder.Services.AddQlcmAdminServices(builder.Configuration);
 builder.Services.AddQlcmHangfire(medDbConnectionString);
 builder.Services.AddQlcmChatbot(builder.Configuration);
 

@@ -1,5 +1,23 @@
 # Project Changelog
 
+## 2026-06-04
+### Added
+| Item | Description |
+|---|---|
+| VNPT SmartCA sandbox signing | Added SmartCA SP sandbox client, signer binding config, Docker/env config, pending transaction storage, clinical modal start/poll flow and CA certificate evidence export |
+| SmartCA safety guards | Blocked cross-user finalization and require matching SmartCA document id plus certificate subject/serial/expiry before legal signature creation |
+
+### Changed
+| Item | Description |
+|---|---|
+| Clinical signature UX | Split legal SmartCA sandbox signing from internal demo signing, with provider readiness, transaction code and status polling |
+
+### Verification
+| Check | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release --no-restore` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 226/226 tests |
+
 ## 2026-06-03
 ### Added
 | Item | Description |

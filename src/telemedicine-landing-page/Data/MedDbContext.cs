@@ -71,6 +71,7 @@ public class MedDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<ProtocolApplicabilityRule> ProtocolApplicabilityRules => Set<ProtocolApplicabilityRule>();
     public DbSet<PatientProtocolApplication> PatientProtocolApplications => Set<PatientProtocolApplication>();
     public DbSet<SignatureRecord> SignatureRecords => Set<SignatureRecord>();
+    public DbSet<SignatureTransactionRecord> SignatureTransactions => Set<SignatureTransactionRecord>();
 
     // === Thông báo ===
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();

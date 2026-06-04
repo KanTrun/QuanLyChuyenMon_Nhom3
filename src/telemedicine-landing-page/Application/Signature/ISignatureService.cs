@@ -17,6 +17,28 @@ public interface ISignatureService
         Guid targetId,
         CancellationToken cancellationToken = default);
 
+    Task<SignatureTransactionRecord?> GetLatestSmartCaTransactionAsync(
+        string targetType,
+        Guid targetId,
+        Guid? signerUserId = null,
+        CancellationToken cancellationToken = default);
+
+    SmartCaReadiness GetSmartCaReadiness();
+
+    Task<(SignatureResult Result, SignatureTransactionRecord? Transaction)> StartSmartCaSignatureAsync(
+        string targetType,
+        Guid targetId,
+        Guid signerUserId,
+        string signerUsername,
+        string? metadataJson = null,
+        CancellationToken cancellationToken = default);
+
+    Task<(SignatureResult Result, SignatureRecord? Record, SignatureTransactionRecord? Transaction)> RefreshSmartCaSignatureAsync(
+        Guid signatureTransactionId,
+        Guid actorUserId,
+        string actorUsername,
+        CancellationToken cancellationToken = default);
+
     Task<SignatureResult> RevokeDemoSignatureAsync(
         string targetType,
         Guid targetId,
@@ -35,5 +57,10 @@ public enum SignatureResult
     TargetNotFound,
     Unauthorized,
     Revoked,
-    InvalidState
+    InvalidState,
+    ProviderNotConfigured,
+    PendingExternalConfirmation,
+    ExternalProviderRejected,
+    ExternalProviderExpired,
+    ExternalProviderFailed
 }

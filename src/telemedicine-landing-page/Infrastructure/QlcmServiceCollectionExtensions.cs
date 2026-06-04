@@ -132,9 +132,11 @@ public static class QlcmServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddQlcmAdminServices(this IServiceCollection services)
+    public static IServiceCollection AddQlcmAdminServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDataProtection();
+        services.AddOptions<SmartCaOptions>()
+            .Bind(configuration.GetSection(SmartCaOptions.SectionName));
         services.AddSingleton<IMedDataChangeBus, MedDataChangeBus>();
         services.AddSingleton<BrowserSessionTokenService>();
         services.AddScoped<IMedDataStore, MedDbDataStore>();
@@ -143,6 +145,8 @@ public static class QlcmServiceCollectionExtensions
         services.AddScoped<IWorkflowGuard<ProcedureVersion, string>, ProcedureVersionWorkflowGuard>();
         services.AddScoped<IWorkflowGuard<TechnicalOrder, string>, TechnicalOrderWorkflowGuard>();
         services.AddScoped<IWorkflowGuard<PatientProtocolApplication, string>, PatientProtocolApplicationWorkflowGuard>();
+        services.AddHttpClient<ISmartCaClient, SmartCaClient>(ConfigureSmartCaHttpClient)
+            .AddQlcmExternalResilience();
         services.AddScoped<ISignatureService, SignatureService>();
         services.AddScoped<PermissionChangeRequestService>();
         services.AddScoped<ProcedureLifecycleService>();
@@ -215,6 +219,16 @@ public static class QlcmServiceCollectionExtensions
     private static void ConfigureChatbotHttpClient(IServiceProvider sp, HttpClient http)
     {
         var opts = sp.GetRequiredService<IOptions<ChatbotOptions>>().Value;
+        if (!string.IsNullOrWhiteSpace(opts.BaseUrl))
+        {
+            http.BaseAddress = new Uri(opts.BaseUrl);
+        }
+        http.Timeout = TimeSpan.FromSeconds(Math.Max(15, opts.RequestTimeoutSeconds));
+    }
+
+    private static void ConfigureSmartCaHttpClient(IServiceProvider sp, HttpClient http)
+    {
+        var opts = sp.GetRequiredService<IOptions<SmartCaOptions>>().Value;
         if (!string.IsNullOrWhiteSpace(opts.BaseUrl))
         {
             http.BaseAddress = new Uri(opts.BaseUrl);

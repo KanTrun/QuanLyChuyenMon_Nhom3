@@ -231,8 +231,21 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
         html.AppendLine("<table class=\"signature-meta\"><tbody>");
         AppendRow(html, "Ng\u01b0\u1eddi k\u00fd", signature.SignerUsername);
         AppendRow(html, "Th\u1eddi \u0111i\u1ec3m k\u00fd", AdminDateTimeDisplay.DateTime(signature.SignedAt));
-        AppendRow(html, "H\u00ecnh th\u1ee9c x\u00e1c nh\u1eadn", "Ch\u1eef k\u00fd \u0111i\u1ec7n t\u1eed n\u1ed9i b\u1ed9");
+        AppendRow(html, "H\u00ecnh th\u1ee9c x\u00e1c nh\u1eadn", signature.IsLegallyValid ? "Ch\u1eef k\u00fd s\u1ed1 CA" : "Ch\u1eef k\u00fd \u0111i\u1ec7n t\u1eed n\u1ed9i b\u1ed9");
         AppendRow(html, "Nh\u00e0 cung c\u1ea5p", ProviderName(signature.ProviderCode));
+        AppendRow(html, "Hi\u1ec7u l\u1ef1c ph\u00e1p l\u00fd", signature.IsLegallyValid ? "C\u00f3" : "Kh\u00f4ng");
+        if (!string.IsNullOrWhiteSpace(signature.CertificateSerial))
+        {
+            AppendRow(html, "Serial ch\u1ee9ng th\u01b0", signature.CertificateSerial);
+        }
+        if (!string.IsNullOrWhiteSpace(signature.CertificateSubject))
+        {
+            AppendRow(html, "Ch\u1ee7 th\u1ec3 ch\u1ee9ng th\u01b0", signature.CertificateSubject);
+        }
+        if (signature.CertificateExpiry.HasValue)
+        {
+            AppendRow(html, "H\u1ebft h\u1ea1n ch\u1ee9ng th\u01b0", AdminDateTimeDisplay.DateTime(signature.CertificateExpiry.Value));
+        }
         html.AppendLine("</tbody></table>");
         html.AppendLine("<p class=\"signature-note\">Vi\u1ec7c k\u00fd x\u00e1c nh\u1eadn th\u1ec3 hi\u1ec7n ng\u01b0\u1eddi k\u00fd \u0111\u00e3 ki\u1ec3m tra v\u00e0 ch\u1ea5p thu\u1eadn n\u1ed9i dung \u00e1p d\u1ee5ng ph\u00e1c \u0111\u1ed3 trong h\u1ed3 s\u01a1 n\u00e0y.</p>");
         html.AppendLine("</div>");
@@ -422,9 +435,12 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
         return service is null ? "-" : $"{service.ServiceCode} - {service.Name}";
     }
     private static string ProviderName(string? code)
-        => string.Equals(code, "demo", StringComparison.OrdinalIgnoreCase)
-            ? "QLCM Pro - k\u00fd \u0111i\u1ec7n t\u1eed n\u1ed9i b\u1ed9"
-            : Blank(code);
+        => code switch
+        {
+            "demo" => "QLCM Pro - k\u00fd \u0111i\u1ec7n t\u1eed n\u1ed9i b\u1ed9",
+            "vnpt-smartca-sandbox" => "VNPT SmartCA sandbox",
+            _ => Blank(code)
+        };
     private static string DisplayPatient(ModelsSql.PatientRef patient) => patient.DisplayName ?? patient.PatientCode ?? patient.ExternalPatientId;
     private static string Lookup(IReadOnlyList<ModelsSql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "-";
     private static string Blank(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
