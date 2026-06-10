@@ -74,6 +74,18 @@ The Docker web container also exposes server-side SmartCA API routes:
 
 For VNPT callback, set `SMARTCA_CALLBACK_SECRET` and configure VNPT/public gateway to send header `X-QLCM-SMARTCA-CALLBACK-SECRET`. The callback does not trust signed data from the request body; it uses the transaction reference to poll VNPT server-side before finalizing.
 
+After Docker starts, run this smoke check from the repo root:
+
+```powershell
+.\scripts\smoke-smartca-api.ps1
+```
+
+When `SMARTCA_CALLBACK_SECRET` is configured locally, verify the positive callback path without exposing the secret in source:
+
+```powershell
+.\scripts\smoke-smartca-api.ps1 -CallbackSecret "<local-secret>"
+```
+
 ### Chatbot Credential and Privacy Guard
 Create a user-owned Gemini key manually in [Google AI Studio](https://aistudio.google.com/api-keys), restrict the key to Gemini API, and inject it only through environment variables or user-secrets. Never commit a key.
 

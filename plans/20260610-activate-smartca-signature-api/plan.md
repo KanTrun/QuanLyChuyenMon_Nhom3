@@ -32,6 +32,7 @@ Hoan thien chu ky SmartCA sandbox de dung duoc qua Docker, khong chi qua UI Blaz
 - Docker web rebuilt: `quanlychuyenmon_nhom3-web:latest`.
 - Docker web health: healthy.
 - Callback missing secret: HTTP 403.
+- Added and ran `scripts/smoke-smartca-api.ps1`: pass.
 
 ## Ranh gioi
 

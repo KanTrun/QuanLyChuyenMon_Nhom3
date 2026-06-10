@@ -7,6 +7,7 @@
 | SmartCA Docker API surface | Added authenticated `/api/signatures/smartca/readiness`, latest transaction, start, and refresh endpoints for app/container consumers |
 | SmartCA callback endpoint | Added `POST /api/signatures/smartca/callback` guarded by `SMARTCA_CALLBACK_SECRET`; callback resolves VNPT transaction reference then polls SmartCA server-side before finalizing |
 | Callback configuration | Added `SMARTCA_CALLBACK_SECRET` mapping in Docker/env/app config and documented callback header usage |
+| SmartCA API smoke script | Added `scripts/smoke-smartca-api.ps1` for Docker health and callback-secret regression checks |
 
 ### Changed
 | Item | Description |
@@ -23,6 +24,7 @@
 | `Invoke-WebRequest http://localhost:8080/` | Passed, HTTP 200 |
 | `Invoke-WebRequest http://localhost:8080/health` | Passed, Healthy |
 | `POST /api/signatures/smartca/callback` without secret | Passed, HTTP 403 |
+| `.\scripts\smoke-smartca-api.ps1` | Passed, health HTTP 200 and callback-missing-secret HTTP 403 |
 
 ## 2026-06-04
 ### Added
