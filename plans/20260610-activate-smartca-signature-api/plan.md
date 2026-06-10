@@ -34,9 +34,11 @@ Hoan thien chu ky SmartCA sandbox de dung duoc qua Docker, khong chi qua UI Blaz
 - Callback missing secret: HTTP 403.
 - Added and ran `scripts/smoke-smartca-api.ps1`: pass; health HTTP 200, anonymous SmartCA readiness HTTP 302, callback-missing-secret HTTP 403.
 - Added `scripts/configure-smartca-env.ps1` so operators can fill local `.env` SmartCA sandbox values without committing VNPT secrets.
+- Added `scripts/test-smartca-vnpt-credential.ps1` so operators can verify VNPT `get_certificate` with local `.env` values without printing secrets.
 - Updated chatbot/signature guidance so operators see VNPT SmartCA CA signing as the primary path and demo signing only as the fallback while credential is pending.
 - Aligned revoke/config/PDR/architecture wording so SmartCA CA signing and internal demo fallback are clearly separated.
 - Clarified for operators that VNPT web screenshots do not show endpoint paths; SmartCA endpoints are in the downloadable PDF and map to existing QLCM files.
+- Local `.env` was configured from the provided Gmail screenshot, Docker loaded SmartCA env successfully, but VNPT `get_certificate` returned `401 sp_id or sp_password invalid`; exact `ClientSecret` text is still needed.
 
 ## Ranh gioi
 

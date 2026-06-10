@@ -80,9 +80,11 @@ Neu chua chac dien tay, chay:
 .\scripts\configure-smartca-env.ps1
 docker compose up --build -d web
 .\scripts\smoke-smartca-api.ps1
+.\scripts\test-smartca-vnpt-credential.ps1
 ```
 
 Script tren chi tao/cap nhat `.env` local. File `.env` bi gitignore, khong day secret len GitHub.
+Script `test-smartca-vnpt-credential.ps1` goi `v1/credentials/get_certificate` de kiem tra `ClientId`/`ClientSecret` va subscriber voi VNPT, nhung khong in password ra terminal.
 
 ## Ban do folder/file trong project
 
@@ -225,13 +227,15 @@ eContract la he hop dong dien tu rieng, khong thay the SmartCA direct signing. N
 
 1. Dien `SMARTCA_ENABLED=true`, `SMARTCA_SP_ID`, `SMARTCA_SP_PASSWORD`.
 2. Bind bac si/nguoi ky bang `SMARTCA_SIGNER_USERNAME` + `SMARTCA_DEFAULT_USER_ID`, hoac `SMARTCA_USER_BINDINGS_JSON`.
-3. Test sandbox: gui ky, mo app SmartCA xac nhan, poll status, kiem tra `signature_records`.
-4. Neu VNPT yeu cau callback: cau hinh public URL `https://domain/api/signatures/smartca/callback` va header `X-QLCM-SMARTCA-CALLBACK-SECRET`.
-5. Neu nghiep vu can hop dong nhieu ben: thiet ke module eContract rieng, khong tron vao `SmartCaClient`.
+3. Chay `.\scripts\test-smartca-vnpt-credential.ps1`; neu VNPT tra `status_code=200` va co certificate thi credential/subscriber dung.
+4. Test sandbox: gui ky, mo app SmartCA xac nhan, poll status, kiem tra `signature_records`.
+5. Neu VNPT yeu cau callback: cau hinh public URL `https://domain/api/signatures/smartca/callback` va header `X-QLCM-SMARTCA-CALLBACK-SECRET`.
+6. Neu nghiep vu can hop dong nhieu ben: thiet ke module eContract rieng, khong tron vao `SmartCaClient`.
 
 ## Cau hoi chua giai quyet
 
 - Credential SP sandbox VNPT cua team la gi?
+- Credential doc tu anh/Gmail can copy exact `ClientSecret` dang text; cac gia tri doc duoc tu anh hien tra `401 sp_id or sp_password invalid`.
 - Tenant cua minh dung `tran_code` hay `transaction_id` trong path `v1/signatures/sign/{tranId}/status`? Code dang dung `tran_code` vi response VNPT tra ma nay.
 - QLCM can ky ho so lam sang truc tiep hay can them hop dong dien tu nhieu ben qua eContract?
 - Co public callback URL de VNPT cau hinh webhook khong?

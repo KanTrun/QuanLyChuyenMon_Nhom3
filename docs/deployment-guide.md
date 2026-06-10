@@ -66,9 +66,11 @@ If you do not know where each value belongs, use the local configurator from the
 .\scripts\configure-smartca-env.ps1
 docker compose up --build -d web
 .\scripts\smoke-smartca-api.ps1
+.\scripts\test-smartca-vnpt-credential.ps1
 ```
 
 The configurator copies/updates only local `.env` values from `.env.example`, enables SmartCA, prompts for VNPT SP credentials, binds the QLCM signer, and generates a callback secret when a callback URL is supplied. `.env` is ignored by git and must never be committed.
+The credential tester calls VNPT `v1/credentials/get_certificate` with local `.env` values and reports VNPT status/certificate count without printing `SMARTCA_SP_PASSWORD`.
 
 The clinical signing UI sends a canonical SHA-256 hash to SmartCA, shows the returned transaction code, and lets the same app user poll status after confirming in the SmartCA app. QLCM writes the final immutable `med.signature_records` row only after SmartCA returns a signature for the expected document id and certificate evidence with subject, serial, and expiry. Pending state is stored in `med.signature_transactions`.
 

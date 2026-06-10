@@ -9,6 +9,7 @@
 | Callback configuration | Added `SMARTCA_CALLBACK_SECRET` mapping in Docker/env/app config and documented callback header usage |
 | SmartCA API smoke script | Added `scripts/smoke-smartca-api.ps1` for Docker health and callback-secret regression checks |
 | SmartCA env configurator | Added `scripts/configure-smartca-env.ps1` to guide local sandbox credential setup without committing secrets |
+| SmartCA credential tester | Added `scripts/test-smartca-vnpt-credential.ps1` to validate local `.env` SP credential/subscriber against VNPT without printing secrets |
 | SmartCA chatbot grounding | Updated chatbot knowledge and demo replies so operators see SmartCA CA signing plus demo fallback instead of stale demo-only guidance |
 | VNPT API discovery guide | Clarified that VNPT endpoint paths are inside the downloadable SmartCA PDF, not directly visible on the web page screenshot |
 

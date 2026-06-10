@@ -115,9 +115,10 @@ Nếu chưa biết điền biến nào, chạy wizard local:
 .\scripts\configure-smartca-env.ps1
 docker compose up --build -d web
 .\scripts\smoke-smartca-api.ps1
+.\scripts\test-smartca-vnpt-credential.ps1
 ```
 
-Script chỉ ghi vào `.env` local đang được gitignore, không commit credential VNPT. Sau khi Docker chạy, kiểm nhanh API SmartCA bằng `.\scripts\smoke-smartca-api.ps1`.
+Script cấu hình chỉ ghi vào `.env` local đang được gitignore, không commit credential VNPT. Sau khi Docker chạy, kiểm nhanh API SmartCA bằng `.\scripts\smoke-smartca-api.ps1`; kiểm credential thật với VNPT bằng `.\scripts\test-smartca-vnpt-credential.ps1`.
 
 Muốn tạo lại DB sạch:
 
