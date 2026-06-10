@@ -13,16 +13,17 @@ Neu ban khong biet lay API o dau, lam theo thu tu nay:
    `Client_Id`/`Client_Secret` hoac bo credential SP tuong duong.
 4. Mo trang tai tai lieu SmartCA WebAPI:
    `https://doitac-smartca.vnpt.vn/help/docs/tich-hop/ky-so/webapi/tai-lieu-tich-hop-chi-tiet/`
-5. Tai PDF `SmartCA` va `SmartCA Tich hop`. API ky so truc tiep cua QLCM nam trong PDF SmartCA.
+5. Tai PDF `SmartCA` va `SmartCA Tich hop`. QLCM hien dang dung luong SP truc tiep `/sca/sp769`, nam trong PDF `SmartCA Tich hop` / `Tai_lieu_tich_hop_smartca_v4.1.pdf`.
 6. Neu can hop dong dien tu nhieu ben, mo trang eContract:
    `https://doitac-smartca.vnpt.vn/help/docs/tich-hop/hop-dong-dien-tu/webapi/tai-lieu-tich-hop-chi-tiet/`
 7. Tai PDF eContract. Day la luong khac, chua gan vao code QLCM hien tai.
 
 Noi ngan gon:
 
-- Can ky ho so lam sang bang CA: dung SmartCA WebAPI.
+- Can ky ho so lam sang bang CA theo code hien tai: dung SmartCA SP truc tiep `/sca/sp769`.
 - Can hop dong dien tu nhieu nguoi ky/OTP/email/SMS: dung eContract API.
-- QLCM hien da gan SmartCA WebAPI. eContract chua gan.
+- Neu chi co `ClientId` dang `*.apps.smartcaapi.com` kem `MobileCode`: day la luong SmartCA OAuth/Bearer rieng, chua phai credential SP `/sca/sp769`.
+- QLCM hien da gan SmartCA SP `/sca/sp769`. eContract chua gan.
 
 ## Neu nhin trang/anh VNPT ma khong thay API
 
@@ -34,8 +35,8 @@ Lam dung nhu sau:
 
 1. O menu trai chon `I. Tai lieu tich hop ky so` -> `WEB API`.
 2. Mo `Tai lieu tich hop chi tiet`.
-3. Trong noi dung trang, bam link tai `SmartCA` de lay PDF ky so truc tiep.
-4. Neu thay link `SmartCA Tich hop`, day la PDF cho luong ky tich hop v2/password/OTP/TOTP, khong phai luong QLCM dang dung mac dinh.
+3. Trong noi dung trang, neu bam link `SmartCA`, ban se tai PDF OAuth/Bearer `TichHopKySoSmartCA.pdf`, dung `client_id`, `client_secret`, `/auth/token`, `/csc/...`.
+4. Link `SmartCA Tich hop` tai PDF `Tai_lieu_tich_hop_smartca_v4.1.pdf`. Day la PDF co `/sca/sp769`, `sp_id`, `sp_password`, `v1/credentials/get_certificate`, `v1/signatures/sign`; code QLCM dang dung luong nay.
 5. Mo PDF vua tai, bam `Ctrl + F` va tim cac tu khoa:
    - `signatures/sign`
    - `get_certificate`
@@ -47,9 +48,10 @@ Noi that ngan:
 
 | Ban dang nhin thay gi trong anh/trang | Y nghia | Viec can lam |
 | --- | --- | --- |
-| Chi thay menu `WEB API`, khong thay endpoint | Binh thuong, endpoint nam trong PDF | Bam `Tai lieu tich hop chi tiet` -> tai `SmartCA`. |
-| Chi thay `Client_Id`/`Client_Secret` duoc noi la gui email | Binh thuong, day la credential SP | Dien vao `.env` bang `SMARTCA_SP_ID` va `SMARTCA_SP_PASSWORD`. |
-| Thay 2 file `SmartCA` va `SmartCA Tich hop` | Co 2 luong API khac nhau | QLCM dang dung `SmartCA`; `SmartCA Tich hop` chi can neu lam v2 OTP/TOTP. |
+| Chi thay menu `WEB API`, khong thay endpoint | Binh thuong, endpoint nam trong PDF | Bam `Tai lieu tich hop chi tiet` -> tai dung PDF theo luong can dung. |
+| Thay `ClientId` dang `*.apps.smartcaapi.com` va `MobileCode` | Day la credential SmartCA OAuth/Bearer | Khong dua thang vao `/sca/sp769`; can luong OAuth hoac credential SP rieng. |
+| Thay `sp_id`/sample dang `*.apps.signserviceapi.com` | Day la credential SP truc tiep cho `/sca/sp769` | Dien vao `.env` bang `SMARTCA_SP_ID` va `SMARTCA_SP_PASSWORD`. |
+| Thay 2 file `SmartCA` va `SmartCA Tich hop` | Co 2 luong API khac nhau | QLCM dang dung `SmartCA Tich hop` cho `/sca/sp769`; `SmartCA` la OAuth/Bearer `/csc/...`. |
 | Thay tai lieu eContract | Day la hop dong dien tu, khac SmartCA ky ho so | Chua gan vao QLCM, chi lam khi can hop dong nhieu ben. |
 
 API khong gan vao anh hay trang VNPT. API duoc gan vao code QLCM tai:
@@ -66,9 +68,9 @@ API khong gan vao anh hay trang VNPT. API duoc gan vao code QLCM tai:
 | Ban can lay | Vao dau | Muc tren trang/tai lieu | Dien vao dau |
 | --- | --- | --- | --- |
 | Tai khoan developer | `https://doitac-smartca.vnpt.vn/help/docs/tich-hop/ky-so/webapi/tao-tai-khoan-tich-hop/` | Buoc 1: dang nhap/dang ky SmartCA for Developers | Khong dien vao code; chi dung de tao he thong tich hop. |
-| `Client_Id` / `SP_ID` | Trang tren | Buoc 2: Tao thong tin he thong tich hop, VNPT gui email sau khi dang ky thanh cong | `.env` -> `SMARTCA_SP_ID`; Docker map sang `SmartCa__SpId`; code doc o `SmartCaOptions.cs`. |
-| `Client_Secret` / `SP_PASSWORD` | Trang tren | Email cua quan tri vien nhan tai khoan tich hop | `.env` -> `SMARTCA_SP_PASSWORD`; Docker map sang `SmartCa__SpPassword`; code doc o `SmartCaOptions.cs`. |
-| Gateway sandbox | PDF SmartCA WebAPI | Base URL/API prefix sandbox | `.env` -> `SMARTCA_BASE_URL=https://rmgateway.vnptit.vn`, `SMARTCA_API_PREFIX=/sca/sp769`. |
+| OAuth `ClientId` / `ClientSecret` | Link `SmartCA` / PDF `TichHopKySoSmartCA.pdf` | Email co `*.apps.smartcaapi.com`, `MobileCode`, dung `/auth/token` va `/csc/...` | Chua dien vao code hien tai; chi dung neu them provider OAuth SmartCA rieng. |
+| Direct `SP_ID` / `SP_PASSWORD` | Link `SmartCA Tich hop` / PDF `Tai_lieu_tich_hop_smartca_v4.1.pdf` | Credential SP cho `/sca/sp769`, trong tai lieu mau co dang `*.apps.signserviceapi.com` | `.env` -> `SMARTCA_SP_ID`/`SMARTCA_SP_PASSWORD`; Docker map sang `SmartCa__SpId`/`SmartCa__SpPassword`; code doc o `SmartCaOptions.cs`. |
+| Gateway sandbox | PDF `SmartCA Tich hop` | Base URL/API prefix sandbox cho `/sca/sp769` | `.env` -> `SMARTCA_BASE_URL=https://rmgateway.vnptit.vn`, `SMARTCA_API_PREFIX=/sca/sp769`. |
 | So thue bao SmartCA/CCCD/MST nguoi ky | App demo SmartCA/VNPT sandbox account | Nguoi dung kich hoat chung thu so tren app demo | `.env` -> `SMARTCA_DEFAULT_USER_ID`; bind voi user app bang `SMARTCA_SIGNER_USERNAME=admin` hoac JSON. |
 | Serial chung thu | API `get_certificate` hoac danh sach chung thu SmartCA trong tai lieu | Dung khi mot thue bao co nhieu chung thu | `.env` -> `SMARTCA_DEFAULT_SERIAL_NUMBER`, co the de trong neu VNPT khong yeu cau. |
 | Callback URL | Server public cua minh, khong lay tu VNPT | Dang ky cho VNPT goi lai sau khi ky | `.env` -> `SMARTCA_CALLBACK_URL=https://domain/api/signatures/smartca/callback`; endpoint code o `SmartCaSignatureEndpoints.cs`. |
@@ -84,7 +86,26 @@ docker compose up --build -d web
 ```
 
 Script tren chi tao/cap nhat `.env` local. File `.env` bi gitignore, khong day secret len GitHub.
-Script `test-smartca-vnpt-credential.ps1` goi `v1/credentials/get_certificate` de kiem tra `ClientId`/`ClientSecret` va subscriber voi VNPT, nhung khong in password ra terminal.
+Script `test-smartca-vnpt-credential.ps1` goi `v1/credentials/get_certificate` de kiem tra credential SP `/sca/sp769` va subscriber voi VNPT, nhung khong in password ra terminal. Neu `SMARTCA_SP_ID` co duoi `*.apps.smartcaapi.com`, script se canh bao day la credential OAuth/Bearer va VNPT co the tra `401 sp_id or sp_password invalid` tren luong SP truc tiep.
+
+## Credential ban vua gui thuoc loai nao
+
+Gia tri dang:
+
+```text
+ClientId: 40b0-...apps.smartcaapi.com
+ClientSecret: <khong ghi vao git>
+MobileCode: VNPTSmartCAPartner-...
+```
+
+la dau hieu cua luong `SmartCA` OAuth/Bearer trong PDF `TichHopKySoSmartCA.pdf`, khong phai bo SP truc tiep ma QLCM hien dang goi tai `/sca/sp769`.
+
+Voi credential nay co 2 duong:
+
+| Duong | Can them gi | Trang thai QLCM |
+| --- | --- | --- |
+| Tiep tuc luong da code `/sca/sp769` | VNPT cap bo SP direct: `sp_id`/`sp_password`, thuong co dang `*.apps.signserviceapi.com` trong tai lieu mau | Da code, chi thieu credential dung. |
+| Dung credential `*.apps.smartcaapi.com` hien co | Can OAuth redirect/auth code hoac username/password SmartCA theo PDF OAuth, sau do goi `/csc/credentials/list`, `/csc/signature/signhash` | Chua gan vao QLCM; phai them provider OAuth rieng. |
 
 ## Ban do folder/file trong project
 
@@ -152,7 +173,8 @@ File nay gom API CA/VNPT can biet de gan vao QLCM Pro. Tach 2 luong:
 Nguon chinh thuc:
 
 - SmartCA WebAPI: https://doitac-smartca.vnpt.vn/help/docs/tich-hop/ky-so/webapi/tai-lieu-tich-hop-chi-tiet/
-- SmartCA PDF: https://doitac-smartca.vnpt.vn/help/document/Tai_lieu_tich_hop_smartca_v4.1.pdf
+- SmartCA OAuth/Bearer PDF: https://doitac-smartca.vnpt.vn/help/document/TichHopKySoSmartCA.pdf
+- SmartCA SP direct `/sca/sp769` PDF: https://doitac-smartca.vnpt.vn/help/document/Tai_lieu_tich_hop_smartca_v4.1.pdf
 - eContract WebAPI: https://doitac-smartca.vnpt.vn/help/docs/tich-hop/hop-dong-dien-tu/webapi/tai-lieu-tich-hop-chi-tiet/
 - eContract PDF: https://doitac-smartca.vnpt.vn/help/assets/files/API_VNPT_eContract_VNPT-5a9b8c1fb5c66f7ab294d8023bd2babf.pdf
 

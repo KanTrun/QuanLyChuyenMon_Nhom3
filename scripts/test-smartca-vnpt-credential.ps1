@@ -37,6 +37,19 @@ function Get-Required([hashtable]$Values, [string]$Key) {
     return $Values[$Key]
 }
 
+function Get-CredentialFamily([string]$SpId) {
+    $normalized = $SpId.Trim().ToLowerInvariant()
+    if ($normalized.EndsWith(".apps.signserviceapi.com")) {
+        return "direct-sp"
+    }
+
+    if ($normalized.EndsWith(".apps.smartcaapi.com")) {
+        return "oauth-smartca"
+    }
+
+    return "unknown"
+}
+
 $envValues = Read-EnvFile $EnvPath
 $baseUrl = Get-Required $envValues "SMARTCA_BASE_URL"
 $apiPrefix = Get-Required $envValues "SMARTCA_API_PREFIX"
@@ -45,6 +58,19 @@ $spPassword = Get-Required $envValues "SMARTCA_SP_PASSWORD"
 
 if ([string]::IsNullOrWhiteSpace($SubscriberId)) {
     $SubscriberId = Get-Required $envValues "SMARTCA_DEFAULT_USER_ID"
+}
+
+$credentialFamily = Get-CredentialFamily $spId
+if ($credentialFamily -eq "oauth-smartca") {
+    Write-Host "SmartCA credential family warning"
+    Write-Host "  SMARTCA_SP_ID looks like an OAuth SmartCA app client (*.apps.smartcaapi.com)."
+    Write-Host "  Current QLCM direct signing calls /sca/sp769 and expects SP credentials from the SmartCA Tich hop PDF."
+    Write-Host "  VNPT can return 401 sp_id or sp_password invalid when these two API families are mixed."
+}
+elseif ($credentialFamily -eq "unknown") {
+    Write-Host "SmartCA credential family warning"
+    Write-Host "  SMARTCA_SP_ID suffix is not recognized by this tester."
+    Write-Host "  Direct /sca/sp769 usually uses a VNPT-issued SP account such as *.apps.signserviceapi.com."
 }
 
 $url = $baseUrl.TrimEnd("/") + "/" + $apiPrefix.Trim("/").TrimEnd("/") + "/v1/credentials/get_certificate"

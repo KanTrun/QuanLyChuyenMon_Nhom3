@@ -109,6 +109,8 @@ Bật `SMARTCA_ENABLED=true`, nhập credential SP sandbox do VNPT cấp, rồi 
 
 Docker web expose API SmartCA server-side: `GET /api/signatures/smartca/readiness`, `GET /api/signatures/smartca/transactions/latest`, `POST /api/signatures/smartca/start`, `POST /api/signatures/smartca/transactions/{signatureTransactionId}/refresh`, và callback `POST /api/signatures/smartca/callback`. Callback cần header `X-QLCM-SMARTCA-CALLBACK-SECRET` khớp `SMARTCA_CALLBACK_SECRET`; body chỉ cần một trong các field `transactionCode`, `tranCode`, `transactionId`, hoặc `externalReference`.
 
+Lưu ý credential VNPT: code hiện tại đang dùng API SP trực tiếp `/sca/sp769`, nên `SMARTCA_SP_ID`/`SMARTCA_SP_PASSWORD` phải là bộ SP direct của PDF `SmartCA Tích hợp` (`Tai_lieu_tich_hop_smartca_v4.1.pdf`). Nếu email VNPT gửi `ClientId` có đuôi `*.apps.smartcaapi.com` kèm `MobileCode`, đó là luồng OAuth/Bearer `SmartCA` (`/auth/token`, `/csc/...`) và chưa thể dùng thay `sp_id`/`sp_password` trong flow hiện tại.
+
 Nếu chưa biết điền biến nào, chạy wizard local:
 
 ```powershell

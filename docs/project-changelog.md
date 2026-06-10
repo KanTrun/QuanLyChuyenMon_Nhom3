@@ -10,6 +10,7 @@
 | SmartCA API smoke script | Added `scripts/smoke-smartca-api.ps1` for Docker health and callback-secret regression checks |
 | SmartCA env configurator | Added `scripts/configure-smartca-env.ps1` to guide local sandbox credential setup without committing secrets |
 | SmartCA credential tester | Added `scripts/test-smartca-vnpt-credential.ps1` to validate local `.env` SP credential/subscriber against VNPT without printing secrets |
+| SmartCA credential family diagnostics | Added warning for OAuth `*.apps.smartcaapi.com` client credentials when testing the direct `/sca/sp769` SP flow |
 | SmartCA chatbot grounding | Updated chatbot knowledge and demo replies so operators see SmartCA CA signing plus demo fallback instead of stale demo-only guidance |
 | VNPT API discovery guide | Clarified that VNPT endpoint paths are inside the downloadable SmartCA PDF, not directly visible on the web page screenshot |
 
@@ -20,6 +21,7 @@
 | SmartCA rollout status | Roadmap now marks live SmartCA signing as credential pending while implementation and Docker API are available |
 | Signature wording alignment | Reworded revoke/config/help copy so SmartCA CA signing and internal demo fallback are not conflated |
 | SmartCA operator docs | Added a screenshot-oriented troubleshooting section mapping VNPT page links, PDF search keywords and QLCM files |
+| SmartCA credential guidance | Documented the difference between OAuth/Bearer `SmartCA` credentials and direct SP `SmartCA Tich hop` credentials required by the current QLCM implementation |
 
 ### Verification
 | Check | Result |
@@ -32,6 +34,8 @@
 | `Invoke-WebRequest http://localhost:8080/health` | Passed, Healthy |
 | `POST /api/signatures/smartca/callback` without secret | Passed, HTTP 403 |
 | `.\scripts\smoke-smartca-api.ps1` | Passed, health HTTP 200, anonymous SmartCA readiness HTTP 302, callback-missing-secret HTTP 403 |
+| `.\scripts\test-smartca-vnpt-credential.ps1` with OAuth app credential in `.env` | Expected diagnostic warning, then VNPT `401 sp_id or sp_password invalid` on direct `/sca/sp769` |
+| `dotnet test .\telemedicine-landing-page.sln --no-restore` | Passed, 228/228 tests |
 
 ## 2026-06-04
 ### Added
