@@ -17,6 +17,19 @@ public sealed class ChatbotGroundingTests
     }
 
     [Fact]
+    public void FindRelevant_SignatureTopic_ExplainsSmartCaAndDemoFallback()
+    {
+        var topic = QlcmChatbotKnowledgeCatalog
+            .FindRelevant("ký xác nhận hồ sơ bằng SmartCA", limit: 1)
+            .Single();
+
+        Assert.Equal("signatures", topic.Code);
+        Assert.Contains("VNPT SmartCA sandbox", topic.DemoReply);
+        Assert.Contains("ký demo nội bộ", topic.DemoReply);
+        Assert.DoesNotContain("Chữ ký hiện là **chữ ký demo**", topic.DemoReply);
+    }
+
+    [Fact]
     public void BuildSystemPrompt_UserCustomizationCannotReplaceCoreRules()
     {
         var builder = new CoreOnlyChatbotContextBuilder();

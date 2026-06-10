@@ -836,7 +836,7 @@
 
     private void OpenRevoke(ClinicalRow row)
     {
-        if (!Guard.CanDo("SCR_ADMIN:MANAGE_SIGNATURES", "thu hồi chữ ký demo"))
+        if (!Guard.CanDo("SCR_ADMIN:MANAGE_SIGNATURES", "thu hồi chữ ký hồ sơ"))
         {
             return;
         }
@@ -975,7 +975,7 @@
         };
     private string MissingSmartCaFields()
         => _smartCaReadiness is null || _smartCaReadiness.MissingFields.Count == 0
-            ? "SMARTCA_ENABLED, SMARTCA_SP_ID, SMARTCA_SP_PASSWORD, SMARTCA_DEFAULT_USER_ID, SMARTCA_SIGNER_USER_ID"
+            ? "SMARTCA_ENABLED, SMARTCA_SP_ID, SMARTCA_SP_PASSWORD, SMARTCA_DEFAULT_USER_ID và một trong SMARTCA_SIGNER_USER_ID/SMARTCA_SIGNER_USERNAME/SMARTCA_USER_BINDINGS_JSON"
             : string.Join(", ", _smartCaReadiness.MissingFields);
     private static string SmartCaResultMessage(SignatureResult result)
         => result switch

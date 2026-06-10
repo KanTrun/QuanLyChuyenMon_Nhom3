@@ -85,12 +85,12 @@ public sealed class DemoChatbotClient : IChatbotClient
 
         if (string.IsNullOrEmpty(normalized))
         {
-            return "Bạn vui lòng nhập câu hỏi cụ thể nhé. Tôi có thể hỗ trợ về tài khoản, quy trình kỹ thuật, phân quyền, tài nguyên, chỉ định, phác đồ, báo cáo, chữ ký demo và cài đặt.";
+            return "Bạn vui lòng nhập câu hỏi cụ thể nhé. Tôi có thể hỗ trợ về tài khoản, quy trình kỹ thuật, phân quyền, tài nguyên, chỉ định, phác đồ, báo cáo, chữ ký SmartCA/demo và cài đặt.";
         }
 
         if (Contains(normalized, "chao") || Contains(normalized, "xin chao") || Contains(normalized, "hello"))
         {
-            return "Xin chào! Rất vui được hỗ trợ bạn. Bạn có thể hỏi tôi về **tài khoản**, **quy trình kỹ thuật**, **phân quyền**, **tài nguyên**, **chỉ định**, **phác đồ**, **báo cáo** hoặc **chữ ký demo** trong QLCM Pro.";
+            return "Xin chào! Rất vui được hỗ trợ bạn. Bạn có thể hỏi tôi về **tài khoản**, **quy trình kỹ thuật**, **phân quyền**, **tài nguyên**, **chỉ định**, **phác đồ**, **báo cáo** hoặc **chữ ký SmartCA/demo** trong QLCM Pro.";
         }
 
         var topic = QlcmChatbotKnowledgeCatalog.FindRelevant(normalized, limit: 1).FirstOrDefault();
@@ -99,7 +99,7 @@ public sealed class DemoChatbotClient : IChatbotClient
             return topic.DemoReply;
         }
 
-        return "Tôi đã ghi nhận câu hỏi. Trong chế độ demo, hãy hỏi theo chủ đề **tài khoản**, **quy trình**, **phân quyền**, **tài nguyên**, **chỉ định**, **phác đồ**, **báo cáo**, **thông báo**, **chữ ký demo** hoặc **cài đặt**.";
+        return "Tôi đã ghi nhận câu hỏi. Trong chế độ demo, hãy hỏi theo chủ đề **tài khoản**, **quy trình**, **phân quyền**, **tài nguyên**, **chỉ định**, **phác đồ**, **báo cáo**, **thông báo**, **chữ ký SmartCA/demo** hoặc **cài đặt**.";
     }
 
     private static bool Contains(string source, string needle) =>

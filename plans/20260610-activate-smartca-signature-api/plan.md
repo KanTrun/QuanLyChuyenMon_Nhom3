@@ -27,13 +27,15 @@ Hoan thien chu ky SmartCA sandbox de dung duoc qua Docker, khong chi qua UI Blaz
 ## Ket qua 2026-06-10
 
 - Build Release: pass, 0 warnings, 0 errors.
-- Full test: pass, 227/227.
+- Full test: pass, 228/228.
 - Docker compose config: pass.
 - Docker web rebuilt: `quanlychuyenmon_nhom3-web:latest`.
 - Docker web health: healthy.
 - Callback missing secret: HTTP 403.
 - Added and ran `scripts/smoke-smartca-api.ps1`: pass; health HTTP 200, anonymous SmartCA readiness HTTP 302, callback-missing-secret HTTP 403.
 - Added `scripts/configure-smartca-env.ps1` so operators can fill local `.env` SmartCA sandbox values without committing VNPT secrets.
+- Updated chatbot/signature guidance so operators see VNPT SmartCA CA signing as the primary path and demo signing only as the fallback while credential is pending.
+- Aligned revoke/config/PDR/architecture wording so SmartCA CA signing and internal demo fallback are clearly separated.
 
 ## Ranh gioi
 

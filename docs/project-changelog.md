@@ -9,17 +9,20 @@
 | Callback configuration | Added `SMARTCA_CALLBACK_SECRET` mapping in Docker/env/app config and documented callback header usage |
 | SmartCA API smoke script | Added `scripts/smoke-smartca-api.ps1` for Docker health and callback-secret regression checks |
 | SmartCA env configurator | Added `scripts/configure-smartca-env.ps1` to guide local sandbox credential setup without committing secrets |
+| SmartCA chatbot grounding | Updated chatbot knowledge and demo replies so operators see SmartCA CA signing plus demo fallback instead of stale demo-only guidance |
 
 ### Changed
 | Item | Description |
 |---|---|
 | SmartCA finalization flow | Shared UI polling and callback finalization through `SignatureService.RefreshSmartCaSignatureByExternalReferenceAsync` so both paths enforce document id and certificate evidence checks |
+| SmartCA rollout status | Roadmap now marks live SmartCA signing as credential pending while implementation and Docker API are available |
+| Signature wording alignment | Reworded revoke/config/help copy so SmartCA CA signing and internal demo fallback are not conflated |
 
 ### Verification
 | Check | Result |
 |---|---|
 | `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
-| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 227/227 tests |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 228/228 tests |
 | `docker compose config --quiet` | Passed |
 | `docker compose up --build -d web` | Passed, image `quanlychuyenmon_nhom3-web:latest` rebuilt and web container healthy |
 | `Invoke-WebRequest http://localhost:8080/` | Passed, HTTP 200 |

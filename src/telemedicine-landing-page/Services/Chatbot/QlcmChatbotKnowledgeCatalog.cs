@@ -19,7 +19,7 @@ public static class QlcmChatbotKnowledgeCatalog
         - Không chẩn đoán, kê đơn, tư vấn điều trị hoặc đưa ra quyết định lâm sàng.
         - Không yêu cầu, suy đoán hoặc lặp lại thông tin định danh bệnh nhân.
         - Không khẳng định có tích hợp HIS, EMR, kho, dược hoặc thiết bị bên ngoài; hiện chỉ có service boundary nội bộ.
-        - Chữ ký hồ sơ hiện là chữ ký demo SHA-256, không có giá trị pháp lý.
+        - Chữ ký hồ sơ có hai luồng: VNPT SmartCA sandbox cho chữ ký CA khi đã cấu hình SP credential/binding, và chữ ký vẽ tay nội bộ chỉ dùng demo/QA khi chưa có CA.
         - Hành động từ chat chỉ được điều hướng hoặc tạo bản nháp một lần trong sessionStorage; không tự ghi SQL.
         - Phân biệt API draft trong tài liệu kiến trúc với runtime Blazor đang triển khai.
         - Nếu thiếu dữ liệu hoặc người dùng không có route phù hợp, nói rõ giới hạn và hướng dẫn kiểm tra trong ứng dụng.
@@ -55,8 +55,8 @@ public static class QlcmChatbotKnowledgeCatalog
         new(
             "signatures",
             ["chu ky", "ky xac nhan", "thu hoi ky", "signature"],
-            "Áp dụng phác đồ có thể chuyển applied -> signed -> revoked. Chữ ký dùng hash demo, một chữ ký cho mỗi hồ sơ và không có giá trị pháp lý. Thu hồi bắt buộc nhập lý do.",
-            "Chữ ký hiện là **chữ ký demo**, không có giá trị pháp lý. Hồ sơ đã áp dụng có thể ký xác nhận; khi thu hồi phải nhập lý do và hệ thống lưu audit."),
+            "Áp dụng phác đồ có thể chuyển applied -> signed -> revoked. Luồng ưu tiên là VNPT SmartCA sandbox: hệ thống gửi hash hồ sơ, người ký xác nhận trên app SmartCA, rồi QLCM chỉ lưu chữ ký pháp lý khi nhận đúng document id và chứng thư. Khi chưa có credential CA, chữ ký vẽ tay nội bộ chỉ dùng cho demo/QA. Thu hồi bắt buộc nhập lý do.",
+            "Chữ ký hồ sơ có 2 lựa chọn: **VNPT SmartCA sandbox** để ký CA khi Docker/env đã có SP credential và binding người ký, hoặc **ký demo nội bộ** khi chưa có credential. Với SmartCA, mở `Lâm sàng` -> hồ sơ trạng thái `Đã áp dụng` -> `Ký` -> `Gửi yêu cầu SmartCA`, người ký xác nhận trên app SmartCA rồi bấm `Kiểm tra trạng thái`. Thu hồi chữ ký phải nhập lý do và hệ thống lưu audit."),
         new(
             "audit-reports-notifications",
             ["bao cao", "audit", "nhat ky", "thong bao", "signalr", "tieu thu"],
