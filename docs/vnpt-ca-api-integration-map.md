@@ -24,6 +24,29 @@ Noi ngan gon:
 - Can hop dong dien tu nhieu nguoi ky/OTP/email/SMS: dung eContract API.
 - QLCM hien da gan SmartCA WebAPI. eContract chua gan.
 
+## Lay credential/API o trang nao
+
+| Ban can lay | Vao dau | Muc tren trang/tai lieu | Dien vao dau |
+| --- | --- | --- | --- |
+| Tai khoan developer | `https://doitac-smartca.vnpt.vn/help/docs/tich-hop/ky-so/webapi/tao-tai-khoan-tich-hop/` | Buoc 1: dang nhap/dang ky SmartCA for Developers | Khong dien vao code; chi dung de tao he thong tich hop. |
+| `Client_Id` / `SP_ID` | Trang tren | Buoc 2: Tao thong tin he thong tich hop, VNPT gui email sau khi dang ky thanh cong | `.env` -> `SMARTCA_SP_ID`; Docker map sang `SmartCa__SpId`; code doc o `SmartCaOptions.cs`. |
+| `Client_Secret` / `SP_PASSWORD` | Trang tren | Email cua quan tri vien nhan tai khoan tich hop | `.env` -> `SMARTCA_SP_PASSWORD`; Docker map sang `SmartCa__SpPassword`; code doc o `SmartCaOptions.cs`. |
+| Gateway sandbox | PDF SmartCA WebAPI | Base URL/API prefix sandbox | `.env` -> `SMARTCA_BASE_URL=https://rmgateway.vnptit.vn`, `SMARTCA_API_PREFIX=/sca/sp769`. |
+| So thue bao SmartCA/CCCD/MST nguoi ky | App demo SmartCA/VNPT sandbox account | Nguoi dung kich hoat chung thu so tren app demo | `.env` -> `SMARTCA_DEFAULT_USER_ID`; bind voi user app bang `SMARTCA_SIGNER_USERNAME=admin` hoac JSON. |
+| Serial chung thu | API `get_certificate` hoac danh sach chung thu SmartCA trong tai lieu | Dung khi mot thue bao co nhieu chung thu | `.env` -> `SMARTCA_DEFAULT_SERIAL_NUMBER`, co the de trong neu VNPT khong yeu cau. |
+| Callback URL | Server public cua minh, khong lay tu VNPT | Dang ky cho VNPT goi lai sau khi ky | `.env` -> `SMARTCA_CALLBACK_URL=https://domain/api/signatures/smartca/callback`; endpoint code o `SmartCaSignatureEndpoints.cs`. |
+| Callback secret | Minh tu dat/sinh | Chia se voi gateway/cau hinh callback de verify request | `.env` -> `SMARTCA_CALLBACK_SECRET`; header can gui la `X-QLCM-SMARTCA-CALLBACK-SECRET`. |
+
+Neu chua chac dien tay, chay:
+
+```powershell
+.\scripts\configure-smartca-env.ps1
+docker compose up --build -d web
+.\scripts\smoke-smartca-api.ps1
+```
+
+Script tren chi tao/cap nhat `.env` local. File `.env` bi gitignore, khong day secret len GitHub.
+
 ## Ban do folder/file trong project
 
 Project goc: `d:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3`

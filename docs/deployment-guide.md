@@ -60,6 +60,16 @@ The bootstrap migration reactivates this local admin account when an older Docke
 ### VNPT SmartCA Sandbox
 Enable SmartCA by setting `SMARTCA_ENABLED=true`, `SMARTCA_SP_ID`, `SMARTCA_SP_PASSWORD`, and a signer binding in local `.env`. For a single sandbox subscriber, set `SMARTCA_DEFAULT_USER_ID` plus either `SMARTCA_SIGNER_USER_ID` or `SMARTCA_SIGNER_USERNAME`. For multiple clinicians, use `SMARTCA_USER_BINDINGS_JSON` and map each app user to the VNPT subscriber id and optional certificate serial. The web container calls VNPT from server-side only; SP secrets and subscriber ids are never sent to the browser.
 
+If you do not know where each value belongs, use the local configurator from the repo root:
+
+```powershell
+.\scripts\configure-smartca-env.ps1
+docker compose up --build -d web
+.\scripts\smoke-smartca-api.ps1
+```
+
+The configurator copies/updates only local `.env` values from `.env.example`, enables SmartCA, prompts for VNPT SP credentials, binds the QLCM signer, and generates a callback secret when a callback URL is supplied. `.env` is ignored by git and must never be committed.
+
 The clinical signing UI sends a canonical SHA-256 hash to SmartCA, shows the returned transaction code, and lets the same app user poll status after confirming in the SmartCA app. QLCM writes the final immutable `med.signature_records` row only after SmartCA returns a signature for the expected document id and certificate evidence with subject, serial, and expiry. Pending state is stored in `med.signature_transactions`.
 
 The Docker web container also exposes server-side SmartCA API routes:

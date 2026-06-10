@@ -33,6 +33,7 @@ Hoan thien chu ky SmartCA sandbox de dung duoc qua Docker, khong chi qua UI Blaz
 - Docker web health: healthy.
 - Callback missing secret: HTTP 403.
 - Added and ran `scripts/smoke-smartca-api.ps1`: pass; health HTTP 200, anonymous SmartCA readiness HTTP 302, callback-missing-secret HTTP 403.
+- Added `scripts/configure-smartca-env.ps1` so operators can fill local `.env` SmartCA sandbox values without committing VNPT secrets.
 
 ## Ranh gioi
 

@@ -8,6 +8,7 @@
 | SmartCA callback endpoint | Added `POST /api/signatures/smartca/callback` guarded by `SMARTCA_CALLBACK_SECRET`; callback resolves VNPT transaction reference then polls SmartCA server-side before finalizing |
 | Callback configuration | Added `SMARTCA_CALLBACK_SECRET` mapping in Docker/env/app config and documented callback header usage |
 | SmartCA API smoke script | Added `scripts/smoke-smartca-api.ps1` for Docker health and callback-secret regression checks |
+| SmartCA env configurator | Added `scripts/configure-smartca-env.ps1` to guide local sandbox credential setup without committing secrets |
 
 ### Changed
 | Item | Description |

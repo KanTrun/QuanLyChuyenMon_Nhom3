@@ -109,7 +109,15 @@ Bật `SMARTCA_ENABLED=true`, nhập credential SP sandbox do VNPT cấp, rồi 
 
 Docker web expose API SmartCA server-side: `GET /api/signatures/smartca/readiness`, `GET /api/signatures/smartca/transactions/latest`, `POST /api/signatures/smartca/start`, `POST /api/signatures/smartca/transactions/{signatureTransactionId}/refresh`, và callback `POST /api/signatures/smartca/callback`. Callback cần header `X-QLCM-SMARTCA-CALLBACK-SECRET` khớp `SMARTCA_CALLBACK_SECRET`; body chỉ cần một trong các field `transactionCode`, `tranCode`, `transactionId`, hoặc `externalReference`.
 
-Sau khi Docker chạy, kiểm nhanh API SmartCA bằng `.\scripts\smoke-smartca-api.ps1`.
+Nếu chưa biết điền biến nào, chạy wizard local:
+
+```powershell
+.\scripts\configure-smartca-env.ps1
+docker compose up --build -d web
+.\scripts\smoke-smartca-api.ps1
+```
+
+Script chỉ ghi vào `.env` local đang được gitignore, không commit credential VNPT. Sau khi Docker chạy, kiểm nhanh API SmartCA bằng `.\scripts\smoke-smartca-api.ps1`.
 
 Muốn tạo lại DB sạch:
 
