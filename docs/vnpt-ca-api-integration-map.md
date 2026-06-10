@@ -90,6 +90,7 @@ docker compose up --build -d web
 Script tren chi tao/cap nhat `.env` local. File `.env` bi gitignore, khong day secret len GitHub.
 Script `test-smartca-vnpt-credential.ps1` goi `v1/credentials/get_certificate` de kiem tra credential SP `/sca/sp769` va subscriber voi VNPT, nhung khong in password ra terminal. Neu `SMARTCA_SP_ID` co duoi `*.apps.smartcaapi.com`, script se canh bao day la credential OAuth/Bearer va VNPT co the tra `401 sp_id or sp_password invalid` tren luong SP truc tiep.
 Script `test-smartca-oauth-credential.ps1` kiem tra OAuth: neu chi co `ClientId`/`ClientSecret`/`MobileCode`, script se bao thieu `SMARTCA_OAUTH_REFRESH_TOKEN` hoac `SMARTCA_OAUTH_USERNAME/PASSWORD`; neu da co token/user password thi script goi `/auth/token` va `/csc/credentials/list`.
+Neu da dien CCCD/password ma `/auth/token` van tra HTTP 500, can hoi VNPT xac nhan app co duoc bat password grant khong va tai khoan nguoi ky da active tren sandbox chua. Cach chuan hon la Authorization Code de nguoi ky dang nhap SmartCA va cap quyen lay refresh token.
 
 ## Credential ban vua gui thuoc loai nao
 

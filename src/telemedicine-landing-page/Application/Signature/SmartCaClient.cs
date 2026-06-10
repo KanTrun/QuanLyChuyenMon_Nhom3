@@ -263,14 +263,14 @@ public sealed class SmartCaClient : ISmartCaClient
         var body = new Dictionary<string, string>
         {
             ["client_id"] = _options.ResolvedOAuthClientId(),
-            ["client_secret"] = _options.ResolvedOAuthClientSecret(),
-            ["scope"] = "sign offline_access"
+            ["client_secret"] = _options.ResolvedOAuthClientSecret()
         };
 
         if (!string.IsNullOrWhiteSpace(_options.OAuthRefreshToken))
         {
             body["grant_type"] = "refresh_token";
             body["refresh_token"] = _options.OAuthRefreshToken.Trim();
+            body["scope"] = "sign offline_access";
         }
         else if (!string.IsNullOrWhiteSpace(_options.OAuthUsername) && !string.IsNullOrWhiteSpace(_options.OAuthPassword))
         {

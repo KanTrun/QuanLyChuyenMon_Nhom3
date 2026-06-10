@@ -57,12 +57,12 @@ if ($clientId -notlike "*.apps.smartcaapi.com") {
 $body = @{
     client_id = $clientId
     client_secret = $clientSecret
-    scope = "sign offline_access"
 }
 
 if (-not [string]::IsNullOrWhiteSpace($refreshToken)) {
     $body["grant_type"] = "refresh_token"
     $body["refresh_token"] = $refreshToken
+    $body["scope"] = "sign offline_access"
 }
 elseif (-not [string]::IsNullOrWhiteSpace($username) -and -not [string]::IsNullOrWhiteSpace($password)) {
     $body["grant_type"] = "password"
@@ -112,5 +112,6 @@ try {
 catch {
     Write-Host "  HTTP transport: ERROR"
     Write-Host "  Error: $($_.Exception.Message)"
+    Write-Host "  Hint: If this happens with password grant, ask VNPT to confirm the app is allowed to use password grant and that the signer account is active for sandbox."
     exit 1
 }
