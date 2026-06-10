@@ -1,6 +1,82 @@
 # VNPT CA API Integration Map
 
-Ngay cap nhat: 2026-06-04
+Ngay cap nhat: 2026-06-10
+
+## Doc nhanh cho nguoi moi
+
+Neu ban khong biet lay API o dau, lam theo thu tu nay:
+
+1. Mo trang dang ky tich hop SmartCA:
+   `https://doitac-smartca.vnpt.vn/help/docs/tich-hop/ky-so/webapi/tao-tai-khoan-tich-hop/`
+2. Dang nhap/dang ky tai khoan SmartCA for Developers.
+3. Tao thong tin he thong tich hop. Sau khi VNPT duyet/test, ho gui ve email:
+   `Client_Id`/`Client_Secret` hoac bo credential SP tuong duong.
+4. Mo trang tai tai lieu SmartCA WebAPI:
+   `https://doitac-smartca.vnpt.vn/help/docs/tich-hop/ky-so/webapi/tai-lieu-tich-hop-chi-tiet/`
+5. Tai PDF `SmartCA` va `SmartCA Tich hop`. API ky so truc tiep cua QLCM nam trong PDF SmartCA.
+6. Neu can hop dong dien tu nhieu ben, mo trang eContract:
+   `https://doitac-smartca.vnpt.vn/help/docs/tich-hop/hop-dong-dien-tu/webapi/tai-lieu-tich-hop-chi-tiet/`
+7. Tai PDF eContract. Day la luong khac, chua gan vao code QLCM hien tai.
+
+Noi ngan gon:
+
+- Can ky ho so lam sang bang CA: dung SmartCA WebAPI.
+- Can hop dong dien tu nhieu nguoi ky/OTP/email/SMS: dung eContract API.
+- QLCM hien da gan SmartCA WebAPI. eContract chua gan.
+
+## Ban do folder/file trong project
+
+Project goc: `d:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3`
+
+| Viec can tim | Folder/file | Ban nen sua/kiem tra gi |
+| --- | --- | --- |
+| Noi goi API VNPT that | `src/telemedicine-landing-page/Application/Signature/SmartCaClient.cs` | Them/sua endpoint VNPT o day. |
+| Interface cua client CA | `src/telemedicine-landing-page/Application/Signature/ISmartCaClient.cs` | Neu them API moi, them method o day truoc. |
+| Payload/response JSON VNPT | `src/telemedicine-landing-page/Application/Signature/SmartCaModels.cs` | Them record model neu API moi co body/response moi. |
+| Cau hinh sandbox/credential | `src/telemedicine-landing-page/Application/Signature/SmartCaOptions.cs` | Them bien cau hinh, bind user app voi user CA. |
+| Nghiep vu ky ho so | `src/telemedicine-landing-page/Application/Signature/SignatureService.cs` | Gan luong UI -> API -> DB. Khong goi VNPT truc tiep trong UI. |
+| Nut bam UI SmartCA | `src/telemedicine-landing-page/Components/Pages/Admin/LamSangPage.razor` | Man hinh Lam sang, modal ky, nut gui/kiem tra trang thai. |
+| Dang ky DI/HttpClient | `src/telemedicine-landing-page/Infrastructure/QlcmServiceCollectionExtensions.cs` | Dang ky client, base URL, timeout. |
+| Config mac dinh app | `src/telemedicine-landing-page/appsettings.json` | Chi de default rong/false, khong dat secret. |
+| Config Docker | `docker-compose.yml` | Map `SMARTCA_*` vao `SmartCa__*`. |
+| Mau env local | `.env.example` | Huong dan bien moi, khong ghi secret that. |
+| DB giao dich dang cho CA | `src/telemedicine-landing-page/Models/Admin/Sql/SignatureTransactions.cs` | Luu transaction CA cho den khi ky xong. |
+| DB chu ky cuoi | `src/telemedicine-landing-page/Models/Admin/Sql/SignatureRecords.cs` | Luu evidence cuoi: provider, cert subject/serial/expiry. |
+| Migration DB | `scripts/migrations/20260604-010-add-smartca-signature-transactions.sql` | Tao bang pending transaction. |
+| Test SmartCA | `tests/telemedicine-landing-page.tests/Admin/Sql/SignatureServiceTests.cs` | Them test khi sua nghiep vu ky. |
+| Export/phieu in | `src/telemedicine-landing-page/Services/Admin/ClinicalExportService.cs` | Hien provider/chung thu tren file export. |
+
+## API nao gan vao file nao
+
+| API tu tai lieu VNPT | Lay o trang nao | Da gan chua | File/method dang gan |
+| --- | --- | --- | --- |
+| `POST /sca/sp769/v1/signatures/sign` | SmartCA WebAPI PDF | Da gan | `SmartCaClient.StartHashSignatureAsync()` -> `SignatureService.StartSmartCaSignatureAsync()` -> `LamSangPage.StartSmartCaSign()` |
+| `POST /sca/sp769/v1/signatures/sign/{tranId}/status` | SmartCA WebAPI PDF | Da gan | `SmartCaClient.GetSignatureStatusAsync()` -> `SignatureService.RefreshSmartCaSignatureAsync()` -> `LamSangPage.RefreshSmartCaSign()` |
+| `POST /sca/sp769/v1/credentials/get_certificate` | SmartCA WebAPI PDF | Da gan | `SmartCaClient.GetCertificateAsync()` -> `SignatureService.GetRequiredSmartCaCertificateAsync()` |
+| SmartCA callback/webhook | VNPT cau hinh khi co public URL | Chua gan | Nen tao endpoint server o `Program.cs` hoac folder endpoint moi, roi goi `SignatureService` cap nhat transaction. |
+| SmartCA v2 `sign`/`confirm` | PDF SmartCA Tich hop | Chua gan | Them method vao `ISmartCaClient`, payload vao `SmartCaModels.cs`, orchestration vao `SignatureService.cs`. |
+| eContract login | eContract PDF | Chua gan | Nen tao `Application/Signature/EContractClient.cs` va `EContractOptions.cs`. |
+| eContract tao hop dong | eContract PDF | Chua gan | Nen tao service rieng, khong tron vao `SmartCaClient`. |
+| eContract gui hop dong | eContract PDF | Chua gan | Gan vao service eContract + DB transaction rieng. |
+| eContract ky OTP/SmartCA/HSM | eContract PDF | Chua gan | Can UI rieng, callback rieng, bao mat OTP/token rieng. |
+
+## Bien Docker can dien khi co credential
+
+File can xem: `.env.example` va `docker-compose.yml`.
+
+```env
+SMARTCA_ENABLED=true
+SMARTCA_BASE_URL=https://rmgateway.vnptit.vn
+SMARTCA_API_PREFIX=/sca/sp769
+SMARTCA_SP_ID=<VNPT cap>
+SMARTCA_SP_PASSWORD=<VNPT cap>
+SMARTCA_SIGNER_USERNAME=admin
+SMARTCA_DEFAULT_USER_ID=<so thue bao SmartCA sandbox>
+SMARTCA_DEFAULT_SERIAL_NUMBER=<neu VNPT yeu cau>
+SMARTCA_CALLBACK_URL=<de trong neu chua co public webhook>
+```
+
+Khong commit `.env` that. Chi commit `.env.example`.
 
 ## Muc tieu
 
