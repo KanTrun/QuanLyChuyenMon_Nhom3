@@ -39,6 +39,10 @@ public interface ISignatureService
         string actorUsername,
         CancellationToken cancellationToken = default);
 
+    Task<(SignatureResult Result, SignatureRecord? Record, SignatureTransactionRecord? Transaction)> RefreshSmartCaSignatureByExternalReferenceAsync(
+        string externalReference,
+        CancellationToken cancellationToken = default);
+
     Task<SignatureResult> RevokeDemoSignatureAsync(
         string targetType,
         Guid targetId,

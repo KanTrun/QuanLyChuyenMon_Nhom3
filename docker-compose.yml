@@ -23,6 +23,7 @@ services:
       SmartCa__DefaultSignerUsername: ${SMARTCA_SIGNER_USERNAME:-}
       SmartCa__UserBindingsJson: ${SMARTCA_USER_BINDINGS_JSON:-}
       SmartCa__CallbackUrl: ${SMARTCA_CALLBACK_URL:-}
+      SmartCa__CallbackSecret: ${SMARTCA_CALLBACK_SECRET:-}
       SmartCa__RequestTimeoutSeconds: ${SMARTCA_REQUEST_TIMEOUT_SECONDS:-45}
     depends_on:
       db-init:

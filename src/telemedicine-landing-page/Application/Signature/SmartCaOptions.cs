@@ -19,6 +19,7 @@ public sealed class SmartCaOptions
     public string? DefaultSignerUsername { get; init; }
     public string? UserBindingsJson { get; init; }
     public string? CallbackUrl { get; init; }
+    public string? CallbackSecret { get; init; }
     public int RequestTimeoutSeconds { get; init; } = 45;
 
     public bool IsReady =>

@@ -16,13 +16,22 @@ Hoan thien chu ky SmartCA sandbox de dung duoc qua Docker, khong chi qua UI Blaz
 
 ## Viec lam
 
-1. Audit code hien tai: SmartCA client, service, UI, Docker, tests.
-2. Them method service callback/finalize theo external transaction id/code.
-3. Them minimal API group `/api/signatures/smartca`.
-4. Them model request/response nho, khong tron UI Razor.
-5. Them tests cho callback/API behavior co the test duoc.
-6. Cap nhat README/deployment/API map.
-7. Chay `dotnet build`, `dotnet test`, `docker compose config`, rebuild Docker web.
+1. [x] Audit code hien tai: SmartCA client, service, UI, Docker, tests.
+2. [x] Them method service callback/finalize theo external transaction id/code.
+3. [x] Them minimal API group `/api/signatures/smartca`.
+4. [x] Them model request/response nho, khong tron UI Razor.
+5. [x] Them tests cho callback/API behavior co the test duoc.
+6. [x] Cap nhat README/deployment/API map.
+7. [x] Chay `dotnet build`, `dotnet test`, `docker compose config`, rebuild Docker web.
+
+## Ket qua 2026-06-10
+
+- Build Release: pass, 0 warnings, 0 errors.
+- Full test: pass, 227/227.
+- Docker compose config: pass.
+- Docker web rebuilt: `quanlychuyenmon_nhom3-web:latest`.
+- Docker web health: healthy.
+- Callback missing secret: HTTP 403.
 
 ## Ranh gioi
 

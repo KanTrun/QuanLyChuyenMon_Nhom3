@@ -266,10 +266,52 @@ public sealed class SignatureService : ISignatureService
             .FirstOrDefaultAsync(t => t.SignatureTransactionId == signatureTransactionId, cancellationToken);
         if (transaction is null)
             return (SignatureResult.TargetNotFound, null, null);
-        if (transaction.SignerUserId != actorUserId)
-            return (SignatureResult.Unauthorized, null, transaction);
 
-        var signerBinding = _smartCaOptions.ResolveSigner(actorUserId, actorUsername);
+        return await RefreshSmartCaTransactionAsync(db, transaction, actorUserId, actorUsername, true, cancellationToken);
+    }
+
+    public async Task<(SignatureResult Result, SignatureRecord? Record, SignatureTransactionRecord? Transaction)> RefreshSmartCaSignatureByExternalReferenceAsync(
+        string externalReference,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_smartCaOptions.IsReady || _smartCaClient is null)
+            return (SignatureResult.ProviderNotConfigured, null, null);
+        if (string.IsNullOrWhiteSpace(externalReference))
+            return (SignatureResult.TargetNotFound, null, null);
+
+        var reference = externalReference.Trim();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var transaction = await db.SignatureTransactions
+            .FirstOrDefaultAsync(t =>
+                t.ProviderCode == SmartCaProviderCode &&
+                (t.ExternalTransactionId == reference || t.ExternalTransactionCode == reference),
+                cancellationToken);
+        if (transaction is null)
+            return (SignatureResult.TargetNotFound, null, null);
+
+        return await RefreshSmartCaTransactionAsync(
+            db,
+            transaction,
+            transaction.SignerUserId,
+            transaction.SignerUsername ?? "smartca-callback",
+            false,
+            cancellationToken);
+    }
+
+    private async Task<(SignatureResult Result, SignatureRecord? Record, SignatureTransactionRecord? Transaction)> RefreshSmartCaTransactionAsync(
+        MedDbContext db,
+        SignatureTransactionRecord transaction,
+        Guid actorUserId,
+        string actorUsername,
+        bool requireActorOwnership,
+        CancellationToken cancellationToken)
+    {
+        if (requireActorOwnership && transaction.SignerUserId != actorUserId)
+            return (SignatureResult.Unauthorized, null, transaction);
+        if (_smartCaClient is null)
+            return (SignatureResult.ProviderNotConfigured, null, transaction);
+
+        var signerBinding = _smartCaOptions.ResolveSigner(transaction.SignerUserId, transaction.SignerUsername ?? actorUsername);
         if (signerBinding is null)
             return (SignatureResult.ProviderNotConfigured, null, transaction);
         if (!MatchesTransactionBinding(transaction, signerBinding))

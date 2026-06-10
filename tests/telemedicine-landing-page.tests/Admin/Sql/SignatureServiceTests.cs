@@ -271,6 +271,39 @@ public sealed class SignatureServiceTests
     }
 
     [Fact]
+    public async Task RefreshSmartCaSignatureByExternalReferenceAsync_SignedProviderStatus_CreatesLegalSignatureRecord()
+    {
+        var (db, factory) = TestDbHelper.CreateSeededContextWithFactory();
+        using var _ = db;
+        var app = AddApplication(db, "applied");
+        var smartCa = new FakeSmartCaClient();
+        var service = CreateService(factory, db, smartCa, SmartCaConfiguredOptions());
+        var (_, transaction) = await service.StartSmartCaSignatureAsync(
+            SignatureService.PatientProtocolApplicationTarget,
+            app.PatientProtocolApplicationId,
+            MedDataStoreSeed.AdminUserId,
+            "admin",
+            "{\"source\":\"smartca-callback-test\"}");
+        Assert.NotNull(transaction);
+        smartCa.Status = new SmartCaStatusResult(
+            SmartCaExternalStatus.Signed,
+            "SP_CA_001",
+            "SUCCESS",
+            [new SmartCaSignedDocument(transaction.DocumentId, "signed-value", "timestamp-value")]);
+
+        var (result, record, updatedTransaction) = await service.RefreshSmartCaSignatureByExternalReferenceAsync(
+            transaction.ExternalTransactionCode!);
+
+        Assert.Equal(SignatureResult.Created, result);
+        Assert.NotNull(record);
+        Assert.NotNull(updatedTransaction);
+        Assert.True(record.IsLegallyValid);
+        using var readDb = factory.CreateDbContext();
+        Assert.Equal("signed", readDb.PatientProtocolApplications.Single(a => a.PatientProtocolApplicationId == app.PatientProtocolApplicationId).ApplicationStatus);
+        Assert.Equal("signed", readDb.SignatureTransactions.Single(t => t.SignatureTransactionId == transaction.SignatureTransactionId).TransactionStatus);
+    }
+
+    [Fact]
     public async Task RefreshSmartCaSignatureAsync_DifferentActorCannotFinalizePendingTransaction()
     {
         var (db, factory) = TestDbHelper.CreateSeededContextWithFactory();

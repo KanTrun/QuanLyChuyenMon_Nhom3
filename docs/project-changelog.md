@@ -1,5 +1,29 @@
 # Project Changelog
 
+## 2026-06-10
+### Added
+| Item | Description |
+|---|---|
+| SmartCA Docker API surface | Added authenticated `/api/signatures/smartca/readiness`, latest transaction, start, and refresh endpoints for app/container consumers |
+| SmartCA callback endpoint | Added `POST /api/signatures/smartca/callback` guarded by `SMARTCA_CALLBACK_SECRET`; callback resolves VNPT transaction reference then polls SmartCA server-side before finalizing |
+| Callback configuration | Added `SMARTCA_CALLBACK_SECRET` mapping in Docker/env/app config and documented callback header usage |
+
+### Changed
+| Item | Description |
+|---|---|
+| SmartCA finalization flow | Shared UI polling and callback finalization through `SignatureService.RefreshSmartCaSignatureByExternalReferenceAsync` so both paths enforce document id and certificate evidence checks |
+
+### Verification
+| Check | Result |
+|---|---|
+| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
+| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 227/227 tests |
+| `docker compose config --quiet` | Passed |
+| `docker compose up --build -d web` | Passed, image `quanlychuyenmon_nhom3-web:latest` rebuilt and web container healthy |
+| `Invoke-WebRequest http://localhost:8080/` | Passed, HTTP 200 |
+| `Invoke-WebRequest http://localhost:8080/health` | Passed, Healthy |
+| `POST /api/signatures/smartca/callback` without secret | Passed, HTTP 403 |
+
 ## 2026-06-04
 ### Added
 | Item | Description |

@@ -40,6 +40,7 @@ Project goc: `d:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3`
 | Config mac dinh app | `src/telemedicine-landing-page/appsettings.json` | Chi de default rong/false, khong dat secret. |
 | Config Docker | `docker-compose.yml` | Map `SMARTCA_*` vao `SmartCa__*`. |
 | Mau env local | `.env.example` | Huong dan bien moi, khong ghi secret that. |
+| HTTP API cho Docker/app khac | `src/telemedicine-landing-page/Infrastructure/SmartCaSignatureEndpoints.cs` | Expose `/api/signatures/smartca/*`, co auth/callback secret. |
 | DB giao dich dang cho CA | `src/telemedicine-landing-page/Models/Admin/Sql/SignatureTransactions.cs` | Luu transaction CA cho den khi ky xong. |
 | DB chu ky cuoi | `src/telemedicine-landing-page/Models/Admin/Sql/SignatureRecords.cs` | Luu evidence cuoi: provider, cert subject/serial/expiry. |
 | Migration DB | `scripts/migrations/20260604-010-add-smartca-signature-transactions.sql` | Tao bang pending transaction. |
@@ -53,7 +54,7 @@ Project goc: `d:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3`
 | `POST /sca/sp769/v1/signatures/sign` | SmartCA WebAPI PDF | Da gan | `SmartCaClient.StartHashSignatureAsync()` -> `SignatureService.StartSmartCaSignatureAsync()` -> `LamSangPage.StartSmartCaSign()` |
 | `POST /sca/sp769/v1/signatures/sign/{tranId}/status` | SmartCA WebAPI PDF | Da gan | `SmartCaClient.GetSignatureStatusAsync()` -> `SignatureService.RefreshSmartCaSignatureAsync()` -> `LamSangPage.RefreshSmartCaSign()` |
 | `POST /sca/sp769/v1/credentials/get_certificate` | SmartCA WebAPI PDF | Da gan | `SmartCaClient.GetCertificateAsync()` -> `SignatureService.GetRequiredSmartCaCertificateAsync()` |
-| SmartCA callback/webhook | VNPT cau hinh khi co public URL | Chua gan | Nen tao endpoint server o `Program.cs` hoac folder endpoint moi, roi goi `SignatureService` cap nhat transaction. |
+| SmartCA callback/webhook | VNPT cau hinh khi co public URL | Da gan entrypoint | `POST /api/signatures/smartca/callback` trong `SmartCaSignatureEndpoints.cs`, goi `SignatureService.RefreshSmartCaSignatureByExternalReferenceAsync()` va poll VNPT truoc khi finalize. |
 | SmartCA v2 `sign`/`confirm` | PDF SmartCA Tich hop | Chua gan | Them method vao `ISmartCaClient`, payload vao `SmartCaModels.cs`, orchestration vao `SignatureService.cs`. |
 | eContract login | eContract PDF | Chua gan | Nen tao `Application/Signature/EContractClient.cs` va `EContractOptions.cs`. |
 | eContract tao hop dong | eContract PDF | Chua gan | Nen tao service rieng, khong tron vao `SmartCaClient`. |
@@ -74,6 +75,7 @@ SMARTCA_SIGNER_USERNAME=admin
 SMARTCA_DEFAULT_USER_ID=<so thue bao SmartCA sandbox>
 SMARTCA_DEFAULT_SERIAL_NUMBER=<neu VNPT yeu cau>
 SMARTCA_CALLBACK_URL=<de trong neu chua co public webhook>
+SMARTCA_CALLBACK_SECRET=<secret rieng de verify callback>
 ```
 
 Khong commit `.env` that. Chi commit `.env.example`.
@@ -153,6 +155,7 @@ eContract la he hop dong dien tu rieng, khong thay the SmartCA direct signing. N
 ## Viec da lam
 
 - SmartCA v1 sandbox da duong day server-side.
+- SmartCA da co API Docker/app khac: `GET /api/signatures/smartca/readiness`, `GET /api/signatures/smartca/transactions/latest`, `POST /api/signatures/smartca/start`, `POST /api/signatures/smartca/transactions/{id}/refresh`, `POST /api/signatures/smartca/callback`.
 - Docker da co env `SMARTCA_*`.
 - UI lam sang da co luong gui ky va poll trang thai.
 - DB da co bang pending transaction va final signature evidence.
@@ -163,7 +166,7 @@ eContract la he hop dong dien tu rieng, khong thay the SmartCA direct signing. N
 1. Dien `SMARTCA_ENABLED=true`, `SMARTCA_SP_ID`, `SMARTCA_SP_PASSWORD`.
 2. Bind bac si/nguoi ky bang `SMARTCA_SIGNER_USERNAME` + `SMARTCA_DEFAULT_USER_ID`, hoac `SMARTCA_USER_BINDINGS_JSON`.
 3. Test sandbox: gui ky, mo app SmartCA xac nhan, poll status, kiem tra `signature_records`.
-4. Neu VNPT yeu cau callback: them endpoint callback sau khi co public URL va secret.
+4. Neu VNPT yeu cau callback: cau hinh public URL `https://domain/api/signatures/smartca/callback` va header `X-QLCM-SMARTCA-CALLBACK-SECRET`.
 5. Neu nghiep vu can hop dong nhieu ben: thiet ke module eContract rieng, khong tron vao `SmartCaClient`.
 
 ## Cau hoi chua giai quyet

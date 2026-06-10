@@ -103,9 +103,11 @@ Có thể đổi cấu hình qua biến môi trường hoặc file `.env` cục 
 | `CHATBOT_MAX_TOKENS` | `4096` | Giới hạn output chatbot để giảm trả lời bị cắt giữa chừng |
 
 ### Chữ ký VNPT SmartCA sandbox
-Docker map `SMARTCA_ENABLED`, `SMARTCA_BASE_URL`, `SMARTCA_API_PREFIX`, `SMARTCA_SP_ID`, `SMARTCA_SP_PASSWORD`, `SMARTCA_DEFAULT_USER_ID`, `SMARTCA_DEFAULT_SERIAL_NUMBER`, `SMARTCA_SIGNER_USER_ID`, `SMARTCA_SIGNER_USERNAME`, `SMARTCA_USER_BINDINGS_JSON`, `SMARTCA_CALLBACK_URL`, và `SMARTCA_REQUEST_TIMEOUT_SECONDS` vào `SmartCa:*`.
+Docker map `SMARTCA_ENABLED`, `SMARTCA_BASE_URL`, `SMARTCA_API_PREFIX`, `SMARTCA_SP_ID`, `SMARTCA_SP_PASSWORD`, `SMARTCA_DEFAULT_USER_ID`, `SMARTCA_DEFAULT_SERIAL_NUMBER`, `SMARTCA_SIGNER_USER_ID`, `SMARTCA_SIGNER_USERNAME`, `SMARTCA_USER_BINDINGS_JSON`, `SMARTCA_CALLBACK_URL`, `SMARTCA_CALLBACK_SECRET`, và `SMARTCA_REQUEST_TIMEOUT_SECONDS` vào `SmartCa:*`.
 
 Bật `SMARTCA_ENABLED=true`, nhập credential SP sandbox do VNPT cấp, rồi bind thuê bao CA với đúng tài khoản app bằng `SMARTCA_SIGNER_USER_ID` hoặc `SMARTCA_SIGNER_USERNAME`. Nếu nhiều người ký, dùng `SMARTCA_USER_BINDINGS_JSON` dạng `[{"appUsername":"admin","subscriberId":"012345678901","serialNumber":"optional"}]`. QLCM chỉ gửi hash chuẩn hóa của hồ sơ sang SmartCA, chờ người ký xác nhận trên app SmartCA, kiểm tra đúng document id và chứng thư trước khi lưu chữ ký pháp lý. Khi chưa có credential/binding, Docker vẫn chạy và chữ ký demo nội bộ vẫn dùng cho QA.
+
+Docker web expose API SmartCA server-side: `GET /api/signatures/smartca/readiness`, `GET /api/signatures/smartca/transactions/latest`, `POST /api/signatures/smartca/start`, `POST /api/signatures/smartca/transactions/{signatureTransactionId}/refresh`, và callback `POST /api/signatures/smartca/callback`. Callback cần header `X-QLCM-SMARTCA-CALLBACK-SECRET` khớp `SMARTCA_CALLBACK_SECRET`; body chỉ cần một trong các field `transactionCode`, `tranCode`, `transactionId`, hoặc `externalReference`.
 
 Muốn tạo lại DB sạch:
 

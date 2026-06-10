@@ -5,13 +5,15 @@ Ngay 2026-06-04, clinical signing supports VNPT SmartCA sandbox beside the exist
 
 | Area | Decision |
 |---|---|
-| Provider boundary | `ISignatureService` owns SmartCA start/poll/finalize; Razor pages do not call VNPT directly |
+| Provider boundary | `ISignatureService` owns SmartCA start/poll/callback/finalize; Razor pages and API endpoints do not call VNPT directly |
 | External API | Server-side `SmartCaClient` calls `https://rmgateway.vnptit.vn/sca/sp769/v1/signatures/sign` and polls `v1/signatures/sign/{tranId}/status` |
+| Docker API surface | `SmartCaSignatureEndpoints` exposes `/api/signatures/smartca/readiness`, `/transactions/latest`, `/start`, `/transactions/{id}/refresh`, and `/callback` from the web container |
 | Signer binding | `SmartCaOptions` requires each app signer to bind to a VNPT subscriber id/optional serial before CA signing is enabled |
-| Secret handling | Docker/env maps `SmartCa:*`; SP secrets, subscriber id and serial never go to browser or source |
+| Callback security | SmartCA callback requires `SMARTCA_CALLBACK_SECRET` via `X-QLCM-SMARTCA-CALLBACK-SECRET`; callback only uses the reference then polls VNPT server-side |
+| Secret handling | Docker/env maps `SmartCa:*`; SP secrets, callback secret, subscriber id and serial never go to browser or source |
 | Signed payload | QLCM sends a canonical SHA-256 hash of the clinical application context, not patient text or files |
 | Pending state | `med.signature_transactions` stores SmartCA transaction code, document hash and status while user confirms in the mobile app |
-| Final evidence | `med.signature_records` remains immutable and is created only after the same app user polls, SmartCA returns the expected document id, and certificate subject/serial/expiry are present |
+| Final evidence | `med.signature_records` remains immutable and is created only after app polling or verified callback polling returns the expected document id, and certificate subject/serial/expiry are present |
 | UI | Clinical signing modal separates VNPT SmartCA sandbox from internal demo signature and shows readiness, transaction code and polling state |
 | Export | Clinical dossier prints provider, legal validity and certificate subject/serial/expiry when SmartCA evidence exists |
 

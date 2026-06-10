@@ -53,13 +53,26 @@ The bootstrap migration reactivates this local admin account when an older Docke
 | `SMARTCA_SIGNER_USER_ID` | empty | App user id allowed to use `SMARTCA_DEFAULT_USER_ID` |
 | `SMARTCA_SIGNER_USERNAME` | empty | App username allowed to use `SMARTCA_DEFAULT_USER_ID` |
 | `SMARTCA_USER_BINDINGS_JSON` | empty | Multi-user binding JSON, e.g. `[{"appUsername":"admin","subscriberId":"012345678901","serialNumber":"optional"}]` |
-| `SMARTCA_CALLBACK_URL` | empty | Reserved for public callback URL; current UI uses polling |
+| `SMARTCA_CALLBACK_URL` | empty | Public callback URL registered with VNPT, e.g. `https://domain/api/signatures/smartca/callback` |
+| `SMARTCA_CALLBACK_SECRET` | empty | Shared callback secret expected in `X-QLCM-SMARTCA-CALLBACK-SECRET`; leave empty to disable callback |
 | `SMARTCA_REQUEST_TIMEOUT_SECONDS` | `45` | HTTP timeout for SmartCA calls |
 
 ### VNPT SmartCA Sandbox
 Enable SmartCA by setting `SMARTCA_ENABLED=true`, `SMARTCA_SP_ID`, `SMARTCA_SP_PASSWORD`, and a signer binding in local `.env`. For a single sandbox subscriber, set `SMARTCA_DEFAULT_USER_ID` plus either `SMARTCA_SIGNER_USER_ID` or `SMARTCA_SIGNER_USERNAME`. For multiple clinicians, use `SMARTCA_USER_BINDINGS_JSON` and map each app user to the VNPT subscriber id and optional certificate serial. The web container calls VNPT from server-side only; SP secrets and subscriber ids are never sent to the browser.
 
 The clinical signing UI sends a canonical SHA-256 hash to SmartCA, shows the returned transaction code, and lets the same app user poll status after confirming in the SmartCA app. QLCM writes the final immutable `med.signature_records` row only after SmartCA returns a signature for the expected document id and certificate evidence with subject, serial, and expiry. Pending state is stored in `med.signature_transactions`.
+
+The Docker web container also exposes server-side SmartCA API routes:
+
+| Route | Auth | Purpose |
+|---|---|---|
+| `GET /api/signatures/smartca/readiness` | App login cookie | Check provider readiness and missing config |
+| `GET /api/signatures/smartca/transactions/latest?targetType=patient_protocol_application&targetId=<guid>` | App login cookie | Read latest SmartCA transaction for current signer |
+| `POST /api/signatures/smartca/start` | App login cookie | Start signing for a target; body: `targetType`, `targetId`, optional `metadataJson` |
+| `POST /api/signatures/smartca/transactions/<signatureTransactionId>/refresh` | App login cookie | Poll SmartCA and finalize legal signature |
+| `POST /api/signatures/smartca/callback` | Callback secret | VNPT callback entry; body can include `transactionCode`, `tranCode`, `transactionId`, or `externalReference` |
+
+For VNPT callback, set `SMARTCA_CALLBACK_SECRET` and configure VNPT/public gateway to send header `X-QLCM-SMARTCA-CALLBACK-SECRET`. The callback does not trust signed data from the request body; it uses the transaction reference to poll VNPT server-side before finalizing.
 
 ### Chatbot Credential and Privacy Guard
 Create a user-owned Gemini key manually in [Google AI Studio](https://aistudio.google.com/api-keys), restrict the key to Gemini API, and inject it only through environment variables or user-secrets. Never commit a key.
