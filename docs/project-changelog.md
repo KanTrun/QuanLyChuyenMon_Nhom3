@@ -11,6 +11,8 @@
 | SmartCA env configurator | Added `scripts/configure-smartca-env.ps1` to guide local sandbox credential setup without committing secrets |
 | SmartCA credential tester | Added `scripts/test-smartca-vnpt-credential.ps1` to validate local `.env` SP credential/subscriber against VNPT without printing secrets |
 | SmartCA credential family diagnostics | Added warning for OAuth `*.apps.smartcaapi.com` client credentials when testing the direct `/sca/sp769` SP flow |
+| SmartCA OAuth/Bearer provider | Added OAuth mode for `*.apps.smartcaapi.com` credentials, including token, credential list/info, signhash and transaction polling client paths |
+| SmartCA OAuth smoke script | Added `scripts/test-smartca-oauth-credential.ps1` to validate token source and `/csc/credentials/list` without printing secrets |
 | SmartCA chatbot grounding | Updated chatbot knowledge and demo replies so operators see SmartCA CA signing plus demo fallback instead of stale demo-only guidance |
 | VNPT API discovery guide | Clarified that VNPT endpoint paths are inside the downloadable SmartCA PDF, not directly visible on the web page screenshot |
 
@@ -22,6 +24,7 @@
 | Signature wording alignment | Reworded revoke/config/help copy so SmartCA CA signing and internal demo fallback are not conflated |
 | SmartCA operator docs | Added a screenshot-oriented troubleshooting section mapping VNPT page links, PDF search keywords and QLCM files |
 | SmartCA credential guidance | Documented the difference between OAuth/Bearer `SmartCA` credentials and direct SP `SmartCA Tich hop` credentials required by the current QLCM implementation |
+| SmartCA credential modes | Docker/env/readiness now supports `Auto`, `DirectSP` and `OAuth`; OAuth readiness requires a SmartCA user refresh token or approved password grant |
 
 ### Verification
 | Check | Result |
@@ -35,7 +38,8 @@
 | `POST /api/signatures/smartca/callback` without secret | Passed, HTTP 403 |
 | `.\scripts\smoke-smartca-api.ps1` | Passed, health HTTP 200, anonymous SmartCA readiness HTTP 302, callback-missing-secret HTTP 403 |
 | `.\scripts\test-smartca-vnpt-credential.ps1` with OAuth app credential in `.env` | Expected diagnostic warning, then VNPT `401 sp_id or sp_password invalid` on direct `/sca/sp769` |
-| `dotnet test .\telemedicine-landing-page.sln --no-restore` | Passed, 228/228 tests |
+| `.\scripts\test-smartca-oauth-credential.ps1` with current OAuth app credential only | Expected missing token diagnostic; no secret printed |
+| `dotnet test .\telemedicine-landing-page.sln --no-restore` | Passed, 229/229 tests |
 
 ## 2026-06-04
 ### Added

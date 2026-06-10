@@ -151,7 +151,8 @@ public sealed class SignatureService : ISignatureService
             _smartCaOptions.BaseUrl,
             _smartCaOptions.ApiPrefix,
             string.IsNullOrWhiteSpace(_smartCaOptions.DefaultUserId) ? null : _smartCaOptions.DefaultUserId,
-            _smartCaOptions.MissingFields());
+            _smartCaOptions.MissingFields(),
+            _smartCaOptions.EffectiveCredentialMode);
 
     public async Task<(SignatureResult Result, SignatureTransactionRecord? Transaction)> StartSmartCaSignatureAsync(
         string targetType,

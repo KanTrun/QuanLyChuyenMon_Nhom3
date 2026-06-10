@@ -21,6 +21,35 @@ public static class SmartCaSignatureEndpoints
         group.MapGet("/readiness", (ISignatureService signatures) =>
             Results.Ok(SmartCaReadinessApiResponse.From(signatures.GetSmartCaReadiness())));
 
+        group.MapGet("/oauth/authorize-request", (
+            [FromQuery] string? state,
+            IOptions<SmartCaOptions> options) =>
+        {
+            var opts = options.Value;
+            var requestState = string.IsNullOrWhiteSpace(state)
+                ? Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant()
+                : state.Trim();
+            var redirectUri = string.IsNullOrWhiteSpace(opts.OAuthRedirectUri)
+                ? "SMARTCA_OAUTH_REDIRECT_URI_NOT_CONFIGURED"
+                : opts.OAuthRedirectUri.Trim();
+
+            IReadOnlyDictionary<string, string> fields = new Dictionary<string, string>
+            {
+                ["response_type"] = "code",
+                ["client_id"] = opts.ResolvedOAuthClientId(),
+                ["state"] = requestState,
+                ["redirect_uri"] = redirectUri,
+                ["scope"] = "sign offline_access"
+            };
+
+            return Results.Ok(new SmartCaOAuthAuthorizeApiResponse(
+                opts.AuthorizeEndpoint(),
+                "POST",
+                "application/x-www-form-urlencoded",
+                fields,
+                "VNPT SmartCA requires user login/consent. The returned code must be exchanged quickly for a refresh token, then stored as SMARTCA_OAUTH_REFRESH_TOKEN."));
+        });
+
         group.MapGet("/transactions/latest", async (
             [FromQuery] string targetType,
             [FromQuery] Guid targetId,

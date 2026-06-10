@@ -13,10 +13,19 @@ services:
       Chatbot__BaseUrl: ${CHATBOT_BASE_URL:-https://generativelanguage.googleapis.com}
       Chatbot__MaxTokens: ${CHATBOT_MAX_TOKENS:-4096}
       SmartCa__Enabled: ${SMARTCA_ENABLED:-false}
+      SmartCa__CredentialMode: ${SMARTCA_CREDENTIAL_MODE:-Auto}
       SmartCa__BaseUrl: ${SMARTCA_BASE_URL:-https://rmgateway.vnptit.vn}
       SmartCa__ApiPrefix: ${SMARTCA_API_PREFIX:-/sca/sp769}
       SmartCa__SpId: ${SMARTCA_SP_ID:-}
       SmartCa__SpPassword: ${SMARTCA_SP_PASSWORD:-}
+      SmartCa__MobileCode: ${SMARTCA_MOBILE_CODE:-}
+      SmartCa__OAuthClientId: ${SMARTCA_OAUTH_CLIENT_ID:-}
+      SmartCa__OAuthClientSecret: ${SMARTCA_OAUTH_CLIENT_SECRET:-}
+      SmartCa__OAuthRedirectUri: ${SMARTCA_OAUTH_REDIRECT_URI:-}
+      SmartCa__OAuthRefreshToken: ${SMARTCA_OAUTH_REFRESH_TOKEN:-}
+      SmartCa__OAuthUsername: ${SMARTCA_OAUTH_USERNAME:-}
+      SmartCa__OAuthPassword: ${SMARTCA_OAUTH_PASSWORD:-}
+      SmartCa__OAuthCredentialId: ${SMARTCA_OAUTH_CREDENTIAL_ID:-}
       SmartCa__DefaultUserId: ${SMARTCA_DEFAULT_USER_ID:-}
       SmartCa__DefaultSerialNumber: ${SMARTCA_DEFAULT_SERIAL_NUMBER:-}
       SmartCa__DefaultSignerUserId: ${SMARTCA_SIGNER_USER_ID:-}

@@ -231,6 +231,31 @@ public sealed class SignatureServiceTests
     }
 
     [Fact]
+    public void GetSmartCaReadiness_OAuthClientWithoutUserToken_ReturnsMissingToken()
+    {
+        var (db, factory) = TestDbHelper.CreateSeededContextWithFactory();
+        using var _ = db;
+        var options = new SmartCaOptions
+        {
+            Enabled = true,
+            BaseUrl = "https://rmgateway.vnptit.vn",
+            ApiPrefix = "/sca/sp769",
+            SpId = "40b0-test.apps.smartcaapi.com",
+            SpPassword = "client-secret",
+            MobileCode = "VNPTSmartCAPartner-test",
+            DefaultUserId = "012345678901",
+            DefaultSignerUserId = MedDataStoreSeed.AdminUserId.ToString()
+        };
+        var service = CreateService(factory, db, new FakeSmartCaClient(), options);
+
+        var readiness = service.GetSmartCaReadiness();
+
+        Assert.False(readiness.Ready);
+        Assert.Equal("OAuth", readiness.CredentialMode);
+        Assert.Contains("SMARTCA_OAUTH_REFRESH_TOKEN or SMARTCA_OAUTH_USERNAME/PASSWORD", readiness.MissingFields);
+    }
+
+    [Fact]
     public async Task RefreshSmartCaSignatureAsync_SignedProviderStatus_CreatesLegalSignatureRecord()
     {
         var (db, factory) = TestDbHelper.CreateSeededContextWithFactory();

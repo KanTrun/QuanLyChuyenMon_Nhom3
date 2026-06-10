@@ -90,3 +90,62 @@ internal sealed record SmartCaCertificateData(
     [property: JsonPropertyName("serial_number")] string? SerialNumber,
     [property: JsonPropertyName("cert_subject")] string? Subject,
     [property: JsonPropertyName("cert_valid_to")] DateTime? ValidTo);
+
+internal sealed record SmartCaOAuthTokenResponse(
+    [property: JsonPropertyName("access_token")] string? AccessToken,
+    [property: JsonPropertyName("refresh_token")] string? RefreshToken,
+    [property: JsonPropertyName("token_type")] string? TokenType,
+    [property: JsonPropertyName("expires_in")] int? ExpiresIn,
+    [property: JsonPropertyName("scope")] string? Scope);
+
+internal sealed record SmartCaOAuthEnvelope<T>(
+    [property: JsonPropertyName("code")] int? Code,
+    [property: JsonPropertyName("codeDesc")] string? CodeDescription,
+    [property: JsonPropertyName("message")] string? Message,
+    [property: JsonPropertyName("content")] T? Content);
+
+internal sealed record SmartCaOAuthCredentialInfoRequest(
+    [property: JsonPropertyName("credentialId")] string CredentialId,
+    [property: JsonPropertyName("certificates")] string Certificates,
+    [property: JsonPropertyName("certInfo")] bool CertInfo,
+    [property: JsonPropertyName("authInfo")] bool AuthInfo);
+
+internal sealed record SmartCaOAuthCredentialInfo(
+    [property: JsonPropertyName("cert")] SmartCaOAuthCertificate? Certificate,
+    [property: JsonPropertyName("status")] string? Status);
+
+internal sealed record SmartCaOAuthCertificate(
+    [property: JsonPropertyName("serialNumber")] string? SerialNumber,
+    [property: JsonPropertyName("subjectDN")] string? SubjectDn,
+    [property: JsonPropertyName("validTo")] string? ValidTo);
+
+internal sealed record SmartCaOAuthSignHashPayload(
+    [property: JsonPropertyName("credentialId")] string CredentialId,
+    [property: JsonPropertyName("refTranId")] string RefTranId,
+    [property: JsonPropertyName("notifyUrl")] string? NotifyUrl,
+    [property: JsonPropertyName("description")] string Description,
+    [property: JsonPropertyName("datas")] IReadOnlyList<SmartCaOAuthHashData> Datas);
+
+internal sealed record SmartCaOAuthHashData(
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("hash")] string Hash);
+
+internal sealed record SmartCaOAuthTransactionResponse(
+    [property: JsonPropertyName("tranId")] string? TransactionId);
+
+internal sealed record SmartCaOAuthTransactionInfoRequest(
+    [property: JsonPropertyName("tranId")] string TransactionId);
+
+internal sealed record SmartCaOAuthTransactionInfo(
+    [property: JsonPropertyName("refTranId")] string? RefTranId,
+    [property: JsonPropertyName("documents")] IReadOnlyList<SmartCaOAuthSignedDocument>? Documents,
+    [property: JsonPropertyName("tranId")] string? TransactionId,
+    [property: JsonPropertyName("credentialId")] string? CredentialId,
+    [property: JsonPropertyName("tranStatus")] int? TransactionStatus,
+    [property: JsonPropertyName("tranStatusDesc")] string? TransactionStatusDescription);
+
+internal sealed record SmartCaOAuthSignedDocument(
+    [property: JsonPropertyName("name")] string? Name,
+    [property: JsonPropertyName("hash")] string? Hash,
+    [property: JsonPropertyName("sig")] string? Signature,
+    [property: JsonPropertyName("dataSigned")] string? DataSigned);

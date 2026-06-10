@@ -22,8 +22,8 @@ Noi ngan gon:
 
 - Can ky ho so lam sang bang CA theo code hien tai: dung SmartCA SP truc tiep `/sca/sp769`.
 - Can hop dong dien tu nhieu nguoi ky/OTP/email/SMS: dung eContract API.
-- Neu chi co `ClientId` dang `*.apps.smartcaapi.com` kem `MobileCode`: day la luong SmartCA OAuth/Bearer rieng, chua phai credential SP `/sca/sp769`.
-- QLCM hien da gan SmartCA SP `/sca/sp769`. eContract chua gan.
+- Neu chi co `ClientId` dang `*.apps.smartcaapi.com` kem `MobileCode`: dung SmartCA OAuth/Bearer, nhung van can refresh token hoac username/password SmartCA de lay Bearer token.
+- QLCM hien da gan ca SmartCA SP `/sca/sp769` va SmartCA OAuth/Bearer `/csc/...`. eContract chua gan.
 
 ## Neu nhin trang/anh VNPT ma khong thay API
 
@@ -49,7 +49,7 @@ Noi that ngan:
 | Ban dang nhin thay gi trong anh/trang | Y nghia | Viec can lam |
 | --- | --- | --- |
 | Chi thay menu `WEB API`, khong thay endpoint | Binh thuong, endpoint nam trong PDF | Bam `Tai lieu tich hop chi tiet` -> tai dung PDF theo luong can dung. |
-| Thay `ClientId` dang `*.apps.smartcaapi.com` va `MobileCode` | Day la credential SmartCA OAuth/Bearer | Khong dua thang vao `/sca/sp769`; can luong OAuth hoac credential SP rieng. |
+| Thay `ClientId` dang `*.apps.smartcaapi.com` va `MobileCode` | Day la credential SmartCA OAuth/Bearer | Dat `SMARTCA_CREDENTIAL_MODE=OAuth`; can them `SMARTCA_OAUTH_REFRESH_TOKEN` hoac `SMARTCA_OAUTH_USERNAME/PASSWORD`. |
 | Thay `sp_id`/sample dang `*.apps.signserviceapi.com` | Day la credential SP truc tiep cho `/sca/sp769` | Dien vao `.env` bang `SMARTCA_SP_ID` va `SMARTCA_SP_PASSWORD`. |
 | Thay 2 file `SmartCA` va `SmartCA Tich hop` | Co 2 luong API khac nhau | QLCM dang dung `SmartCA Tich hop` cho `/sca/sp769`; `SmartCA` la OAuth/Bearer `/csc/...`. |
 | Thay tai lieu eContract | Day la hop dong dien tu, khac SmartCA ky ho so | Chua gan vao QLCM, chi lam khi can hop dong nhieu ben. |
@@ -68,7 +68,8 @@ API khong gan vao anh hay trang VNPT. API duoc gan vao code QLCM tai:
 | Ban can lay | Vao dau | Muc tren trang/tai lieu | Dien vao dau |
 | --- | --- | --- | --- |
 | Tai khoan developer | `https://doitac-smartca.vnpt.vn/help/docs/tich-hop/ky-so/webapi/tao-tai-khoan-tich-hop/` | Buoc 1: dang nhap/dang ky SmartCA for Developers | Khong dien vao code; chi dung de tao he thong tich hop. |
-| OAuth `ClientId` / `ClientSecret` | Link `SmartCA` / PDF `TichHopKySoSmartCA.pdf` | Email co `*.apps.smartcaapi.com`, `MobileCode`, dung `/auth/token` va `/csc/...` | Chua dien vao code hien tai; chi dung neu them provider OAuth SmartCA rieng. |
+| OAuth `ClientId` / `ClientSecret` | Link `SmartCA` / PDF `TichHopKySoSmartCA.pdf` | Email co `*.apps.smartcaapi.com`, `MobileCode`, dung `/auth/token` va `/csc/...` | `.env` -> `SMARTCA_CREDENTIAL_MODE=OAuth`, `SMARTCA_SP_ID`/`SMARTCA_SP_PASSWORD` hoac `SMARTCA_OAUTH_CLIENT_ID`/`SMARTCA_OAUTH_CLIENT_SECRET`. |
+| OAuth user grant | PDF `TichHopKySoSmartCA.pdf` | Authorization code hoac password grant cua nguoi ky SmartCA | `.env` -> `SMARTCA_OAUTH_REFRESH_TOKEN` hoac `SMARTCA_OAUTH_USERNAME`/`SMARTCA_OAUTH_PASSWORD`. Khong co muc nay thi chua ky duoc. |
 | Direct `SP_ID` / `SP_PASSWORD` | Link `SmartCA Tich hop` / PDF `Tai_lieu_tich_hop_smartca_v4.1.pdf` | Credential SP cho `/sca/sp769`, trong tai lieu mau co dang `*.apps.signserviceapi.com` | `.env` -> `SMARTCA_SP_ID`/`SMARTCA_SP_PASSWORD`; Docker map sang `SmartCa__SpId`/`SmartCa__SpPassword`; code doc o `SmartCaOptions.cs`. |
 | Gateway sandbox | PDF `SmartCA Tich hop` | Base URL/API prefix sandbox cho `/sca/sp769` | `.env` -> `SMARTCA_BASE_URL=https://rmgateway.vnptit.vn`, `SMARTCA_API_PREFIX=/sca/sp769`. |
 | So thue bao SmartCA/CCCD/MST nguoi ky | App demo SmartCA/VNPT sandbox account | Nguoi dung kich hoat chung thu so tren app demo | `.env` -> `SMARTCA_DEFAULT_USER_ID`; bind voi user app bang `SMARTCA_SIGNER_USERNAME=admin` hoac JSON. |
@@ -83,10 +84,12 @@ Neu chua chac dien tay, chay:
 docker compose up --build -d web
 .\scripts\smoke-smartca-api.ps1
 .\scripts\test-smartca-vnpt-credential.ps1
+.\scripts\test-smartca-oauth-credential.ps1
 ```
 
 Script tren chi tao/cap nhat `.env` local. File `.env` bi gitignore, khong day secret len GitHub.
 Script `test-smartca-vnpt-credential.ps1` goi `v1/credentials/get_certificate` de kiem tra credential SP `/sca/sp769` va subscriber voi VNPT, nhung khong in password ra terminal. Neu `SMARTCA_SP_ID` co duoi `*.apps.smartcaapi.com`, script se canh bao day la credential OAuth/Bearer va VNPT co the tra `401 sp_id or sp_password invalid` tren luong SP truc tiep.
+Script `test-smartca-oauth-credential.ps1` kiem tra OAuth: neu chi co `ClientId`/`ClientSecret`/`MobileCode`, script se bao thieu `SMARTCA_OAUTH_REFRESH_TOKEN` hoac `SMARTCA_OAUTH_USERNAME/PASSWORD`; neu da co token/user password thi script goi `/auth/token` va `/csc/credentials/list`.
 
 ## Credential ban vua gui thuoc loai nao
 
@@ -98,14 +101,14 @@ ClientSecret: <khong ghi vao git>
 MobileCode: VNPTSmartCAPartner-...
 ```
 
-la dau hieu cua luong `SmartCA` OAuth/Bearer trong PDF `TichHopKySoSmartCA.pdf`, khong phai bo SP truc tiep ma QLCM hien dang goi tai `/sca/sp769`.
+la dau hieu cua luong `SmartCA` OAuth/Bearer trong PDF `TichHopKySoSmartCA.pdf`, khong phai bo SP truc tiep `/sca/sp769`.
 
 Voi credential nay co 2 duong:
 
 | Duong | Can them gi | Trang thai QLCM |
 | --- | --- | --- |
-| Tiep tuc luong da code `/sca/sp769` | VNPT cap bo SP direct: `sp_id`/`sp_password`, thuong co dang `*.apps.signserviceapi.com` trong tai lieu mau | Da code, chi thieu credential dung. |
-| Dung credential `*.apps.smartcaapi.com` hien co | Can OAuth redirect/auth code hoac username/password SmartCA theo PDF OAuth, sau do goi `/csc/credentials/list`, `/csc/signature/signhash` | Chua gan vao QLCM; phai them provider OAuth rieng. |
+| Tiep tuc luong `/sca/sp769` | VNPT cap bo SP direct: `sp_id`/`sp_password`, thuong co dang `*.apps.signserviceapi.com` trong tai lieu mau | Da code, can credential SP dung. |
+| Dung credential `*.apps.smartcaapi.com` hien co | Can OAuth redirect/auth code hoac username/password SmartCA theo PDF OAuth, sau do goi `/csc/credentials/list`, `/csc/signature/signhash` | Da gan vao QLCM. Voi thong tin hien co van thieu user grant/token nen chua ky live duoc. |
 
 ## Ban do folder/file trong project
 
@@ -134,9 +137,14 @@ Project goc: `d:/BenhVienQuanLy_Nhom3/QuanLyChuyenMon_Nhom3`
 
 | API tu tai lieu VNPT | Lay o trang nao | Da gan chua | File/method dang gan |
 | --- | --- | --- | --- |
-| `POST /sca/sp769/v1/signatures/sign` | SmartCA WebAPI PDF | Da gan | `SmartCaClient.StartHashSignatureAsync()` -> `SignatureService.StartSmartCaSignatureAsync()` -> `LamSangPage.StartSmartCaSign()` |
+| `POST /sca/sp769/v1/signatures/sign` | SmartCA SP direct PDF | Da gan | `SmartCaClient.StartHashSignatureAsync()` -> `SignatureService.StartSmartCaSignatureAsync()` -> `LamSangPage.StartSmartCaSign()` |
 | `POST /sca/sp769/v1/signatures/sign/{tranId}/status` | SmartCA WebAPI PDF | Da gan | `SmartCaClient.GetSignatureStatusAsync()` -> `SignatureService.RefreshSmartCaSignatureAsync()` -> `LamSangPage.RefreshSmartCaSign()` |
 | `POST /sca/sp769/v1/credentials/get_certificate` | SmartCA WebAPI PDF | Da gan | `SmartCaClient.GetCertificateAsync()` -> `SignatureService.GetRequiredSmartCaCertificateAsync()` |
+| `POST /auth/token` | SmartCA OAuth/Bearer PDF | Da gan | `SmartCaClient.GetOAuthAccessTokenAsync()`, dung refresh token hoac password grant. |
+| `POST /csc/credentials/list` | SmartCA OAuth/Bearer PDF | Da gan | `SmartCaClient.ResolveOAuthCredentialIdAsync()` khi chua set `SMARTCA_OAUTH_CREDENTIAL_ID`. |
+| `POST /csc/credentials/info` | SmartCA OAuth/Bearer PDF | Da gan | `SmartCaClient.GetOAuthCertificateAsync()` lay subject/serial/expiry. |
+| `POST /csc/signature/signhash` | SmartCA OAuth/Bearer PDF | Da gan | `SmartCaClient.StartOAuthHashSignatureAsync()` gui hash ho so. |
+| `POST /csc/credentials/gettraninfo` | SmartCA OAuth/Bearer PDF | Da gan | `SmartCaClient.GetOAuthSignatureStatusAsync()` poll trang thai. |
 | SmartCA callback/webhook | VNPT cau hinh khi co public URL | Da gan entrypoint | `POST /api/signatures/smartca/callback` trong `SmartCaSignatureEndpoints.cs`, goi `SignatureService.RefreshSmartCaSignatureByExternalReferenceAsync()` va poll VNPT truoc khi finalize. |
 | SmartCA v2 `sign`/`confirm` | PDF SmartCA Tich hop | Chua gan | Them method vao `ISmartCaClient`, payload vao `SmartCaModels.cs`, orchestration vao `SignatureService.cs`. |
 | eContract login | eContract PDF | Chua gan | Nen tao `Application/Signature/EContractClient.cs` va `EContractOptions.cs`. |
@@ -159,6 +167,24 @@ SMARTCA_DEFAULT_USER_ID=<so thue bao SmartCA sandbox>
 SMARTCA_DEFAULT_SERIAL_NUMBER=<neu VNPT yeu cau>
 SMARTCA_CALLBACK_URL=<de trong neu chua co public webhook>
 SMARTCA_CALLBACK_SECRET=<secret rieng de verify callback>
+```
+
+Neu dung credential OAuth `*.apps.smartcaapi.com` hien co:
+
+```env
+SMARTCA_ENABLED=true
+SMARTCA_CREDENTIAL_MODE=OAuth
+SMARTCA_BASE_URL=https://rmgateway.vnptit.vn
+SMARTCA_SP_ID=<client-id>
+SMARTCA_SP_PASSWORD=<secret>
+SMARTCA_MOBILE_CODE=<mobile-code>
+SMARTCA_SIGNER_USERNAME=admin
+SMARTCA_DEFAULT_USER_ID=<CCCD/uid nguoi ky SmartCA>
+SMARTCA_OAUTH_REFRESH_TOKEN=<token>
+# hoac neu VNPT cho phep password grant:
+SMARTCA_OAUTH_USERNAME=<Personal ID/uid nguoi ky>
+SMARTCA_OAUTH_PASSWORD=<mat khau SmartCA nguoi ky>
+SMARTCA_OAUTH_CREDENTIAL_ID=<optional, de trong de app goi /csc/credentials/list>
 ```
 
 Khong commit `.env` that. Chi commit `.env.example`.

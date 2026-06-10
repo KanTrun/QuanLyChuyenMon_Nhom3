@@ -20,6 +20,7 @@ public sealed record SmartCaReadinessApiResponse(
     bool Ready,
     string BaseUrl,
     string ApiPrefix,
+    string CredentialMode,
     IReadOnlyList<string> MissingFields)
 {
     public static SmartCaReadinessApiResponse From(SmartCaReadiness readiness)
@@ -28,8 +29,16 @@ public sealed record SmartCaReadinessApiResponse(
             readiness.Ready,
             readiness.BaseUrl,
             readiness.ApiPrefix,
+            readiness.CredentialMode,
             readiness.MissingFields);
 }
+
+public sealed record SmartCaOAuthAuthorizeApiResponse(
+    string AuthorizationEndpoint,
+    string Method,
+    string ContentType,
+    IReadOnlyDictionary<string, string> FormFields,
+    string Note);
 
 public sealed record SmartCaSignatureApiResponse(
     string Result,

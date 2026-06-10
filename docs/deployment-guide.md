@@ -44,10 +44,18 @@ The bootstrap migration reactivates this local admin account when an older Docke
 | `CHATBOT_BASE_URL` | `https://generativelanguage.googleapis.com` | Provider endpoint mapped into `Chatbot:BaseUrl` |
 | `CHATBOT_MAX_TOKENS` | `4096` | Bounded chatbot output budget for longer grounded answers |
 | `SMARTCA_ENABLED` | `false` | Enable VNPT SmartCA sandbox signing |
+| `SMARTCA_CREDENTIAL_MODE` | `Auto` | `Auto`, `DirectSP`, or `OAuth`; `Auto` treats `*.apps.smartcaapi.com` as OAuth |
 | `SMARTCA_BASE_URL` | `https://rmgateway.vnptit.vn` | VNPT SmartCA sandbox gateway |
 | `SMARTCA_API_PREFIX` | `/sca/sp769` | SmartCA integrated API prefix |
 | `SMARTCA_SP_ID` | empty | VNPT-issued direct SP account for `/sca/sp769`, never commit |
 | `SMARTCA_SP_PASSWORD` | empty | VNPT-issued direct SP password for `/sca/sp769`, never commit |
+| `SMARTCA_MOBILE_CODE` | empty | VNPT OAuth app mobile code, optional metadata |
+| `SMARTCA_OAUTH_CLIENT_ID` | empty | OAuth client id; optional when `SMARTCA_SP_ID` already stores `*.apps.smartcaapi.com` |
+| `SMARTCA_OAUTH_CLIENT_SECRET` | empty | OAuth client secret; optional when `SMARTCA_SP_PASSWORD` already stores the client secret |
+| `SMARTCA_OAUTH_REFRESH_TOKEN` | empty | OAuth refresh token from user consent; never commit |
+| `SMARTCA_OAUTH_USERNAME` | empty | SmartCA user uid for password grant when VNPT approves this grant type |
+| `SMARTCA_OAUTH_PASSWORD` | empty | SmartCA user password for password grant; never commit |
+| `SMARTCA_OAUTH_CREDENTIAL_ID` | empty | Optional credential id; when blank QLCM calls `/csc/credentials/list` |
 | `SMARTCA_DEFAULT_USER_ID` | empty | Sandbox subscriber CCCD/MST used for signing |
 | `SMARTCA_DEFAULT_SERIAL_NUMBER` | empty | Optional certificate serial when subscriber has multiple certificates |
 | `SMARTCA_SIGNER_USER_ID` | empty | App user id allowed to use `SMARTCA_DEFAULT_USER_ID` |
@@ -60,7 +68,7 @@ The bootstrap migration reactivates this local admin account when an older Docke
 ### VNPT SmartCA Sandbox
 Enable SmartCA by setting `SMARTCA_ENABLED=true`, direct `/sca/sp769` SP credentials in `SMARTCA_SP_ID` and `SMARTCA_SP_PASSWORD`, and a signer binding in local `.env`. For a single sandbox subscriber, set `SMARTCA_DEFAULT_USER_ID` plus either `SMARTCA_SIGNER_USER_ID` or `SMARTCA_SIGNER_USERNAME`. For multiple clinicians, use `SMARTCA_USER_BINDINGS_JSON` and map each app user to the VNPT subscriber id and optional certificate serial. The web container calls VNPT from server-side only; SP secrets and subscriber ids are never sent to the browser.
 
-VNPT also issues OAuth SmartCA app credentials such as `*.apps.smartcaapi.com` with a `MobileCode`. Those belong to the OAuth/Bearer API family (`/auth/token`, `/csc/...`) and are not accepted as `sp_id`/`sp_password` by the current direct `/sca/sp769` implementation. If that credential family must be used, add a separate OAuth provider flow instead of placing it in `SMARTCA_SP_ID`.
+VNPT also issues OAuth SmartCA app credentials such as `*.apps.smartcaapi.com` with a `MobileCode`. Those belong to the OAuth/Bearer API family (`/auth/token`, `/csc/...`). QLCM supports this family with `SMARTCA_CREDENTIAL_MODE=OAuth`, but client id/client secret alone are not enough: VNPT requires user consent through authorization code or an approved password grant before `/csc/signature/signhash` can be called.
 
 If you do not know where each value belongs, use the local configurator from the repo root:
 
@@ -69,10 +77,11 @@ If you do not know where each value belongs, use the local configurator from the
 docker compose up --build -d web
 .\scripts\smoke-smartca-api.ps1
 .\scripts\test-smartca-vnpt-credential.ps1
+.\scripts\test-smartca-oauth-credential.ps1
 ```
 
 The configurator copies/updates only local `.env` values from `.env.example`, enables SmartCA, prompts for VNPT SP credentials, binds the QLCM signer, and generates a callback secret when a callback URL is supplied. `.env` is ignored by git and must never be committed.
-The credential tester calls VNPT `v1/credentials/get_certificate` with local `.env` values and reports VNPT status/certificate count without printing `SMARTCA_SP_PASSWORD`. It also warns when `SMARTCA_SP_ID` looks like an OAuth `*.apps.smartcaapi.com` client because VNPT can return `401 sp_id or sp_password invalid` when OAuth app credentials are mixed into the direct SP API.
+The direct credential tester calls VNPT `v1/credentials/get_certificate` with local `.env` values and reports VNPT status/certificate count without printing `SMARTCA_SP_PASSWORD`. It also warns when `SMARTCA_SP_ID` looks like an OAuth `*.apps.smartcaapi.com` client because VNPT can return `401 sp_id or sp_password invalid` when OAuth app credentials are mixed into the direct SP API. The OAuth tester validates the OAuth token source and `/csc/credentials/list` without printing client secret, refresh token, username or password.
 
 The clinical signing UI sends a canonical SHA-256 hash to SmartCA, shows the returned transaction code, and lets the same app user poll status after confirming in the SmartCA app. QLCM writes the final immutable `med.signature_records` row only after SmartCA returns a signature for the expected document id and certificate evidence with subject, serial, and expiry. Pending state is stored in `med.signature_transactions`.
 
