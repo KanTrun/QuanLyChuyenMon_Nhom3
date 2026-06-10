@@ -24,7 +24,7 @@
 | `Invoke-WebRequest http://localhost:8080/` | Passed, HTTP 200 |
 | `Invoke-WebRequest http://localhost:8080/health` | Passed, Healthy |
 | `POST /api/signatures/smartca/callback` without secret | Passed, HTTP 403 |
-| `.\scripts\smoke-smartca-api.ps1` | Passed, health HTTP 200 and callback-missing-secret HTTP 403 |
+| `.\scripts\smoke-smartca-api.ps1` | Passed, health HTTP 200, anonymous SmartCA readiness HTTP 302, callback-missing-secret HTTP 403 |
 
 ## 2026-06-04
 ### Added

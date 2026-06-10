@@ -5,6 +5,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+Add-Type -AssemblyName System.Net.Http
 
 function Invoke-SmokeRequest {
     param(
@@ -15,7 +16,7 @@ function Invoke-SmokeRequest {
 
     try {
         $response = & $Request
-        $statusCode = [int]$response.StatusCode
+        $statusCode = if ($response -is [int]) { $response } else { [int]$response.StatusCode }
     }
     catch {
         if ($_.Exception.Response -eq $null) {
@@ -32,13 +33,50 @@ function Invoke-SmokeRequest {
     Write-Host "PASS $Name -> HTTP $statusCode"
 }
 
+function Invoke-NoRedirectStatus {
+    param(
+        [string]$Method,
+        [string]$Url,
+        [hashtable]$Headers = @{},
+        [string]$Body = ""
+    )
+
+    $handler = [System.Net.Http.HttpClientHandler]::new()
+    $handler.AllowAutoRedirect = $false
+    $client = [System.Net.Http.HttpClient]::new($handler)
+    try {
+        $request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::new($Method), $Url)
+        foreach ($header in $Headers.GetEnumerator()) {
+            [void]$request.Headers.TryAddWithoutValidation($header.Key, [string]$header.Value)
+        }
+        if ($Body.Length -gt 0) {
+            $request.Content = [System.Net.Http.StringContent]::new($Body, [System.Text.Encoding]::UTF8, "application/json")
+        }
+
+        $response = $client.SendAsync($request).GetAwaiter().GetResult()
+        return [int]$response.StatusCode
+    }
+    finally {
+        $client.Dispose()
+        $handler.Dispose()
+    }
+}
+
 $base = $BaseUrl.TrimEnd("/")
+$readinessUrl = "$base/api/signatures/smartca/readiness"
 $callbackUrl = "$base/api/signatures/smartca/callback"
 
 Invoke-SmokeRequest `
     -Name "Health endpoint" `
     -ExpectedStatusCodes @(200) `
     -Request { Invoke-WebRequest -UseBasicParsing "$base/health" }
+
+Invoke-SmokeRequest `
+    -Name "SmartCA readiness requires app authentication" `
+    -ExpectedStatusCodes @(302, 401, 403) `
+    -Request {
+        Invoke-NoRedirectStatus -Method "GET" -Url $readinessUrl
+    }
 
 Invoke-SmokeRequest `
     -Name "SmartCA callback without secret is forbidden" `
