@@ -10,6 +10,7 @@
 | SmartCA API smoke script | Added `scripts/smoke-smartca-api.ps1` for Docker health and callback-secret regression checks |
 | SmartCA env configurator | Added `scripts/configure-smartca-env.ps1` to guide local sandbox credential setup without committing secrets |
 | SmartCA chatbot grounding | Updated chatbot knowledge and demo replies so operators see SmartCA CA signing plus demo fallback instead of stale demo-only guidance |
+| VNPT API discovery guide | Clarified that VNPT endpoint paths are inside the downloadable SmartCA PDF, not directly visible on the web page screenshot |
 
 ### Changed
 | Item | Description |
@@ -17,6 +18,7 @@
 | SmartCA finalization flow | Shared UI polling and callback finalization through `SignatureService.RefreshSmartCaSignatureByExternalReferenceAsync` so both paths enforce document id and certificate evidence checks |
 | SmartCA rollout status | Roadmap now marks live SmartCA signing as credential pending while implementation and Docker API are available |
 | Signature wording alignment | Reworded revoke/config/help copy so SmartCA CA signing and internal demo fallback are not conflated |
+| SmartCA operator docs | Added a screenshot-oriented troubleshooting section mapping VNPT page links, PDF search keywords and QLCM files |
 
 ### Verification
 | Check | Result |

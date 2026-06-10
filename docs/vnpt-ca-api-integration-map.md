@@ -24,6 +24,43 @@ Noi ngan gon:
 - Can hop dong dien tu nhieu nguoi ky/OTP/email/SMS: dung eContract API.
 - QLCM hien da gan SmartCA WebAPI. eContract chua gan.
 
+## Neu nhin trang/anh VNPT ma khong thay API
+
+Khong phai ban nhin sai. Trang web VNPT khong hien truc tiep cac endpoint nhu
+`POST /sca/sp769/v1/signatures/sign` tren man hinh. Trang do chi la trang dieu
+huong/tai lieu. API nam trong file PDF tai ve.
+
+Lam dung nhu sau:
+
+1. O menu trai chon `I. Tai lieu tich hop ky so` -> `WEB API`.
+2. Mo `Tai lieu tich hop chi tiet`.
+3. Trong noi dung trang, bam link tai `SmartCA` de lay PDF ky so truc tiep.
+4. Neu thay link `SmartCA Tich hop`, day la PDF cho luong ky tich hop v2/password/OTP/TOTP, khong phai luong QLCM dang dung mac dinh.
+5. Mo PDF vua tai, bam `Ctrl + F` va tim cac tu khoa:
+   - `signatures/sign`
+   - `get_certificate`
+   - `status`
+   - `tran_code`
+6. Lay endpoint trong PDF roi doi chieu voi bang `API nao gan vao file nao` ben duoi.
+
+Noi that ngan:
+
+| Ban dang nhin thay gi trong anh/trang | Y nghia | Viec can lam |
+| --- | --- | --- |
+| Chi thay menu `WEB API`, khong thay endpoint | Binh thuong, endpoint nam trong PDF | Bam `Tai lieu tich hop chi tiet` -> tai `SmartCA`. |
+| Chi thay `Client_Id`/`Client_Secret` duoc noi la gui email | Binh thuong, day la credential SP | Dien vao `.env` bang `SMARTCA_SP_ID` va `SMARTCA_SP_PASSWORD`. |
+| Thay 2 file `SmartCA` va `SmartCA Tich hop` | Co 2 luong API khac nhau | QLCM dang dung `SmartCA`; `SmartCA Tich hop` chi can neu lam v2 OTP/TOTP. |
+| Thay tai lieu eContract | Day la hop dong dien tu, khac SmartCA ky ho so | Chua gan vao QLCM, chi lam khi can hop dong nhieu ben. |
+
+API khong gan vao anh hay trang VNPT. API duoc gan vao code QLCM tai:
+
+- Endpoint VNPT raw: `src/telemedicine-landing-page/Application/Signature/SmartCaClient.cs`
+- Payload/response: `src/telemedicine-landing-page/Application/Signature/SmartCaModels.cs`
+- Nghiep vu ky: `src/telemedicine-landing-page/Application/Signature/SignatureService.cs`
+- Nut UI ky: `src/telemedicine-landing-page/Components/Pages/Admin/LamSangPage.razor`
+- API Docker noi bo: `src/telemedicine-landing-page/Infrastructure/SmartCaSignatureEndpoints.cs`
+- Credential Docker/local: `.env`, `.env.example`, `docker-compose.yml`
+
 ## Lay credential/API o trang nao
 
 | Ban can lay | Vao dau | Muc tren trang/tai lieu | Dien vao dau |

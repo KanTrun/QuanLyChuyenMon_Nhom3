@@ -36,6 +36,7 @@ Hoan thien chu ky SmartCA sandbox de dung duoc qua Docker, khong chi qua UI Blaz
 - Added `scripts/configure-smartca-env.ps1` so operators can fill local `.env` SmartCA sandbox values without committing VNPT secrets.
 - Updated chatbot/signature guidance so operators see VNPT SmartCA CA signing as the primary path and demo signing only as the fallback while credential is pending.
 - Aligned revoke/config/PDR/architecture wording so SmartCA CA signing and internal demo fallback are clearly separated.
+- Clarified for operators that VNPT web screenshots do not show endpoint paths; SmartCA endpoints are in the downloadable PDF and map to existing QLCM files.
 
 ## Ranh gioi
 
