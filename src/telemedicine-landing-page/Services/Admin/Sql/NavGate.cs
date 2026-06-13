@@ -123,6 +123,11 @@ public sealed class NavGate
     public IReadOnlyList<string> GetRoutePermissionCodes(string route)
     {
         var normalizedRoute = ToPermissionRoute(NormalizeRoute(route));
+        if (IsProcedureUpdateRoute(normalizedRoute))
+        {
+            return new[] { "SCR_PROCEDURES:UPDATE", "PERM_PROCEDURES_update" };
+        }
+
         string[]? matchedPermissions = null;
         var matchLength = 0;
 
@@ -242,5 +247,15 @@ public sealed class NavGate
             return false;
 
         return route.Length == prefix.Length || route[prefix.Length] == '/';
+    }
+
+    private static bool IsProcedureUpdateRoute(string route)
+    {
+        var segments = route.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return segments.Length == 4 &&
+               string.Equals(segments[0], "admin", StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(segments[1], "quy-trinh", StringComparison.OrdinalIgnoreCase) &&
+               Guid.TryParse(segments[2], out _) &&
+               string.Equals(segments[3], "cap-nhat", StringComparison.OrdinalIgnoreCase);
     }
 }

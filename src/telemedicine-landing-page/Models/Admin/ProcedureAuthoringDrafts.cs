@@ -1,3 +1,5 @@
+using Sql = TelemedicineLandingPage.Models.Admin.Sql;
+
 namespace TelemedicineLandingPage.Models.Admin;
 
 public sealed class ProcedureSectionDraft
@@ -37,3 +39,33 @@ public sealed class ProcedureRevisionDraft
     public string Summary { get; set; } = string.Empty;
 }
 
+public sealed record ProcedureStoredAttachmentDraft(
+    string AttachmentType,
+    string FileName,
+    string FileUri,
+    string? MimeType,
+    long? FileSizeBytes,
+    string? ChecksumSha256);
+
+public sealed record ProcedureAuthoringCommand(
+    Guid VersionId,
+    Guid? ProcedureId,
+    Guid? SourceVersionId,
+    string Code,
+    string Name,
+    string ProcedureType,
+    Guid DepartmentId,
+    string? Description,
+    string? SummaryText,
+    DateTime IssueDate,
+    int IssueNumber,
+    Guid UserId,
+    IReadOnlyList<ProcedureSectionDraft> Sections,
+    IReadOnlyList<ProcedureRecipientDraft> Recipients,
+    IReadOnlyList<ProcedureRevisionDraft> Revisions,
+    IReadOnlyList<ProcedureFlowStepDraft> Steps,
+    IReadOnlyList<ProcedureStoredAttachmentDraft> Attachments);
+
+public sealed record ProcedureAuthoringResult(
+    Sql.ProfessionalProcedure Procedure,
+    Sql.ProcedureVersion Version);

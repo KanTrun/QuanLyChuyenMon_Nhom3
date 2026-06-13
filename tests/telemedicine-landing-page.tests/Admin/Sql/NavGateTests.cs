@@ -87,6 +87,54 @@ public sealed class NavGateTests
     }
 
     [Fact]
+    public void CanAccess_ProcedureUpdateRouteRequiresUpdatePermission()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var viewerId = Guid.NewGuid();
+        var editorId = Guid.NewGuid();
+        var roleId = Guid.NewGuid();
+        var permissionId = Guid.NewGuid();
+        var procedureId = Guid.NewGuid();
+
+        db.Users.AddRange(
+            new AppUser
+            {
+                UserId = viewerId,
+                Username = "procedure_viewer_only",
+                FullName = "Procedure viewer",
+                PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
+            },
+            new AppUser
+            {
+                UserId = editorId,
+                Username = "procedure_editor",
+                FullName = "Procedure editor",
+                PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
+            });
+        db.Roles.Add(new Role { RoleId = roleId, Code = "PROC_EDITOR_TEST", Name = "Procedure editor" });
+        db.UserRoles.Add(new UserRole { UserId = editorId, RoleId = roleId });
+        db.Permissions.Add(new MedPermission
+        {
+            PermissionId = permissionId,
+            PermissionCode = "SCR_PROCEDURES:UPDATE",
+            ScreenId = MedDataStoreSeed.ScreenProcId,
+            ActionCode = "update"
+        });
+        db.RolePermissions.Add(new RolePermission { RoleId = roleId, PermissionId = permissionId });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+        var gate = new NavGate(context);
+        var updateRoute = $"/qlcm/quy-trinh/{procedureId}/cap-nhat";
+
+        context.SetCurrentUser(viewerId);
+        Assert.False(gate.CanAccess(updateRoute));
+
+        context.SetCurrentUser(editorId);
+        Assert.True(gate.CanAccess(updateRoute));
+    }
+
+    [Fact]
     public void GetDisplayRoute_RewritesProfessionalAdminRouteForNonAdmin()
     {
         using var db = TestDbHelper.CreateSeededContext();

@@ -146,6 +146,7 @@ public static class QlcmServiceCollectionExtensions
         services.AddScoped<ISignatureService, SignatureService>();
         services.AddScoped<PermissionChangeRequestService>();
         services.AddScoped<ProcedureLifecycleService>();
+        services.AddScoped<ProcedureAuthoringService>();
         services.AddScoped<ProcedureDocumentSnapshotService>();
         services.AddScoped<ProcedureSignoffService>();
         services.AddScoped<IProcedureDocumentExportService, ProcedureDocumentExportService>();
