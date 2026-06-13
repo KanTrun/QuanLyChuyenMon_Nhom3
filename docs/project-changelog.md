@@ -20,7 +20,7 @@
 | Check | Result |
 |---|---|
 | Build/test | Release build clean; `226/226` tests passed |
-| Docker | Compose config valid; runtime refresh and browser smoke required after final commit |
+| Docker | Rebuilt latest web image; web healthy, `/health` and `/` returned 200, db-init exited 0, browser smoke passed for create `v01` and update `v02` |
 
 ## 2026-06-03
 ### Added
