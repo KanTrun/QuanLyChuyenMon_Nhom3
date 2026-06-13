@@ -1,5 +1,11 @@
 # Project Changelog
 
+## 2026-06-14
+### Changed
+| Item | Description |
+|---|---|
+| Hospital logo | Replaced the web-wide logo and favicon with `assets/logo_hos.jpg`, including login, registration, landing page, sidebars and printable clinical exports |
+
 ## 2026-06-13
 ### Added
 | Item | Description |
