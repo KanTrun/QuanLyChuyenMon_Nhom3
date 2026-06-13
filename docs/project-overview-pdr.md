@@ -135,7 +135,7 @@ Phạm vi gồm 6 chủ đề chính:
 |---|---|
 | AI tự sinh phác đồ | Cần hội đồng chuyên môn và kiểm định y khoa |
 | Tự động trừ kho thực tế | Phụ thuộc phân hệ kho/dược hiện hữu |
-| Ký số pháp lý production ngoài sandbox | SmartCA sandbox đã có đường dây kỹ thuật; production cần credential CA thật, hợp đồng dịch vụ và kiểm thử chứng thư |
+| Ký số qua nhà cung cấp bên ngoài | Không thuộc phạm vi; hệ thống chỉ dùng xác nhận nội bộ theo tài khoản và hash nội dung |
 | Tích hợp HIS/EMR cụ thể | Chưa có thông tin stack/API hiện tại |
 
 ## Acceptance Summary

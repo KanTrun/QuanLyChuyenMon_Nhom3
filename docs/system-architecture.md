@@ -1,21 +1,9 @@
 # System Architecture
 
-## VNPT SmartCA Sandbox Signature Architecture
-Ngay 2026-06-04, clinical signing supports VNPT SmartCA sandbox beside the existing internal demo signature.
+## Internal Procedure Signature Architecture
+QLCM uses internal confirmation only. Procedure signoffs bind writer, checker and approver accounts to the SHA-256 hash of the exact version content. Editing metadata, sections, recipients, revisions, flow steps or attachments changes the hash and makes earlier signoffs stale.
 
-| Area | Decision |
-|---|---|
-| Provider boundary | `ISignatureService` owns SmartCA start/poll/callback/finalize; Razor pages and API endpoints do not call VNPT directly |
-| External API | Server-side `SmartCaClient` calls `https://rmgateway.vnptit.vn/sca/sp769/v1/signatures/sign` and polls `v1/signatures/sign/{tranId}/status` |
-| Docker API surface | `SmartCaSignatureEndpoints` exposes `/api/signatures/smartca/readiness`, `/transactions/latest`, `/start`, `/transactions/{id}/refresh`, and `/callback` from the web container |
-| Signer binding | `SmartCaOptions` requires each app signer to bind to a VNPT subscriber id/optional serial before CA signing is enabled |
-| Callback security | SmartCA callback requires `SMARTCA_CALLBACK_SECRET` via `X-QLCM-SMARTCA-CALLBACK-SECRET`; callback only uses the reference then polls VNPT server-side |
-| Secret handling | Docker/env maps `SmartCa:*`; SP secrets, callback secret, subscriber id and serial never go to browser or source |
-| Signed payload | QLCM sends a canonical SHA-256 hash of the clinical application context, not patient text or files |
-| Pending state | `med.signature_transactions` stores SmartCA transaction code, document hash and status while user confirms in the mobile app |
-| Final evidence | `med.signature_records` remains immutable and is created only after app polling or verified callback polling returns the expected document id, and certificate subject/serial/expiry are present |
-| UI | Clinical signing modal separates VNPT SmartCA sandbox from internal demo signature and shows readiness, transaction code and polling state |
-| Export | Clinical dossier prints provider, legal validity and certificate subject/serial/expiry when SmartCA evidence exists |
+`ProcedureAuthoringService` creates immutable version sequences `v01`, `v02`, `v03`... A new draft receives copied document content, attachments, resource norms and screen mappings but never receives signoffs from its source version. Active source versions remain effective until the new version is published; publishing marks the previous active version `superseded`.
 
 ## System-Wide Remediation Architecture
 Ngày 2026-06-03, QLCM Pro được harden cho session, realtime, archive lifecycle, clinical export và Docker chatbot.
@@ -47,7 +35,7 @@ Ngày 2026-06-02, chatbot QLCM có grounding bắt buộc và privacy guard cụ
 | Safe actions | Quick action tiếp tục whitelist route, kiểm tra `NavGate.CanAccess()` và chỉ điều hướng/tạo draft nonce |
 
 ## Signing, Onboarding and Safe Chat Actions
-Ngày 2026-05-28, QLCM Pro có lớp ký demo nội bộ và account onboarding riêng, không pollute lookup dùng chung. Từ 2026-06-04, luồng VNPT SmartCA sandbox ở mục trên là đường ký CA chính khi đã có credential; ký demo chỉ còn là fallback QA/nội bộ.
+Ngày 2026-05-28, QLCM Pro có lớp xác nhận nội bộ và account onboarding riêng, không pollute lookup dùng chung. Không có OAuth, callback hoặc giao dịch chờ từ nhà cung cấp chữ ký bên ngoài.
 
 | Area | Decision |
 |---|---|
@@ -55,7 +43,7 @@ Ngày 2026-05-28, QLCM Pro có lớp ký demo nội bộ và account onboarding 
 | Re-registration policy | Public registration remains insert-only. Rejected email records stay in DB; admin resubmits by setting onboarding back to `submitted` |
 | Login states | `LoginAttemptStatus.Rejected` separates rejected onboarding from pending/inactive accounts |
 | Signature target | `med.signature_records` supports `patient_protocol_application` target only in v1 and enforces one signature per target |
-| Signature integrity | Legacy/internal demo hash uses SHA-256 over `target_type:target_id:signer_user_id:signed_at:provider_code`; demo records set `is_legally_valid = false`, while SmartCA records require provider evidence and certificate metadata |
+| Signature integrity | Internal records use SHA-256 over the signed target/version content plus signer metadata; procedure signoffs are valid only while their content hash matches the current version snapshot |
 | Signature workflow | `PatientProtocolApplicationWorkflowGuard` allows `applied -> signed` and `signed/applied -> revoked`; revoked has no outgoing transition |
 | Chat action security | Chat quick actions are whitelist-only navigation. Draft payloads are stored under `sessionStorage["draft:{nonce}"]`, URL carries `draft_nonce`, and the clinical page deletes the draft on read |
 

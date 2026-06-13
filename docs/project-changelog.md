@@ -1,63 +1,26 @@
 # Project Changelog
 
-## 2026-06-10
+## 2026-06-13
 ### Added
 | Item | Description |
 |---|---|
-| SmartCA Docker API surface | Added authenticated `/api/signatures/smartca/readiness`, latest transaction, start, and refresh endpoints for app/container consumers |
-| SmartCA callback endpoint | Added `POST /api/signatures/smartca/callback` guarded by `SMARTCA_CALLBACK_SECRET`; callback resolves VNPT transaction reference then polls SmartCA server-side before finalizing |
-| Callback configuration | Added `SMARTCA_CALLBACK_SECRET` mapping in Docker/env/app config and documented callback header usage |
-| SmartCA API smoke script | Added `scripts/smoke-smartca-api.ps1` for Docker health and callback-secret regression checks |
-| SmartCA env configurator | Added `scripts/configure-smartca-env.ps1` to guide local sandbox credential setup without committing secrets |
-| SmartCA credential tester | Added `scripts/test-smartca-vnpt-credential.ps1` to validate local `.env` SP credential/subscriber against VNPT without printing secrets |
-| SmartCA credential family diagnostics | Added warning for OAuth `*.apps.smartcaapi.com` client credentials when testing the direct `/sca/sp769` SP flow |
-| SmartCA OAuth/Bearer provider | Added OAuth mode for `*.apps.smartcaapi.com` credentials, including token, credential list/info, signhash and transaction polling client paths |
-| SmartCA OAuth smoke script | Added `scripts/test-smartca-oauth-credential.ps1` to validate token source and `/csc/credentials/list` without printing secrets |
-| SmartCA chatbot grounding | Updated chatbot knowledge and demo replies so operators see SmartCA CA signing plus demo fallback instead of stale demo-only guidance |
-| VNPT API discovery guide | Clarified that VNPT endpoint paths are inside the downloadable SmartCA PDF, not directly visible on the web page screenshot |
+| Professional procedure authoring | Added issue metadata, 11 Roman sections, distribution, revision tracking, semantic flowchart shapes, attachments and A4 print export |
+| Internal signoffs | Added writer, checker and approver confirmation bound to the current procedure content hash |
+| Immutable version updates | Added `Cập nhật` workflow that creates `v01`, `v02`, `v03`... while preserving all earlier versions and files |
+| KSNK imports | Added four source-scan drafts with authenticated PDF attachments and an OCR gate before publication |
 
 ### Changed
 | Item | Description |
 |---|---|
-| SmartCA finalization flow | Shared UI polling and callback finalization through `SignatureService.RefreshSmartCaSignatureByExternalReferenceAsync` so both paths enforce document id and certificate evidence checks |
-| SmartCA rollout status | Roadmap now marks live SmartCA signing as credential pending while implementation and Docker API are available |
-| Signature wording alignment | Reworded revoke/config/help copy so SmartCA CA signing and internal demo fallback are not conflated |
-| SmartCA operator docs | Added a screenshot-oriented troubleshooting section mapping VNPT page links, PDF search keywords and QLCM files |
-| SmartCA credential guidance | Documented the difference between OAuth/Bearer `SmartCA` credentials and direct SP `SmartCA Tich hop` credentials required by the current QLCM implementation |
-| SmartCA credential modes | Docker/env/readiness now supports `Auto`, `DirectSP` and `OAuth`; OAuth readiness requires a SmartCA user refresh token or approved password grant |
+| Procedure update UI | Replaced the metadata-only save modal with the full professional authoring form prefilled from the latest version |
+| Version inheritance | New versions inherit sections, recipients, revision history, flow steps, attachments, resource norms and screen mappings; signoffs are intentionally not inherited |
+| Internal-only signing | Removed external provider routes, configuration, scripts and documentation |
 
 ### Verification
 | Check | Result |
 |---|---|
-| `dotnet build .\telemedicine-landing-page.sln -c Release` | Passed, 0 warnings, 0 errors |
-| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 228/228 tests |
-| `docker compose config --quiet` | Passed |
-| `docker compose up --build -d web` | Passed, image `quanlychuyenmon_nhom3-web:latest` rebuilt and web container healthy |
-| `Invoke-WebRequest http://localhost:8080/` | Passed, HTTP 200 |
-| `Invoke-WebRequest http://localhost:8080/health` | Passed, Healthy |
-| `POST /api/signatures/smartca/callback` without secret | Passed, HTTP 403 |
-| `.\scripts\smoke-smartca-api.ps1` | Passed, health HTTP 200, anonymous SmartCA readiness HTTP 302, callback-missing-secret HTTP 403 |
-| `.\scripts\test-smartca-vnpt-credential.ps1` with OAuth app credential in `.env` | Expected diagnostic warning, then VNPT `401 sp_id or sp_password invalid` on direct `/sca/sp769` |
-| `.\scripts\test-smartca-oauth-credential.ps1` with current OAuth app credential only | Expected missing token diagnostic; no secret printed |
-| `dotnet test .\telemedicine-landing-page.sln --no-restore` | Passed, 229/229 tests |
-
-## 2026-06-04
-### Added
-| Item | Description |
-|---|---|
-| VNPT SmartCA sandbox signing | Added SmartCA SP sandbox client, signer binding config, Docker/env config, pending transaction storage, clinical modal start/poll flow and CA certificate evidence export |
-| SmartCA safety guards | Blocked cross-user finalization and require matching SmartCA document id plus certificate subject/serial/expiry before legal signature creation |
-
-### Changed
-| Item | Description |
-|---|---|
-| Clinical signature UX | Split legal SmartCA sandbox signing from internal demo signing, with provider readiness, transaction code and status polling |
-
-### Verification
-| Check | Result |
-|---|---|
-| `dotnet build .\telemedicine-landing-page.sln -c Release --no-restore` | Passed, 0 warnings, 0 errors |
-| `dotnet test .\telemedicine-landing-page.sln -c Release --no-build` | Passed, 226/226 tests |
+| Build/test | Release build clean; `226/226` tests passed |
+| Docker | Compose config valid; runtime refresh and browser smoke required after final commit |
 
 ## 2026-06-03
 ### Added

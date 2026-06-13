@@ -102,28 +102,14 @@ Có thể đổi cấu hình qua biến môi trường hoặc file `.env` cục 
 | `CHATBOT_BASE_URL` | `https://generativelanguage.googleapis.com` | Endpoint provider cho container web |
 | `CHATBOT_MAX_TOKENS` | `4096` | Giới hạn output chatbot để giảm trả lời bị cắt giữa chừng |
 
-### Chữ ký VNPT SmartCA sandbox
-Docker map `SMARTCA_ENABLED`, `SMARTCA_BASE_URL`, `SMARTCA_API_PREFIX`, `SMARTCA_SP_ID`, `SMARTCA_SP_PASSWORD`, `SMARTCA_DEFAULT_USER_ID`, `SMARTCA_DEFAULT_SERIAL_NUMBER`, `SMARTCA_SIGNER_USER_ID`, `SMARTCA_SIGNER_USERNAME`, `SMARTCA_USER_BINDINGS_JSON`, `SMARTCA_CALLBACK_URL`, `SMARTCA_CALLBACK_SECRET`, và `SMARTCA_REQUEST_TIMEOUT_SECONDS` vào `SmartCa:*`.
+### Quy trình y tế và xác nhận nội bộ
+QLCM chỉ dùng xác nhận nội bộ theo tài khoản, vai trò, thời điểm và hash SHA-256 của nội dung. Quy trình cần đủ chữ ký người viết, người kiểm tra và người phê duyệt trước khi ban hành.
 
-Bật `SMARTCA_ENABLED=true`, nhập credential SP sandbox do VNPT cấp, rồi bind thuê bao CA với đúng tài khoản app bằng `SMARTCA_SIGNER_USER_ID` hoặc `SMARTCA_SIGNER_USERNAME`. Nếu nhiều người ký, dùng `SMARTCA_USER_BINDINGS_JSON` dạng `[{"appUsername":"admin","subscriberId":"012345678901","serialNumber":"optional"}]`. QLCM chỉ gửi hash chuẩn hóa của hồ sơ sang SmartCA, chờ người ký xác nhận trên app SmartCA, kiểm tra đúng document id và chứng thư trước khi lưu chữ ký pháp lý. Khi chưa có credential/binding, Docker vẫn chạy và chữ ký demo nội bộ vẫn dùng cho QA.
+Trang tạo quy trình sinh bản đầu `v01`. Nút `Cập nhật` trong bảng quy trình mở lại toàn bộ biểu mẫu từ phiên bản mới nhất và tạo `v02`, `v03`... Phiên bản cũ không bị ghi đè: bản active tiếp tục có hiệu lực đến khi bản mới được ban hành, sau đó tự chuyển `superseded`; bản draft/rejected nguồn được lưu `archived` khi tạo bản kế tiếp.
 
-Docker web expose API SmartCA server-side: `GET /api/signatures/smartca/readiness`, `GET /api/signatures/smartca/transactions/latest`, `POST /api/signatures/smartca/start`, `POST /api/signatures/smartca/transactions/{signatureTransactionId}/refresh`, và callback `POST /api/signatures/smartca/callback`. Callback cần header `X-QLCM-SMARTCA-CALLBACK-SECRET` khớp `SMARTCA_CALLBACK_SECRET`; body chỉ cần một trong các field `transactionCode`, `tranCode`, `transactionId`, hoặc `externalReference`.
+Mỗi phiên bản lưu riêng các mục La Mã, nơi nhận, theo dõi sửa đổi, lưu đồ, tệp, định mức và ánh xạ màn hình. Chữ ký cũ không được sao chép sang phiên bản mới. Nút `In/PDF` xuất HTML A4 để mở, in hoặc lưu PDF trong trình duyệt.
 
-Lưu ý credential VNPT: nếu chạy API SP trực tiếp `/sca/sp769`, `SMARTCA_SP_ID`/`SMARTCA_SP_PASSWORD` phải là bộ SP direct của PDF `SmartCA Tích hợp` (`Tai_lieu_tich_hop_smartca_v4.1.pdf`). Nếu email VNPT gửi `ClientId` có đuôi `*.apps.smartcaapi.com` kèm `MobileCode`, đó là luồng OAuth/Bearer `SmartCA` (`/auth/token`, `/csc/...`) và phải chạy bằng mode OAuth.
-
-App cũng hỗ trợ luồng OAuth/Bearer cho credential `*.apps.smartcaapi.com`: đặt `SMARTCA_CREDENTIAL_MODE=OAuth`, giữ `SMARTCA_SP_ID`/`SMARTCA_SP_PASSWORD` làm client id/secret hoặc dùng `SMARTCA_OAUTH_CLIENT_ID`/`SMARTCA_OAUTH_CLIENT_SECRET`, rồi cung cấp thêm `SMARTCA_OAUTH_REFRESH_TOKEN` hoặc `SMARTCA_OAUTH_USERNAME`/`SMARTCA_OAUTH_PASSWORD`. Chỉ `ClientId`/`ClientSecret`/`MobileCode` chưa đủ để ký vì VNPT yêu cầu người dùng SmartCA cấp quyền trước khi gọi `/csc/signature/signhash`.
-
-Nếu chưa biết điền biến nào, chạy wizard local:
-
-```powershell
-.\scripts\configure-smartca-env.ps1
-docker compose up --build -d web
-.\scripts\smoke-smartca-api.ps1
-.\scripts\test-smartca-vnpt-credential.ps1
-.\scripts\test-smartca-oauth-credential.ps1
-```
-
-Script cấu hình chỉ ghi vào `.env` local đang được gitignore, không commit credential VNPT. Sau khi Docker chạy, kiểm nhanh API SmartCA bằng `.\scripts\smoke-smartca-api.ps1`; kiểm credential thật với VNPT bằng `.\scripts\test-smartca-vnpt-credential.ps1`.
+PDF nguồn được mount từ `procedure-source-pdfs/` ở chế độ chỉ đọc. Tệp tải lên được lưu bền vững trong `procedure-uploads/`; cả hai thư mục đều bị loại khỏi Git.
 
 Muốn tạo lại DB sạch:
 
