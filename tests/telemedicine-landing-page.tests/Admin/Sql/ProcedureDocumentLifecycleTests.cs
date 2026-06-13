@@ -1,0 +1,124 @@
+using TelemedicineLandingPage.Application.Workflow;
+using TelemedicineLandingPage.Data;
+using TelemedicineLandingPage.Models.Admin.Sql;
+using TelemedicineLandingPage.Services.Admin;
+using TelemedicineLandingPage.Services.Admin.Sql;
+
+namespace TelemedicineLandingPage.Tests.Admin.Sql;
+
+public sealed class ProcedureDocumentLifecycleTests : IDisposable
+{
+    private readonly MedDbContext _db = TestDbHelper.CreateSeededContext();
+
+    [Fact]
+    public void Submit_RequiresCurrentWriterSignoff()
+    {
+        var (versionId, lifecycle, signoffs) = CreateCompleteDocument();
+
+        var exception = Assert.Throws<MedDomainException>(() =>
+            lifecycle.Submit(versionId, MedDataStoreSeed.AdminUserId));
+        Assert.Equal(50027, exception.SqlErrorNumber);
+
+        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Quản trị viên");
+        lifecycle.Submit(versionId, MedDataStoreSeed.AdminUserId);
+
+        Assert.Equal("pending_approval", _db.ProcedureVersions.Single(item => item.ProcedureVersionId == versionId).StatusCode);
+    }
+
+    [Fact]
+    public void Publish_RequiresWriterCheckerAndApproverOnCurrentHash()
+    {
+        var (versionId, lifecycle, signoffs) = CreateCompleteDocument();
+        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Người soạn");
+        lifecycle.Submit(versionId, MedDataStoreSeed.AdminUserId);
+
+        var exception = Assert.Throws<MedDomainException>(() =>
+            lifecycle.Publish(versionId, MedDataStoreSeed.AdminUserId));
+        Assert.Equal(50028, exception.SqlErrorNumber);
+
+        signoffs.Sign(versionId, "checker", MedDataStoreSeed.AdminUserId, "admin", "Người kiểm tra");
+        signoffs.Sign(versionId, "approver", MedDataStoreSeed.AdminUserId, "admin", "Người phê duyệt");
+        lifecycle.Publish(versionId, MedDataStoreSeed.AdminUserId);
+
+        Assert.Equal("active", _db.ProcedureVersions.Single(item => item.ProcedureVersionId == versionId).StatusCode);
+    }
+
+    public void Dispose() => _db.Dispose();
+
+    private (Guid VersionId, ProcedureLifecycleService Lifecycle, ProcedureSignoffService Signoffs) CreateCompleteDocument()
+    {
+        var procedure = new ProfessionalProcedure
+        {
+            ProcedureCode = $"QT.LIFE.{Guid.NewGuid():N}"[..22],
+            Name = "Quy trình vòng đời đầy đủ",
+            ProcedureType = "technical",
+            OwnerDepartmentId = MedDataStoreSeed.DeptNoiId,
+            CreatedBy = MedDataStoreSeed.AdminUserId
+        };
+        var version = new ProcedureVersion
+        {
+            ProcedureId = procedure.ProcedureId,
+            VersionNo = 1,
+            VersionLabel = "v1.0",
+            Title = procedure.Name,
+            Summary = "{\"note\":\"test\"}",
+            IssueDate = new DateTime(2026, 6, 13),
+            IssueNumber = 1,
+            SourcePdfFileName = "source.pdf",
+            SourcePdfChecksumSha256 = "ABC123",
+            CreatedBy = MedDataStoreSeed.AdminUserId
+        };
+        _db.Procedures.Add(procedure);
+        _db.ProcedureVersions.Add(version);
+
+        var kinds = new[] { "purpose", "scope", "basis", "definitions", "responsibilities", "procedure", "flowchart", "records", "appendices" };
+        for (var index = 0; index < kinds.Length; index++)
+            _db.ProcedureDocumentSections.Add(new ProcedureDocumentSection
+            {
+                ProcedureVersionId = version.ProcedureVersionId,
+                SectionOrder = index + 1,
+                SectionNumber = (index + 1).ToString(),
+                Title = kinds[index],
+                SectionKind = kinds[index],
+                ContentText = "Nội dung đầy đủ"
+            });
+
+        _db.ProcedureDistributionRecipients.Add(new ProcedureDistributionRecipient
+        {
+            ProcedureVersionId = version.ProcedureVersionId,
+            DisplayOrder = 1,
+            RecipientName = "Khoa Nội"
+        });
+        _db.ProcedureRevisionEntries.Add(new ProcedureRevisionEntry
+        {
+            ProcedureVersionId = version.ProcedureVersionId,
+            DisplayOrder = 1,
+            Summary = "Ban hành lần đầu"
+        });
+        _db.ProcedureSteps.Add(new ProcedureStep
+        {
+            ProcedureVersionId = version.ProcedureVersionId,
+            StepNo = 1,
+            Name = "Thực hiện",
+            Description = "Thực hiện đúng nội dung",
+            ResponsibilityText = "Điều dưỡng",
+            FlowShapeCode = "process"
+        });
+        _db.ProcedureAttachments.Add(new ProcedureAttachment
+        {
+            ProcedureVersionId = version.ProcedureVersionId,
+            AttachmentType = "source_pdf",
+            FileName = "source.pdf",
+            FileUri = "test/source.pdf",
+            ChecksumSha256 = "ABC123"
+        });
+        _db.SaveChanges();
+
+        var store = new MedDbDataStore(_db);
+        var snapshots = new ProcedureDocumentSnapshotService(store);
+        var signoffs = new ProcedureSignoffService(store, snapshots);
+        var audit = new AuditTrailService(_db);
+        var lifecycle = new ProcedureLifecycleService(_db, audit, new ProcedureVersionWorkflowGuard(audit), snapshots);
+        return (version.ProcedureVersionId, lifecycle, signoffs);
+    }
+}

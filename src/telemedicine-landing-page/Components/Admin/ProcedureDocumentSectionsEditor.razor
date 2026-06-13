@@ -1,0 +1,30 @@
+@using TelemedicineLandingPage.Models.Admin
+
+<section class="admin-panel">
+    <header class="admin-panel-head">
+        <div>
+            <h2 class="admin-panel-title">Nội dung văn bản</h2>
+            <p class="admin-form-field-hint">Soạn đủ các mục La Mã theo thứ tự. Nội dung này được đóng dấu hash khi ký.</p>
+        </div>
+    </header>
+
+    <div class="procedure-section-editor">
+        @foreach (var item in Sections)
+        {
+            <div class="admin-form-field admin-form-field-full" @key="item.Number">
+                <label class="admin-form-field-label @(item.IsRequired ? "is-required" : string.Empty)">
+                    @(item.Number). @item.Title
+                </label>
+                <textarea class="admin-textarea"
+                          rows="@(item.Kind is "procedure" or "flowchart" ? 8 : 4)"
+                          @bind="item.Content"
+                          placeholder="@($"Nhập nội dung {item.Title.ToLowerInvariant()}...")"></textarea>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public required IReadOnlyList<ProcedureSectionDraft> Sections { get; set; }
+}

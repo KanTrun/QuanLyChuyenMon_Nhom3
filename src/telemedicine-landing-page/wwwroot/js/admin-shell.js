@@ -194,6 +194,33 @@
         return downloadFile(filename || 'bao-cao.csv', content, 'text/csv;charset=utf-8');
     }
 
+    async function downloadProcedureAttachment(attachmentId, filename) {
+        try {
+            var token = window.sessionStorage.getItem('qlcm_session');
+            if (!token || !attachmentId) return false;
+            var response = await fetch('/api/procedure-attachments/' + encodeURIComponent(attachmentId), {
+                headers: { 'X-QLCM-Session': token }
+            });
+            if (!response.ok) return false;
+            var blob = await response.blob();
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename || 'procedure-attachment';
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            window.setTimeout(function () {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 0);
+            return true;
+        } catch (err) {
+            console && console.warn && console.warn('qlcmShell downloadProcedureAttachment error:', err);
+            return false;
+        }
+    }
+
     function lockBodyScroll(lock) {
         var html = document.documentElement;
         if (lock) {
@@ -543,6 +570,7 @@
         lockBodyScroll: lockBodyScroll,
         downloadFile: downloadFile,
         downloadCsv: downloadCsv,
+        downloadProcedureAttachment: downloadProcedureAttachment,
         registerOutsideClick: registerOutsideClick,
         unregisterOutsideClick: unregisterOutsideClick,
         setSessionJson: setSessionJson,

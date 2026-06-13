@@ -19,7 +19,7 @@ public static class QlcmChatbotKnowledgeCatalog
         - Không chẩn đoán, kê đơn, tư vấn điều trị hoặc đưa ra quyết định lâm sàng.
         - Không yêu cầu, suy đoán hoặc lặp lại thông tin định danh bệnh nhân.
         - Không khẳng định có tích hợp HIS, EMR, kho, dược hoặc thiết bị bên ngoài; hiện chỉ có service boundary nội bộ.
-        - Chữ ký hồ sơ có hai luồng: VNPT SmartCA sandbox cho chữ ký CA khi đã cấu hình SP credential/binding, và chữ ký vẽ tay nội bộ chỉ dùng demo/QA khi chưa có CA.
+        - Chu ky ho so chi su dung xac nhan noi bo bang tai khoan dang nhap, thoi diem, anh chu ky ve tay neu co va audit/hash noi dung.
         - Hành động từ chat chỉ được điều hướng hoặc tạo bản nháp một lần trong sessionStorage; không tự ghi SQL.
         - Phân biệt API draft trong tài liệu kiến trúc với runtime Blazor đang triển khai.
         - Nếu thiếu dữ liệu hoặc người dùng không có route phù hợp, nói rõ giới hạn và hướng dẫn kiểm tra trong ứng dụng.
@@ -55,8 +55,8 @@ public static class QlcmChatbotKnowledgeCatalog
         new(
             "signatures",
             ["chu ky", "ky xac nhan", "thu hoi ky", "signature"],
-            "Áp dụng phác đồ có thể chuyển applied -> signed -> revoked. Luồng ưu tiên là VNPT SmartCA sandbox: hệ thống gửi hash hồ sơ, người ký xác nhận trên app SmartCA, rồi QLCM chỉ lưu chữ ký pháp lý khi nhận đúng document id và chứng thư. Khi chưa có credential CA, chữ ký vẽ tay nội bộ chỉ dùng cho demo/QA. Thu hồi bắt buộc nhập lý do.",
-            "Chữ ký hồ sơ có 2 lựa chọn: **VNPT SmartCA sandbox** để ký CA khi Docker/env đã có SP credential và binding người ký, hoặc **ký demo nội bộ** khi chưa có credential. Với SmartCA, mở `Lâm sàng` -> hồ sơ trạng thái `Đã áp dụng` -> `Ký` -> `Gửi yêu cầu SmartCA`, người ký xác nhận trên app SmartCA rồi bấm `Kiểm tra trạng thái`. Thu hồi chữ ký phải nhập lý do và hệ thống lưu audit."),
+            "Ap dung phac do co the chuyen applied -> signed -> revoked. Chu ky la xac nhan noi bo bang tai khoan dang nhap, thoi diem, metadata va hash noi dung; khong goi nha cung cap ben ngoai. Thu hoi bat buoc nhap ly do va luu audit.",
+            "Chu ky ho so: mo `Lam sang` -> ho so trang thai `Da ap dung` -> `Ky` -> ve chu ky noi bo -> xac nhan. He thong gan chu ky voi tai khoan, thoi diem va hash noi dung; thu hoi chu ky phai nhap ly do va luu audit."),
         new(
             "audit-reports-notifications",
             ["bao cao", "audit", "nhat ky", "thong bao", "signalr", "tieu thu"],
@@ -98,7 +98,14 @@ public static class QlcmChatbotKnowledgeCatalog
         {
             if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
             {
-                builder.Append(character == 'đ' ? 'd' : character);
+                if (character is '\u0111' or '\u0110')
+                {
+                    builder.Append('d');
+                }
+                else
+                {
+                    builder.Append(character);
+                }
             }
         }
 

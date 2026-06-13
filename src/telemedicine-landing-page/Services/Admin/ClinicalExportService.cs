@@ -231,9 +231,10 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
         html.AppendLine("<table class=\"signature-meta\"><tbody>");
         AppendRow(html, "Ng\u01b0\u1eddi k\u00fd", signature.SignerUsername);
         AppendRow(html, "Th\u1eddi \u0111i\u1ec3m k\u00fd", AdminDateTimeDisplay.DateTime(signature.SignedAt));
-        AppendRow(html, "H\u00ecnh th\u1ee9c x\u00e1c nh\u1eadn", signature.IsLegallyValid ? "Ch\u1eef k\u00fd s\u1ed1 CA" : "Ch\u1eef k\u00fd \u0111i\u1ec7n t\u1eed n\u1ed9i b\u1ed9");
+        AppendRow(html, "H\u00ecnh th\u1ee9c x\u00e1c nh\u1eadn", "X\u00e1c nh\u1eadn n\u1ed9i b\u1ed9");
         AppendRow(html, "Nh\u00e0 cung c\u1ea5p", ProviderName(signature.ProviderCode));
-        AppendRow(html, "Hi\u1ec7u l\u1ef1c ph\u00e1p l\u00fd", signature.IsLegallyValid ? "C\u00f3" : "Kh\u00f4ng");
+        AppendRow(html, "Hash x\u00e1c nh\u1eadn", signature.SignatureHash);
+        AppendRow(html, "Ph\u1ea1m vi hi\u1ec7u l\u1ef1c", "N\u1ed9i b\u1ed9 QLCM");
         if (!string.IsNullOrWhiteSpace(signature.CertificateSerial))
         {
             AppendRow(html, "Serial ch\u1ee9ng th\u01b0", signature.CertificateSerial);
@@ -437,8 +438,7 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
     private static string ProviderName(string? code)
         => code switch
         {
-            "demo" => "QLCM Pro - k\u00fd \u0111i\u1ec7n t\u1eed n\u1ed9i b\u1ed9",
-            "vnpt-smartca-sandbox" => "VNPT SmartCA sandbox",
+            "internal" or "demo" => "QLCM Pro - ky xac nhan noi bo",
             _ => Blank(code)
         };
     private static string DisplayPatient(ModelsSql.PatientRef patient) => patient.DisplayName ?? patient.PatientCode ?? patient.ExternalPatientId;

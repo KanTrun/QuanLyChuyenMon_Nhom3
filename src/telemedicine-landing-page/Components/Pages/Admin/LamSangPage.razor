@@ -1,4 +1,4 @@
-@page "/admin/lam-sang"
+﻿@page "/admin/lam-sang"
 @page "/qlcm/lam-sang"
 @layout AdminLayout
 @using Microsoft.AspNetCore.WebUtilities
@@ -16,27 +16,27 @@
 @inject NavigationManager Navigation
 @implements IDisposable
 
-<PageTitle>Lâm sàng | QLCM Pro</PageTitle>
+<PageTitle>LÃ¢m sÃ ng | QLCM Pro</PageTitle>
 
 <section class="admin-page">
     <header class="admin-page-header">
         <div>
-            <span class="admin-page-eyebrow">Lâm sàng</span>
-            <h1 class="admin-page-title">Quản lý lâm sàng</h1>
-            <p class="admin-page-subtitle">Quản lý bệnh nhân, lượt khám và áp dụng phác đồ trên dữ liệu SQL.</p>
+            <span class="admin-page-eyebrow">LÃ¢m sÃ ng</span>
+            <h1 class="admin-page-title">Quáº£n lÃ½ lÃ¢m sÃ ng</h1>
+            <p class="admin-page-subtitle">Quáº£n lÃ½ bá»‡nh nhÃ¢n, lÆ°á»£t khÃ¡m vÃ  Ã¡p dá»¥ng phÃ¡c Ä‘á»“ trÃªn dá»¯ liá»‡u SQL.</p>
         </div>
-        <button type="button" class="admin-btn admin-btn-primary" @onclick="OpenCreate">Tạo áp dụng phác đồ</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="OpenCreate">Táº¡o Ã¡p dá»¥ng phÃ¡c Ä‘á»“</button>
     </header>
 
     <div class="admin-filter-bar">
         <div class="admin-filter-field">
-            <label class="admin-filter-label">Tìm kiếm</label>
-            <input class="admin-input" placeholder="Bệnh nhân, mã lượt khám, chẩn đoán..." @bind="_search" @bind:after="Recompute" />
+            <label class="admin-filter-label">TÃ¬m kiáº¿m</label>
+            <input class="admin-input" placeholder="Bá»‡nh nhÃ¢n, mÃ£ lÆ°á»£t khÃ¡m, cháº©n Ä‘oÃ¡n..." @bind="_search" @bind:after="Recompute" />
         </div>
         <div class="admin-filter-field">
             <label class="admin-filter-label">Khoa</label>
             <select class="admin-select" @bind="_departmentFilter" @bind:after="Recompute">
-                <option value="">Tất cả</option>
+                <option value="">Táº¥t cáº£</option>
                 @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
                 {
                     <option value="@dept.DepartmentId">@dept.Name</option>
@@ -44,9 +44,9 @@
             </select>
         </div>
         <div class="admin-filter-field">
-            <label class="admin-filter-label">Trạng thái áp dụng</label>
+            <label class="admin-filter-label">Tráº¡ng thÃ¡i Ã¡p dá»¥ng</label>
             <select class="admin-select" @bind="_statusFilter" @bind:after="Recompute">
-                <option value="">Tất cả</option>
+                <option value="">Táº¥t cáº£</option>
                 @foreach (var status in Sql.MedLookups.ProtocolApplicationStatuses)
                 {
                     <option value="@status.Code">@status.Name</option>
@@ -54,11 +54,11 @@
             </select>
         </div>
         <div class="admin-filter-field">
-            <label class="admin-filter-label">Từ ngày</label>
+            <label class="admin-filter-label">Tá»« ngÃ y</label>
             <input class="admin-input" type="date" value="@_fromIso" @onchange="OnFromChanged" />
         </div>
         <div class="admin-filter-field">
-            <label class="admin-filter-label">Đến ngày</label>
+            <label class="admin-filter-label">Äáº¿n ngÃ y</label>
             <input class="admin-input" type="date" value="@_toIso" @onchange="OnToChanged" />
         </div>
     </div>
@@ -70,16 +70,16 @@
                     PageSize="_pageSize"
                     TotalItems="_total"
                     CurrentPageChanged="p => { _page = p; Paginate(); }"
-                    EmptyTitle="Không có dữ liệu lâm sàng"
-                    EmptyBody="Không có bản ghi phù hợp với bộ lọc hiện tại.">
+                    EmptyTitle="KhÃ´ng cÃ³ dá»¯ liá»‡u lÃ¢m sÃ ng"
+                    EmptyBody="KhÃ´ng cÃ³ báº£n ghi phÃ¹ há»£p vá»›i bá»™ lá»c hiá»‡n táº¡i.">
         <HeaderTemplate>
-            <th>Bệnh nhân</th>
-            <th>Lượt khám</th>
+            <th>Bá»‡nh nhÃ¢n</th>
+            <th>LÆ°á»£t khÃ¡m</th>
             <th>Khoa</th>
-            <th>Chẩn đoán</th>
-            <th>Phác đồ</th>
-            <th>Trạng thái</th>
-            <th>Thời điểm</th>
+            <th>Cháº©n Ä‘oÃ¡n</th>
+            <th>PhÃ¡c Ä‘á»“</th>
+            <th>Tráº¡ng thÃ¡i</th>
+            <th>Thá»i Ä‘iá»ƒm</th>
             <th></th>
         </HeaderTemplate>
         <RowTemplate Context="row">
@@ -88,9 +88,9 @@
                     <div class="admin-table-cell-strong">@PatientName(row.Patient)</div>
                     <div class="admin-table-cell-muted">@PatientCode(row.Patient)</div>
                 </td>
-                <td>@(row.Encounter?.ExternalEncounterId ?? "—")</td>
+                <td>@(row.Encounter?.ExternalEncounterId ?? "â€”")</td>
                 <td>@GetDeptName(row.Encounter?.DepartmentId)</td>
-                <td>@(row.Application.DiagnosisCode ?? "—")</td>
+                <td>@(row.Application.DiagnosisCode ?? "â€”")</td>
                 <td>@ProtocolVersionName(row.Application.ClinicalProtocolVersionId)</td>
                 <td>
                     <div class="admin-row-actions">
@@ -99,26 +99,22 @@
                         {
                             <AdminBadge Tone="tone-secondary">@SignatureBadgeLabel(signature)</AdminBadge>
                         }
-                        else if (PendingSmartCaFor(row.Application.PatientProtocolApplicationId) is { } transaction)
-                        {
-                            <AdminBadge Tone="@SmartCaStatusTone(transaction.TransactionStatus)">SmartCA @SmartCaStatusText(transaction.TransactionStatus)</AdminBadge>
-                        }
                     </div>
                 </td>
                 <td>@AdminDateTimeDisplay.DateTime(row.Application.AppliedAt)</td>
                 <td style="text-align:right;">
                     <div class="admin-row-actions">
                         <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ExportPatientDossier(row)">In/PDF</button>
-                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEdit(row)">Sửa</button>
-                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" disabled="@IsSignatureProtectedStatus(row.Application.ApplicationStatus)" @onclick='() => SetStatus(row, "skipped")'>Bỏ qua</button>
-                        <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" disabled="@IsSignatureProtectedStatus(row.Application.ApplicationStatus)" @onclick='() => SetStatus(row, "applied")'>Áp dụng</button>
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEdit(row)">Sá»­a</button>
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" disabled="@IsSignatureProtectedStatus(row.Application.ApplicationStatus)" @onclick='() => SetStatus(row, "skipped")'>Bá» qua</button>
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" disabled="@IsSignatureProtectedStatus(row.Application.ApplicationStatus)" @onclick='() => SetStatus(row, "applied")'>Ãp dá»¥ng</button>
                         @if (row.Application.ApplicationStatus == "applied" && CanCurrentUserSign())
                         {
-                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => OpenSign(row)">Ký</button>
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => OpenSign(row)">KÃ½</button>
                         }
                         @if (row.Application.ApplicationStatus == "signed" && CanCurrentUserRevoke())
                         {
-                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenRevoke(row)">Thu hồi</button>
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenRevoke(row)">Thu há»“i</button>
                         }
                     </div>
                 </td>
@@ -127,13 +123,13 @@
     </AdminDataTable>
 </section>
 
-<AdminModal IsOpen="_modalOpen" IsOpenChanged="v => _modalOpen = v" Title="@(_editingApplicationId.HasValue ? "Sửa áp dụng phác đồ" : "Tạo áp dụng phác đồ")">
+<AdminModal IsOpen="_modalOpen" IsOpenChanged="v => _modalOpen = v" Title="@(_editingApplicationId.HasValue ? "Sá»­a Ã¡p dá»¥ng phÃ¡c Ä‘á»“" : "Táº¡o Ã¡p dá»¥ng phÃ¡c Ä‘á»“")">
     <ChildContent>
         <div class="admin-form-grid">
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Bệnh nhân có sẵn</label>
+                <label class="admin-form-field-label">Bá»‡nh nhÃ¢n cÃ³ sáºµn</label>
                 <select class="admin-select" @bind="_patientId" @bind:after="SyncPatientFields">
-                    <option value="">Tạo bệnh nhân mới</option>
+                    <option value="">Táº¡o bá»‡nh nhÃ¢n má»›i</option>
                     @foreach (var patient in Store.PatientRefs.OrderBy(p => p.DisplayName ?? p.PatientCode))
                     {
                         <option value="@patient.PatientRefId">@PatientName(patient) - @PatientCode(patient)</option>
@@ -141,21 +137,21 @@
                 </select>
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Tên bệnh nhân</label>
+                <label class="admin-form-field-label">TÃªn bá»‡nh nhÃ¢n</label>
                 <input class="admin-input" @bind="_patientName" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Mã bệnh nhân</label>
+                <label class="admin-form-field-label">MÃ£ bá»‡nh nhÃ¢n</label>
                 <input class="admin-input" @bind="_patientCode" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Mã lượt khám</label>
+                <label class="admin-form-field-label">MÃ£ lÆ°á»£t khÃ¡m</label>
                 <input class="admin-input" @bind="_encounterCode" />
             </div>
             <div class="admin-form-field">
                 <label class="admin-form-field-label">Khoa</label>
                 <select class="admin-select" @bind="_encounterDepartmentId">
-                    <option value="">Không chọn</option>
+                    <option value="">KhÃ´ng chá»n</option>
                     @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
                     {
                         <option value="@dept.DepartmentId">@dept.Name</option>
@@ -163,9 +159,9 @@
                 </select>
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Phác đồ</label>
+                <label class="admin-form-field-label">PhÃ¡c Ä‘á»“</label>
                 <select class="admin-select" @bind="_protocolVersionId">
-                    <option value="">Chọn phác đồ</option>
+                    <option value="">Chá»n phÃ¡c Ä‘á»“</option>
                     @foreach (var version in Store.ClinicalProtocolVersions.OrderByDescending(v => v.CreatedAt))
                     {
                         <option value="@version.ClinicalProtocolVersionId">@ProtocolVersionName(version.ClinicalProtocolVersionId)</option>
@@ -173,11 +169,11 @@
                 </select>
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Chẩn đoán</label>
-                <input class="admin-input" @bind="_diagnosisCode" placeholder="ICD hoặc ghi chú chẩn đoán" />
+                <label class="admin-form-field-label">Cháº©n Ä‘oÃ¡n</label>
+                <input class="admin-input" @bind="_diagnosisCode" placeholder="ICD hoáº·c ghi chÃº cháº©n Ä‘oÃ¡n" />
             </div>
             <div class="admin-form-field">
-                <label class="admin-form-field-label">Trạng thái</label>
+                <label class="admin-form-field-label">Tráº¡ng thÃ¡i</label>
                 <select class="admin-select" @bind="_applicationStatus" disabled="@IsSignatureProtectedStatus(_applicationStatus)">
                     @if (IsSignatureProtectedStatus(_applicationStatus))
                     {
@@ -190,98 +186,63 @@
                 </select>
             </div>
             <div class="admin-form-field admin-form-field-full">
-                <label class="admin-form-field-label">Lý do bỏ qua / ghi chú</label>
+                <label class="admin-form-field-label">LÃ½ do bá» qua / ghi chÃº</label>
                 <input class="admin-input" @bind="_skippedReason" />
             </div>
         </div>
     </ChildContent>
     <FooterContent>
-        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _modalOpen = false">Hủy</button>
-        <button type="button" class="admin-btn admin-btn-primary" @onclick="SaveClinical">Lưu</button>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _modalOpen = false">Há»§y</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="SaveClinical">LÆ°u</button>
     </FooterContent>
 </AdminModal>
 
-<AdminModal IsOpen="_signModalOpen" IsOpenChanged="SetSignModalOpen" Title="Ký xác nhận hồ sơ">
+<AdminModal IsOpen="_signModalOpen" IsOpenChanged="SetSignModalOpen" Title="Ky xac nhan noi bo">
     <ChildContent>
         @if (_signingRow is not null)
         {
             <dl class="admin-detail-grid">
-                <dt>Người ký</dt>
+                <dt>Nguoi ky</dt>
                 <dd>@(UserContext.CurrentUser?.Username ?? "anonymous")</dd>
-                <dt>Hồ sơ</dt>
+                <dt>Ho so</dt>
                 <dd>@PatientName(_signingRow.Patient) - @ProtocolVersionName(_signingRow.Application.ClinicalProtocolVersionId)</dd>
-                <dt>Thời điểm</dt>
+                <dt>Thoi diem</dt>
                 <dd>@AdminDateTimeDisplay.DateTime(DateTime.UtcNow)</dd>
-                <dt>Nhà cung cấp</dt>
-                <dd>@(_smartCaReadiness?.DisplayStatus ?? "SmartCA sandbox đang kiểm tra")</dd>
+                <dt>Nha cung cap</dt>
+                <dd>Noi bo QLCM</dd>
             </dl>
-            <div class="signature-provider-grid">
-                <section class="signature-provider-panel signature-provider-panel-ca">
-                    <div class="signature-provider-heading">
-                        <span class="signature-provider-kicker">VNPT SmartCA</span>
-                        <strong>Sandbox CA</strong>
-                    </div>
-                    <p class="signature-provider-copy">Gửi hash hồ sơ đến CA, người ký xác nhận trên ứng dụng SmartCA, sau đó hệ thống lấy chữ ký và khóa trạng thái hồ sơ.</p>
-                    @if (_smartCaReadiness?.Ready == true)
-                    {
-                        <dl class="signature-transaction-grid">
-                            <dt>Thuê bao CA</dt>
-                            <dd>@(_smartCaReadiness.DefaultUserId ?? "Theo binding tài khoản")</dd>
-                            <dt>Gateway</dt>
-                            <dd>@_smartCaReadiness.BaseUrl@_smartCaReadiness.ApiPrefix</dd>
-                            <dt>Mode</dt>
-                            <dd>@_smartCaReadiness.CredentialMode</dd>
-                            <dt>Giao dịch</dt>
-                            <dd>@(_smartCaTransaction?.ExternalTransactionCode ?? "Chưa gửi")</dd>
-                            <dt>Trạng thái</dt>
-                            <dd>@SmartCaStatusText(_smartCaTransaction?.TransactionStatus)</dd>
-                        </dl>
-                        <div class="signature-provider-actions">
-                            <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="StartSmartCaSign">Gửi yêu cầu SmartCA</button>
-                            <button type="button" class="admin-btn admin-btn-ghost" disabled="@(_signatureBusy || _smartCaTransaction is null)" @onclick="RefreshSmartCaSign">Kiểm tra trạng thái</button>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="signature-config-warning">
-                            <strong>Chưa bật được SmartCA sandbox</strong>
-                            <span>Cấu hình Docker/env còn thiếu: @MissingSmartCaFields()</span>
-                        </div>
-                    }
-                </section>
-                <section class="signature-provider-panel">
-                    <div class="signature-provider-heading">
-                        <span class="signature-provider-kicker">Nội bộ</span>
-                        <strong>Ký demo không pháp lý</strong>
-                    </div>
-                    <p class="signature-provider-copy">Dùng khi chưa có credential CA. Chữ ký vẽ tay được lưu làm bằng chứng demo và không thay thế chữ ký số CA.</p>
-                    <div class="signature-pad-panel">
-                        <label class="admin-form-field-label is-required" for="@SignatureCanvasId">Chữ ký demo</label>
-                        <canvas id="@SignatureCanvasId" class="signature-pad-canvas" aria-label="Vùng vẽ chữ ký demo"></canvas>
-                    </div>
-                </section>
-            </div>
+            <section class="signature-provider-panel">
+                <div class="signature-provider-heading">
+                    <span class="signature-provider-kicker">Noi bo</span>
+                    <strong>Tai khoan, thoi diem va hash noi dung</strong>
+                </div>
+                <p class="signature-provider-copy">Chu ky noi bo gan voi tai khoan dang nhap, thoi diem ky, anh chu ky ve tay va metadata ho so tai luc ky.</p>
+                <div class="signature-pad-panel">
+                    <label class="admin-form-field-label is-required" for="@SignatureCanvasId">Chu ky noi bo</label>
+                    <canvas id="@SignatureCanvasId" class="signature-pad-canvas" aria-label="Vung ve chu ky noi bo"></canvas>
+                </div>
+            </section>
         }
     </ChildContent>
     <FooterContent>
-        <button type="button" class="admin-btn admin-btn-ghost" @onclick="ClearSignaturePad">Xóa chữ ký demo</button>
-        <button type="button" class="admin-btn admin-btn-ghost" @onclick="CloseSignModal">Hủy</button>
-        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">Ký demo</button>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="ClearSignaturePad">Xoa chu ky</button>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="CloseSignModal">Huy</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">Ky noi bo</button>
     </FooterContent>
 </AdminModal>
 
-<AdminModal IsOpen="_revokeModalOpen" IsOpenChanged="v => _revokeModalOpen = v" Title="Thu hồi ký xác nhận">
+<AdminModal IsOpen="_revokeModalOpen" IsOpenChanged="v => _revokeModalOpen = v" Title="Thu há»“i kÃ½ xÃ¡c nháº­n">
     <ChildContent>
         <div class="admin-form-grid">
             <div class="admin-form-field admin-form-field-full">
-                <label class="admin-form-field-label is-required">Lý do thu hồi</label>
+                <label class="admin-form-field-label is-required">LÃ½ do thu há»“i</label>
                 <input class="admin-input" @bind="_revokeReason" />
             </div>
         </div>
     </ChildContent>
     <FooterContent>
-        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _revokeModalOpen = false">Hủy</button>
-        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmRevoke">Thu hồi</button>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _revokeModalOpen = false">Há»§y</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmRevoke">Thu há»“i</button>
     </FooterContent>
 </AdminModal>
 
@@ -315,8 +276,6 @@
     private bool _signatureBusy;
     private bool _signaturePadReady;
     private ClinicalRow? _signingRow;
-    private SmartCaReadiness? _smartCaReadiness;
-    private Sql.SignatureTransactionRecord? _smartCaTransaction;
     private string _revokeReason = string.Empty;
 
     protected override void OnInitialized()
@@ -428,15 +387,15 @@
         _protocolVersionId = string.Empty;
         _diagnosisCode = payload.DiagnosisCode ?? string.Empty;
         _applicationStatus = OrdinaryStatusOrDefault(payload.ApplicationStatus, "draft");
-        _skippedReason = "Bản nháp từ thao tác chat";
+        _skippedReason = "Báº£n nhÃ¡p tá»« thao tÃ¡c chat";
         _modalOpen = true;
-        Toasts.Show("Đã nạp bản nháp", "Dữ liệu nháp chỉ đọc một lần từ sessionStorage.", ToastVariant.Success);
+        Toasts.Show("ÄÃ£ náº¡p báº£n nhÃ¡p", "Dá»¯ liá»‡u nhÃ¡p chá»‰ Ä‘á»c má»™t láº§n tá»« sessionStorage.", ToastVariant.Success);
         StateHasChanged();
     }
 
     private void OpenCreate()
     {
-        if (!Guard.CanDo("SCR_CLINICAL_ADMIN:CREATE", "tạo áp dụng phác đồ"))
+        if (!Guard.CanDo("SCR_CLINICAL_ADMIN:CREATE", "táº¡o Ã¡p dá»¥ng phÃ¡c Ä‘á»“"))
         {
             return;
         }
@@ -449,7 +408,7 @@
 
     private void OpenEdit(ClinicalRow row)
     {
-        if (!Guard.CanDo("SCR_CLINICAL_ADMIN:UPDATE", "sửa áp dụng phác đồ"))
+        if (!Guard.CanDo("SCR_CLINICAL_ADMIN:UPDATE", "sá»­a Ã¡p dá»¥ng phÃ¡c Ä‘á»“"))
         {
             return;
         }
@@ -470,7 +429,7 @@
     private void SaveClinical()
     {
         var permission = _editingApplicationId.HasValue ? "SCR_CLINICAL_ADMIN:UPDATE" : "SCR_CLINICAL_ADMIN:CREATE";
-        var action = _editingApplicationId.HasValue ? "sửa dữ liệu lâm sàng" : "tạo dữ liệu lâm sàng";
+        var action = _editingApplicationId.HasValue ? "sá»­a dá»¯ liá»‡u lÃ¢m sÃ ng" : "táº¡o dá»¯ liá»‡u lÃ¢m sÃ ng";
         if (!Guard.CanDo(permission, action))
         {
             return;
@@ -478,7 +437,7 @@
 
         if (!Guid.TryParse(_protocolVersionId, out var protocolVersionId))
         {
-            Toasts.Show("Thiếu phác đồ", "Vui lòng chọn phiên bản phác đồ.", ToastVariant.Warning);
+            Toasts.Show("Thiáº¿u phÃ¡c Ä‘á»“", "Vui lÃ²ng chá»n phiÃªn báº£n phÃ¡c Ä‘á»“.", ToastVariant.Warning);
             return;
         }
 
@@ -517,11 +476,11 @@
             }
 
             _modalOpen = false;
-            Toasts.Show("Đã lưu dữ liệu lâm sàng", PatientName(Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == patientId)), ToastVariant.Success);
+            Toasts.Show("ÄÃ£ lÆ°u dá»¯ liá»‡u lÃ¢m sÃ ng", PatientName(Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == patientId)), ToastVariant.Success);
         }
         catch (Exception ex)
         {
-            Toasts.Show("Không thể lưu dữ liệu lâm sàng", ex.Message, ToastVariant.Error);
+            Toasts.Show("KhÃ´ng thá»ƒ lÆ°u dá»¯ liá»‡u lÃ¢m sÃ ng", ex.Message, ToastVariant.Error);
         }
     }
 
@@ -587,15 +546,15 @@
             return;
         }
 
-        if (!Guard.CanDo("SCR_CLINICAL_ADMIN:EXECUTE", "cập nhật trạng thái áp dụng phác đồ"))
+        if (!Guard.CanDo("SCR_CLINICAL_ADMIN:EXECUTE", "cáº­p nháº­t tráº¡ng thÃ¡i Ã¡p dá»¥ng phÃ¡c Ä‘á»“"))
         {
             return;
         }
 
         var ok = await Confirm.ShowAsync(
-            "Cập nhật trạng thái",
-            $"Chuyển áp dụng phác đồ sang \"{Lookup(Sql.MedLookups.ProtocolApplicationStatuses, status)}\"?",
-            confirmText: "Cập nhật");
+            "Cáº­p nháº­t tráº¡ng thÃ¡i",
+            $"Chuyá»ƒn Ã¡p dá»¥ng phÃ¡c Ä‘á»“ sang \"{Lookup(Sql.MedLookups.ProtocolApplicationStatuses, status)}\"?",
+            confirmText: "Cáº­p nháº­t");
         if (!ok)
         {
             return;
@@ -606,22 +565,17 @@
             ApplicationStatus = status,
             AppliedAt = row.Application.AppliedAt ?? DateTime.UtcNow
         });
-        Toasts.Show("Đã cập nhật trạng thái", Lookup(Sql.MedLookups.ProtocolApplicationStatuses, status), ToastVariant.Success);
+        Toasts.Show("ÄÃ£ cáº­p nháº­t tráº¡ng thÃ¡i", Lookup(Sql.MedLookups.ProtocolApplicationStatuses, status), ToastVariant.Success);
     }
 
-    private async Task OpenSign(ClinicalRow row)
+    private void OpenSign(ClinicalRow row)
     {
-        if (!Guard.CanDo("SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION", "ký xác nhận hồ sơ"))
+        if (!Guard.CanDo("SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION", "ky xac nhan ho so"))
         {
             return;
         }
 
         _signingRow = row;
-        _smartCaReadiness = SignatureService.GetSmartCaReadiness();
-        _smartCaTransaction = await SignatureService.GetLatestSmartCaTransactionAsync(
-            SignatureTargetType,
-            row.Application.PatientProtocolApplicationId,
-            UserContext.CurrentUser?.UserId);
         _signaturePadReady = false;
         _signModalOpen = true;
     }
@@ -635,7 +589,6 @@
         }
 
         _signModalOpen = true;
-        _smartCaReadiness = SignatureService.GetSmartCaReadiness();
         _signaturePadReady = false;
     }
 
@@ -652,7 +605,7 @@
         catch (Exception ex)
         {
             _signaturePadReady = false;
-            Toasts.Show("Không thể mở bảng ký", ex.Message, ToastVariant.Warning);
+            Toasts.Show("KhÃ´ng thá»ƒ má»Ÿ báº£ng kÃ½", ex.Message, ToastVariant.Warning);
         }
     }
 
@@ -665,7 +618,7 @@
         catch (JSDisconnectedException) { }
         catch (Exception ex)
         {
-            Toasts.Show("Không thể xóa chữ ký", ex.Message, ToastVariant.Warning);
+            Toasts.Show("KhÃ´ng thá»ƒ xÃ³a chá»¯ kÃ½", ex.Message, ToastVariant.Warning);
         }
     }
 
@@ -690,7 +643,7 @@
             var signatureImageDataUrl = await JS.InvokeAsync<string?>("qlcmShell.getSignaturePadDataUrl", SignatureCanvasId);
             if (string.IsNullOrWhiteSpace(signatureImageDataUrl))
             {
-                Toasts.Show("Thiếu chữ ký", "Vui lòng ký trực tiếp trong bảng trước khi xác nhận.", ToastVariant.Warning);
+                Toasts.Show("Thiáº¿u chá»¯ kÃ½", "Vui lÃ²ng kÃ½ trá»±c tiáº¿p trong báº£ng trÆ°á»›c khi xÃ¡c nháº­n.", ToastVariant.Warning);
                 return;
             }
 
@@ -702,7 +655,7 @@
                 SignatureCaptured = true,
                 SignatureImageDataUrl = signatureImageDataUrl
             });
-            var result = await SignatureService.CreateDemoSignatureAsync(
+            var result = await SignatureService.CreateInternalSignatureAsync(
                 SignatureTargetType,
                 _signingRow.Application.PatientProtocolApplicationId,
                 UserContext.CurrentUser.UserId,
@@ -713,96 +666,21 @@
             {
                 await CloseSignModal();
                 Store.Refresh(publish: true);
-                Toasts.Show("Đã ký xác nhận hồ sơ", "Chữ ký demo đã được lưu.", ToastVariant.Success);
+                Toasts.Show("Da ky xac nhan ho so", "Chu ky noi bo da duoc luu.", ToastVariant.Success);
                 Recompute();
                 return;
             }
 
             var message = result.Result == SignatureResult.AlreadySigned
-                ? "Hồ sơ này đã có chữ ký."
+                ? "Há»“ sÆ¡ nÃ y Ä‘Ã£ cÃ³ chá»¯ kÃ½."
                 : result.Result == SignatureResult.Unauthorized
-                    ? "Tài khoản hiện tại không có quyền ký."
-                    : "Hồ sơ không ở trạng thái có thể ký.";
-            Toasts.Show("Không thể ký", message, ToastVariant.Warning);
+                    ? "TÃ i khoáº£n hiá»‡n táº¡i khÃ´ng cÃ³ quyá»n kÃ½."
+                    : "Há»“ sÆ¡ khÃ´ng á»Ÿ tráº¡ng thÃ¡i cÃ³ thá»ƒ kÃ½.";
+            Toasts.Show("KhÃ´ng thá»ƒ kÃ½", message, ToastVariant.Warning);
         }
         catch (Exception ex)
         {
-            Toasts.Show("Không thể ký", ex.Message, ToastVariant.Error);
-        }
-        finally
-        {
-            _signatureBusy = false;
-        }
-    }
-
-    private async Task StartSmartCaSign()
-    {
-        if (_signingRow is null || UserContext.CurrentUser is null) return;
-        _signatureBusy = true;
-        try
-        {
-            var metadata = JsonSerializer.Serialize(new
-            {
-                Page = "admin_lam_sang",
-                Mode = "smartca_sandbox",
-                ProtocolVersionId = _signingRow.Application.ClinicalProtocolVersionId,
-                PatientCode = PatientCode(_signingRow.Patient)
-            });
-            var result = await SignatureService.StartSmartCaSignatureAsync(
-                SignatureTargetType,
-                _signingRow.Application.PatientProtocolApplicationId,
-                UserContext.CurrentUser.UserId,
-                UserContext.CurrentUser.Username,
-                metadata);
-
-            _smartCaTransaction = result.Transaction ?? _smartCaTransaction;
-            Store.Refresh(publish: true);
-
-            if (result.Result == SignatureResult.PendingExternalConfirmation)
-            {
-                Toasts.Show("Đã gửi yêu cầu SmartCA", "Người ký mở ứng dụng SmartCA để xác nhận, sau đó bấm kiểm tra trạng thái.", ToastVariant.Success);
-                return;
-            }
-
-            Toasts.Show("Không thể gửi SmartCA", SmartCaResultMessage(result.Result), ToastVariant.Warning);
-        }
-        catch (Exception ex)
-        {
-            Toasts.Show("Không thể gửi SmartCA", ex.Message, ToastVariant.Error);
-        }
-        finally
-        {
-            _signatureBusy = false;
-        }
-    }
-
-    private async Task RefreshSmartCaSign()
-    {
-        if (_smartCaTransaction is null || UserContext.CurrentUser is null) return;
-        _signatureBusy = true;
-        try
-        {
-            var result = await SignatureService.RefreshSmartCaSignatureAsync(
-                _smartCaTransaction.SignatureTransactionId,
-                UserContext.CurrentUser.UserId,
-                UserContext.CurrentUser.Username);
-
-            _smartCaTransaction = result.Transaction ?? _smartCaTransaction;
-            Store.Refresh(publish: true);
-
-            if (result.Result == SignatureResult.Created)
-            {
-                await CloseSignModal();
-                Toasts.Show("SmartCA đã ký hồ sơ", "Chữ ký CA đã được lưu và hồ sơ chuyển sang trạng thái đã ký.", ToastVariant.Success);
-                Recompute();
-                return;
-            }
-
-            Toasts.Show("Trạng thái SmartCA", SmartCaResultMessage(result.Result), SmartCaToastVariant(result.Result));
-        }
-        catch (Exception ex)
-        {
-            Toasts.Show("Không thể kiểm tra SmartCA", ex.Message, ToastVariant.Error);
+            Toasts.Show("KhÃ´ng thá»ƒ kÃ½", ex.Message, ToastVariant.Error);
         }
         finally
         {
@@ -814,7 +692,7 @@
     {
         if (!Guard.HasPermission("SCR_CLINICAL:VIEW", "PERM_CLINICAL_view"))
         {
-            Toasts.Show("Không có quyền", "Tài khoản hiện tại không được phép xuất hồ sơ lâm sàng.", ToastVariant.Warning);
+            Toasts.Show("KhÃ´ng cÃ³ quyá»n", "TÃ i khoáº£n hiá»‡n táº¡i khÃ´ng Ä‘Æ°á»£c phÃ©p xuáº¥t há»“ sÆ¡ lÃ¢m sÃ ng.", ToastVariant.Warning);
             return;
         }
 
@@ -826,19 +704,19 @@
             var fileName = $"qlcm-ho-so-{patientCode}-{AdminDateTimeDisplay.ToDisplayTime(generatedAt):yyyyMMdd-HHmm}.html";
             var downloaded = await JS.InvokeAsync<bool>("qlcmShell.downloadFile", fileName, html, "text/html;charset=utf-8");
             Toasts.Show(
-                downloaded ? "Đã xuất hồ sơ" : "Không thể tải tệp",
-                downloaded ? "Mở file HTML để xem, in hoặc lưu PDF từ trình duyệt." : "Trình duyệt từ chối thao tác tải tệp.",
+                downloaded ? "ÄÃ£ xuáº¥t há»“ sÆ¡" : "KhÃ´ng thá»ƒ táº£i tá»‡p",
+                downloaded ? "Má»Ÿ file HTML Ä‘á»ƒ xem, in hoáº·c lÆ°u PDF tá»« trÃ¬nh duyá»‡t." : "TrÃ¬nh duyá»‡t tá»« chá»‘i thao tÃ¡c táº£i tá»‡p.",
                 downloaded ? ToastVariant.Success : ToastVariant.Warning);
         }
         catch (Exception ex)
         {
-            Toasts.Show("Không thể xuất hồ sơ", ex.Message, ToastVariant.Error);
+            Toasts.Show("KhÃ´ng thá»ƒ xuáº¥t há»“ sÆ¡", ex.Message, ToastVariant.Error);
         }
     }
 
     private void OpenRevoke(ClinicalRow row)
     {
-        if (!Guard.CanDo("SCR_ADMIN:MANAGE_SIGNATURES", "thu hồi chữ ký hồ sơ"))
+        if (!Guard.CanDo("SCR_ADMIN:MANAGE_SIGNATURES", "thu há»“i chá»¯ kÃ½ há»“ sÆ¡"))
         {
             return;
         }
@@ -853,14 +731,14 @@
         if (_signingRow is null || UserContext.CurrentUser is null) return;
         if (string.IsNullOrWhiteSpace(_revokeReason))
         {
-            Toasts.Show("Thiếu lý do", "Vui lòng nhập lý do thu hồi.", ToastVariant.Warning);
+            Toasts.Show("Thiáº¿u lÃ½ do", "Vui lÃ²ng nháº­p lÃ½ do thu há»“i.", ToastVariant.Warning);
             return;
         }
 
         _signatureBusy = true;
         try
         {
-            var result = await SignatureService.RevokeDemoSignatureAsync(
+            var result = await SignatureService.RevokeInternalSignatureAsync(
                 SignatureTargetType,
                 _signingRow.Application.PatientProtocolApplicationId,
                 UserContext.CurrentUser.UserId,
@@ -871,16 +749,16 @@
             {
                 _revokeModalOpen = false;
                 Store.Refresh(publish: true);
-                Toasts.Show("Đã thu hồi", "Hồ sơ đã chuyển sang trạng thái thu hồi.", ToastVariant.Success);
+                Toasts.Show("ÄÃ£ thu há»“i", "Há»“ sÆ¡ Ä‘Ã£ chuyá»ƒn sang tráº¡ng thÃ¡i thu há»“i.", ToastVariant.Success);
                 Recompute();
                 return;
             }
 
-            Toasts.Show("Không thể thu hồi", "Hồ sơ không ở trạng thái có thể thu hồi hoặc bạn thiếu quyền.", ToastVariant.Warning);
+            Toasts.Show("KhÃ´ng thá»ƒ thu há»“i", "Há»“ sÆ¡ khÃ´ng á»Ÿ tráº¡ng thÃ¡i cÃ³ thá»ƒ thu há»“i hoáº·c báº¡n thiáº¿u quyá»n.", ToastVariant.Warning);
         }
         catch (Exception ex)
         {
-            Toasts.Show("Không thể thu hồi", ex.Message, ToastVariant.Error);
+            Toasts.Show("KhÃ´ng thá»ƒ thu há»“i", ex.Message, ToastVariant.Error);
         }
         finally
         {
@@ -891,14 +769,14 @@
     private string ProtocolVersionName(Guid versionId)
     {
         var version = Store.ClinicalProtocolVersions.FirstOrDefault(v => v.ClinicalProtocolVersionId == versionId);
-        if (version is null) return "—";
+        if (version is null) return "â€”";
         var protocol = Store.ClinicalProtocols.FirstOrDefault(p => p.ClinicalProtocolId == version.ClinicalProtocolId);
         return $"{protocol?.ProtocolCode ?? "PD"} v{version.VersionNo} - {version.Title}";
     }
 
-    private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
-    private static string PatientName(Sql.PatientRef? patient) => patient?.DisplayName ?? patient?.PatientCode ?? "—";
-    private static string PatientCode(Sql.PatientRef? patient) => patient?.PatientCode ?? patient?.ExternalPatientId ?? "—";
+    private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "â€”" : "â€”";
+    private static string PatientName(Sql.PatientRef? patient) => patient?.DisplayName ?? patient?.PatientCode ?? "â€”";
+    private static string PatientCode(Sql.PatientRef? patient) => patient?.PatientCode ?? patient?.ExternalPatientId ?? "â€”";
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
     private static string SafeFileNamePart(string? value)
     {
@@ -907,7 +785,7 @@
             .ToArray());
         return string.IsNullOrWhiteSpace(safe) ? "benh-nhan" : safe;
     }
-    private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
+    private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "â€”";
     private static readonly IReadOnlyList<Sql.LookupEntry> OrdinaryApplicationStatuses =
         Sql.MedLookups.ProtocolApplicationStatuses.Where(status => !IsSignatureProtectedStatus(status.Code)).ToList();
     private string StatusForOrdinarySave()
@@ -943,63 +821,10 @@
         => Store.SignatureRecords.FirstOrDefault(s =>
             s.TargetType == SignatureTargetType &&
             s.TargetId == applicationId);
-    private Sql.SignatureTransactionRecord? PendingSmartCaFor(Guid applicationId)
-        => Store.SignatureTransactions
-            .Where(t => t.TargetType == SignatureTargetType &&
-                        t.TargetId == applicationId &&
-                        t.ProviderCode == SmartCaOptions.SandboxProviderCode &&
-                        t.TransactionStatus is "created" or "waiting")
-            .OrderByDescending(t => t.RequestedAt)
-            .FirstOrDefault();
     private static string SignatureBadgeLabel(Sql.SignatureRecord signature)
-        => signature.ProviderCode == SmartCaOptions.SandboxProviderCode
-            ? "SmartCA sandbox"
-            : "Chữ ký demo";
-    private static string SmartCaStatusText(string? status)
-        => status switch
-        {
-            "created" => "đã tạo",
-            "waiting" => "chờ xác nhận",
-            "signed" => "đã ký",
-            "rejected" => "bị từ chối",
-            "expired" => "hết hạn",
-            "failed" => "lỗi",
-            "unknown" => "chưa rõ",
-            _ => "chưa gửi"
-        };
-    private static string SmartCaStatusTone(string? status)
-        => status switch
-        {
-            "signed" => "tone-success",
-            "rejected" or "expired" or "failed" => "tone-danger",
-            "waiting" or "created" => "tone-warning",
-            _ => "tone-muted"
-        };
-    private string MissingSmartCaFields()
-        => _smartCaReadiness is null || _smartCaReadiness.MissingFields.Count == 0
-            ? "SMARTCA_ENABLED, SMARTCA_SP_ID, SMARTCA_SP_PASSWORD, SMARTCA_DEFAULT_USER_ID và một trong SMARTCA_SIGNER_USER_ID/SMARTCA_SIGNER_USERNAME/SMARTCA_USER_BINDINGS_JSON"
-            : string.Join(", ", _smartCaReadiness.MissingFields);
-    private static string SmartCaResultMessage(SignatureResult result)
-        => result switch
-        {
-            SignatureResult.PendingExternalConfirmation => "Giao dịch đang chờ người ký xác nhận trên SmartCA.",
-            SignatureResult.ProviderNotConfigured => "SmartCA sandbox chưa được cấu hình đủ trong Docker/env.",
-            SignatureResult.AlreadySigned => "Hồ sơ này đã có chữ ký.",
-            SignatureResult.Unauthorized => "Tài khoản hiện tại không có quyền ký.",
-            SignatureResult.InvalidState => "Hồ sơ không ở trạng thái có thể ký.",
-            SignatureResult.ExternalProviderRejected => "Người ký đã từ chối giao dịch SmartCA.",
-            SignatureResult.ExternalProviderExpired => "Giao dịch SmartCA đã hết hạn.",
-            SignatureResult.ExternalProviderFailed => "SmartCA chưa trả kết quả hợp lệ hoặc đang lỗi.",
-            _ => "Không thể xử lý giao dịch ký số."
-        };
-    private static ToastVariant SmartCaToastVariant(SignatureResult result)
-        => result switch
-        {
-            SignatureResult.PendingExternalConfirmation => ToastVariant.Info,
-            SignatureResult.ExternalProviderRejected or SignatureResult.ExternalProviderExpired => ToastVariant.Warning,
-            SignatureResult.ExternalProviderFailed => ToastVariant.Error,
-            _ => ToastVariant.Warning
-        };
+        => string.Equals(signature.ProviderCode, "internal", StringComparison.OrdinalIgnoreCase)
+            ? "Ky noi bo"
+            : "Chu ky noi bo";
     private bool CanCurrentUserSign()
         => IsCurrentAdmin()
            || UserContext.HasPermission("SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION")

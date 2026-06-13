@@ -50,6 +50,10 @@ public class MedDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<ProcedureStep> ProcedureSteps => Set<ProcedureStep>();
     public DbSet<ProcedureAttachment> ProcedureAttachments => Set<ProcedureAttachment>();
     public DbSet<ProcedureScreenMapping> ProcedureScreenMappings => Set<ProcedureScreenMapping>();
+    public DbSet<ProcedureDocumentSection> ProcedureDocumentSections => Set<ProcedureDocumentSection>();
+    public DbSet<ProcedureDistributionRecipient> ProcedureDistributionRecipients => Set<ProcedureDistributionRecipient>();
+    public DbSet<ProcedureRevisionEntry> ProcedureRevisionEntries => Set<ProcedureRevisionEntry>();
+    public DbSet<ProcedureSignoffRecord> ProcedureSignoffRecords => Set<ProcedureSignoffRecord>();
 
     // === Bệnh nhân & Lượt khám ===
     public DbSet<PatientRef> PatientRefs => Set<PatientRef>();
@@ -71,7 +75,6 @@ public class MedDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<ProtocolApplicabilityRule> ProtocolApplicabilityRules => Set<ProtocolApplicabilityRule>();
     public DbSet<PatientProtocolApplication> PatientProtocolApplications => Set<PatientProtocolApplication>();
     public DbSet<SignatureRecord> SignatureRecords => Set<SignatureRecord>();
-    public DbSet<SignatureTransactionRecord> SignatureTransactions => Set<SignatureTransactionRecord>();
 
     // === Thông báo ===
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();

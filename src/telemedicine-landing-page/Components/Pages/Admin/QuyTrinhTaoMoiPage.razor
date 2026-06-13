@@ -1,271 +1,136 @@
 @page "/admin/quy-trinh/tao"
 @page "/qlcm/quy-trinh/tao"
 @layout AdminLayout
+@using System.Text.Json
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@inject ProcedureLifecycleService Lifecycle
+@inject ProcedureSignoffService Signoffs
+@inject IProcedureAttachmentStorageService AttachmentStorage
 @inject NavigationManager Navigation
 
-<PageTitle>Tạo quy trình mới | QLCM Pro</PageTitle>
+<PageTitle>Tạo quy trình y tế | QLCM Pro</PageTitle>
 
-<section class="admin-page">
+<section class="admin-page procedure-authoring-page">
     <header class="admin-page-header">
         <div>
-            <span class="admin-page-eyebrow">Quy trình</span>
-            <h1 class="admin-page-title">Tạo quy trình kỹ thuật mới</h1>
-            <p class="admin-page-subtitle">Khai báo quy trình, phiên bản, bước thực hiện, định mức nguồn lực, ánh xạ màn hình và tệp đính kèm.</p>
+            <span class="admin-page-eyebrow">Quy trình kỹ thuật</span>
+            <h1 class="admin-page-title">Soạn quy trình y tế mới</h1>
+            <p class="admin-page-subtitle">Tạo hồ sơ có cấu trúc, lưu đồ, kiểm soát sửa đổi, tệp nguồn và chuỗi ký nội bộ.</p>
         </div>
         <a class="admin-btn admin-btn-ghost" href="/qlcm/quy-trinh">Hủy và quay lại</a>
     </header>
 
     <article class="admin-panel">
-        <h2 class="admin-panel-title">Thông tin chung</h2>
+        <header class="admin-panel-head">
+            <div>
+                <h2 class="admin-panel-title">Thông tin kiểm soát và ban hành</h2>
+                <p class="admin-form-field-hint">Thông tin này xuất hiện trên bìa và đầu trang bản in.</p>
+            </div>
+        </header>
         <div class="admin-form-grid">
-            <div class="admin-form-field">
-                <label class="admin-form-field-label is-required">Mã quy trình</label>
-                <input class="admin-input" @bind="_code" placeholder="VD: QT-XN-CTM-02" />
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label is-required">Tên quy trình</label>
-                <input class="admin-input" @bind="_name" placeholder="VD: Quy trình xét nghiệm công thức máu" />
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label is-required">Loại quy trình</label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Mã quy trình</span>
+                <input class="admin-input" @bind="_code" placeholder="VD: QT.KSNK.18" />
+            </label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Tên quy trình</span>
+                <input class="admin-input" @bind="_name" />
+            </label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Loại quy trình</span>
                 <select class="admin-select" @bind="_procedureType">
                     @foreach (var type in Sql.MedLookups.ProcedureTypes)
                     {
                         <option value="@type.Code">@type.Name</option>
                     }
                 </select>
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label">Khoa chủ quản</label>
+            </label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Khoa/phòng chủ trì</span>
                 <select class="admin-select" @bind="_departmentId">
-                    <option value="">Không chọn</option>
-                    @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Code))
+                    <option value="">Chọn khoa/phòng</option>
+                    @foreach (var department in Store.Departments.Where(item => item.Status == "active").OrderBy(item => item.Code))
                     {
-                        <option value="@dept.DepartmentId">@dept.Name</option>
+                        <option value="@department.DepartmentId">@department.Code - @department.Name</option>
                     }
                 </select>
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label is-required">Nhãn phiên bản</label>
+            </label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Phiên bản</span>
                 <input class="admin-input" @bind="_versionLabel" />
-            </div>
-            <div class="admin-form-field admin-form-field-full">
-                <label class="admin-form-field-label">Mô tả quy trình</label>
-                <textarea class="admin-textarea" rows="3" @bind="_description"></textarea>
-            </div>
-            <div class="admin-form-field admin-form-field-full">
-                <label class="admin-form-field-label">Tóm tắt phiên bản</label>
+            </label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Lần ban hành</span>
+                <input class="admin-input" type="number" min="1" @bind="_issueNumber" />
+            </label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Ngày dự kiến ban hành</span>
+                <input class="admin-input" type="date" @bind="_issueDate" />
+            </label>
+            <label class="admin-form-field admin-form-field-full">
+                <span class="admin-form-field-label">Mô tả quản trị</span>
+                <textarea class="admin-textarea" rows="2" @bind="_description"></textarea>
+            </label>
+            <label class="admin-form-field admin-form-field-full">
+                <span class="admin-form-field-label">Tóm tắt phiên bản / lý do xây dựng</span>
                 <textarea class="admin-textarea" rows="3" @bind="_summary"></textarea>
-            </div>
+            </label>
         </div>
     </article>
+
+    <ProcedureGovernanceEditor Recipients="_recipients" Revisions="_revisions" />
+    <ProcedureDocumentSectionsEditor Sections="_sections" />
+    <ProcedureFlowEditor Steps="_steps" Roles="ActiveRoles" />
 
     <article class="admin-panel">
         <header class="admin-panel-head">
-            <h2 class="admin-panel-title">Các bước thực hiện</h2>
-            <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddStep">Thêm bước</button>
+            <div>
+                <h2 class="admin-panel-title">Tệp gắn kèm</h2>
+                <p class="admin-form-field-hint">Tệp được lưu nội bộ, tính SHA-256 và chỉ tải xuống qua phiên đăng nhập.</p>
+            </div>
+            <InputFile OnChange="OnFilesSelected" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
         </header>
-        <div class="admin-step-rows">
-            @for (var i = 0; i < _steps.Count; i++)
-            {
-                var index = i;
-                var step = _steps[index];
-                <div class="admin-step-row">
-                    <div class="admin-step-row-bullet">B@(index + 1)</div>
-                    <input class="admin-input" placeholder="Mã bước" value="@step.Code" @oninput="e => UpdateStep(index, code: e.Value?.ToString())" />
-                    <input class="admin-input" placeholder="Tên bước" value="@step.Name" @oninput="e => UpdateStep(index, name: e.Value?.ToString())" />
-                    <select class="admin-select" value="@step.RoleId" @onchange="e => UpdateStep(index, roleId: e.Value?.ToString())">
-                        <option value="">Không chọn vai trò</option>
-                        @foreach (var role in Store.Roles.Where(r => r.Status == "active").OrderBy(r => r.Code))
-                        {
-                            <option value="@role.RoleId">@role.Name</option>
-                        }
-                    </select>
-                    <input class="admin-input" type="number" min="0" value="@step.Minutes" @oninput="e => UpdateStep(index, minutes: ParseInt(e.Value?.ToString()))" />
-                    <button type="button" class="admin-icon-btn is-danger" @onclick="() => RemoveStep(index)">×</button>
-                </div>
-                <textarea class="admin-textarea" rows="2" placeholder="Mô tả / điều kiện chuyển bước JSON hoặc ghi chú" value="@step.Description" @oninput="e => UpdateStep(index, description: e.Value?.ToString())"></textarea>
-            }
-        </div>
-    </article>
 
-    <article class="admin-panel">
-        <h2 class="admin-panel-title">Định mức nguồn lực theo phiên bản</h2>
         <div class="admin-table-wrapper">
             <table class="admin-table">
-                <thead><tr><th>Tài nguyên</th><th>Số lượng</th><th>Đơn vị</th><th>Bắt buộc</th><th>Ghi chú</th><th></th></tr></thead>
+                <thead><tr><th>Tệp</th><th>Loại</th><th>Dung lượng</th><th></th></tr></thead>
                 <tbody>
-                    @foreach (var norm in _resourceNorms)
+                    @if (_attachments.Count == 0)
                     {
-                        <tr>
-                            <td>@GetResourceName(norm.ResourceId)</td>
-                            <td>@norm.Quantity.ToString("0.##")</td>
-                            <td>@LookupUnit(norm.UnitCode)</td>
-                            <td>@(norm.IsRequired ? "Có" : "Không")</td>
-                            <td>@norm.Note</td>
-                            <td style="text-align:right;"><button type="button" class="admin-icon-btn is-danger" @onclick="() => _resourceNorms.Remove(norm)">×</button></td>
+                        <tr><td colspan="4">Chưa chọn tệp. Cần ít nhất một PDF nguồn trước khi gửi kiểm tra.</td></tr>
+                    }
+                    @foreach (var attachment in _attachments)
+                    {
+                        <tr @key="attachment">
+                            <td>@attachment.File.Name</td>
+                            <td>
+                                <select class="admin-select" @bind="attachment.AttachmentType">
+                                    @foreach (var type in Sql.MedLookups.AttachmentTypes)
+                                    {
+                                        <option value="@type.Code">@type.Name</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>@FormatBytes(attachment.File.Size)</td>
+                            <td><button type="button" class="admin-icon-btn is-danger" title="Xóa tệp" @onclick="() => _attachments.Remove(attachment)">×</button></td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-        <div class="admin-form-grid" style="margin-top:14px;">
-            <div class="admin-form-field">
-                <label class="admin-form-field-label">Tài nguyên</label>
-                <select class="admin-select" @bind="_normResourceId" @bind:after="SyncNormUnit">
-                    <option value="">Chọn tài nguyên</option>
-                    @foreach (var resource in Store.ResourceCatalog.Where(r => r.Status == "active").OrderBy(r => r.ResourceCode))
-                    {
-                        <option value="@resource.ResourceId">@resource.ResourceCode - @resource.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label">Số lượng</label>
-                <input class="admin-input" type="number" min="0" step="0.01" @bind="_normQuantity" />
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label">Đơn vị</label>
-                <select class="admin-select" @bind="_normUnit">
-                    @foreach (var unit in Sql.MedLookups.UnitCatalog)
-                    {
-                        <option value="@unit.Code">@unit.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label">Bắt buộc</label>
-                <label class="admin-check-row"><input type="checkbox" @bind="_normRequired" /> Có</label>
-            </div>
-            <div class="admin-form-field admin-form-field-full">
-                <label class="admin-form-field-label">Ghi chú</label>
-                <input class="admin-input" @bind="_normNote" />
-            </div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
-            <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddResourceNorm">Thêm định mức</button>
-        </div>
     </article>
 
-    <article class="admin-panel">
-        <h2 class="admin-panel-title">Ánh xạ màn hình</h2>
-        <div class="admin-table-wrapper">
-            <table class="admin-table">
-                <thead><tr><th>Màn hình</th><th>Tính năng</th><th>Hành động</th><th>Kiểm soát</th><th></th></tr></thead>
-                <tbody>
-                    @foreach (var mapping in _screenMappings)
-                    {
-                        <tr>
-                            <td>@GetScreenName(mapping.ScreenId)</td>
-                            <td>@GetFeatureName(mapping.FeatureId)</td>
-                            <td>@AdminBusinessDisplay.Action(mapping.ActionCode)</td>
-                            <td>@Lookup(Sql.MedLookups.EnforcementModes, mapping.EnforcementMode)</td>
-                            <td style="text-align:right;"><button type="button" class="admin-icon-btn is-danger" @onclick="() => _screenMappings.Remove(mapping)">×</button></td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-        <div class="admin-form-grid" style="margin-top:14px;">
-            <div class="admin-form-field">
-                <label class="admin-form-field-label">Màn hình</label>
-                <select class="admin-select" @bind="_mappingScreenId">
-                    <option value="">Chọn màn hình</option>
-                    @foreach (var screen in Store.Screens.Where(s => s.Status == "active").OrderBy(s => s.ScreenCode))
-                    {
-                        <option value="@screen.ScreenId">@screen.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label">Tính năng</label>
-                <select class="admin-select" @bind="_mappingFeatureId">
-                    <option value="">Không chọn</option>
-                    @foreach (var feature in Store.Features.Where(f => f.Status == "active").OrderBy(f => f.FeatureCode))
-                    {
-                        <option value="@feature.FeatureId">@feature.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label">Hành động</label>
-                <select class="admin-select" @bind="_mappingAction">
-                    <option value="">Không chọn</option>
-                    @foreach (var action in Sql.MedLookups.ActionCodes)
-                    {
-                        <option value="@action.Code">@action.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label">Kiểm soát</label>
-                <select class="admin-select" @bind="_mappingEnforcement">
-                    @foreach (var mode in Sql.MedLookups.EnforcementModes)
-                    {
-                        <option value="@mode.Code">@mode.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="admin-form-field admin-form-field-full">
-                <label class="admin-form-field-label">Ghi chú kiểm soát</label>
-                <div class="admin-form-field-hint">Hệ thống tự lưu quy tắc theo màn hình, tác vụ và chế độ kiểm soát đã chọn. Chi tiết kỹ thuật không nhập ở đây.</div>
-            </div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
-            <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddScreenMapping">Thêm ánh xạ</button>
-        </div>
-    </article>
+    <aside class="admin-callout">
+        <strong>Chuỗi xác nhận nội bộ:</strong> người soạn ký trên hash hiện tại khi gửi; người kiểm tra ký ở hàng chờ duyệt; người phê duyệt ký khi ban hành. Mọi chỉnh sửa nội dung làm chữ ký cũ hết hiệu lực.
+    </aside>
 
-    <article class="admin-panel">
-        <h2 class="admin-panel-title">Tệp đính kèm</h2>
-        <div class="admin-table-wrapper">
-            <table class="admin-table">
-                <thead><tr><th>Tên file</th><th>Loại</th><th>URI</th><th></th></tr></thead>
-                <tbody>
-                    @foreach (var file in _attachments)
-                    {
-                        <tr>
-                            <td>@file.FileName</td>
-                            <td>@Lookup(Sql.MedLookups.AttachmentTypes, file.AttachmentType)</td>
-                            <td>@file.FileUri</td>
-                            <td style="text-align:right;"><button type="button" class="admin-icon-btn is-danger" @onclick="() => _attachments.Remove(file)">×</button></td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-        <div class="admin-form-grid" style="margin-top:14px;">
-            <div class="admin-form-field">
-                <label class="admin-form-field-label">Tên file</label>
-                <input class="admin-input" @bind="_attachmentName" />
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label">URI</label>
-                <input class="admin-input" @bind="_attachmentUri" placeholder="/files/sop.pdf" />
-            </div>
-            <div class="admin-form-field">
-                <label class="admin-form-field-label">Loại</label>
-                <select class="admin-select" @bind="_attachmentType">
-                    @foreach (var type in Sql.MedLookups.AttachmentTypes)
-                    {
-                        <option value="@type.Code">@type.Name</option>
-                    }
-                </select>
-            </div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
-            <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddAttachment">Thêm tệp</button>
-        </div>
-    </article>
-
-    <div style="display:flex;justify-content:flex-end;gap:8px;">
-        <button type="button" class="admin-btn admin-btn-ghost" @onclick="SaveDraft">Lưu bản nháp</button>
-        <button type="button" class="admin-btn admin-btn-primary" @onclick="SavePendingApproval">Lưu và gửi phê duyệt</button>
+    <div class="procedure-authoring-actions">
+        <button type="button" class="admin-btn admin-btn-ghost" disabled="@_isSaving" @onclick="SaveDraftAsync">Lưu bản nháp</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_isSaving" @onclick="SignAndSubmitAsync">Ký người soạn và gửi kiểm tra</button>
     </div>
 </section>
 
@@ -275,235 +140,224 @@
     private string _procedureType = "technical";
     private string _departmentId = string.Empty;
     private string _versionLabel = "v1.0";
+    private int _issueNumber = 1;
+    private DateTime? _issueDate = DateTime.Today;
     private string _description = string.Empty;
     private string _summary = string.Empty;
+    private bool _isSaving;
 
-    private readonly List<StepDraft> _steps = new()
+    private readonly List<ProcedureSectionDraft> _sections = CreateSections();
+    private readonly List<ProcedureFlowStepDraft> _steps =
+    [
+        new() { Code = "BUOC-01", Name = "Bắt đầu", ShapeCode = "terminator", DetailSectionNumber = "VIII" },
+        new() { Code = "BUOC-02", Name = "Thực hiện", ShapeCode = "process", DetailSectionNumber = "VIII" },
+        new() { Code = "BUOC-03", Name = "Kết thúc và lưu hồ sơ", ShapeCode = "terminator", DetailSectionNumber = "X" }
+    ];
+    private readonly List<ProcedureRecipientDraft> _recipients = [new()];
+    private readonly List<ProcedureRevisionDraft> _revisions = [new() { Summary = "Ban hành lần đầu" }];
+    private readonly List<PendingAttachment> _attachments = [];
+
+    private IReadOnlyList<Sql.Role> ActiveRoles => Store.Roles.Where(item => item.Status == "active").OrderBy(item => item.Code).ToList();
+
+    private void OnFilesSelected(InputFileChangeEventArgs args)
     {
-        new("BUOC-01", "Chuẩn bị người bệnh", string.Empty, 5, "Kiểm tra hồ sơ và điều kiện thực hiện"),
-        new("BUOC-02", "Thực hiện kỹ thuật", string.Empty, 15, "Thực hiện theo SOP")
-    };
-
-    private readonly List<ResourceNormDraft> _resourceNorms = new();
-    private string _normResourceId = string.Empty;
-    private decimal _normQuantity = 1;
-    private string _normUnit = "piece";
-    private bool _normRequired = true;
-    private string _normNote = string.Empty;
-
-    private readonly List<ScreenMappingDraft> _screenMappings = new();
-    private string _mappingScreenId = string.Empty;
-    private string _mappingFeatureId = string.Empty;
-    private string _mappingAction = "execute";
-    private string _mappingEnforcement = "warning";
-    private string _mappingRuleJson = string.Empty;
-
-    private readonly List<AttachmentDraft> _attachments = new();
-    private string _attachmentName = string.Empty;
-    private string _attachmentUri = string.Empty;
-    private string _attachmentType = "sop";
-
-    private void AddStep()
-        => _steps.Add(new StepDraft($"BUOC-{_steps.Count + 1:00}", string.Empty, string.Empty, 5, string.Empty));
-
-    private void RemoveStep(int index)
-    {
-        if (index >= 0 && index < _steps.Count) _steps.RemoveAt(index);
+        foreach (var file in args.GetMultipleFiles(10))
+        {
+            var isFirstPdf = !_attachments.Any(item => item.AttachmentType == "source_pdf") &&
+                             file.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+            _attachments.Add(new PendingAttachment(file, isFirstPdf ? "source_pdf" : "other"));
+        }
     }
 
-    private void UpdateStep(int index, string? code = null, string? name = null, string? roleId = null, int? minutes = null, string? description = null)
+    private Task SaveDraftAsync() => SaveAsync(submit: false);
+    private Task SignAndSubmitAsync() => SaveAsync(submit: true);
+
+    private async Task SaveAsync(bool submit)
     {
-        if (index < 0 || index >= _steps.Count) return;
-        var step = _steps[index];
-        _steps[index] = step with
+        if (_isSaving || !Guard.CanDo("SCR_PROCEDURES:CREATE", "tạo quy trình")) return;
+        var validationMessage = Validate(submit);
+        if (validationMessage is not null)
         {
-            Code = code ?? step.Code,
-            Name = name ?? step.Name,
-            RoleId = roleId ?? step.RoleId,
-            Minutes = minutes ?? step.Minutes,
-            Description = description ?? step.Description
-        };
-    }
-
-    private void AddResourceNorm()
-    {
-        if (!Guid.TryParse(_normResourceId, out var resourceId) || _normQuantity < 0)
-        {
-            Toasts.Show("Định mức chưa hợp lệ", "Chọn tài nguyên và nhập số lượng không âm.", ToastVariant.Warning);
-            return;
-        }
-        _resourceNorms.Add(new ResourceNormDraft(resourceId, _normQuantity, _normUnit, _normRequired, _normNote));
-        _normResourceId = string.Empty;
-        _normQuantity = 1;
-        _normUnit = "piece";
-        _normRequired = true;
-        _normNote = string.Empty;
-    }
-
-    private void AddScreenMapping()
-    {
-        if (!Guid.TryParse(_mappingScreenId, out var screenId))
-        {
-            Toasts.Show("Thiếu màn hình", "Vui lòng chọn màn hình cần ánh xạ.", ToastVariant.Warning);
-            return;
-        }
-        _screenMappings.Add(new ScreenMappingDraft(
-            screenId,
-            ParseGuid(_mappingFeatureId),
-            string.IsNullOrWhiteSpace(_mappingAction) ? null : _mappingAction,
-            _mappingEnforcement,
-            null));
-        _mappingScreenId = string.Empty;
-        _mappingFeatureId = string.Empty;
-        _mappingAction = "execute";
-        _mappingEnforcement = "warning";
-        _mappingRuleJson = string.Empty;
-    }
-
-    private void AddAttachment()
-    {
-        if (string.IsNullOrWhiteSpace(_attachmentName) || string.IsNullOrWhiteSpace(_attachmentUri))
-        {
-            Toasts.Show("Thiếu tệp đính kèm", "Nhập tên file và URI.", ToastVariant.Warning);
-            return;
-        }
-        _attachments.Add(new AttachmentDraft(_attachmentName.Trim(), _attachmentUri.Trim(), _attachmentType));
-        _attachmentName = string.Empty;
-        _attachmentUri = string.Empty;
-        _attachmentType = "sop";
-    }
-
-    private void SaveDraft() => SaveProcedure("draft");
-    private void SavePendingApproval() => SaveProcedure("pending_approval");
-
-    private void SaveProcedure(string status)
-    {
-        if (!Guard.CanDo("SCR_PROCEDURES:CREATE", "tạo quy trình"))
-        {
+            Toasts.Show("Chưa thể lưu quy trình", validationMessage, ToastVariant.Warning);
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_code) || string.IsNullOrWhiteSpace(_name))
+        var user = UserContext.CurrentUser;
+        if (user is null)
         {
-            Toasts.Show("Thiếu thông tin quy trình", "Vui lòng nhập mã và tên quy trình.", ToastVariant.Warning);
-            return;
-        }
-        if (_steps.Count == 0 || _steps.Any(s => string.IsNullOrWhiteSpace(s.Name)))
-        {
-            Toasts.Show("Thiếu bước thực hiện", "Quy trình cần ít nhất một bước có tên rõ ràng.", ToastVariant.Warning);
+            Toasts.Show("Phiên đăng nhập không hợp lệ", "Vui lòng đăng nhập lại trước khi lưu.", ToastVariant.Error);
             return;
         }
 
+        _isSaving = true;
         try
         {
-            var now = DateTime.UtcNow;
-            var proc = new Sql.ProfessionalProcedure
+            var procedure = new Sql.ProfessionalProcedure
             {
                 ProcedureCode = _code.Trim(),
                 Name = _name.Trim(),
                 ProcedureType = _procedureType,
                 OwnerDepartmentId = ParseGuid(_departmentId),
-                Description = string.IsNullOrWhiteSpace(_description) ? null : _description.Trim(),
-                CreatedBy = UserContext.CurrentUser?.UserId
+                Description = NullIfWhiteSpace(_description),
+                CreatedBy = user.UserId
             };
-            Store.AddProcedure(proc);
+            var versionId = Guid.NewGuid();
+            var storedAttachments = new List<(PendingAttachment Draft, StoredProcedureAttachment Stored)>();
+            foreach (var attachment in _attachments)
+            {
+                storedAttachments.Add((attachment, await AttachmentStorage.SaveAsync(versionId, attachment.File)));
+            }
+            var source = storedAttachments.FirstOrDefault(item => item.Draft.AttachmentType == "source_pdf").Stored;
+
+            Store.AddProcedure(procedure);
 
             var version = new Sql.ProcedureVersion
             {
-                ProcedureId = proc.ProcedureId,
+                ProcedureVersionId = versionId,
+                ProcedureId = procedure.ProcedureId,
                 VersionNo = 1,
                 VersionLabel = _versionLabel.Trim(),
-                StatusCode = status,
+                StatusCode = "draft",
                 DepartmentId = ParseGuid(_departmentId),
-                Title = $"{proc.Name} - {_versionLabel.Trim()}",
-                Summary = string.IsNullOrWhiteSpace(_summary) ? "Phiên bản khởi tạo" : _summary.Trim(),
-                CreatedBy = UserContext.CurrentUser?.UserId,
-                SubmittedBy = status == "pending_approval" ? UserContext.CurrentUser?.UserId : null,
-                SubmittedAt = status == "pending_approval" ? now : null,
-                EffectiveFrom = now
+                Title = $"{procedure.Name} - {_versionLabel.Trim()}",
+                Summary = JsonSerializer.Serialize(new { note = NullIfWhiteSpace(_summary) ?? "Khởi tạo quy trình" }),
+                EffectiveFrom = _issueDate,
+                IssueDate = _issueDate,
+                IssueNumber = _issueNumber,
+                SourcePdfFileName = source?.FileName,
+                SourcePdfChecksumSha256 = source?.ChecksumSha256,
+                CreatedBy = user.UserId
             };
             Store.AddProcedureVersion(version);
+            PersistDocument(version, user.UserId, storedAttachments);
 
-            for (var i = 0; i < _steps.Count; i++)
+            if (submit)
             {
-                var step = _steps[i];
-                Store.AddProcedureStep(new Sql.ProcedureStep
-                {
-                    ProcedureVersionId = version.ProcedureVersionId,
-                    StepNo = i + 1,
-                    StepCode = string.IsNullOrWhiteSpace(step.Code) ? $"BUOC-{i + 1:00}" : step.Code.Trim(),
-                    Name = step.Name.Trim(),
-                    Description = string.IsNullOrWhiteSpace(step.Description) ? null : step.Description.Trim(),
-                    ActorRoleId = ParseGuid(step.RoleId),
-                    StandardDurationMinutes = step.Minutes
-                });
+                Signoffs.Sign(versionId, "writer", user.UserId, user.Username, user.FullName, note: "Xác nhận nội dung do người soạn lập");
+                Lifecycle.Submit(versionId, user.UserId);
             }
 
-            foreach (var norm in _resourceNorms)
-            {
-                Store.AddProcedureVersionResourceNorm(new Sql.ProcedureVersionResourceNorm
-                {
-                    ProcedureVersionId = version.ProcedureVersionId,
-                    ResourceId = norm.ResourceId,
-                    StandardQuantity = norm.Quantity,
-                    UnitCode = norm.UnitCode,
-                    IsRequired = norm.IsRequired,
-                    Note = string.IsNullOrWhiteSpace(norm.Note) ? null : norm.Note.Trim()
-                });
-            }
-
-            foreach (var mapping in _screenMappings)
-            {
-                Store.AddProcedureScreenMapping(new Sql.ProcedureScreenMapping
-                {
-                    ProcedureVersionId = version.ProcedureVersionId,
-                    ScreenId = mapping.ScreenId,
-                    FeatureId = mapping.FeatureId,
-                    ActionCode = mapping.ActionCode,
-                    EnforcementMode = mapping.EnforcementMode,
-                    RuleJson = mapping.RuleJson
-                });
-            }
-
-            foreach (var attachment in _attachments)
-            {
-                Store.AddProcedureAttachment(new Sql.ProcedureAttachment
-                {
-                    ProcedureVersionId = version.ProcedureVersionId,
-                    AttachmentType = attachment.AttachmentType,
-                    FileName = attachment.FileName,
-                    FileUri = attachment.FileUri,
-                    UploadedBy = UserContext.CurrentUser?.UserId
-                });
-            }
-
-            Toasts.Show(status == "pending_approval" ? "Đã gửi phê duyệt" : "Đã lưu bản nháp", proc.Name, ToastVariant.Success);
+            Toasts.Show(submit ? "Đã ký và gửi kiểm tra" : "Đã lưu bản nháp", procedure.Name, ToastVariant.Success);
             Navigation.NavigateTo("/qlcm/quy-trinh");
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            Toasts.Show("Không thể lưu quy trình", ex.Message, ToastVariant.Error);
+            Toasts.Show("Không thể lưu quy trình", exception.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isSaving = false;
         }
     }
 
-    private void SyncNormUnit()
+    private void PersistDocument(
+        Sql.ProcedureVersion version,
+        Guid userId,
+        IReadOnlyList<(PendingAttachment Draft, StoredProcedureAttachment Stored)> storedAttachments)
     {
-        if (Guid.TryParse(_normResourceId, out var resourceId))
-        {
-            _normUnit = Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == resourceId)?.DefaultUnitCode ?? "piece";
-        }
+        foreach (var section in _sections)
+            Store.AddProcedureDocumentSection(new Sql.ProcedureDocumentSection
+            {
+                ProcedureVersionId = version.ProcedureVersionId,
+                SectionOrder = section.Order,
+                SectionNumber = section.Number,
+                Title = section.Title,
+                SectionKind = section.Kind,
+                ContentText = NullIfWhiteSpace(section.Content),
+                IsRequired = section.IsRequired
+            });
+
+        foreach (var item in _recipients.Where(item => !string.IsNullOrWhiteSpace(item.Name)).Select((item, index) => (item, index)))
+            Store.AddProcedureDistributionRecipient(new Sql.ProcedureDistributionRecipient
+            {
+                ProcedureVersionId = version.ProcedureVersionId,
+                DisplayOrder = item.index + 1,
+                RecipientName = item.item.Name.Trim(),
+                IsMarked = item.item.IsMarked
+            });
+
+        foreach (var item in _revisions.Where(item => !string.IsNullOrWhiteSpace(item.Summary)).Select((item, index) => (item, index)))
+            Store.AddProcedureRevisionEntry(new Sql.ProcedureRevisionEntry
+            {
+                ProcedureVersionId = version.ProcedureVersionId,
+                DisplayOrder = item.index + 1,
+                RevisionDate = item.item.RevisionDate,
+                PageRef = NullIfWhiteSpace(item.item.PageReference),
+                SectionRef = NullIfWhiteSpace(item.item.SectionReference),
+                Summary = item.item.Summary.Trim()
+            });
+
+        foreach (var item in _steps.Where(item => !string.IsNullOrWhiteSpace(item.Name)).Select((item, index) => (item, index)))
+            Store.AddProcedureStep(new Sql.ProcedureStep
+            {
+                ProcedureVersionId = version.ProcedureVersionId,
+                StepNo = item.index + 1,
+                StepCode = NullIfWhiteSpace(item.item.Code) ?? $"BUOC-{item.index + 1:00}",
+                Name = item.item.Name.Trim(),
+                Description = NullIfWhiteSpace(item.item.Description),
+                ActorRoleId = ParseGuid(item.item.RoleId),
+                ResponsibilityText = NullIfWhiteSpace(item.item.Responsibility),
+                FlowShapeCode = item.item.ShapeCode,
+                FormReferenceText = NullIfWhiteSpace(item.item.FormReference),
+                DetailSectionNumber = NullIfWhiteSpace(item.item.DetailSectionNumber),
+                StandardDurationMinutes = item.item.Minutes
+            });
+
+        foreach (var item in storedAttachments)
+            Store.AddProcedureAttachment(new Sql.ProcedureAttachment
+            {
+                ProcedureVersionId = version.ProcedureVersionId,
+                AttachmentType = item.Draft.AttachmentType,
+                FileName = item.Stored.FileName,
+                FileUri = item.Stored.FileUri,
+                MimeType = item.Stored.MimeType,
+                FileSizeBytes = item.Stored.FileSizeBytes,
+                ChecksumSha256 = item.Stored.ChecksumSha256,
+                UploadedBy = userId
+            });
     }
 
-    private string GetResourceName(Guid id) => Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == id)?.Name ?? "—";
-    private string GetScreenName(Guid id) => Store.Screens.FirstOrDefault(s => s.ScreenId == id)?.Name ?? "—";
-    private string GetFeatureName(Guid? id) => id.HasValue ? Store.Features.FirstOrDefault(f => f.FeatureId == id.Value)?.Name ?? "—" : "—";
-    private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
-    private static int ParseInt(string? value) => int.TryParse(value, out var parsed) ? parsed : 0;
-    private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
-    private static string LookupUnit(string? code) => Sql.MedLookups.UnitCatalog.FirstOrDefault(u => u.Code == code)?.Name ?? code ?? "—";
+    private string? Validate(bool submit)
+    {
+        if (string.IsNullOrWhiteSpace(_code) || string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_versionLabel))
+            return "Nhập mã, tên và phiên bản quy trình.";
+        if (Store.Procedures.Any(item => string.Equals(item.ProcedureCode, _code.Trim(), StringComparison.OrdinalIgnoreCase)))
+            return "Mã quy trình đã tồn tại. Vui lòng dùng mã khác.";
+        if (!Guid.TryParse(_departmentId, out _)) return "Chọn khoa/phòng chủ trì.";
+        if (_issueDate is null || _issueNumber < 1) return "Nhập ngày và lần ban hành hợp lệ.";
+        if (!submit) return null;
+        if (_sections.Any(item => item.IsRequired && string.IsNullOrWhiteSpace(item.Content))) return "Hoàn thiện tất cả mục La Mã bắt buộc.";
+        if (_steps.Count == 0 || _steps.Any(item => string.IsNullOrWhiteSpace(item.Name) || string.IsNullOrWhiteSpace(item.Responsibility) || string.IsNullOrWhiteSpace(item.Description)))
+            return "Mỗi bước phải có tên, trách nhiệm và diễn giải thao tác.";
+        if (!_recipients.Any(item => !string.IsNullOrWhiteSpace(item.Name))) return "Thêm ít nhất một nơi nhận.";
+        if (!_revisions.Any(item => !string.IsNullOrWhiteSpace(item.Summary))) return "Thêm ít nhất một dòng theo dõi sửa đổi.";
+        if (!_attachments.Any(item => item.AttachmentType == "source_pdf" && item.File.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)))
+            return "Chọn một tệp PDF và đặt loại là PDF nguồn.";
+        return null;
+    }
 
-    private sealed record StepDraft(string Code, string Name, string RoleId, int Minutes, string Description);
-    private sealed record ResourceNormDraft(Guid ResourceId, decimal Quantity, string UnitCode, bool IsRequired, string Note);
-    private sealed record ScreenMappingDraft(Guid ScreenId, Guid? FeatureId, string? ActionCode, string EnforcementMode, string? RuleJson);
-    private sealed record AttachmentDraft(string FileName, string FileUri, string AttachmentType);
+    private static List<ProcedureSectionDraft> CreateSections() =>
+    [
+        new() { Order = 1, Number = "I", Title = "Mục đích", Kind = "purpose" },
+        new() { Order = 2, Number = "II", Title = "Phạm vi áp dụng", Kind = "scope" },
+        new() { Order = 3, Number = "III", Title = "Căn cứ và tài liệu viện dẫn", Kind = "basis" },
+        new() { Order = 4, Number = "IV", Title = "Thuật ngữ và định nghĩa", Kind = "definitions" },
+        new() { Order = 5, Number = "V", Title = "Trách nhiệm", Kind = "responsibilities" },
+        new() { Order = 6, Number = "VI", Title = "Nơi nhận và phân phối", Kind = "distribution" },
+        new() { Order = 7, Number = "VII", Title = "Theo dõi sửa đổi", Kind = "revision" },
+        new() { Order = 8, Number = "VIII", Title = "Nội dung quy trình", Kind = "procedure" },
+        new() { Order = 9, Number = "IX", Title = "Lưu đồ", Kind = "flowchart" },
+        new() { Order = 10, Number = "X", Title = "Hồ sơ, biểu mẫu và phụ lục", Kind = "records" },
+        new() { Order = 11, Number = "XI", Title = "Tệp đính kèm", Kind = "appendices" }
+    ];
+
+    private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    private static string? NullIfWhiteSpace(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    private static string FormatBytes(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
+
+    private sealed class PendingAttachment(IBrowserFile file, string attachmentType)
+    {
+        public IBrowserFile File { get; } = file;
+        public string AttachmentType { get; set; } = attachmentType;
+    }
 }

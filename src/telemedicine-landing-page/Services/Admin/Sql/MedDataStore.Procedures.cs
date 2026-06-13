@@ -109,4 +109,52 @@ public sealed partial class MedDataStore
             RaiseStateChanged();
         }
     }
+
+    public void AddProcedureDocumentSection(ProcedureDocumentSection section)
+    {
+        lock (_lock)
+        {
+            _procedureDocumentSections.Add(section);
+            RaiseStateChanged();
+        }
+    }
+
+    public void UpdateProcedureDocumentSection(ProcedureDocumentSection section)
+    {
+        lock (_lock)
+        {
+            var idx = _procedureDocumentSections.FindIndex(s => s.ProcedureDocumentSectionId == section.ProcedureDocumentSectionId);
+            if (idx < 0)
+                throw MedDomainException.Constraint("PK_procedure_document_sections", 547, "Muc tai lieu quy trinh khong ton tai.");
+            _procedureDocumentSections[idx] = section;
+            RaiseStateChanged();
+        }
+    }
+
+    public void AddProcedureDistributionRecipient(ProcedureDistributionRecipient recipient)
+    {
+        lock (_lock)
+        {
+            _procedureDistributionRecipients.Add(recipient);
+            RaiseStateChanged();
+        }
+    }
+
+    public void AddProcedureRevisionEntry(ProcedureRevisionEntry revision)
+    {
+        lock (_lock)
+        {
+            _procedureRevisionEntries.Add(revision);
+            RaiseStateChanged();
+        }
+    }
+
+    public void AddProcedureSignoffRecord(ProcedureSignoffRecord signoff)
+    {
+        lock (_lock)
+        {
+            _procedureSignoffRecords.Add(signoff);
+            RaiseStateChanged();
+        }
+    }
 }

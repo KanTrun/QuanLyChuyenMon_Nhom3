@@ -4,7 +4,7 @@ namespace TelemedicineLandingPage.Application.Signature;
 
 public interface ISignatureService
 {
-    Task<(SignatureResult Result, SignatureRecord? Record)> CreateDemoSignatureAsync(
+    Task<(SignatureResult Result, SignatureRecord? Record)> CreateInternalSignatureAsync(
         string targetType,
         Guid targetId,
         Guid signerUserId,
@@ -17,33 +17,7 @@ public interface ISignatureService
         Guid targetId,
         CancellationToken cancellationToken = default);
 
-    Task<SignatureTransactionRecord?> GetLatestSmartCaTransactionAsync(
-        string targetType,
-        Guid targetId,
-        Guid? signerUserId = null,
-        CancellationToken cancellationToken = default);
-
-    SmartCaReadiness GetSmartCaReadiness();
-
-    Task<(SignatureResult Result, SignatureTransactionRecord? Transaction)> StartSmartCaSignatureAsync(
-        string targetType,
-        Guid targetId,
-        Guid signerUserId,
-        string signerUsername,
-        string? metadataJson = null,
-        CancellationToken cancellationToken = default);
-
-    Task<(SignatureResult Result, SignatureRecord? Record, SignatureTransactionRecord? Transaction)> RefreshSmartCaSignatureAsync(
-        Guid signatureTransactionId,
-        Guid actorUserId,
-        string actorUsername,
-        CancellationToken cancellationToken = default);
-
-    Task<(SignatureResult Result, SignatureRecord? Record, SignatureTransactionRecord? Transaction)> RefreshSmartCaSignatureByExternalReferenceAsync(
-        string externalReference,
-        CancellationToken cancellationToken = default);
-
-    Task<SignatureResult> RevokeDemoSignatureAsync(
+    Task<SignatureResult> RevokeInternalSignatureAsync(
         string targetType,
         Guid targetId,
         Guid actorUserId,
@@ -61,10 +35,5 @@ public enum SignatureResult
     TargetNotFound,
     Unauthorized,
     Revoked,
-    InvalidState,
-    ProviderNotConfigured,
-    PendingExternalConfirmation,
-    ExternalProviderRejected,
-    ExternalProviderExpired,
-    ExternalProviderFailed
+    InvalidState
 }

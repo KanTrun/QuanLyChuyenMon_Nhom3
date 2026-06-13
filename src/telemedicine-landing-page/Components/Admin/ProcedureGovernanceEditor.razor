@@ -1,0 +1,52 @@
+@using TelemedicineLandingPage.Models.Admin
+
+<section class="admin-panel">
+    <header class="admin-panel-head">
+        <div>
+            <h2 class="admin-panel-title">Kiểm soát tài liệu</h2>
+            <p class="admin-form-field-hint">Nơi nhận và lịch sử sửa đổi sẽ xuất hiện trong bản in chính thức.</p>
+        </div>
+    </header>
+
+    <div class="admin-form-grid">
+        <div class="admin-form-field admin-form-field-full">
+            <label class="admin-form-field-label is-required">Nơi nhận</label>
+            @for (var index = 0; index < Recipients.Count; index++)
+            {
+                var recipient = Recipients[index];
+                <div class="procedure-inline-row" @key="recipient">
+                    <input class="admin-input" @bind="recipient.Name" placeholder="Khoa/phòng nhận tài liệu" />
+                    <label class="admin-check-row"><input type="checkbox" @bind="recipient.IsMarked" /> Nhận bản kiểm soát</label>
+                    <button type="button" class="admin-icon-btn is-danger" title="Xóa nơi nhận" @onclick="() => Recipients.Remove(recipient)">×</button>
+                </div>
+            }
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddRecipient">Thêm nơi nhận</button>
+        </div>
+
+        <div class="admin-form-field admin-form-field-full">
+            <label class="admin-form-field-label is-required">Theo dõi sửa đổi</label>
+            @foreach (var revision in Revisions)
+            {
+                <div class="procedure-revision-row" @key="revision">
+                    <input class="admin-input" type="date" @bind="revision.RevisionDate" />
+                    <input class="admin-input" @bind="revision.PageReference" placeholder="Trang" />
+                    <input class="admin-input" @bind="revision.SectionReference" placeholder="Mục" />
+                    <input class="admin-input" @bind="revision.Summary" placeholder="Nội dung thay đổi" />
+                    <button type="button" class="admin-icon-btn is-danger" title="Xóa sửa đổi" @onclick="() => Revisions.Remove(revision)">×</button>
+                </div>
+            }
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddRevision">Thêm dòng sửa đổi</button>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public required List<ProcedureRecipientDraft> Recipients { get; set; }
+
+    [Parameter, EditorRequired]
+    public required List<ProcedureRevisionDraft> Revisions { get; set; }
+
+    private void AddRecipient() => Recipients.Add(new ProcedureRecipientDraft());
+    private void AddRevision() => Revisions.Add(new ProcedureRevisionDraft());
+}

@@ -58,6 +58,10 @@ public sealed class MedDbDataStore : IMedDataStore
     public IReadOnlyList<ProcedureStep> ProcedureSteps => _db.ProcedureSteps.ToList();
     public IReadOnlyList<ProcedureAttachment> ProcedureAttachments => _db.ProcedureAttachments.ToList();
     public IReadOnlyList<ProcedureScreenMapping> ProcedureScreenMappings => _db.ProcedureScreenMappings.ToList();
+    public IReadOnlyList<ProcedureDocumentSection> ProcedureDocumentSections => _db.ProcedureDocumentSections.ToList();
+    public IReadOnlyList<ProcedureDistributionRecipient> ProcedureDistributionRecipients => _db.ProcedureDistributionRecipients.ToList();
+    public IReadOnlyList<ProcedureRevisionEntry> ProcedureRevisionEntries => _db.ProcedureRevisionEntries.ToList();
+    public IReadOnlyList<ProcedureSignoffRecord> ProcedureSignoffRecords => _db.ProcedureSignoffRecords.ToList();
     public IReadOnlyList<PatientRef> PatientRefs => _db.PatientRefs.ToList();
     public IReadOnlyList<EncounterRef> EncounterRefs => _db.EncounterRefs.ToList();
     public IReadOnlyList<TechnicalService> TechnicalServices => _db.TechnicalServices.ToList();
@@ -73,7 +77,6 @@ public sealed class MedDbDataStore : IMedDataStore
     public IReadOnlyList<ProtocolApplicabilityRule> ProtocolApplicabilityRules => _db.ProtocolApplicabilityRules.ToList();
     public IReadOnlyList<PatientProtocolApplication> PatientProtocolApplications => _db.PatientProtocolApplications.ToList();
     public IReadOnlyList<SignatureRecord> SignatureRecords => _db.SignatureRecords.ToList();
-    public IReadOnlyList<SignatureTransactionRecord> SignatureTransactions => _db.SignatureTransactions.ToList();
     public IReadOnlyList<NotificationPreference> NotificationPreferences => _db.NotificationPreferences.ToList();
     public IReadOnlyList<MedNotification> Notifications => _db.Notifications.ToList();
     public IReadOnlyList<NotificationDeliveryAttempt> NotificationDeliveryAttempts => _db.NotificationDeliveryAttempts.ToList();
@@ -330,6 +333,18 @@ public sealed class MedDbDataStore : IMedDataStore
     public void AddProcedureStep(ProcedureStep step) { _db.ProcedureSteps.Add(step); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProcedureAttachment(ProcedureAttachment att) { _db.ProcedureAttachments.Add(att); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProcedureScreenMapping(ProcedureScreenMapping mapping) { _db.ProcedureScreenMappings.Add(mapping); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureDocumentSection(ProcedureDocumentSection section) { _db.ProcedureDocumentSections.Add(section); _db.SaveChanges(); RaiseStateChanged(); }
+    public void UpdateProcedureDocumentSection(ProcedureDocumentSection section)
+    {
+        var existing = _db.ProcedureDocumentSections.FirstOrDefault(s => s.ProcedureDocumentSectionId == section.ProcedureDocumentSectionId)
+            ?? throw new InvalidOperationException("Muc tai lieu quy trinh khong ton tai.");
+        _db.ProcedureDocumentSections.Entry(existing).CurrentValues.SetValues(section);
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
+    public void AddProcedureDistributionRecipient(ProcedureDistributionRecipient recipient) { _db.ProcedureDistributionRecipients.Add(recipient); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureRevisionEntry(ProcedureRevisionEntry revision) { _db.ProcedureRevisionEntries.Add(revision); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureSignoffRecord(ProcedureSignoffRecord signoff) { _db.ProcedureSignoffRecords.Add(signoff); _db.SaveChanges(); RaiseStateChanged(); }
     public void RemoveProcedureAttachment(Guid attachmentId)
     {
         var existing = _db.ProcedureAttachments.FirstOrDefault(a => a.ProcedureAttachmentId == attachmentId)
@@ -498,15 +513,6 @@ public sealed class MedDbDataStore : IMedDataStore
     }
 
     public void AddSignatureRecord(SignatureRecord signature) { _db.SignatureRecords.Add(signature); _db.SaveChanges(); RaiseStateChanged(); }
-    public void AddSignatureTransaction(SignatureTransactionRecord transaction) { _db.SignatureTransactions.Add(transaction); _db.SaveChanges(); RaiseStateChanged(); }
-    public void UpdateSignatureTransaction(SignatureTransactionRecord transaction)
-    {
-        var existing = _db.SignatureTransactions.FirstOrDefault(t => t.SignatureTransactionId == transaction.SignatureTransactionId)
-            ?? throw new InvalidOperationException("Giao dịch ký số không tồn tại.");
-        _db.SignatureTransactions.Entry(existing).CurrentValues.SetValues(transaction with { UpdatedAt = DateTime.UtcNow });
-        _db.SaveChanges();
-        RaiseStateChanged();
-    }
     public void AddNotificationPreference(NotificationPreference pref) { _db.NotificationPreferences.Add(pref); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddNotification(MedNotification notification) { _db.Notifications.Add(notification); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddNotificationDeliveryAttempt(NotificationDeliveryAttempt attempt) { _db.NotificationDeliveryAttempts.Add(attempt); _db.SaveChanges(); RaiseStateChanged(); }

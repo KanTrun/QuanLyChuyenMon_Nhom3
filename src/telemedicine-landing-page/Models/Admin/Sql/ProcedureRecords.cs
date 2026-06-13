@@ -77,6 +77,18 @@ public sealed record ProcedureVersion
     [Column("effective_to")]
     public DateTime? EffectiveTo { get; init; }
 
+    [Column("issue_date")]
+    public DateTime? IssueDate { get; init; }
+
+    [Column("issue_number")]
+    public int? IssueNumber { get; init; }
+
+    [Column("source_pdf_file_name")]
+    public string? SourcePdfFileName { get; init; }
+
+    [Column("source_pdf_checksum_sha256")]
+    public string? SourcePdfChecksumSha256 { get; init; }
+
     [Column("created_by")]
     public Guid? CreatedBy { get; init; }
 
@@ -128,6 +140,18 @@ public sealed record ProcedureStep
     [Column("actor_role_id")]
     public Guid? ActorRoleId { get; init; }
 
+    [Column("responsibility_text")]
+    public string? ResponsibilityText { get; init; }
+
+    [Column("flow_shape_code")]
+    public string FlowShapeCode { get; init; } = "process";
+
+    [Column("form_reference_text")]
+    public string? FormReferenceText { get; init; }
+
+    [Column("detail_section_number")]
+    public string? DetailSectionNumber { get; init; }
+
     [Column("transition_condition_json")]
     public string? TransitionConditionJson { get; init; }
 
@@ -139,6 +163,126 @@ public sealed record ProcedureStep
 
     [Column("created_at")]
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+}
+
+/// <summary>Muc lon cua van ban quy trinh y te.</summary>
+[Table("procedure_document_sections", Schema = "med")]
+public sealed record ProcedureDocumentSection
+{
+    [Key]
+    [Column("procedure_document_section_id")]
+    public Guid ProcedureDocumentSectionId { get; init; } = Guid.NewGuid();
+
+    [Column("procedure_version_id")]
+    public required Guid ProcedureVersionId { get; init; }
+
+    [Column("section_order")]
+    public required int SectionOrder { get; init; }
+
+    [Column("section_number")]
+    public required string SectionNumber { get; init; }
+
+    [Column("title")]
+    public required string Title { get; init; }
+
+    [Column("section_kind")]
+    public string SectionKind { get; init; } = "body";
+
+    [Column("content_text")]
+    public string? ContentText { get; init; }
+
+    [Column("is_required")]
+    public bool IsRequired { get; init; } = true;
+
+    [Column("created_at")]
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+}
+
+/// <summary>Noi nhan ban hanh quy trinh.</summary>
+[Table("procedure_distribution_recipients", Schema = "med")]
+public sealed record ProcedureDistributionRecipient
+{
+    [Key]
+    [Column("procedure_distribution_recipient_id")]
+    public Guid ProcedureDistributionRecipientId { get; init; } = Guid.NewGuid();
+
+    [Column("procedure_version_id")]
+    public required Guid ProcedureVersionId { get; init; }
+
+    [Column("display_order")]
+    public required int DisplayOrder { get; init; }
+
+    [Column("recipient_name")]
+    public required string RecipientName { get; init; }
+
+    [Column("is_marked")]
+    public bool IsMarked { get; init; } = true;
+}
+
+/// <summary>Theo doi sua doi tai lieu.</summary>
+[Table("procedure_revision_entries", Schema = "med")]
+public sealed record ProcedureRevisionEntry
+{
+    [Key]
+    [Column("procedure_revision_entry_id")]
+    public Guid ProcedureRevisionEntryId { get; init; } = Guid.NewGuid();
+
+    [Column("procedure_version_id")]
+    public required Guid ProcedureVersionId { get; init; }
+
+    [Column("display_order")]
+    public required int DisplayOrder { get; init; }
+
+    [Column("revision_date")]
+    public DateTime? RevisionDate { get; init; }
+
+    [Column("page_ref")]
+    public string? PageRef { get; init; }
+
+    [Column("section_ref")]
+    public string? SectionRef { get; init; }
+
+    [Column("summary")]
+    public required string Summary { get; init; }
+}
+
+/// <summary>Ky xac nhan noi bo theo vai tro trong quy trinh.</summary>
+[Table("procedure_signoff_records", Schema = "med")]
+public sealed record ProcedureSignoffRecord
+{
+    [Key]
+    [Column("procedure_signoff_record_id")]
+    public Guid ProcedureSignoffRecordId { get; init; } = Guid.NewGuid();
+
+    [Column("procedure_version_id")]
+    public required Guid ProcedureVersionId { get; init; }
+
+    [Column("signoff_role")]
+    public required string SignoffRole { get; init; }
+
+    [Column("display_order")]
+    public int DisplayOrder { get; init; }
+
+    [Column("signer_user_id")]
+    public Guid? SignerUserId { get; init; }
+
+    [Column("signer_username")]
+    public string? SignerUsername { get; init; }
+
+    [Column("signer_full_name")]
+    public string? SignerFullName { get; init; }
+
+    [Column("signed_at")]
+    public DateTime SignedAt { get; init; } = DateTime.UtcNow;
+
+    [Column("content_hash_sha256")]
+    public required string ContentHashSha256 { get; init; }
+
+    [Column("signature_image_data_url")]
+    public string? SignatureImageDataUrl { get; init; }
+
+    [Column("note")]
+    public string? Note { get; init; }
 }
 
 /// <summary>Tài liệu đính kèm của phiên bản quy trình.</summary>

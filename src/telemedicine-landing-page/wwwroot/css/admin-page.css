@@ -773,6 +773,64 @@
     font-size: 0.95rem;
 }
 
+.procedure-authoring-page {
+    max-width: 1220px;
+}
+
+.procedure-section-editor {
+    display: grid;
+    gap: 16px;
+}
+
+.procedure-flow-step {
+    grid-template-columns: 52px minmax(0, 1fr) 36px;
+    align-items: start;
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+.procedure-flow-step-fields {
+    min-width: 0;
+}
+
+.procedure-inline-row {
+    display: grid;
+    grid-template-columns: minmax(240px, 1fr) minmax(180px, auto) 36px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.procedure-revision-row {
+    display: grid;
+    grid-template-columns: 150px 100px 120px minmax(240px, 1fr) 36px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.procedure-authoring-actions {
+    position: sticky;
+    bottom: 12px;
+    z-index: 3;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+    backdrop-filter: blur(8px);
+}
+
+.admin-callout {
+    padding: 12px 14px;
+    border-left: 4px solid var(--color-primary);
+    background: var(--color-primary-soft);
+    color: var(--color-ink);
+    font-size: 0.88rem;
+}
+
 /* ── Kanban (Lâm sàng) ──────────────────────────── */
 
 .admin-kanban {
@@ -1559,6 +1617,7 @@
     .admin-step-row { grid-template-columns: 60px 1fr 1fr; }
     .admin-profile-grid { grid-template-columns: 1fr; }
     .admin-profile-summary { position: static; }
+    .procedure-revision-row { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 700px) {
@@ -1567,6 +1626,10 @@
     .admin-card-grid { grid-template-columns: 1fr; }
     .admin-detail-grid { grid-template-columns: 1fr; }
     .admin-step-row { grid-template-columns: 1fr; }
+    .procedure-flow-step,
+    .procedure-inline-row,
+    .procedure-revision-row { grid-template-columns: 1fr; }
+    .procedure-authoring-actions { position: static; flex-direction: column-reverse; }
     .permission-picker-toolbar,
     .permission-option {
         grid-template-columns: 1fr;

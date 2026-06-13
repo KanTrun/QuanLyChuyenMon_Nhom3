@@ -8,6 +8,9 @@
 @inject IConfirmDialogService Confirm
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@inject ProcedureSignoffService Signoffs
+@inject IProcedureDocumentExportService ProcedureExport
+@inject IJSRuntime JS
 @implements IDisposable
 
 <PageTitle>Phê duyệt quy trình | QLCM Pro</PageTitle>
@@ -85,6 +88,11 @@
                         @if (row.Version.StatusCode is "draft" or "rejected")
                         {
                             <button type="button" class="admin-icon-btn" title="Sửa" @onclick="() => OpenEdit(row)">✎</button>
+                        }
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ExportVersionAsync(row.Version)">In/PDF</button>
+                        @if (row.Version.StatusCode == "pending_approval")
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SignVersion(row.Version, "checker")'>Ky kiem tra</button>
                         }
                         @if (row.Version.StatusCode == "pending_approval")
                         {
@@ -331,6 +339,13 @@
         if (!ok) return;
         try
         {
+            if (!Signoffs.HasCurrentSignoff(row.Version.ProcedureVersionId, "checker"))
+            {
+                Toasts.Show("Thieu chu ky kiem tra", "Nguoi kiem tra phai ky noi bo truoc khi ban hanh.", ToastVariant.Warning);
+                return;
+            }
+
+            SignVersion(row.Version, "approver", showToast: false);
             Lifecycle.Publish(row.Version.ProcedureVersionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
             Recompute();
             RefreshSelected(row.Version.ProcedureVersionId);
@@ -339,6 +354,39 @@
         catch (Exception ex)
         {
             Toasts.Show("Không thể phê duyệt", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void SignVersion(Sql.ProcedureVersion version, string role, bool showToast = true)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "ky xac nhan quy trinh")) return;
+        Signoffs.Sign(
+            version.ProcedureVersionId,
+            role,
+            UserContext.CurrentUser?.UserId,
+            UserContext.CurrentUser?.Username,
+            UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username);
+        if (showToast)
+        {
+            Toasts.Show("Da ky xac nhan", $"{role}: {version.Title}", ToastVariant.Success);
+            Recompute();
+            RefreshSelected(version.ProcedureVersionId);
+        }
+    }
+
+    private async Task ExportVersionAsync(Sql.ProcedureVersion version)
+    {
+        try
+        {
+            var html = ProcedureExport.BuildProcedureDocumentHtml(version.ProcedureVersionId, DateTime.UtcNow);
+            var procedure = Store.Procedures.FirstOrDefault(p => p.ProcedureId == version.ProcedureId);
+            var fileName = $"{SafeFileNamePart(procedure?.ProcedureCode)}-{SafeFileNamePart(version.VersionLabel ?? $"v{version.VersionNo}")}.html";
+            var ok = await JS.InvokeAsync<bool>("qlcmShell.downloadFile", fileName, html, "text/html;charset=utf-8");
+            Toasts.Show(ok ? "Da xuat HTML" : "Khong the tai tep", ok ? "Mo HTML de in hoac luu PDF." : "Trinh duyet tu choi tai tep.", ok ? ToastVariant.Success : ToastVariant.Warning);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Khong the xuat quy trinh", ex.Message, ToastVariant.Error);
         }
     }
 
@@ -427,6 +475,11 @@
 
     private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
     private static bool Contains(string? value, string search) => value?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false;
+    private static string SafeFileNamePart(string? value)
+    {
+        var safe = new string((value ?? string.Empty).Where(c => char.IsLetterOrDigit(c) || c is '-' or '_').ToArray());
+        return string.IsNullOrWhiteSpace(safe) ? "quy-trinh" : safe;
+    }
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
     private static string VersionLabel(Sql.ProcedureVersion version) => version.VersionLabel ?? $"v{version.VersionNo}";
     private static string StatusLabel(string status) => Sql.MedLookups.VersionStatuses.FirstOrDefault(s => s.Code == status)?.Name ?? status;

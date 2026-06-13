@@ -96,5 +96,9 @@ assets/
 # External repos for study/reference
 external/
 
+# Local source scans mounted as authenticated procedure attachments
+procedure-source-pdfs/
+procedure-uploads/
+
 # Git worktrees (local development only)
 worktrees/

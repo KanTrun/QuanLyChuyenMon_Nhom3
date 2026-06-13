@@ -79,6 +79,14 @@ public static class MedDataStoreSeed
     public static readonly Guid ProcXnId = Guid.Parse("f0000000-0000-0000-0000-000000000002");
     public static readonly Guid ProcNoiVersionId = Guid.Parse("f1000000-0000-0000-0000-000000000001");
     public static readonly Guid ProcXnVersionId = Guid.Parse("f1000000-0000-0000-0000-000000000002");
+    public static readonly Guid ProcKsnk09Id = Guid.Parse("f0000000-0000-0000-0000-000000000009");
+    public static readonly Guid ProcKsnk12Id = Guid.Parse("f0000000-0000-0000-0000-000000000012");
+    public static readonly Guid ProcKsnk16Id = Guid.Parse("f0000000-0000-0000-0000-000000000016");
+    public static readonly Guid ProcKsnk17Id = Guid.Parse("f0000000-0000-0000-0000-000000000017");
+    public static readonly Guid ProcKsnk09VersionId = Guid.Parse("f1000000-0000-0000-0000-000000000009");
+    public static readonly Guid ProcKsnk12VersionId = Guid.Parse("f1000000-0000-0000-0000-000000000012");
+    public static readonly Guid ProcKsnk16VersionId = Guid.Parse("f1000000-0000-0000-0000-000000000016");
+    public static readonly Guid ProcKsnk17VersionId = Guid.Parse("f1000000-0000-0000-0000-000000000017");
 
     // --- Dịch vụ kỹ thuật & Nguồn lực ---
     public static readonly Guid SvcXnCtmId = Guid.Parse("f2000000-0000-0000-0000-000000000001");
@@ -477,6 +485,159 @@ public static class MedDataStoreSeed
             ActorRoleId = RoleClinicalId,
             StandardDurationMinutes = 5
         });
+
+        SeedKsnkProcedures(store);
+    }
+
+    private static void SeedKsnkProcedures(MedDataStore store)
+    {
+        SeedKsnkProcedure(
+            store,
+            ProcKsnk09Id,
+            ProcKsnk09VersionId,
+            "QT.KSNK.09",
+            "Quy trinh xu ly dung cu phau thuat",
+            "2145_QUY TRÌNH XỬ LÝ DỤNG CỤ PHẪU THUẬT.pdf",
+            "C77CA23EA777CFFE94D28F110AB6A58BB8C630248FF04D1CD22A8A0C718C5C8A",
+            30688980,
+            ["Lam sach dung cu", "Giao nhan dung cu sau khi lam sach", "Lam sach, khu khuan dung cu", "Bao duong - kiem tra dung cu", "Dong goi dung cu", "Tiet khuan dung cu", "Giam sat chat luong tiet khuan dung cu", "Luu tru dung cu", "Giao nhan dung cu sau khi tiet khuan"]);
+        SeedKsnkProcedure(
+            store,
+            ProcKsnk12Id,
+            ProcKsnk12VersionId,
+            "QT.KSNK.12",
+            "Quy trinh xu ly dung cu y te",
+            "2145_QUY TRÌNH XỬ LÝ DỤNG CỤ Y TẾ.pdf",
+            "A81D27EF2338C86280A6F9A8300D5537A6A68BA4A3B74771BB987B9419166F44",
+            26591000,
+            ["Lam sach, khu khuan dung cu", "Giao nhan dung cu sau khi lam sach", "Lam sach, khu khuan dung cu", "Bao duong - kiem tra dung cu", "Dong goi dung cu", "Tiet khuan dung cu", "Giam sat chat luong tiet khuan dung cu", "Luu tru dung cu", "Giao nhan dung cu sau khi tiet khuan"]);
+        SeedKsnkProcedure(
+            store,
+            ProcKsnk16Id,
+            ProcKsnk16VersionId,
+            "QT.KSNK.16",
+            "Quy trinh khu khuan muc do cao dung cu y te",
+            "2145_QUY TRÌNH KHỬ KHUẨN MỨC ĐỘ CAO DỤNG CỤ Y TẾ.pdf",
+            "F0E0EE39369E3815FF6634A217555A15F68DD878D040CCBC3A23B23C8631892A",
+            11543000,
+            ["Lam sach dung cu", "Giao nhan dung cu sau khi lam sach", "Khu khuan muc do cao dung cu", "Dong goi dung cu", "Luu tru dung cu tai khoa KSNK", "Giao nhan dung cu vo khuan"]);
+        SeedKsnkProcedure(
+            store,
+            ProcKsnk17Id,
+            ProcKsnk17VersionId,
+            "QT.KSNK.17",
+            "Quy trinh xu ly tay khoan nha khoa",
+            "2145_QUY TRÌNH XỬ LÝ TAY KHOAN NHA KHOA.pdf",
+            "40A3241A42BB0B803A75A599B55EEA95D6EC55917CEBF91FCF26F26D717CC4A5",
+            6530255,
+            ["Chuan bi", "Lam sach", "Khu khuan", "Tra dau boi tron", "Giao nhan dung cu sau khi lam sach, khu khuan", "Dong goi", "Tiet khuan", "Luu tru tai khoa KSNK", "Giao nhan dung cu sau khi tiet khuan"]);
+    }
+
+    private static void SeedKsnkProcedure(
+        MedDataStore store,
+        Guid procedureId,
+        Guid versionId,
+        string code,
+        string title,
+        string pdfFileName,
+        string checksum,
+        long fileSize,
+        IReadOnlyList<string> steps)
+    {
+        store.AddProcedure(new ProfessionalProcedure
+        {
+            ProcedureId = procedureId,
+            ProcedureCode = code,
+            Name = title,
+            ProcedureType = "technical",
+            OwnerDepartmentId = DeptHcId,
+            Description = "Nhap tu PDF scan 2145; dang cho OCR day du tung trang truoc khi ban hanh.",
+            CreatedBy = AdminUserId
+        });
+
+        store.AddProcedureVersion(new ProcedureVersion
+        {
+            ProcedureVersionId = versionId,
+            ProcedureId = procedureId,
+            VersionNo = 1,
+            VersionLabel = "lan-02-scan",
+            StatusCode = "draft",
+            DepartmentId = DeptHcId,
+            Title = title,
+            Summary = "{\"ocrStatus\":\"OCR_PENDING\",\"note\":\"PDF scan la nguon su that; chi seed metadata va luu do da spot-check tu anh render.\"}",
+            ChangeReason = "Nhap quy trinh KSNK tu PDF scan",
+            IssueDate = new DateTime(2026, 3, 19),
+            IssueNumber = 2,
+            SourcePdfFileName = pdfFileName,
+            SourcePdfChecksumSha256 = checksum,
+            CreatedBy = AdminUserId
+        });
+
+        AddDefaultProcedureSections(store, versionId);
+        store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 1, RecipientName = "Ban Giam doc" });
+        store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 2, RecipientName = "Khoa Kiem soat nhiem khuan" });
+        store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 3, RecipientName = "Cac khoa/phong su dung dung cu" });
+        store.AddProcedureRevisionEntry(new ProcedureRevisionEntry { ProcedureVersionId = versionId, DisplayOrder = 1, RevisionDate = new DateTime(2026, 3, 19), PageRef = "Toan van", SectionRef = "Lan 02", Summary = "Ban hanh theo PDF scan so 2145; noi dung chi tiet cho OCR/doi chieu." });
+
+        for (var i = 0; i < steps.Count; i++)
+        {
+            store.AddProcedureStep(new ProcedureStep
+            {
+                ProcedureVersionId = versionId,
+                StepNo = i + 1,
+                StepCode = $"B{i + 1:00}",
+                Name = steps[i],
+                Description = "OCR_PENDING: dien giai chi tiet can trich xuat va doi chieu tu tung trang PDF scan.",
+                ResponsibilityText = i == 0 ? "Khoa su dung / KSNK" : "Khoa KSNK",
+                FlowShapeCode = i == 0 || i == steps.Count - 1 ? "terminator" : "process",
+                DetailSectionNumber = "VIII",
+                ActorRoleId = RoleClinicalId,
+                StandardDurationMinutes = 10
+            });
+        }
+
+        store.AddProcedureAttachment(new ProcedureAttachment
+        {
+            ProcedureVersionId = versionId,
+            AttachmentType = "source_pdf",
+            FileName = pdfFileName,
+            FileUri = "imported/" + pdfFileName,
+            MimeType = "application/pdf",
+            FileSizeBytes = fileSize,
+            ChecksumSha256 = checksum,
+            UploadedBy = AdminUserId
+        });
+    }
+
+    private static void AddDefaultProcedureSections(MedDataStore store, Guid versionId)
+    {
+        (string number, string title, string kind, string text)[] sections =
+        [
+            ("I", "Muc dich", "purpose", "OCR_PENDING: trich xuat tu PDF scan truoc khi ban hanh."),
+            ("II", "Pham vi ap dung", "scope", "OCR_PENDING: ap dung theo dung pham vi trong PDF scan."),
+            ("III", "Can cu va tai lieu vien dan", "basis", "Quyet dinh 3671/QD-BYT, quy dinh KSNK hien hanh va PDF scan nguon."),
+            ("IV", "Thuat ngu va dinh nghia", "definitions", "OCR_PENDING: bo sung thuat ngu y te dung theo PDF scan."),
+            ("V", "Trach nhiem", "responsibilities", "OCR_PENDING: nguoi viet, nguoi kiem tra, nguoi phe duyet va khoa/phong lien quan."),
+            ("VI", "Noi nhan va phan phoi", "distribution", "Xem bang Noi nhan tren bia quy trinh."),
+            ("VII", "Theo doi sua doi", "revision", "Xem bang Theo doi sua doi tren bia quy trinh."),
+            ("VIII", "Noi dung quy trinh", "procedure", "OCR_PENDING: khong duoc ban hanh khi chua co OCR va spot-check tung trang."),
+            ("IX", "Luu do", "flowchart", "Luu do duoc seed theo hinh trong PDF scan; can doi chieu lai khi OCR hoan tat."),
+            ("X", "Ho so bieu mau va phu luc", "records", "OCR_PENDING: danh muc bieu mau/phu luc theo PDF scan."),
+            ("XI", "Tep dinh kem", "appendices", "PDF scan nguon duoc gan kem voi checksum SHA-256.")
+        ];
+
+        for (var i = 0; i < sections.Length; i++)
+        {
+            store.AddProcedureDocumentSection(new ProcedureDocumentSection
+            {
+                ProcedureVersionId = versionId,
+                SectionOrder = i + 1,
+                SectionNumber = sections[i].number,
+                Title = sections[i].title,
+                SectionKind = sections[i].kind,
+                ContentText = sections[i].text
+            });
+        }
     }
 
     private static void SeedTechnicalServices(MedDataStore store)

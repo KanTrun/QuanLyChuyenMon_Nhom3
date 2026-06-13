@@ -9,6 +9,9 @@
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
 @inject AuditTrailService Audit
+@inject ProcedureSignoffService Signoffs
+@inject IProcedureDocumentExportService ProcedureExport
+@inject IJSRuntime JS
 @implements IDisposable
 
 <PageTitle>Quy trình kỹ thuật | QLCM Pro</PageTitle>
@@ -150,6 +153,19 @@
                                 <td>@AdminDateTimeDisplay.ShortDateTime(version.SubmittedAt)</td>
                                 <td>@AdminDateTimeDisplay.ShortDateTime(version.PublishedAt)</td>
                                 <td style="text-align:right;">
+                                    <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ExportVersionAsync(version)">In/PDF</button>
+                                    @if (SourceAttachment(version.ProcedureVersionId) is { } sourceAttachment)
+                                    {
+                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => DownloadAttachmentAsync(sourceAttachment)">Tệp nguồn</button>
+                                    }
+                                    @if (version.StatusCode == "draft")
+                                    {
+                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SignVersion(version, "writer")'>Ky nguoi viet</button>
+                                    }
+                                    @if (version.StatusCode == "pending_approval")
+                                    {
+                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SignVersion(version, "checker")'>Ky kiem tra</button>
+                                    }
                                     @if (version.StatusCode == "draft")
                                     {
                                         <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => SubmitAsync(version)">Gửi duyệt</button>
@@ -519,6 +535,58 @@
         }
     }
 
+    private void SignVersion(Sql.ProcedureVersion version, string role)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "ky xac nhan quy trinh")) return;
+        try
+        {
+            Signoffs.Sign(
+                version.ProcedureVersionId,
+                role,
+                UserContext.CurrentUser?.UserId,
+                UserContext.CurrentUser?.Username,
+                UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username);
+            Toasts.Show("Da ky xac nhan", $"{role}: {version.Title}", ToastVariant.Success);
+            Recompute();
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Khong the ky", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private async Task ExportVersionAsync(Sql.ProcedureVersion version)
+    {
+        try
+        {
+            var html = ProcedureExport.BuildProcedureDocumentHtml(version.ProcedureVersionId, DateTime.UtcNow);
+            var code = Store.Procedures.FirstOrDefault(p => p.ProcedureId == version.ProcedureId)?.ProcedureCode ?? "quy-trinh";
+            var fileName = $"{SafeFileNamePart(code)}-{SafeFileNamePart(version.VersionLabel ?? $"v{version.VersionNo}")}.html";
+            var ok = await JS.InvokeAsync<bool>("qlcmShell.downloadFile", fileName, html, "text/html;charset=utf-8");
+            Toasts.Show(ok ? "Da xuat HTML" : "Khong the tai tep", ok ? "Mo HTML de in hoac luu PDF." : "Trinh duyet tu choi tai tep.", ok ? ToastVariant.Success : ToastVariant.Warning);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Khong the xuat quy trinh", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private Sql.ProcedureAttachment? SourceAttachment(Guid versionId)
+        => Store.ProcedureAttachments.FirstOrDefault(attachment =>
+            attachment.ProcedureVersionId == versionId && attachment.AttachmentType == "source_pdf");
+
+    private async Task DownloadAttachmentAsync(Sql.ProcedureAttachment attachment)
+    {
+        var ok = await JS.InvokeAsync<bool>(
+            "qlcmShell.downloadProcedureAttachment",
+            attachment.ProcedureAttachmentId,
+            attachment.FileName);
+        Toasts.Show(
+            ok ? "Đã tải tệp nguồn" : "Không thể tải tệp nguồn",
+            ok ? attachment.FileName : "Phiên đăng nhập không hợp lệ hoặc tệp không còn tồn tại.",
+            ok ? ToastVariant.Success : ToastVariant.Warning);
+    }
+
     private void WithdrawAsync(Sql.ProcedureVersion version)
     {
         if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "thu hồi phiên bản")) return;
@@ -573,6 +641,11 @@
 
     private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
     private static bool Contains(string? value, string search) => value?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false;
+    private static string SafeFileNamePart(string? value)
+    {
+        var safe = new string((value ?? string.Empty).Where(c => char.IsLetterOrDigit(c) || c is '-' or '_').ToArray());
+        return string.IsNullOrWhiteSpace(safe) ? "quy-trinh" : safe;
+    }
     private static string VersionLabel(Sql.ProcedureVersion? version) => version is null ? "—" : version.VersionLabel ?? $"v{version.VersionNo}";
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
     private static string StatusLabel(string status) => Sql.MedLookups.VersionStatuses.FirstOrDefault(s => s.Code == status)?.Name

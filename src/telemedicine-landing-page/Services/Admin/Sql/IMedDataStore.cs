@@ -34,6 +34,10 @@ public interface IMedDataStore
     IReadOnlyList<ProcedureStep> ProcedureSteps { get; }
     IReadOnlyList<ProcedureAttachment> ProcedureAttachments { get; }
     IReadOnlyList<ProcedureScreenMapping> ProcedureScreenMappings { get; }
+    IReadOnlyList<ProcedureDocumentSection> ProcedureDocumentSections { get; }
+    IReadOnlyList<ProcedureDistributionRecipient> ProcedureDistributionRecipients { get; }
+    IReadOnlyList<ProcedureRevisionEntry> ProcedureRevisionEntries { get; }
+    IReadOnlyList<ProcedureSignoffRecord> ProcedureSignoffRecords { get; }
     IReadOnlyList<PatientRef> PatientRefs { get; }
     IReadOnlyList<EncounterRef> EncounterRefs { get; }
     IReadOnlyList<TechnicalService> TechnicalServices { get; }
@@ -49,7 +53,6 @@ public interface IMedDataStore
     IReadOnlyList<ProtocolApplicabilityRule> ProtocolApplicabilityRules { get; }
     IReadOnlyList<PatientProtocolApplication> PatientProtocolApplications { get; }
     IReadOnlyList<SignatureRecord> SignatureRecords { get; }
-    IReadOnlyList<SignatureTransactionRecord> SignatureTransactions { get; }
     IReadOnlyList<NotificationPreference> NotificationPreferences { get; }
     IReadOnlyList<MedNotification> Notifications { get; }
     IReadOnlyList<NotificationDeliveryAttempt> NotificationDeliveryAttempts { get; }
@@ -99,6 +102,11 @@ public interface IMedDataStore
     void RemoveProcedureAttachment(Guid attachmentId);
     void AddProcedureScreenMapping(ProcedureScreenMapping mapping);
     void RemoveProcedureScreenMapping(Guid mappingId);
+    void AddProcedureDocumentSection(ProcedureDocumentSection section);
+    void UpdateProcedureDocumentSection(ProcedureDocumentSection section);
+    void AddProcedureDistributionRecipient(ProcedureDistributionRecipient recipient);
+    void AddProcedureRevisionEntry(ProcedureRevisionEntry revision);
+    void AddProcedureSignoffRecord(ProcedureSignoffRecord signoff);
 
     void AddPatientRef(PatientRef patient);
     void UpdatePatientRef(PatientRef patient);
@@ -132,8 +140,6 @@ public interface IMedDataStore
     void AddPatientProtocolApplication(PatientProtocolApplication app);
     void UpdatePatientProtocolApplication(PatientProtocolApplication app);
     void AddSignatureRecord(SignatureRecord signature);
-    void AddSignatureTransaction(SignatureTransactionRecord transaction);
-    void UpdateSignatureTransaction(SignatureTransactionRecord transaction);
 
     void AddNotificationPreference(NotificationPreference pref);
     void UpdateNotificationPreference(NotificationPreference pref);

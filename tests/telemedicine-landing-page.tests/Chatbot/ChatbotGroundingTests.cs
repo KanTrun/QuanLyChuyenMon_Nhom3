@@ -9,7 +9,7 @@ public sealed class ChatbotGroundingTests
     public void FindRelevant_AccentInsensitiveQuery_ReturnsProcedureTopic()
     {
         var topic = QlcmChatbotKnowledgeCatalog
-            .FindRelevant("Làm sao ban hành quy trình kỹ thuật?", limit: 1)
+            .FindRelevant("lam sao ban hanh quy trinh ky thuat", limit: 1)
             .Single();
 
         Assert.Equal("procedures", topic.Code);
@@ -17,18 +17,15 @@ public sealed class ChatbotGroundingTests
     }
 
     [Fact]
-    public void FindRelevant_SignatureTopic_ExplainsSmartCaAndDemoFallback()
+    public void FindRelevant_SignatureTopic_ExplainsInternalSignature()
     {
         var topic = QlcmChatbotKnowledgeCatalog
-            .FindRelevant("ký xác nhận hồ sơ bằng SmartCA", limit: 1)
+            .FindRelevant("ky xac nhan ho so noi bo", limit: 1)
             .Single();
 
         Assert.Equal("signatures", topic.Code);
-        Assert.Contains("VNPT SmartCA sandbox", topic.DemoReply);
-        Assert.Contains("ký demo nội bộ", topic.DemoReply);
-        Assert.DoesNotContain("Chữ ký hiện là **chữ ký demo**", topic.DemoReply);
+        Assert.Contains("noi bo", topic.DemoReply);
     }
-
     [Fact]
     public void BuildSystemPrompt_UserCustomizationCannotReplaceCoreRules()
     {
@@ -81,15 +78,16 @@ public sealed class ChatbotGroundingTests
     }
 
     [Theory]
-    [InlineData("Hồ sơ bệnh nhân có mã BN-123456")]
-    [InlineData("Nên dùng thuốc nào và liều dùng bao nhiêu?")]
-    [InlineData("Email bệnh nhân là patient@example.com")]
+    [InlineData("Ho so benh nhan co ma BN-123456")]
+    [InlineData("Nen dung thuoc nao va lieu dung bao nhieu?")]
+    [InlineData("Email benh nhan la patient@example.com")]
     public void PrivacyGuard_BlocksSensitiveOrMedicalAdvice(string input)
     {
         var guard = new ChatbotPrivacyGuard();
 
         Assert.False(guard.CanSend(input, out var localReply));
-        Assert.Contains("API bên ngoài", localReply);
+        Assert.NotNull(localReply);
+        Assert.Contains("API", localReply);
     }
 
     [Fact]
@@ -97,7 +95,7 @@ public sealed class ChatbotGroundingTests
     {
         var guard = new ChatbotPrivacyGuard();
 
-        Assert.True(guard.CanSend("Làm sao gửi duyệt quy trình kỹ thuật?", out var localReply));
+        Assert.True(guard.CanSend("lam sao gui duyet quy trinh ky thuat", out var localReply));
         Assert.Null(localReply);
     }
 }

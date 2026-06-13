@@ -41,6 +41,10 @@ public sealed partial class MedDataStore : IMedDataStore
     private readonly List<ProcedureStep> _procedureSteps = new();
     private readonly List<ProcedureAttachment> _procedureAttachments = new();
     private readonly List<ProcedureScreenMapping> _procedureScreenMappings = new();
+    private readonly List<ProcedureDocumentSection> _procedureDocumentSections = new();
+    private readonly List<ProcedureDistributionRecipient> _procedureDistributionRecipients = new();
+    private readonly List<ProcedureRevisionEntry> _procedureRevisionEntries = new();
+    private readonly List<ProcedureSignoffRecord> _procedureSignoffRecords = new();
     private readonly List<PatientRef> _patientRefs = new();
     private readonly List<EncounterRef> _encounterRefs = new();
     private readonly List<TechnicalService> _technicalServices = new();
@@ -56,7 +60,6 @@ public sealed partial class MedDataStore : IMedDataStore
     private readonly List<ProtocolApplicabilityRule> _protocolRules = new();
     private readonly List<PatientProtocolApplication> _patientProtocolApps = new();
     private readonly List<SignatureRecord> _signatureRecords = new();
-    private readonly List<SignatureTransactionRecord> _signatureTransactions = new();
     private readonly List<NotificationPreference> _notificationPrefs = new();
     private readonly List<MedNotification> _notifications = new();
     private readonly List<NotificationDeliveryAttempt> _deliveryAttempts = new();
@@ -83,6 +86,10 @@ public sealed partial class MedDataStore : IMedDataStore
     public IReadOnlyList<ProcedureStep> ProcedureSteps => _procedureSteps;
     public IReadOnlyList<ProcedureAttachment> ProcedureAttachments => _procedureAttachments;
     public IReadOnlyList<ProcedureScreenMapping> ProcedureScreenMappings => _procedureScreenMappings;
+    public IReadOnlyList<ProcedureDocumentSection> ProcedureDocumentSections => _procedureDocumentSections;
+    public IReadOnlyList<ProcedureDistributionRecipient> ProcedureDistributionRecipients => _procedureDistributionRecipients;
+    public IReadOnlyList<ProcedureRevisionEntry> ProcedureRevisionEntries => _procedureRevisionEntries;
+    public IReadOnlyList<ProcedureSignoffRecord> ProcedureSignoffRecords => _procedureSignoffRecords;
     public IReadOnlyList<PatientRef> PatientRefs => _patientRefs;
     public IReadOnlyList<EncounterRef> EncounterRefs => _encounterRefs;
     public IReadOnlyList<TechnicalService> TechnicalServices => _technicalServices;
@@ -99,7 +106,6 @@ public sealed partial class MedDataStore : IMedDataStore
     public IReadOnlyList<ProtocolApplicabilityRule> ProtocolApplicabilityRules => _protocolRules;
     public IReadOnlyList<PatientProtocolApplication> PatientProtocolApplications => _patientProtocolApps;
     public IReadOnlyList<SignatureRecord> SignatureRecords => _signatureRecords;
-    public IReadOnlyList<SignatureTransactionRecord> SignatureTransactions => _signatureTransactions;
     public IReadOnlyList<NotificationPreference> NotificationPreferences => _notificationPrefs;
     public IReadOnlyList<MedNotification> Notifications => _notifications;
     public IReadOnlyList<NotificationDeliveryAttempt> NotificationDeliveryAttempts => _deliveryAttempts;

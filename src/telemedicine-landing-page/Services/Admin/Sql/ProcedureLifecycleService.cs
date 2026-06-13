@@ -1,6 +1,7 @@
 using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Application.Workflow;
 using TelemedicineLandingPage.Models.Admin.Sql;
+using TelemedicineLandingPage.Services.Admin;
 
 namespace TelemedicineLandingPage.Services.Admin.Sql;
 
@@ -13,6 +14,7 @@ public sealed class ProcedureLifecycleService
     private readonly MedDbContext _db;
     private readonly AuditTrailService _audit;
     private readonly IWorkflowGuard<ProcedureVersion, string> _workflow;
+    private readonly ProcedureDocumentSnapshotService? _documents;
 
     public ProcedureLifecycleService(MedDbContext db, AuditTrailService audit)
         : this(db, audit, new ProcedureVersionWorkflowGuard(audit))
@@ -27,6 +29,18 @@ public sealed class ProcedureLifecycleService
         _db = db;
         _audit = audit;
         _workflow = workflow;
+    }
+
+    public ProcedureLifecycleService(
+        MedDbContext db,
+        AuditTrailService audit,
+        IWorkflowGuard<ProcedureVersion, string> workflow,
+        ProcedureDocumentSnapshotService documents)
+    {
+        _db = db;
+        _audit = audit;
+        _workflow = workflow;
+        _documents = documents;
     }
 
     /// <summary>Tạo phiên bản mới cho quy trình (trạng thái draft).</summary>
@@ -76,6 +90,9 @@ public sealed class ProcedureLifecycleService
             throw MedDomainException.Constraint("CK_procedure_version_steps_required", 50021,
                 "Phiên bản phải có ít nhất một bước quy trình.");
 
+        EnsureDocumentReady(versionId, requireAllSignoffs: false);
+        EnsureCurrentSignoff(versionId, "writer", "CK_procedure_writer_signoff_required", 50027);
+
         var updated = ver with
         {
             StatusCode = "pending_approval",
@@ -107,6 +124,8 @@ public sealed class ProcedureLifecycleService
                 "Chỉ có thể xuất bản phiên bản đang chờ phê duyệt.");
 
         // Hủy kích hoạt phiên bản đang hiệu lực hiện tại (one-active guard)
+        EnsureDocumentReady(versionId, requireAllSignoffs: true);
+
         var currentPublished = _db.ProcedureVersions
             .Where(v => v.ProcedureId == ver.ProcedureId && v.StatusCode == "active")
             .ToList();
@@ -295,6 +314,32 @@ public sealed class ProcedureLifecycleService
         if (!_workflow.CanTransition(version.StatusCode, targetState))
         {
             throw MedDomainException.Constraint(constraintName, errorNumber, message);
+        }
+    }
+
+    private void EnsureDocumentReady(Guid versionId, bool requireAllSignoffs)
+    {
+        if (_documents is null) return;
+        var readiness = _documents.CheckReadiness(versionId, requireAllSignoffs);
+        if (!readiness.IsReady)
+        {
+            throw MedDomainException.Constraint(
+                "CK_procedure_document_ready",
+                50028,
+                "Quy trinh chua du dieu kien ban hanh: " + string.Join(", ", readiness.MissingItems));
+        }
+    }
+
+    private void EnsureCurrentSignoff(Guid versionId, string role, string constraintName, int errorNumber)
+    {
+        if (_documents is null) return;
+        var snapshot = _documents.GetSnapshot(versionId);
+        if (!_documents.HasCurrentSignoff(snapshot, role))
+        {
+            throw MedDomainException.Constraint(
+                constraintName,
+                errorNumber,
+                $"Thieu chu ky {role} hop le hoac chu ky da cu sau khi noi dung thay doi.");
         }
     }
 }

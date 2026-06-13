@@ -1,0 +1,98 @@
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+
+<section class="admin-panel">
+    <header class="admin-panel-head">
+        <div>
+            <h2 class="admin-panel-title">Lưu đồ và diễn giải từng bước</h2>
+            <p class="admin-form-field-hint">Chọn đúng hình theo chức năng: bắt đầu/kết thúc, xử lý, quyết định, dữ liệu hoặc tài liệu.</p>
+        </div>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddStep">Thêm bước</button>
+    </header>
+
+    <div class="admin-step-rows">
+        @for (var index = 0; index < Steps.Count; index++)
+        {
+            var step = Steps[index];
+            <article class="admin-step-row procedure-flow-step" @key="step">
+                <div class="admin-step-row-bullet">@(index + 1)</div>
+                <div class="procedure-flow-step-fields">
+                    <div class="admin-form-grid">
+                        <label class="admin-form-field">
+                            <span class="admin-form-field-label">Mã bước</span>
+                            <input class="admin-input" @bind="step.Code" />
+                        </label>
+                        <label class="admin-form-field">
+                            <span class="admin-form-field-label is-required">Tên bước</span>
+                            <input class="admin-input" @bind="step.Name" />
+                        </label>
+                        <label class="admin-form-field">
+                            <span class="admin-form-field-label">Hình lưu đồ</span>
+                            <select class="admin-select" @bind="step.ShapeCode">
+                                @foreach (var shape in FlowShapes)
+                                {
+                                    <option value="@shape.Code">@shape.Name</option>
+                                }
+                            </select>
+                        </label>
+                        <label class="admin-form-field">
+                            <span class="admin-form-field-label">Vai trò hệ thống</span>
+                            <select class="admin-select" @bind="step.RoleId">
+                                <option value="">Không chọn</option>
+                                @foreach (var role in Roles)
+                                {
+                                    <option value="@role.RoleId">@role.Name</option>
+                                }
+                            </select>
+                        </label>
+                        <label class="admin-form-field">
+                            <span class="admin-form-field-label is-required">Người/bộ phận chịu trách nhiệm</span>
+                            <input class="admin-input" @bind="step.Responsibility" />
+                        </label>
+                        <label class="admin-form-field">
+                            <span class="admin-form-field-label">Thời gian chuẩn (phút)</span>
+                            <input class="admin-input" type="number" min="0" @bind="step.Minutes" />
+                        </label>
+                        <label class="admin-form-field">
+                            <span class="admin-form-field-label">Mục diễn giải</span>
+                            <input class="admin-input" @bind="step.DetailSectionNumber" placeholder="VD: VII.3" />
+                        </label>
+                        <label class="admin-form-field">
+                            <span class="admin-form-field-label">Biểu mẫu/tài liệu liên quan</span>
+                            <input class="admin-input" @bind="step.FormReference" />
+                        </label>
+                        <label class="admin-form-field admin-form-field-full">
+                            <span class="admin-form-field-label is-required">Diễn giải thao tác</span>
+                            <textarea class="admin-textarea" rows="3" @bind="step.Description"></textarea>
+                        </label>
+                    </div>
+                </div>
+                <button type="button" class="admin-icon-btn is-danger" title="Xóa bước" @onclick="() => RemoveStep(step)">×</button>
+            </article>
+        }
+    </div>
+</section>
+
+@code {
+    private static readonly (string Code, string Name)[] FlowShapes =
+    [
+        ("terminator", "Bắt đầu / Kết thúc (bầu dục)"),
+        ("process", "Thao tác xử lý (chữ nhật)"),
+        ("decision", "Điểm quyết định (hình thoi)"),
+        ("data", "Dữ liệu vào/ra (bình hành)"),
+        ("document", "Tài liệu / hồ sơ")
+    ];
+
+    [Parameter, EditorRequired]
+    public required List<ProcedureFlowStepDraft> Steps { get; set; }
+
+    [Parameter, EditorRequired]
+    public required IReadOnlyList<Sql.Role> Roles { get; set; }
+
+    private void AddStep() => Steps.Add(new ProcedureFlowStepDraft
+    {
+        Code = $"BUOC-{Steps.Count + 1:00}",
+        ShapeCode = Steps.Count == 0 ? "terminator" : "process"
+    });
+
+    private void RemoveStep(ProcedureFlowStepDraft step) => Steps.Remove(step);
+}

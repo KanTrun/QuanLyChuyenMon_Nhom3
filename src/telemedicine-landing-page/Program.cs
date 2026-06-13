@@ -44,9 +44,9 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = HealthCheckJsonResponseWriter.WriteAsync
 });
-app.MapSmartCaSignatureEndpoints();
 app.MapStaticAssets();
 app.MapHub<NotificationHub>("/hubs/notification");
+app.MapProcedureAttachmentEndpoints();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 app.Run();

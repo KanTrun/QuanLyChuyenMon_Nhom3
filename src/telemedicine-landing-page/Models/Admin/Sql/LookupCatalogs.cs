@@ -151,6 +151,7 @@ public static class MedLookups
 
     public static IReadOnlyList<LookupEntry> AttachmentTypes { get; } = new[]
     {
+        new LookupEntry("source_pdf", "PDF nguồn"),
         new LookupEntry("sop", "SOP"),
         new LookupEntry("guideline", "Hướng dẫn"),
         new LookupEntry("form", "Biểu mẫu"),
