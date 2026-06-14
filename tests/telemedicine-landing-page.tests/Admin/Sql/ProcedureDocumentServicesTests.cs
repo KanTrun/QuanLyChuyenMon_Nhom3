@@ -59,6 +59,19 @@ public sealed class ProcedureDocumentServicesTests
     }
 
     [Fact]
+    public void CheckReadiness_MissingSignoffs_UsesVietnameseRoleLabels()
+    {
+        var (store, versionId) = CreateCompleteDocument();
+
+        var readiness = new ProcedureDocumentSnapshotService(store).CheckReadiness(versionId, requireSignoffs: true);
+
+        Assert.Contains("Chữ ký Người viết", readiness.MissingItems);
+        Assert.Contains("Chữ ký Người kiểm tra", readiness.MissingItems);
+        Assert.Contains("Chữ ký Người phê duyệt", readiness.MissingItems);
+        Assert.DoesNotContain(readiness.MissingItems, item => item.Contains("writer", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void Export_EscapesContentAndRendersFlowShapeAndSourceMetadata()
     {
         var (store, versionId) = CreateCompleteDocument("Quy trình <script>alert(1)</script>");

@@ -77,7 +77,7 @@ public sealed class ProcedureDocumentSnapshotService
             var section = snapshot.Sections.FirstOrDefault(s => string.Equals(s.SectionKind, kind, StringComparison.OrdinalIgnoreCase));
             if (section is null || (section.IsRequired && string.IsNullOrWhiteSpace(section.ContentText)))
             {
-                missing.Add($"Mục {kind}");
+                missing.Add($"Mục {SectionKindLabel(kind)}");
             }
         }
 
@@ -91,12 +91,34 @@ public sealed class ProcedureDocumentSnapshotService
             foreach (var role in ProcedureSignoffService.RequiredRoles)
             {
                 if (!HasCurrentSignoff(snapshot, role))
-                    missing.Add($"Chữ ký {role}");
+                    missing.Add($"Chữ ký {SignoffRoleLabel(role)}");
             }
         }
 
         return new ProcedureDocumentReadiness(missing.Count == 0, missing);
     }
+
+    private static string SectionKindLabel(string kind) => kind switch
+    {
+        "purpose" => "Mục đích",
+        "scope" => "Phạm vi áp dụng",
+        "basis" => "Căn cứ và tài liệu viện dẫn",
+        "definitions" => "Thuật ngữ và định nghĩa",
+        "responsibilities" => "Trách nhiệm",
+        "procedure" => "Nội dung quy trình",
+        "flowchart" => "Lưu đồ",
+        "records" => "Hồ sơ và biểu mẫu",
+        "appendices" => "Phụ lục",
+        _ => kind
+    };
+
+    private static string SignoffRoleLabel(string role) => role switch
+    {
+        "writer" => "Người viết",
+        "checker" => "Người kiểm tra",
+        "approver" => "Người phê duyệt",
+        _ => role
+    };
 
     public bool HasCurrentSignoff(ProcedureDocumentSnapshot snapshot, string role)
     {
