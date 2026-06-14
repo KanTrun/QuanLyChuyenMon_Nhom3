@@ -8,6 +8,21 @@ public sealed class MedDataStoreTests
 {
     private MedDataStore CreateStore() => new();
 
+    [Fact]
+    public void KsnkSeed_UsesVietnameseAndCanonicalV01Label()
+    {
+        var store = CreateStore();
+        var procedure = store.Procedures.Single(item => item.ProcedureCode == "QT.KSNK.09");
+        var version = store.ProcedureVersions.Single(item => item.ProcedureId == procedure.ProcedureId);
+
+        Assert.Equal("Quy trình xử lý dụng cụ phẫu thuật", procedure.Name);
+        Assert.Contains("đang chờ OCR đầy đủ", procedure.Description);
+        Assert.Equal("v01", version.VersionLabel);
+        Assert.Contains(store.ProcedureDocumentSections, item => item.ProcedureVersionId == version.ProcedureVersionId && item.Title == "Mục đích");
+        Assert.Contains(store.ProcedureSteps, item => item.ProcedureVersionId == version.ProcedureVersionId && item.Name == "Tiệt khuẩn dụng cụ");
+        Assert.Contains(store.ProcedureDistributionRecipients, item => item.ProcedureVersionId == version.ProcedureVersionId && item.RecipientName == "Ban Giám đốc");
+    }
+
     // === 1. Closure table: self-edge tồn tại ===
     [Fact]
     public void AddDepartment_CreatesSelfEdgeInClosure()

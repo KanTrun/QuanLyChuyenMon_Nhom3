@@ -496,41 +496,41 @@ public static class MedDataStoreSeed
             ProcKsnk09Id,
             ProcKsnk09VersionId,
             "QT.KSNK.09",
-            "Quy trinh xu ly dung cu phau thuat",
+            "Quy trình xử lý dụng cụ phẫu thuật",
             "2145_QUY TRÌNH XỬ LÝ DỤNG CỤ PHẪU THUẬT.pdf",
             "C77CA23EA777CFFE94D28F110AB6A58BB8C630248FF04D1CD22A8A0C718C5C8A",
             30688980,
-            ["Lam sach dung cu", "Giao nhan dung cu sau khi lam sach", "Lam sach, khu khuan dung cu", "Bao duong - kiem tra dung cu", "Dong goi dung cu", "Tiet khuan dung cu", "Giam sat chat luong tiet khuan dung cu", "Luu tru dung cu", "Giao nhan dung cu sau khi tiet khuan"]);
+            ["Làm sạch dụng cụ", "Giao nhận dụng cụ sau khi làm sạch", "Làm sạch, khử khuẩn dụng cụ", "Bảo dưỡng - kiểm tra dụng cụ", "Đóng gói dụng cụ", "Tiệt khuẩn dụng cụ", "Giám sát chất lượng tiệt khuẩn dụng cụ", "Lưu trữ dụng cụ", "Giao nhận dụng cụ sau khi tiệt khuẩn"]);
         SeedKsnkProcedure(
             store,
             ProcKsnk12Id,
             ProcKsnk12VersionId,
             "QT.KSNK.12",
-            "Quy trinh xu ly dung cu y te",
+            "Quy trình xử lý dụng cụ y tế",
             "2145_QUY TRÌNH XỬ LÝ DỤNG CỤ Y TẾ.pdf",
             "A81D27EF2338C86280A6F9A8300D5537A6A68BA4A3B74771BB987B9419166F44",
             26591000,
-            ["Lam sach, khu khuan dung cu", "Giao nhan dung cu sau khi lam sach", "Lam sach, khu khuan dung cu", "Bao duong - kiem tra dung cu", "Dong goi dung cu", "Tiet khuan dung cu", "Giam sat chat luong tiet khuan dung cu", "Luu tru dung cu", "Giao nhan dung cu sau khi tiet khuan"]);
+            ["Làm sạch, khử khuẩn dụng cụ", "Giao nhận dụng cụ sau khi làm sạch", "Làm sạch, khử khuẩn dụng cụ", "Bảo dưỡng - kiểm tra dụng cụ", "Đóng gói dụng cụ", "Tiệt khuẩn dụng cụ", "Giám sát chất lượng tiệt khuẩn dụng cụ", "Lưu trữ dụng cụ", "Giao nhận dụng cụ sau khi tiệt khuẩn"]);
         SeedKsnkProcedure(
             store,
             ProcKsnk16Id,
             ProcKsnk16VersionId,
             "QT.KSNK.16",
-            "Quy trinh khu khuan muc do cao dung cu y te",
+            "Quy trình khử khuẩn mức độ cao dụng cụ y tế",
             "2145_QUY TRÌNH KHỬ KHUẨN MỨC ĐỘ CAO DỤNG CỤ Y TẾ.pdf",
             "F0E0EE39369E3815FF6634A217555A15F68DD878D040CCBC3A23B23C8631892A",
             11543000,
-            ["Lam sach dung cu", "Giao nhan dung cu sau khi lam sach", "Khu khuan muc do cao dung cu", "Dong goi dung cu", "Luu tru dung cu tai khoa KSNK", "Giao nhan dung cu vo khuan"]);
+            ["Làm sạch dụng cụ", "Giao nhận dụng cụ sau khi làm sạch", "Khử khuẩn mức độ cao dụng cụ", "Đóng gói dụng cụ", "Lưu trữ dụng cụ tại khoa KSNK", "Giao nhận dụng cụ vô khuẩn"]);
         SeedKsnkProcedure(
             store,
             ProcKsnk17Id,
             ProcKsnk17VersionId,
             "QT.KSNK.17",
-            "Quy trinh xu ly tay khoan nha khoa",
+            "Quy trình xử lý tay khoan nha khoa",
             "2145_QUY TRÌNH XỬ LÝ TAY KHOAN NHA KHOA.pdf",
             "40A3241A42BB0B803A75A599B55EEA95D6EC55917CEBF91FCF26F26D717CC4A5",
             6530255,
-            ["Chuan bi", "Lam sach", "Khu khuan", "Tra dau boi tron", "Giao nhan dung cu sau khi lam sach, khu khuan", "Dong goi", "Tiet khuan", "Luu tru tai khoa KSNK", "Giao nhan dung cu sau khi tiet khuan"]);
+            ["Chuẩn bị", "Làm sạch", "Khử khuẩn", "Tra dầu bôi trơn", "Giao nhận dụng cụ sau khi làm sạch, khử khuẩn", "Đóng gói", "Tiệt khuẩn", "Lưu trữ tại khoa KSNK", "Giao nhận dụng cụ sau khi tiệt khuẩn"]);
     }
 
     private static void SeedKsnkProcedure(
@@ -551,7 +551,7 @@ public static class MedDataStoreSeed
             Name = title,
             ProcedureType = "technical",
             OwnerDepartmentId = DeptHcId,
-            Description = "Nhap tu PDF scan 2145; dang cho OCR day du tung trang truoc khi ban hanh.",
+            Description = "Nhập từ PDF scan 2145; đang chờ OCR đầy đủ từng trang trước khi ban hành.",
             CreatedBy = AdminUserId
         });
 
@@ -560,12 +560,12 @@ public static class MedDataStoreSeed
             ProcedureVersionId = versionId,
             ProcedureId = procedureId,
             VersionNo = 1,
-            VersionLabel = "lan-02-scan",
+            VersionLabel = "v01",
             StatusCode = "draft",
             DepartmentId = DeptHcId,
             Title = title,
-            Summary = "{\"ocrStatus\":\"OCR_PENDING\",\"note\":\"PDF scan la nguon su that; chi seed metadata va luu do da spot-check tu anh render.\"}",
-            ChangeReason = "Nhap quy trinh KSNK tu PDF scan",
+            Summary = "{\"ocrStatus\":\"OCR_PENDING\",\"note\":\"PDF scan là nguồn sự thật; chỉ seed metadata và lưu đồ đã spot-check từ ảnh render.\"}",
+            ChangeReason = "Nhập quy trình KSNK từ PDF scan",
             IssueDate = new DateTime(2026, 3, 19),
             IssueNumber = 2,
             SourcePdfFileName = pdfFileName,
@@ -574,10 +574,10 @@ public static class MedDataStoreSeed
         });
 
         AddDefaultProcedureSections(store, versionId);
-        store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 1, RecipientName = "Ban Giam doc" });
-        store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 2, RecipientName = "Khoa Kiem soat nhiem khuan" });
-        store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 3, RecipientName = "Cac khoa/phong su dung dung cu" });
-        store.AddProcedureRevisionEntry(new ProcedureRevisionEntry { ProcedureVersionId = versionId, DisplayOrder = 1, RevisionDate = new DateTime(2026, 3, 19), PageRef = "Toan van", SectionRef = "Lan 02", Summary = "Ban hanh theo PDF scan so 2145; noi dung chi tiet cho OCR/doi chieu." });
+        store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 1, RecipientName = "Ban Giám đốc" });
+        store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 2, RecipientName = "Khoa Kiểm soát nhiễm khuẩn" });
+        store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 3, RecipientName = "Các khoa/phòng sử dụng dụng cụ" });
+        store.AddProcedureRevisionEntry(new ProcedureRevisionEntry { ProcedureVersionId = versionId, DisplayOrder = 1, RevisionDate = new DateTime(2026, 3, 19), PageRef = "Toàn văn", SectionRef = "Lần 02", Summary = "Ban hành theo PDF scan số 2145; nội dung chi tiết chờ OCR và đối chiếu." });
 
         for (var i = 0; i < steps.Count; i++)
         {
@@ -587,8 +587,8 @@ public static class MedDataStoreSeed
                 StepNo = i + 1,
                 StepCode = $"B{i + 1:00}",
                 Name = steps[i],
-                Description = "OCR_PENDING: dien giai chi tiet can trich xuat va doi chieu tu tung trang PDF scan.",
-                ResponsibilityText = i == 0 ? "Khoa su dung / KSNK" : "Khoa KSNK",
+                Description = "OCR_PENDING: diễn giải chi tiết cần trích xuất và đối chiếu từ từng trang PDF scan.",
+                ResponsibilityText = i == 0 ? "Khoa sử dụng / Khoa KSNK" : "Khoa KSNK",
                 FlowShapeCode = i == 0 || i == steps.Count - 1 ? "terminator" : "process",
                 DetailSectionNumber = "VIII",
                 ActorRoleId = RoleClinicalId,
@@ -613,17 +613,17 @@ public static class MedDataStoreSeed
     {
         (string number, string title, string kind, string text)[] sections =
         [
-            ("I", "Muc dich", "purpose", "OCR_PENDING: trich xuat tu PDF scan truoc khi ban hanh."),
-            ("II", "Pham vi ap dung", "scope", "OCR_PENDING: ap dung theo dung pham vi trong PDF scan."),
-            ("III", "Can cu va tai lieu vien dan", "basis", "Quyet dinh 3671/QD-BYT, quy dinh KSNK hien hanh va PDF scan nguon."),
-            ("IV", "Thuat ngu va dinh nghia", "definitions", "OCR_PENDING: bo sung thuat ngu y te dung theo PDF scan."),
-            ("V", "Trach nhiem", "responsibilities", "OCR_PENDING: nguoi viet, nguoi kiem tra, nguoi phe duyet va khoa/phong lien quan."),
-            ("VI", "Noi nhan va phan phoi", "distribution", "Xem bang Noi nhan tren bia quy trinh."),
-            ("VII", "Theo doi sua doi", "revision", "Xem bang Theo doi sua doi tren bia quy trinh."),
-            ("VIII", "Noi dung quy trinh", "procedure", "OCR_PENDING: khong duoc ban hanh khi chua co OCR va spot-check tung trang."),
-            ("IX", "Luu do", "flowchart", "Luu do duoc seed theo hinh trong PDF scan; can doi chieu lai khi OCR hoan tat."),
-            ("X", "Ho so bieu mau va phu luc", "records", "OCR_PENDING: danh muc bieu mau/phu luc theo PDF scan."),
-            ("XI", "Tep dinh kem", "appendices", "PDF scan nguon duoc gan kem voi checksum SHA-256.")
+            ("I", "Mục đích", "purpose", "OCR_PENDING: trích xuất từ PDF scan trước khi ban hành."),
+            ("II", "Phạm vi áp dụng", "scope", "OCR_PENDING: áp dụng theo đúng phạm vi trong PDF scan."),
+            ("III", "Căn cứ và tài liệu viện dẫn", "basis", "Quyết định 3671/QĐ-BYT, quy định KSNK hiện hành và PDF scan nguồn."),
+            ("IV", "Thuật ngữ và định nghĩa", "definitions", "OCR_PENDING: bổ sung thuật ngữ y tế đúng theo PDF scan."),
+            ("V", "Trách nhiệm", "responsibilities", "OCR_PENDING: người viết, người kiểm tra, người phê duyệt và khoa/phòng liên quan."),
+            ("VI", "Nơi nhận và phân phối", "distribution", "Xem bảng Nơi nhận trên bìa quy trình."),
+            ("VII", "Theo dõi sửa đổi", "revision", "Xem bảng Theo dõi sửa đổi trên bìa quy trình."),
+            ("VIII", "Nội dung quy trình", "procedure", "OCR_PENDING: không được ban hành khi chưa có OCR và spot-check từng trang."),
+            ("IX", "Lưu đồ", "flowchart", "Lưu đồ được seed theo hình trong PDF scan; cần đối chiếu lại khi OCR hoàn tất."),
+            ("X", "Hồ sơ, biểu mẫu và phụ lục", "records", "OCR_PENDING: danh mục biểu mẫu/phụ lục theo PDF scan."),
+            ("XI", "Tệp đính kèm", "appendices", "PDF scan nguồn được gắn kèm với checksum SHA-256.")
         ];
 
         for (var i = 0; i < sections.Length; i++)
