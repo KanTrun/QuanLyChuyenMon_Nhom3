@@ -63,6 +63,15 @@ public sealed class ProcedureDocumentServicesTests
     {
         var (store, versionId) = CreateCompleteDocument("Quy trình <script>alert(1)</script>");
         var snapshots = new ProcedureDocumentSnapshotService(store);
+        var hash = snapshots.ComputeContentHash(versionId);
+        store.AddProcedureSignoffRecord(new ProcedureSignoffRecord
+        {
+            ProcedureVersionId = versionId,
+            SignoffRole = "writer",
+            SignerFullName = "Điều dưỡng Nguyễn An",
+            ContentHashSha256 = hash,
+            SignatureImageDataUrl = "data:image/png;base64,AAAA"
+        });
         var html = new ProcedureDocumentExportService(snapshots)
             .BuildProcedureDocumentHtml(versionId, new DateTime(2026, 6, 13, 8, 0, 0, DateTimeKind.Utc));
 
@@ -72,6 +81,14 @@ public sealed class ProcedureDocumentServicesTests
         Assert.Contains("source.pdf", html);
         Assert.Contains("ABC123", html);
         Assert.Contains(store.Departments.First(item => item.DepartmentId == MedDataStoreSeed.DeptNoiId).Name, html);
+        Assert.Contains("BỆNH VIỆN UNG BƯỚU", html);
+        Assert.Contains("In / Lưu PDF", html);
+        Assert.Contains("Điều dưỡng Nguyễn An", html);
+        Assert.Contains("data:image/png;base64,AAAA", html);
+        Assert.Contains("Chịu trách nhiệm", html);
+        Assert.Contains("LƯU ĐỒ QUY TRÌNH <span class=\"continuation\">(2/2)</span>", html);
+        Assert.True(Count(html, "<section class=\"page\">") >= 14);
+        Assert.Contains("Trang 1 /", html);
     }
 
     private static (MedDataStore Store, Guid VersionId) CreateCompleteDocument(string name = "Quy trình kiểm thử")
@@ -126,15 +143,23 @@ public sealed class ProcedureDocumentServicesTests
             RevisionDate = new DateTime(2026, 6, 13),
             Summary = "Ban hành lần đầu"
         });
-        store.AddProcedureStep(new ProcedureStep
+        var shapes = new[] { "terminator", "process", "decision", "data", "document" };
+        for (var i = 0; i < shapes.Length; i++)
         {
-            ProcedureVersionId = version.ProcedureVersionId,
-            StepNo = 1,
-            Name = "Kiểm tra điều kiện",
-            Description = "Đối chiếu hồ sơ và điều kiện thực hiện",
-            ResponsibilityText = "Điều dưỡng KSNK",
-            FlowShapeCode = "decision"
-        });
+            store.AddProcedureStep(new ProcedureStep
+            {
+                ProcedureVersionId = version.ProcedureVersionId,
+                StepNo = i + 1,
+                StepCode = $"B{i + 1:00}",
+                Name = $"Bước kiểm soát {i + 1}",
+                Description = "Đối chiếu hồ sơ và điều kiện thực hiện",
+                ResponsibilityText = "Điều dưỡng KSNK",
+                FormReferenceText = "BM.KSNK.01",
+                DetailSectionNumber = "VIII",
+                StandardDurationMinutes = 10,
+                FlowShapeCode = shapes[i]
+            });
+        }
         store.AddProcedureAttachment(new ProcedureAttachment
         {
             ProcedureVersionId = version.ProcedureVersionId,
@@ -148,4 +173,7 @@ public sealed class ProcedureDocumentServicesTests
 
         return (store, version.ProcedureVersionId);
     }
+
+    private static int Count(string value, string token)
+        => (value.Length - value.Replace(token, string.Empty, StringComparison.Ordinal).Length) / token.Length;
 }

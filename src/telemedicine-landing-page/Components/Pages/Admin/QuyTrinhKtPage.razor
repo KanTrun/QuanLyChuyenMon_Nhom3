@@ -104,6 +104,10 @@
                 <td style="text-align:right;" @onclick:stopPropagation="true">
                     <div class="admin-row-actions">
                         <button type="button" class="admin-icon-btn" title="Xem" @onclick="() => OpenDetail(row)">☰</button>
+                        @if (row.LatestVersion is not null)
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => ExportVersionAsync(row.LatestVersion)">In/PDF</button>
+                        }
                         <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenUpdate(row)">Cập nhật</button>
                         @if (row.Procedure.Status == "archived")
                         {
@@ -154,7 +158,7 @@
                                 <td>@AdminDateTimeDisplay.ShortDateTime(version.SubmittedAt)</td>
                                 <td>@AdminDateTimeDisplay.ShortDateTime(version.PublishedAt)</td>
                                 <td style="text-align:right;">
-                                    <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ExportVersionAsync(version)">In/PDF</button>
+                                    <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => ExportVersionAsync(version)">Xem bản in / PDF</button>
                                     @if (SourceAttachment(version.ProcedureVersionId) is { } sourceAttachment)
                                     {
                                         <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => DownloadAttachmentAsync(sourceAttachment)">Tệp nguồn</button>
@@ -397,12 +401,15 @@
             var html = ProcedureExport.BuildProcedureDocumentHtml(version.ProcedureVersionId, DateTime.UtcNow);
             var code = Store.Procedures.FirstOrDefault(p => p.ProcedureId == version.ProcedureId)?.ProcedureCode ?? "quy-trinh";
             var fileName = $"{SafeFileNamePart(code)}-{SafeFileNamePart(version.VersionLabel ?? $"v{version.VersionNo}")}.html";
-            var ok = await JS.InvokeAsync<bool>("qlcmShell.downloadFile", fileName, html, "text/html;charset=utf-8");
-            Toasts.Show(ok ? "Da xuat HTML" : "Khong the tai tep", ok ? "Mo HTML de in hoac luu PDF." : "Trinh duyet tu choi tai tep.", ok ? ToastVariant.Success : ToastVariant.Warning);
+            var ok = await JS.InvokeAsync<bool>("qlcmShell.openPrintableHtml", fileName, html);
+            Toasts.Show(
+                ok ? "Đã mở bản in A4" : "Không thể mở bản in",
+                ok ? "Chọn In / Lưu PDF trong tab bản xem trước." : "Trình duyệt đã từ chối mở hoặc tải tệp.",
+                ok ? ToastVariant.Success : ToastVariant.Warning);
         }
         catch (Exception ex)
         {
-            Toasts.Show("Khong the xuat quy trinh", ex.Message, ToastVariant.Error);
+            Toasts.Show("Không thể xuất quy trình", ex.Message, ToastVariant.Error);
         }
     }
 

@@ -194,6 +194,24 @@
         return downloadFile(filename || 'bao-cao.csv', content, 'text/csv;charset=utf-8');
     }
 
+    function openPrintableHtml(filename, content) {
+        try {
+            var blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+            var url = window.URL.createObjectURL(blob);
+            var preview = window.open(url, '_blank');
+            if (!preview) {
+                window.URL.revokeObjectURL(url);
+                return downloadFile(filename || 'quy-trinh.html', content, 'text/html;charset=utf-8');
+            }
+            try { preview.opener = null; } catch (_) { /* ignore */ }
+            window.setTimeout(function () { window.URL.revokeObjectURL(url); }, 120000);
+            return true;
+        } catch (err) {
+            console && console.warn && console.warn('qlcmShell openPrintableHtml error:', err);
+            return false;
+        }
+    }
+
     async function downloadProcedureAttachment(attachmentId, filename) {
         try {
             var token = window.sessionStorage.getItem('qlcm_session');
@@ -569,6 +587,7 @@
         focusElement: focusElement,
         lockBodyScroll: lockBodyScroll,
         downloadFile: downloadFile,
+        openPrintableHtml: openPrintableHtml,
         downloadCsv: downloadCsv,
         downloadProcedureAttachment: downloadProcedureAttachment,
         registerOutsideClick: registerOutsideClick,

@@ -61,29 +61,29 @@ public sealed class ProcedureDocumentSnapshotService
     {
         var snapshot = GetSnapshot(versionId);
         var missing = new List<string>();
-        if (string.IsNullOrWhiteSpace(snapshot.Procedure.ProcedureCode)) missing.Add("Ma quy trinh");
-        if (string.IsNullOrWhiteSpace(snapshot.Version.Title)) missing.Add("Tieu de phien ban");
-        if (snapshot.Version.IssueDate is null) missing.Add("Ngay ban hanh");
-        if (snapshot.Version.IssueNumber is null) missing.Add("Lan ban hanh");
-        if (string.IsNullOrWhiteSpace(snapshot.Version.SourcePdfFileName)) missing.Add("Ten PDF nguon");
-        if (string.IsNullOrWhiteSpace(snapshot.Version.SourcePdfChecksumSha256)) missing.Add("Checksum PDF nguon");
-        if (snapshot.Attachments.Count == 0) missing.Add("Tep dinh kem PDF nguon");
-        if (snapshot.Steps.Count == 0) missing.Add("Noi dung cac buoc quy trinh");
-        if (snapshot.Recipients.Count == 0) missing.Add("Noi nhan");
-        if (snapshot.Revisions.Count == 0) missing.Add("Bang theo doi sua doi");
+        if (string.IsNullOrWhiteSpace(snapshot.Procedure.ProcedureCode)) missing.Add("Mã quy trình");
+        if (string.IsNullOrWhiteSpace(snapshot.Version.Title)) missing.Add("Tiêu đề phiên bản");
+        if (snapshot.Version.IssueDate is null) missing.Add("Ngày ban hành");
+        if (snapshot.Version.IssueNumber is null) missing.Add("Lần ban hành");
+        if (string.IsNullOrWhiteSpace(snapshot.Version.SourcePdfFileName)) missing.Add("Tên PDF nguồn");
+        if (string.IsNullOrWhiteSpace(snapshot.Version.SourcePdfChecksumSha256)) missing.Add("Checksum PDF nguồn");
+        if (snapshot.Attachments.Count == 0) missing.Add("Tệp đính kèm PDF nguồn");
+        if (snapshot.Steps.Count == 0) missing.Add("Nội dung các bước quy trình");
+        if (snapshot.Recipients.Count == 0) missing.Add("Nơi nhận");
+        if (snapshot.Revisions.Count == 0) missing.Add("Bảng theo dõi sửa đổi");
 
         foreach (var kind in RequiredSectionKinds)
         {
             var section = snapshot.Sections.FirstOrDefault(s => string.Equals(s.SectionKind, kind, StringComparison.OrdinalIgnoreCase));
             if (section is null || (section.IsRequired && string.IsNullOrWhiteSpace(section.ContentText)))
             {
-                missing.Add($"Muc {kind}");
+                missing.Add($"Mục {kind}");
             }
         }
 
         if (snapshot.Sections.Any(s => s.ContentText?.Contains("OCR_PENDING", StringComparison.OrdinalIgnoreCase) == true))
         {
-            missing.Add("OCR day du tung trang PDF");
+            missing.Add("OCR đầy đủ từng trang PDF");
         }
 
         if (requireSignoffs)
@@ -91,7 +91,7 @@ public sealed class ProcedureDocumentSnapshotService
             foreach (var role in ProcedureSignoffService.RequiredRoles)
             {
                 if (!HasCurrentSignoff(snapshot, role))
-                    missing.Add($"Chu ky {role}");
+                    missing.Add($"Chữ ký {role}");
             }
         }
 

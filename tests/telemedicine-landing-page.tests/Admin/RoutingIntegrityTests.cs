@@ -89,6 +89,20 @@ public sealed class RoutingIntegrityTests
     }
 
     [Fact]
+    public void ProcedureList_ExposesProfessionalPrintPreview()
+    {
+        var root = FindRepositoryRoot();
+        var procedurePage = File.ReadAllText(Path.Combine(root, "src", "telemedicine-landing-page", "Components", "Pages", "Admin", "QuyTrinhKtPage.razor"));
+        var shellScript = File.ReadAllText(Path.Combine(root, "src", "telemedicine-landing-page", "wwwroot", "js", "admin-shell.js"));
+
+        Assert.Contains(">In/PDF</button>", procedurePage);
+        Assert.Contains("Xem bản in / PDF", procedurePage);
+        Assert.Contains("qlcmShell.openPrintableHtml", procedurePage);
+        Assert.Contains("openPrintableHtml: openPrintableHtml", shellScript);
+        Assert.Contains("window.open(url, '_blank')", shellScript);
+    }
+
+    [Fact]
     public void RazorPageRoutes_AreUniqueAcrossComponents()
     {
         var root = FindRepositoryRoot();
