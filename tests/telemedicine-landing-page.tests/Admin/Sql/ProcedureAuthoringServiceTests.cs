@@ -51,10 +51,12 @@ public sealed class ProcedureAuthoringServiceTests
 
         Assert.Equal(2, updated.Version.VersionNo);
         Assert.Equal("v02", updated.Version.VersionLabel);
+        Assert.Equal(2, store.ProcedureVersions.Count(item => item.ProcedureId == original.Procedure.ProcedureId));
         Assert.Equal("archived", store.ProcedureVersions.Single(item => item.ProcedureVersionId == original.Version.ProcedureVersionId).StatusCode);
         Assert.Equal("Nội dung v01", store.ProcedureDocumentSections.Single(item => item.ProcedureVersionId == original.Version.ProcedureVersionId).ContentText);
         Assert.Equal("Nội dung v02", store.ProcedureDocumentSections.Single(item => item.ProcedureVersionId == updated.Version.ProcedureVersionId).ContentText);
         Assert.Single(store.ProcedureAttachments, item => item.ProcedureVersionId == updated.Version.ProcedureVersionId);
+        Assert.Single(store.ProcedureAttachments, item => item.ProcedureVersionId == original.Version.ProcedureVersionId);
         Assert.Single(store.ProcedureVersionResourceNorms, item => item.ProcedureVersionId == updated.Version.ProcedureVersionId);
         Assert.Single(store.ProcedureScreenMappings, item => item.ProcedureVersionId == updated.Version.ProcedureVersionId);
         Assert.DoesNotContain(store.ProcedureSignoffRecords, item => item.ProcedureVersionId == updated.Version.ProcedureVersionId);
