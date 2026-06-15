@@ -19,9 +19,9 @@ Source hiện tại là Blazor Web App `net9.0` tại `src/telemedicine-landing-
 | Business workflow completion | Complete | Runtime procedure guard, scheduled permission apply job, inventory snapshot service, ICD protocol suggestions and persona route gating |
 | Grounded chatbot safety | Complete | Core QLCM knowledge catalog, permission-scoped aggregate context, local privacy guard, header-based Gemini auth, per-circuit AI settings and manual user-owned key policy |
 | System-wide remediation | Complete | Dark signature visibility, archive filters/lifecycle, collapsed sidebar responsiveness, token-bound realtime session, professional clinical dossier export, Docker chatbot config |
-| Internal procedure documents | Complete | Professional authoring, A4 export, internal writer/checker/approver signoffs and immutable version updates `v01`, `v02`... |
+| Internal procedure documents | Complete | Professional authoring, three-column source-faithful flowcharts, paginated A4 export, internal writer/checker/approver signoffs and immutable version updates `v01`, `v02`... |
 | Seed data | Complete | `scripts/seed-realistic-data.sql` nạp dữ liệu mẫu thực tế cho demo/QA |
-| Verification | Complete | Release build `0 warnings, 0 errors`; full solution `226/226`; Docker Compose config valid |
+| Verification | Complete | Release build `0 warnings, 0 errors`; full solution `230/230`; 15-page procedure PDF and Docker runtime verified |
 
 ## Legacy Landing Cleanup Track
 | Item | Status | Output |
@@ -50,8 +50,8 @@ Roadmap cho module quản lý quy trình kỹ thuật chuyên môn. Track này �
 | Architecture blueprint | 100% |
 | Implementation plan | 100% |
 | Code implementation | 100% for implementation-plan scope |
-| Test automation | Release build `0 warnings, 0 errors`; full solution `226/226` |
-| Deployment readiness | Docker Compose config valid; web/sql/db-init verified locally; internal procedure signing, immutable versioning and A4 export enabled |
+| Test automation | Release build `0 warnings, 0 errors`; full solution `230/230` |
+| Deployment readiness | Docker Compose config valid; web/sql/db-init verified locally; internal procedure signing, immutable versioning and 15-page A4 export enabled |
 
 ## Dependencies
 | Dependency | Needed For |

@@ -1,10 +1,51 @@
 # Project Changelog
 
+## 2026-06-15
+### Changed
+| Item | Description |
+|---|---|
+| Source-faithful KSNK flowchart | Replaced the detached flow cards with a three-column table matching the scan: `Trách nhiệm`, `Các bước thực hiện`, `Mô tả / Các biểu mẫu`; each step name is rendered inside its semantic flow shape |
+| Readable procedure content | Removed visible `OCR_PENDING` markers from seeded sections and steps; the OCR publication gate remains in version metadata and readiness validation |
+| QT.KSNK.09 references | Added the page-5 source responsibilities, `5.2.1` through `5.2.8`, `BM.KSNK.09.*` references and appendices to all existing v01/v02 history |
+
+### Fixed
+| Item | Description |
+|---|---|
+| Flowchart A4 pagination | Compacted only the flowchart page so all nine rows and the page footer remain on one A4 sheet without a footer-only spill page |
+| Internal signoff labels | Localized writer/checker/approver actions, confirmations and validation errors; user-facing workflow no longer exposes unsigned Vietnamese text or raw role codes |
+
+### Verification
+| Check | Result |
+|---|---|
+| Build/test | Release build clean with `0 warnings, 0 errors`; `230/230` tests passed |
+| SQL migration | Docker db-init applied the flow-content migration to 42 procedure steps and 55 document sections |
+| Printable PDF | QT.KSNK.09 v02 exported as exactly 15 A4 pages; page 14 contains the complete nine-row flowchart and `Trang 14 / 15` footer |
+| Runtime | Docker web healthy on `localhost:8080`; browser preview contains no `OCR_PENDING` or raw `writer` role code |
+
 ## 2026-06-14
+### Added
+| Item | Description |
+|---|---|
+| Visible procedure print action | Added `In/PDF` to each procedure row and version detail, opening a self-contained A4 preview with hospital branding, document control, Roman sections, flowcharts, attachments and internal signoff evidence |
+
 ### Changed
 | Item | Description |
 |---|---|
 | Hospital logo | Replaced the web-wide logo and favicon with `assets/logo_hos.jpg`, including login, registration, landing page, sidebars and printable clinical exports |
+| KSNK Vietnamese content | Localized all four seeded KSNK procedures and existing version history, including titles, recipients, revision entries, section headings, flow steps, responsibilities and source PDF names |
+
+### Fixed
+| Item | Description |
+|---|---|
+| A4 cover pagination | Compressed cover spacing so the signature table and footer stay on page 1 without generating a footer-only page |
+| Approval readiness labels | Replaced internal role codes with `Người viết`, `Người kiểm tra` and `Người phê duyệt` in printable readiness warnings |
+
+### Verification
+| Check | Result |
+|---|---|
+| Build/test | Release build clean; `229/229` tests passed |
+| Printable PDF | Initial paginated QT.KSNK.09 v02 export verified cover, 11 Roman sections, flowchart pages and attachment/signoff trace before the 15-page source-faithful table refinement |
+| Version history | Browser smoke confirmed latest v02 remains editable while v01 is preserved in the procedure history |
 
 ## 2026-06-13
 ### Added
