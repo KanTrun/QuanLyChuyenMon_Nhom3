@@ -12,7 +12,7 @@ import fitz
 
 PROCEDURES = {
     "QT.KSNK.09": "PHẪU THUẬT",
-    "QT.KSNK.12": "DỤNG CỤ Y TẾ.pdf",
+    "QT.KSNK.12": "XỬ LÝ DỤNG CỤ Y TẾ.pdf",
     "QT.KSNK.16": "KHỬ KHUẨN MỨC ĐỘ CAO",
     "QT.KSNK.17": "TAY KHOAN NHA KHOA",
 }
