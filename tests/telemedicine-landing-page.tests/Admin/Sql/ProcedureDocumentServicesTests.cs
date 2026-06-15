@@ -123,6 +123,29 @@ public sealed class ProcedureDocumentServicesTests
         Assert.Contains("Trang 1 /", html);
     }
 
+    [Theory]
+    [InlineData("QT.KSNK.12", "BM.KSNK.12.10", "Vận hành máy hấp phù hợp")]
+    [InlineData("QT.KSNK.16", "BM.KSNK.16.04", "hạn sử dụng 14 ngày")]
+    [InlineData("QT.KSNK.17", "5.2.7", "10 - 15 giây với dầu bôi trơn")]
+    public void Export_SeededKsnkFlowchart_RendersSourceCheckedContent(
+        string procedureCode,
+        string expectedReference,
+        string expectedDescription)
+    {
+        var store = new MedDataStore();
+        var procedure = store.Procedures.Single(item => item.ProcedureCode == procedureCode);
+        var version = store.ProcedureVersions.Single(item => item.ProcedureId == procedure.ProcedureId);
+
+        var html = new ProcedureDocumentExportService(new ProcedureDocumentSnapshotService(store))
+            .BuildProcedureDocumentHtml(version.ProcedureVersionId, new DateTime(2026, 6, 15, 8, 0, 0, DateTimeKind.Utc));
+        var visibleText = WebUtility.HtmlDecode(html);
+
+        Assert.Contains("<th>Trách nhiệm</th><th>Các bước thực hiện</th><th>Mô tả / Các biểu mẫu</th>", html);
+        Assert.Contains(expectedReference, visibleText);
+        Assert.Contains(expectedDescription, visibleText);
+        Assert.DoesNotContain("Biểu mẫu/phụ lục: đối chiếu theo PDF scan nguồn", visibleText);
+    }
+
     private static (MedDataStore Store, Guid VersionId) CreateCompleteDocument(string name = "Quy trình kiểm thử")
     {
         var store = new MedDataStore();

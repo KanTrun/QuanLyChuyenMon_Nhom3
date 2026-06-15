@@ -25,6 +25,36 @@ public sealed class MedDataStoreTests
         Assert.DoesNotContain(store.ProcedureSteps, item => item.ProcedureVersionId == version.ProcedureVersionId && item.Description?.Contains("OCR_PENDING", StringComparison.OrdinalIgnoreCase) == true);
     }
 
+    [Theory]
+    [InlineData("QT.KSNK.12", 9, "BM.KSNK.12.10", "NV khoa sử dụng")]
+    [InlineData("QT.KSNK.16", 6, "BM.KSNK.16.05", "hạn sử dụng 14 ngày")]
+    [InlineData("QT.KSNK.17", 9, "5.2.7", "10 - 15 giây")]
+    public void KsnkSeed_FlowchartsMatchVisuallyCheckedSourcePages(
+        string code,
+        int expectedStepCount,
+        string expectedReference,
+        string expectedVisibleContent)
+    {
+        var store = CreateStore();
+        var procedure = store.Procedures.Single(item => item.ProcedureCode == code);
+        var version = store.ProcedureVersions.Single(item => item.ProcedureId == procedure.ProcedureId);
+        var steps = store.ProcedureSteps
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId)
+            .OrderBy(item => item.StepNo)
+            .ToList();
+
+        Assert.Equal(expectedStepCount, steps.Count);
+        Assert.Contains(steps, item =>
+            (item.FormReferenceText?.Contains(expectedReference, StringComparison.Ordinal) ?? false) ||
+            (item.DetailSectionNumber?.Contains(expectedReference, StringComparison.Ordinal) ?? false));
+        Assert.Contains(steps, item =>
+            (item.ResponsibilityText?.Contains(expectedVisibleContent, StringComparison.Ordinal) ?? false) ||
+            (item.Description?.Contains(expectedVisibleContent, StringComparison.Ordinal) ?? false));
+        Assert.Equal("terminator", steps.First().FlowShapeCode);
+        Assert.Equal("terminator", steps.Last().FlowShapeCode);
+        Assert.DoesNotContain(steps, item => item.FormReferenceText?.Contains("đối chiếu theo PDF", StringComparison.OrdinalIgnoreCase) == true);
+    }
+
     // === 1. Closure table: self-edge tồn tại ===
     [Fact]
     public void AddDepartment_CreatesSelfEdgeInClosure()

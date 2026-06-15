@@ -627,15 +627,60 @@ public static class MedDataStoreSeed
         {
             return
             [
-                new("Làm sạch dụng cụ", "DD dụng cụ - khoa GMHS", "", "BM.KSNK.09.01\nBM.KSNK.09.02", "terminator", "5.2.1", 10),
-                new("Giao nhận dụng cụ sau khi làm sạch", "- DD dụng cụ - khoa GMHS\n- NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.09.09\nPhụ lục I\nPhụ lục II", "process", "5.2.2", 10),
+                new("Làm sạch dụng cụ", "ĐD dụng cụ - khoa GMHS", "", "BM.KSNK.09.01\nBM.KSNK.09.02", "terminator", "5.2.1", 10),
+                new("Giao nhận dụng cụ sau khi làm sạch", "- ĐD dụng cụ - khoa GMHS\n- NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.09.09\nPhụ lục I\nPhụ lục II", "process", "5.2.2", 10),
                 new("Làm sạch, khử khuẩn dụng cụ", "NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.09.03\nBM.KSNK.09.04", "process", "5.2.3", 10),
-                new("Bảo dưỡng - kiểm tra dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "", "Phụ lục III\nPhụ lục IV\nPhụ lục VI", "process", "5.2.4", 10),
+                new("Bảo dưỡng - kiểm tra dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "", "Phụ lục III\nPhụ lục IV\nPhụ lục V\nPhụ lục VI", "process", "5.2.4", 10),
                 new("Đóng gói dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "", "BM.KSNK.09.05\nBM.KSNK.09.06\nBM.KSNK.09.07", "process", "5.2.5", 10),
                 new("Tiệt khuẩn dụng cụ", "NV vận hành máy hấp - khoa KSNK", "Vận hành máy hấp phù hợp với loại dụng cụ cần tiệt khuẩn:\n- Dụng cụ chịu nhiệt: Máy hấp nhiệt độ cao\n- Dụng cụ không chịu nhiệt: Máy hấp nhiệt độ thấp", "", "process", "", 10),
                 new("Giám sát chất lượng tiệt khuẩn dụng cụ", "NV vận hành máy hấp - khoa KSNK", "", "BM.KSNK.09.08\nPhụ lục VII\nPhụ lục VIII", "process", "5.2.6", 10),
                 new("Lưu trữ dụng cụ", "NV kho vô khuẩn - khoa KSNK", "", "BM.KSNK.09.11", "process", "5.2.7", 10),
-                new("Giao nhận dụng cụ sau khi tiệt khuẩn", "- NV khu vực cấp phát dụng cụ - khoa KSNK\n- DD dụng cụ - khoa GMHS", "", "BM.KSNK.09.10\nPhụ lục IX\nPhụ lục X", "terminator", "5.2.8", 10)
+                new("Giao nhận dụng cụ sau khi tiệt khuẩn", "- NV khu vực cấp phát dụng cụ - khoa KSNK\n- ĐD dụng cụ - khoa GMHS", "", "BM.KSNK.09.10\nPhụ lục IX\nPhụ lục X", "terminator", "5.2.8", 10)
+            ];
+        }
+
+        if (code == "QT.KSNK.12")
+        {
+            return
+            [
+                new("Làm sạch, khử khuẩn dụng cụ", "NV khoa sử dụng", "", "BM.KSNK.12.01\nBM.KSNK.12.02", "terminator", "5.2.1", 10),
+                new("Giao nhận dụng cụ sau khi làm sạch, khử khuẩn", "- NV khoa sử dụng\n- NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.12.09\nPhụ lục I", "process", "5.2.2", 10),
+                new("Làm sạch, khử khuẩn dụng cụ", "NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.12.03\nBM.KSNK.12.04", "process", "5.2.3", 10),
+                new("Bảo dưỡng - kiểm tra dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "", "Phụ lục II\nPhụ lục III", "process", "5.2.4", 10),
+                new("Đóng gói dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "", "BM.KSNK.12.05\nBM.KSNK.12.06\nBM.KSNK.12.07", "process", "5.2.5", 10),
+                new("Tiệt khuẩn dụng cụ", "NV vận hành máy hấp - khoa KSNK", "Vận hành máy hấp phù hợp với loại dụng cụ cần tiệt khuẩn theo khuyến cáo của nhà sản xuất:\n- Dụng cụ chịu nhiệt: Máy hấp nhiệt độ cao\n- Dụng cụ không chịu nhiệt: Máy hấp nhiệt độ thấp", "", "process", "", 10),
+                new("Giám sát chất lượng tiệt khuẩn dụng cụ", "NV vận hành máy hấp - khoa KSNK", "", "BM.KSNK.12.08\nPhụ lục IV\nPhụ lục V", "process", "5.2.6", 10),
+                new("Lưu trữ dụng cụ", "NV kho vô khuẩn - khoa KSNK", "", "BM.KSNK.12.11", "process", "5.2.7", 10),
+                new("Giao nhận dụng cụ sau khi tiệt khuẩn", "- NV khu vực cấp phát dụng cụ - khoa KSNK\n- NV khoa sử dụng", "", "BM.KSNK.12.10\nPhụ lục I", "terminator", "5.2.8", 10)
+            ];
+        }
+
+        if (code == "QT.KSNK.16")
+        {
+            return
+            [
+                new("Làm sạch dụng cụ", "NV khoa sử dụng", "", "BM.KSNK.16.01", "terminator", "5.2.1", 10),
+                new("Giao nhận dụng cụ sau khi làm sạch", "- NV khoa sử dụng\n- NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.16.02\nPhụ lục I", "process", "5.2.2", 10),
+                new("Khử khuẩn mức độ cao dụng cụ", "NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.16.03\nPhụ lục II\nPhụ lục III", "process", "5.2.3", 10),
+                new("Đóng gói dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "- Mang phương tiện PHCN: nón, khẩu trang\n- Vệ sinh tay\n- Trải khăn vô khuẩn lên bàn đóng gói dụng cụ KKMĐC\n- Mang áo choàng vô khuẩn, găng vô khuẩn\n- Lấy dụng cụ ra từ tủ sấy và kiểm tra độ khô; để dụng cụ lên bàn đã trải khăn vô khuẩn\n- Đóng gói dụng cụ bằng bao túi ép chuyên dụng đã được hàn một đầu và hấp tiệt khuẩn\n- Đóng dấu hoặc dán nhãn thông tin: ngày đóng gói, nhân viên đóng gói, hạn sử dụng 14 ngày\n- Chuyển dụng cụ qua kho vô khuẩn bằng hộp trung chuyển (Passbox)", "BM.KSNK.16.04", "process", "", 10),
+                new("Lưu trữ dụng cụ tại khoa KSNK", "NV kho vô khuẩn - khoa KSNK", "Lưu trữ dụng cụ sau khi xử lý tại khoa KSNK để duy trì độ vô khuẩn đến khi bàn giao cho khoa sử dụng.", "", "process", "", 10),
+                new("Giao nhận dụng cụ vô khuẩn", "- NV khu vực cấp phát dụng cụ - khoa KSNK\n- NV khoa sử dụng", "", "BM.KSNK.16.05", "terminator", "5.2.4", 10)
+            ];
+        }
+
+        if (code == "QT.KSNK.17")
+        {
+            return
+            [
+                new("Chuẩn bị", "NV khoa sử dụng", "", "", "terminator", "5.2.2", 10),
+                new("Làm sạch", "NV khoa sử dụng", "", "", "process", "5.2.3", 10),
+                new("Khử khuẩn", "NV khoa sử dụng", "", "", "process", "5.2.4", 10),
+                new("Tra dầu bôi trơn", "NV khoa sử dụng", "Tra dầu bôi trơn theo hướng dẫn của nhà sản xuất và cho chạy nhẹ trong 10 - 15 giây với dầu bôi trơn.", "", "process", "", 10),
+                new("Giao nhận dụng cụ sau khi làm sạch, khử khuẩn", "- NV khoa sử dụng\n- NV khoa KSNK", "", "", "process", "5.2.5", 10),
+                new("Đóng gói", "NV khoa KSNK", "", "", "process", "5.2.6", 10),
+                new("Tiệt khuẩn", "NV khoa KSNK", "Tiệt khuẩn dụng cụ theo hướng dẫn của nhà sản xuất.", "", "process", "", 10),
+                new("Lưu trữ tại khoa KSNK", "NV khoa KSNK", "Dụng cụ sau khi tiệt khuẩn được lưu trữ tại kho vô khuẩn theo quy định.", "", "process", "", 10),
+                new("Giao nhận dụng cụ sau khi tiệt khuẩn", "- NV khoa KSNK\n- NV khoa sử dụng", "", "", "terminator", "5.2.7", 10)
             ];
         }
 
