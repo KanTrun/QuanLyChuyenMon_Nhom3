@@ -25,7 +25,7 @@ public sealed class ProcedureSignoffService
         string? note = null)
     {
         if (!RequiredRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Vai tro ky khong hop le.");
+            throw new InvalidOperationException("Vai trò ký không hợp lệ.");
 
         var normalizedRole = role.ToLowerInvariant();
         var signoff = new ProcedureSignoffRecord

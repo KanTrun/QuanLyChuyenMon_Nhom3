@@ -165,11 +165,11 @@
                                     }
                                     @if (version.StatusCode == "draft")
                                     {
-                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SignVersion(version, "writer")'>Ky nguoi viet</button>
+                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SignVersion(version, "writer")'>Ký người viết</button>
                                     }
                                     @if (version.StatusCode == "pending_approval")
                                     {
-                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SignVersion(version, "checker")'>Ky kiem tra</button>
+                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SignVersion(version, "checker")'>Ký kiểm tra</button>
                                     }
                                     @if (version.StatusCode == "draft")
                                     {
@@ -376,7 +376,7 @@
 
     private void SignVersion(Sql.ProcedureVersion version, string role)
     {
-        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "ky xac nhan quy trinh")) return;
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "ký xác nhận quy trình")) return;
         try
         {
             Signoffs.Sign(
@@ -385,14 +385,22 @@
                 UserContext.CurrentUser?.UserId,
                 UserContext.CurrentUser?.Username,
                 UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username);
-            Toasts.Show("Da ky xac nhan", $"{role}: {version.Title}", ToastVariant.Success);
+            Toasts.Show("Đã ký xác nhận", $"{SignoffRoleLabel(role)}: {version.Title}", ToastVariant.Success);
             Recompute();
         }
         catch (Exception ex)
         {
-            Toasts.Show("Khong the ky", ex.Message, ToastVariant.Error);
+            Toasts.Show("Không thể ký", ex.Message, ToastVariant.Error);
         }
     }
+
+    private static string SignoffRoleLabel(string role) => role switch
+    {
+        "writer" => "Người viết",
+        "checker" => "Người kiểm tra",
+        "approver" => "Người phê duyệt",
+        _ => role
+    };
 
     private async Task ExportVersionAsync(Sql.ProcedureVersion version)
     {

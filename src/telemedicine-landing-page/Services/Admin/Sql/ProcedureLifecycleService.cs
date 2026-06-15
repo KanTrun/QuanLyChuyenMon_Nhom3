@@ -326,7 +326,7 @@ public sealed class ProcedureLifecycleService
             throw MedDomainException.Constraint(
                 "CK_procedure_document_ready",
                 50028,
-                "Quy trinh chua du dieu kien ban hanh: " + string.Join(", ", readiness.MissingItems));
+                "Quy trình chưa đủ điều kiện ban hành: " + string.Join(", ", readiness.MissingItems));
         }
     }
 
@@ -339,7 +339,15 @@ public sealed class ProcedureLifecycleService
             throw MedDomainException.Constraint(
                 constraintName,
                 errorNumber,
-                $"Thieu chu ky {role} hop le hoac chu ky da cu sau khi noi dung thay doi.");
+                $"Thiếu chữ ký {SignoffRoleLabel(role)} hợp lệ hoặc chữ ký đã cũ sau khi nội dung thay đổi.");
         }
     }
+
+    private static string SignoffRoleLabel(string role) => role switch
+    {
+        "writer" => "Người viết",
+        "checker" => "Người kiểm tra",
+        "approver" => "Người phê duyệt",
+        _ => role
+    };
 }
