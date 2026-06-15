@@ -47,6 +47,30 @@ public sealed class ProcedureDocumentServicesTests
     }
 
     [Fact]
+    public void Sign_RequiresAuthenticatedAccountAndCorrectWorkflowStage()
+    {
+        var (store, versionId) = CreateCompleteDocument();
+        var signoffs = new ProcedureSignoffService(store, new ProcedureDocumentSnapshotService(store));
+
+        Assert.Throws<InvalidOperationException>(() =>
+            signoffs.Sign(versionId, "writer", null, null, null));
+        Assert.Throws<InvalidOperationException>(() =>
+            signoffs.Sign(versionId, "checker", MedDataStoreSeed.AdminUserId, "admin", "Người kiểm tra"));
+
+        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Người viết");
+        var version = store.ProcedureVersions.Single(item => item.ProcedureVersionId == versionId);
+        store.UpdateProcedureVersion(version with { StatusCode = "pending_approval" });
+
+        Assert.Throws<InvalidOperationException>(() =>
+            signoffs.Sign(versionId, "approver", MedDataStoreSeed.AdminUserId, "admin", "Người phê duyệt"));
+
+        signoffs.Sign(versionId, "checker", MedDataStoreSeed.AdminUserId, "admin", "Người kiểm tra");
+        var approval = signoffs.Sign(versionId, "approver", MedDataStoreSeed.AdminUserId, "admin", "Người phê duyệt");
+
+        Assert.Equal("approver", approval.SignoffRole);
+    }
+
+    [Fact]
     public void CheckReadiness_OcrPendingMarker_BlocksSubmission()
     {
         var (store, versionId) = CreateCompleteDocument();

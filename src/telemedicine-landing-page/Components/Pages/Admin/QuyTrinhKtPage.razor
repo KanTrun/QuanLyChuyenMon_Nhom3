@@ -376,7 +376,8 @@
 
     private void SignVersion(Sql.ProcedureVersion version, string role)
     {
-        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "ký xác nhận quy trình")) return;
+        var permission = role == "checker" ? "SCR_PROCEDURES:APPROVE" : "SCR_PROCEDURES:UPDATE";
+        if (!Guard.CanDo(permission, "ký xác nhận quy trình")) return;
         try
         {
             Signoffs.Sign(

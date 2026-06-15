@@ -103,6 +103,15 @@ public sealed class RoutingIntegrityTests
     }
 
     [Fact]
+    public void ProcedureCheckerSignoff_RequiresApprovalPermission()
+    {
+        var root = FindRepositoryRoot();
+        var procedurePage = File.ReadAllText(Path.Combine(root, "src", "telemedicine-landing-page", "Components", "Pages", "Admin", "QuyTrinhKtPage.razor"));
+
+        Assert.Contains("role == \"checker\" ? \"SCR_PROCEDURES:APPROVE\" : \"SCR_PROCEDURES:UPDATE\"", procedurePage);
+    }
+
+    [Fact]
     public void RazorPageRoutes_AreUniqueAcrossComponents()
     {
         var root = FindRepositoryRoot();
