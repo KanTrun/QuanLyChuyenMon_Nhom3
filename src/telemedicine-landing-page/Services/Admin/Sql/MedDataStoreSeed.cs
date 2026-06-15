@@ -551,7 +551,7 @@ public static class MedDataStoreSeed
             Name = title,
             ProcedureType = "technical",
             OwnerDepartmentId = DeptHcId,
-            Description = "Nhập từ PDF scan 2145; đang chờ OCR đầy đủ từng trang trước khi ban hành.",
+            Description = "Nhập từ PDF scan 2145; đang chờ trích xuất và đối chiếu đầy đủ từng trang trước khi ban hành.",
             CreatedBy = AdminUserId
         });
 
@@ -577,22 +577,25 @@ public static class MedDataStoreSeed
         store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 1, RecipientName = "Ban Giám đốc" });
         store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 2, RecipientName = "Khoa Kiểm soát nhiễm khuẩn" });
         store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 3, RecipientName = "Các khoa/phòng sử dụng dụng cụ" });
-        store.AddProcedureRevisionEntry(new ProcedureRevisionEntry { ProcedureVersionId = versionId, DisplayOrder = 1, RevisionDate = new DateTime(2026, 3, 19), PageRef = "Toàn văn", SectionRef = "Lần 02", Summary = "Ban hành theo PDF scan số 2145; nội dung chi tiết chờ OCR và đối chiếu." });
+        store.AddProcedureRevisionEntry(new ProcedureRevisionEntry { ProcedureVersionId = versionId, DisplayOrder = 1, RevisionDate = new DateTime(2026, 3, 19), PageRef = "Toàn văn", SectionRef = "Lần 02", Summary = "Ban hành theo PDF scan số 2145; nội dung chi tiết chờ trích xuất và đối chiếu." });
 
+        var flowDetails = KsnkFlowDetails(code, steps);
         for (var i = 0; i < steps.Count; i++)
         {
+            var detail = flowDetails[i];
             store.AddProcedureStep(new ProcedureStep
             {
                 ProcedureVersionId = versionId,
                 StepNo = i + 1,
                 StepCode = $"B{i + 1:00}",
-                Name = steps[i],
-                Description = "OCR_PENDING: diễn giải chi tiết cần trích xuất và đối chiếu từ từng trang PDF scan.",
-                ResponsibilityText = i == 0 ? "Khoa sử dụng / Khoa KSNK" : "Khoa KSNK",
-                FlowShapeCode = i == 0 || i == steps.Count - 1 ? "terminator" : "process",
-                DetailSectionNumber = "VIII",
+                Name = detail.Name,
+                Description = detail.Description,
+                ResponsibilityText = detail.Responsibility,
+                FlowShapeCode = detail.ShapeCode,
+                FormReferenceText = detail.FormReference,
+                DetailSectionNumber = detail.DetailSectionNumber,
                 ActorRoleId = RoleClinicalId,
-                StandardDurationMinutes = 10
+                StandardDurationMinutes = detail.DurationMinutes
             });
         }
 
@@ -609,20 +612,75 @@ public static class MedDataStoreSeed
         });
     }
 
+    private sealed record KsnkFlowStepTemplate(
+        string Name,
+        string Responsibility,
+        string Description,
+        string FormReference,
+        string ShapeCode,
+        string DetailSectionNumber,
+        int DurationMinutes);
+
+    private static IReadOnlyList<KsnkFlowStepTemplate> KsnkFlowDetails(string code, IReadOnlyList<string> steps)
+    {
+        if (code == "QT.KSNK.09")
+        {
+            return
+            [
+                new("Làm sạch dụng cụ", "DD dụng cụ - khoa GMHS", "", "BM.KSNK.09.01\nBM.KSNK.09.02", "terminator", "5.2.1", 10),
+                new("Giao nhận dụng cụ sau khi làm sạch", "- DD dụng cụ - khoa GMHS\n- NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.09.09\nPhụ lục I\nPhụ lục II", "process", "5.2.2", 10),
+                new("Làm sạch, khử khuẩn dụng cụ", "NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.09.03\nBM.KSNK.09.04", "process", "5.2.3", 10),
+                new("Bảo dưỡng - kiểm tra dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "", "Phụ lục III\nPhụ lục IV\nPhụ lục VI", "process", "5.2.4", 10),
+                new("Đóng gói dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "", "BM.KSNK.09.05\nBM.KSNK.09.06\nBM.KSNK.09.07", "process", "5.2.5", 10),
+                new("Tiệt khuẩn dụng cụ", "NV vận hành máy hấp - khoa KSNK", "Vận hành máy hấp phù hợp với loại dụng cụ cần tiệt khuẩn:\n- Dụng cụ chịu nhiệt: Máy hấp nhiệt độ cao\n- Dụng cụ không chịu nhiệt: Máy hấp nhiệt độ thấp", "", "process", "", 10),
+                new("Giám sát chất lượng tiệt khuẩn dụng cụ", "NV vận hành máy hấp - khoa KSNK", "", "BM.KSNK.09.08\nPhụ lục VII\nPhụ lục VIII", "process", "5.2.6", 10),
+                new("Lưu trữ dụng cụ", "NV kho vô khuẩn - khoa KSNK", "", "BM.KSNK.09.11", "process", "5.2.7", 10),
+                new("Giao nhận dụng cụ sau khi tiệt khuẩn", "- NV khu vực cấp phát dụng cụ - khoa KSNK\n- DD dụng cụ - khoa GMHS", "", "BM.KSNK.09.10\nPhụ lục IX\nPhụ lục X", "terminator", "5.2.8", 10)
+            ];
+        }
+
+        return steps.Select((step, index) => new KsnkFlowStepTemplate(
+            step,
+            DefaultKsnkResponsibility(step, index, steps.Count),
+            DefaultKsnkStepDescription(step, index),
+            "Biểu mẫu/phụ lục: đối chiếu theo PDF scan nguồn.",
+            index == 0 || index == steps.Count - 1 ? "terminator" : "process",
+            $"5.2.{index + 1}",
+            10)).ToList();
+    }
+
+    private static string DefaultKsnkResponsibility(string step, int index, int total)
+    {
+        if (index == 0) return "Khoa sử dụng / Khoa KSNK";
+        if (index == total - 1) return "Khoa KSNK / Khoa sử dụng";
+        if (step.Contains("tiệt khuẩn", StringComparison.OrdinalIgnoreCase) ||
+            step.Contains("Giám sát", StringComparison.OrdinalIgnoreCase))
+            return "NV vận hành máy hấp - khoa KSNK";
+        if (step.Contains("Lưu trữ", StringComparison.OrdinalIgnoreCase))
+            return "NV kho vô khuẩn - khoa KSNK";
+        if (step.Contains("Đóng gói", StringComparison.OrdinalIgnoreCase) ||
+            step.Contains("Bảo dưỡng", StringComparison.OrdinalIgnoreCase))
+            return "NV khu vực đóng gói dụng cụ - khoa KSNK";
+        return "NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK";
+    }
+
+    private static string DefaultKsnkStepDescription(string step, int index)
+        => $"{index + 1}. {step}: thực hiện theo diễn giải chi tiết trong PDF scan nguồn; ghi nhận hồ sơ và biểu mẫu tương ứng trước khi chuyển bước tiếp theo.";
+
     private static void AddDefaultProcedureSections(MedDataStore store, Guid versionId)
     {
         (string number, string title, string kind, string text)[] sections =
         [
-            ("I", "Mục đích", "purpose", "OCR_PENDING: trích xuất từ PDF scan trước khi ban hành."),
-            ("II", "Phạm vi áp dụng", "scope", "OCR_PENDING: áp dụng theo đúng phạm vi trong PDF scan."),
+            ("I", "Mục đích", "purpose", "Quy định thống nhất việc tiếp nhận, làm sạch, khử khuẩn/tiệt khuẩn, đóng gói, lưu trữ và giao nhận dụng cụ theo PDF scan nguồn, bảo đảm an toàn người bệnh và kiểm soát nhiễm khuẩn."),
+            ("II", "Phạm vi áp dụng", "scope", "Áp dụng cho khoa Kiểm soát nhiễm khuẩn và các khoa/phòng sử dụng dụng cụ thuộc phạm vi quy trình đã ban hành kèm PDF scan nguồn."),
             ("III", "Căn cứ và tài liệu viện dẫn", "basis", "Quyết định 3671/QĐ-BYT, quy định KSNK hiện hành và PDF scan nguồn."),
-            ("IV", "Thuật ngữ và định nghĩa", "definitions", "OCR_PENDING: bổ sung thuật ngữ y tế đúng theo PDF scan."),
-            ("V", "Trách nhiệm", "responsibilities", "OCR_PENDING: người viết, người kiểm tra, người phê duyệt và khoa/phòng liên quan."),
+            ("IV", "Thuật ngữ và định nghĩa", "definitions", "Thuật ngữ, phân loại dụng cụ, biểu mẫu và phụ lục chuyên môn thực hiện theo bản PDF scan nguồn."),
+            ("V", "Trách nhiệm", "responsibilities", "Người viết, người kiểm tra, người phê duyệt và các khoa/phòng liên quan chịu trách nhiệm theo bảng ký duyệt, bảng phân phối và từng bước trong lưu đồ."),
             ("VI", "Nơi nhận và phân phối", "distribution", "Xem bảng Nơi nhận trên bìa quy trình."),
             ("VII", "Theo dõi sửa đổi", "revision", "Xem bảng Theo dõi sửa đổi trên bìa quy trình."),
-            ("VIII", "Nội dung quy trình", "procedure", "OCR_PENDING: không được ban hành khi chưa có OCR và spot-check từng trang."),
+            ("VIII", "Nội dung quy trình", "procedure", "Thực hiện theo trình tự các bước tại lưu đồ và diễn giải tương ứng; chỉ ban hành chính thức sau khi trích xuất, đối chiếu trực quan từng trang PDF scan nguồn."),
             ("IX", "Lưu đồ", "flowchart", "Lưu đồ được seed theo hình trong PDF scan; cần đối chiếu lại khi OCR hoàn tất."),
-            ("X", "Hồ sơ, biểu mẫu và phụ lục", "records", "OCR_PENDING: danh mục biểu mẫu/phụ lục theo PDF scan."),
+            ("X", "Hồ sơ, biểu mẫu và phụ lục", "records", "Biểu mẫu, phụ lục và hồ sơ kiểm soát được liệt kê tại cột Mô tả/Các biểu mẫu của lưu đồ và tệp PDF nguồn đính kèm."),
             ("XI", "Tệp đính kèm", "appendices", "PDF scan nguồn được gắn kèm với checksum SHA-256.")
         ];
 

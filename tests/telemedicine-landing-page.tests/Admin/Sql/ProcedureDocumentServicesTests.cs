@@ -1,3 +1,4 @@
+using System.Net;
 using TelemedicineLandingPage.Models.Admin.Sql;
 using TelemedicineLandingPage.Services.Admin;
 using TelemedicineLandingPage.Services.Admin.Sql;
@@ -59,6 +60,19 @@ public sealed class ProcedureDocumentServicesTests
     }
 
     [Fact]
+    public void CheckReadiness_OcrPendingSummary_BlocksSubmissionWithoutPrintingMarker()
+    {
+        var (store, versionId) = CreateCompleteDocument();
+        var version = store.ProcedureVersions.First(item => item.ProcedureVersionId == versionId);
+        store.UpdateProcedureVersion(version with { Summary = "{\"ocrStatus\":\"OCR_PENDING\"}" });
+
+        var readiness = new ProcedureDocumentSnapshotService(store).CheckReadiness(versionId, requireSignoffs: false);
+
+        Assert.False(readiness.IsReady);
+        Assert.Contains(readiness.MissingItems, item => item.Contains("OCR", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void CheckReadiness_MissingSignoffs_UsesVietnameseRoleLabels()
     {
         var (store, versionId) = CreateCompleteDocument();
@@ -87,6 +101,7 @@ public sealed class ProcedureDocumentServicesTests
         });
         var html = new ProcedureDocumentExportService(snapshots)
             .BuildProcedureDocumentHtml(versionId, new DateTime(2026, 6, 13, 8, 0, 0, DateTimeKind.Utc));
+        var visibleText = WebUtility.HtmlDecode(html);
 
         Assert.Contains("&lt;script&gt;alert(1)&lt;/script&gt;", html);
         Assert.DoesNotContain("<script>alert(1)</script>", html);
@@ -98,9 +113,13 @@ public sealed class ProcedureDocumentServicesTests
         Assert.Contains("In / Lưu PDF", html);
         Assert.Contains("Điều dưỡng Nguyễn An", html);
         Assert.Contains("data:image/png;base64,AAAA", html);
-        Assert.Contains("Chịu trách nhiệm", html);
-        Assert.Contains("LƯU ĐỒ QUY TRÌNH <span class=\"continuation\">(2/2)</span>", html);
-        Assert.True(Count(html, "<section class=\"page\">") >= 14);
+        Assert.Contains("<th>Trách nhiệm</th><th>Các bước thực hiện</th><th>Mô tả / Các biểu mẫu</th>", html);
+        Assert.Contains("flow-symbol shape-terminator", html);
+        Assert.Contains("Bước kiểm soát 1", visibleText);
+        Assert.Contains("BM.KSNK.01", html);
+        Assert.Contains("LƯU ĐỒ QUY TRÌNH <span class=\"continuation\">(1/1)</span>", html);
+        Assert.DoesNotContain("OCR_PENDING", html);
+        Assert.True(Count(html, "<section class=\"page\">") >= 13);
         Assert.Contains("Trang 1 /", html);
     }
 

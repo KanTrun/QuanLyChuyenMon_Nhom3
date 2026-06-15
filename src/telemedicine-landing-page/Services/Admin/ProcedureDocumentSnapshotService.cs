@@ -81,7 +81,9 @@ public sealed class ProcedureDocumentSnapshotService
             }
         }
 
-        if (snapshot.Sections.Any(s => s.ContentText?.Contains("OCR_PENDING", StringComparison.OrdinalIgnoreCase) == true))
+        if (ContainsOcrPending(snapshot.Version.Summary) ||
+            snapshot.Sections.Any(s => ContainsOcrPending(s.ContentText)) ||
+            snapshot.Steps.Any(s => ContainsOcrPending(s.Description) || ContainsOcrPending(s.FormReferenceText)))
         {
             missing.Add("OCR đầy đủ từng trang PDF");
         }
@@ -119,6 +121,9 @@ public sealed class ProcedureDocumentSnapshotService
         "approver" => "Người phê duyệt",
         _ => role
     };
+
+    private static bool ContainsOcrPending(string? value)
+        => value?.Contains("OCR_PENDING", StringComparison.OrdinalIgnoreCase) == true;
 
     public bool HasCurrentSignoff(ProcedureDocumentSnapshot snapshot, string role)
     {
