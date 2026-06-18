@@ -1863,11 +1863,11 @@
 
 .chatbot-launcher {
     position: fixed;
-    left: calc(var(--admin-sidebar-width) + 24px);
-    right: auto;
+    right: 18px;
+    left: auto;
     bottom: 24px;
-    width: 56px;
-    height: 56px;
+    width: 54px;
+    height: 54px;
     border-radius: 50%;
     border: 0;
     background: var(--gradient-primary);
@@ -1877,11 +1877,13 @@
     box-shadow: var(--shadow-accent);
     cursor: pointer;
     z-index: 50;
-    transition: transform var(--motion-subtle), box-shadow var(--motion-subtle);
+    opacity: 0.88;
+    transition: transform var(--motion-subtle), box-shadow var(--motion-subtle), opacity var(--motion-subtle);
 }
 
 .chatbot-launcher:hover {
-    transform: scale(1.04);
+    transform: translateY(-2px) scale(1.04);
+    opacity: 1;
     box-shadow: var(--shadow-card-hover);
 }
 
@@ -1892,6 +1894,7 @@
 .chatbot-launcher:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 3px;
+    opacity: 1;
 }
 
 .chatbot-launcher.is-open {
@@ -1924,8 +1927,8 @@
 
 .chatbot-panel {
     position: fixed;
-    left: calc(var(--admin-sidebar-width) + 24px);
-    right: auto;
+    right: 24px;
+    left: auto;
     bottom: 96px;
     width: 380px;
     max-height: 560px;
@@ -2302,8 +2305,8 @@
 
 @media (max-width: 640px) {
     .chatbot-launcher {
-        left: 16px;
-        right: auto;
+        right: 14px;
+        left: auto;
         bottom: 16px;
     }
 
@@ -2505,14 +2508,31 @@ body:has(.admin-shell) {
 
 .admin-shell .chatbot-launcher,
 .admin-shell .chatbot-panel {
-    left: calc(var(--admin-sidebar-width) + 24px) !important;
-    right: auto !important;
+    left: auto !important;
+}
+
+.admin-shell .chatbot-launcher {
+    right: 18px !important;
+    bottom: 24px !important;
+    opacity: 0.88;
+}
+
+.admin-shell .chatbot-launcher:hover,
+.admin-shell .chatbot-launcher:focus-visible,
+.admin-shell .chatbot-launcher.is-open {
+    opacity: 1;
+}
+
+.admin-shell .chatbot-panel {
+    right: 24px !important;
+    bottom: 96px !important;
 }
 
 @media (max-width: 640px) {
     .admin-shell .chatbot-launcher {
-        left: 16px !important;
-        right: auto !important;
+        right: 14px !important;
+        left: auto !important;
+        bottom: 16px !important;
     }
 
     .admin-shell .chatbot-panel {
