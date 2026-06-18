@@ -370,7 +370,7 @@
         }
         if (!Guard.HasPermission("SCR_CLINICAL:VIEW", "PERM_CLINICAL_view"))
         {
-            Toasts.Show("Khong co quyen", "Tai khoan hien tai khong duoc phep xuat ho so lam sang.", ToastVariant.Warning);
+            Toasts.Show("Không có quyền", "Tài khoản hiện tại không được phép xuất hồ sơ lâm sàng.", ToastVariant.Warning);
             return;
         }
 
@@ -382,13 +382,13 @@
             var fileName = $"qlcm-ho-so-{patientCode}-{AdminDateTimeDisplay.ToDisplayTime(generatedAt):yyyyMMdd-HHmm}.html";
             var downloaded = await JS.InvokeAsync<bool>("qlcmShell.downloadFile", fileName, html, "text/html;charset=utf-8");
             Toasts.Show(
-                downloaded ? "Da xuat ho so benh nhan" : "Khong the tai tep",
-                downloaded ? "Mo file HTML de xem, in hoac luu PDF tu trinh duyet." : "Trinh duyet tu choi thao tac tai tep.",
+                downloaded ? "Đã xuất hồ sơ bệnh nhân" : "Không thể tải tệp",
+                downloaded ? "Mở file HTML để xem, in hoặc lưu PDF từ trình duyệt." : "Trình duyệt từ chối thao tác tải tệp.",
                 downloaded ? ToastVariant.Success : ToastVariant.Warning);
         }
         catch (Exception ex)
         {
-            Toasts.Show("Khong the xuat ho so", ex.Message, ToastVariant.Error);
+            Toasts.Show("Không thể xuất hồ sơ", ex.Message, ToastVariant.Error);
         }
     }
 
@@ -526,7 +526,7 @@
         }
         if (!IsOrdinaryApplicationStatus(_appStatus))
         {
-            Toasts.Show("Khong the ap dung", "Trang thai ky va thu hoi chi duoc thuc hien qua quy trinh chu ky.", ToastVariant.Warning);
+            Toasts.Show("Không thể áp dụng", "Trạng thái ký và thu hồi chỉ được thực hiện qua quy trình chữ ký.", ToastVariant.Warning);
             return;
         }
 
