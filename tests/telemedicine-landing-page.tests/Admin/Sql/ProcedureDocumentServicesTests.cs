@@ -167,7 +167,7 @@ public sealed class ProcedureDocumentServicesTests
         Assert.DoesNotContain("<script>alert(1)</script>", html);
         Assert.Contains("shape-decision", html);
         Assert.Contains("source.pdf", html);
-        Assert.Contains("ABC123", html);
+        Assert.DoesNotContain("ABC123", html);
         Assert.Contains(store.Departments.First(item => item.DepartmentId == MedDataStoreSeed.DeptNoiId).Name, html);
         Assert.Contains("BỆNH VIỆN UNG BƯỚU", html);
         Assert.Contains("In / Lưu PDF", html);
@@ -179,6 +179,9 @@ public sealed class ProcedureDocumentServicesTests
         Assert.Contains("Còn hiệu lực", visibleText);
         Assert.Contains("Hết hiệu lực", visibleText);
         Assert.Contains("Tài khoản: nguyen.an", visibleText);
+        Assert.DoesNotContain(hash, visibleText);
+        Assert.Contains("Mã kiểm soát", visibleText);
+        Assert.Contains("Tài liệu nguồn được lưu trong hồ sơ kiểm soát", visibleText);
         Assert.Contains(ValidSignature, html);
         Assert.Contains("<th>Trách nhiệm</th><th>Các bước thực hiện</th><th>Mô tả / Các biểu mẫu</th>", html);
         Assert.Contains("flow-symbol shape-terminator", html);
