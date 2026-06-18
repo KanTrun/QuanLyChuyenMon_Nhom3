@@ -1872,3 +1872,43 @@
     height: 8px;
     border: 0;
 }
+
+/* Final detail-view override: all AdminDrawer instances behave like large centered dialogs. */
+.admin-shell .admin-drawer-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(15, 23, 42, 0.44);
+}
+
+.admin-shell .admin-drawer {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%) !important;
+    width: min(1180px, calc(100vw - 48px)) !important;
+    height: min(86vh, 820px) !important;
+    max-height: min(86vh, 820px) !important;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+}
+
+.admin-shell .admin-drawer.admin-drawer-narrow {
+    width: min(720px, calc(100vw - 48px)) !important;
+}
+
+.admin-shell .admin-drawer.admin-drawer-wide {
+    width: min(1180px, calc(100vw - 48px)) !important;
+}
+
+@media (max-width: 640px) {
+    .admin-shell .admin-drawer,
+    .admin-shell .admin-drawer.admin-drawer-wide,
+    .admin-shell .admin-drawer.admin-drawer-narrow {
+        width: calc(100vw - 24px) !important;
+        height: calc(100vh - 32px) !important;
+        max-height: calc(100vh - 32px) !important;
+    }
+}

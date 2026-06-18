@@ -2416,3 +2416,108 @@ body:has(.admin-shell) {
 [data-theme="dark"] .admin-loading-text {
     color: #94a3b8;
 }
+
+/* Final admin chrome overrides: keep navigation visually distinct from page content. */
+.admin-shell .admin-sidebar {
+    background: linear-gradient(180deg, #17365F 0%, #102844 100%);
+    border-right-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 10px 0 28px rgba(15, 23, 42, 0.14);
+}
+
+.admin-shell .admin-sidebar-brand {
+    border-bottom-color: rgba(255, 255, 255, 0.18);
+}
+
+.admin-shell .admin-sidebar-brand-name,
+.admin-shell .admin-nav-link,
+.admin-shell .admin-nav-summary {
+    color: #F8FAFC;
+}
+
+.admin-shell .admin-sidebar-brand-caption,
+.admin-shell .admin-nav-icon,
+.admin-shell .admin-nav-chevron,
+.admin-shell .admin-nav-child-dot,
+.admin-shell .admin-sidebar-version {
+    color: rgba(226, 232, 240, 0.74);
+}
+
+.admin-shell .admin-nav-link:hover,
+.admin-shell .admin-nav-summary:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+}
+
+.admin-shell .admin-nav-link:hover .admin-nav-icon,
+.admin-shell .admin-nav-link.is-active .admin-nav-icon,
+.admin-shell .admin-nav-summary:hover .admin-nav-icon {
+    color: #FFFFFF;
+}
+
+.admin-shell .admin-nav-link.is-active,
+.admin-shell .admin-nav-children .admin-nav-link.is-active {
+    background: rgba(191, 219, 254, 0.22);
+    color: #FFFFFF;
+    border-left-color: #93C5FD;
+}
+
+.admin-shell .admin-nav-link.is-active .admin-nav-child-dot {
+    background: #93C5FD;
+}
+
+.admin-shell .admin-nav-children {
+    border-left-color: rgba(226, 232, 240, 0.22);
+}
+
+.admin-shell .admin-sidebar-footer {
+    border-top-color: rgba(255, 255, 255, 0.16);
+    background: linear-gradient(180deg, transparent, rgba(8, 17, 31, 0.42));
+}
+
+.admin-shell .admin-sidebar-collapse,
+.admin-shell .admin-sidebar-version {
+    background: rgba(255, 255, 255, 0.10);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #F8FAFC;
+}
+
+[data-theme="dark"] .admin-shell .admin-sidebar {
+    background: linear-gradient(180deg, #020617 0%, #08111F 100%);
+    border-right-color: rgba(148, 163, 184, 0.24);
+    box-shadow: 10px 0 32px rgba(0, 0, 0, 0.38);
+}
+
+[data-theme="dark"] .admin-shell .admin-nav-link.is-active,
+[data-theme="dark"] .admin-shell .admin-nav-children .admin-nav-link.is-active {
+    background: rgba(59, 130, 246, 0.28);
+    color: #FFFFFF;
+}
+
+@media (max-width: 900px) {
+    .admin-shell[data-collapsed="true"] .admin-sidebar {
+        background: linear-gradient(180deg, #17365F 0%, #102844 100%);
+    }
+
+    [data-theme="dark"] .admin-shell[data-collapsed="true"] .admin-sidebar {
+        background: linear-gradient(180deg, #020617 0%, #08111F 100%);
+    }
+}
+
+.admin-shell .chatbot-launcher,
+.admin-shell .chatbot-panel {
+    left: calc(var(--admin-sidebar-width) + 24px) !important;
+    right: auto !important;
+}
+
+@media (max-width: 640px) {
+    .admin-shell .chatbot-launcher {
+        left: 16px !important;
+        right: auto !important;
+    }
+
+    .admin-shell .chatbot-panel {
+        left: 12px !important;
+        right: 12px !important;
+        width: auto !important;
+    }
+}
