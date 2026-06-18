@@ -1171,11 +1171,6 @@
     min-width: 0;
 }
 
-.signature-provider-panel-ca {
-    border-color: rgba(40, 167, 69, 0.34);
-    background: linear-gradient(180deg, rgba(40, 167, 69, 0.08), var(--color-surface) 42%);
-}
-
 .signature-provider-heading {
     display: grid;
     gap: 2px;

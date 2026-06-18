@@ -197,37 +197,37 @@
     </FooterContent>
 </AdminModal>
 
-<AdminModal IsOpen="_signModalOpen" IsOpenChanged="SetSignModalOpen" Title="Ky xac nhan noi bo">
+<AdminModal IsOpen="_signModalOpen" IsOpenChanged="SetSignModalOpen" Title="Ký xác nhận nội bộ">
     <ChildContent>
         @if (_signingRow is not null)
         {
             <dl class="admin-detail-grid">
-                <dt>Nguoi ky</dt>
+                <dt>Người ký</dt>
                 <dd>@(UserContext.CurrentUser?.Username ?? "anonymous")</dd>
-                <dt>Ho so</dt>
+                <dt>Hồ sơ</dt>
                 <dd>@PatientName(_signingRow.Patient) - @ProtocolVersionName(_signingRow.Application.ClinicalProtocolVersionId)</dd>
-                <dt>Thoi diem</dt>
+                <dt>Thời điểm</dt>
                 <dd>@AdminDateTimeDisplay.DateTime(DateTime.UtcNow)</dd>
-                <dt>Nha cung cap</dt>
-                <dd>Noi bo QLCM</dd>
+                <dt>Hình thức</dt>
+                <dd>Ký tay trực tiếp nội bộ</dd>
             </dl>
             <section class="signature-provider-panel">
                 <div class="signature-provider-heading">
-                    <span class="signature-provider-kicker">Noi bo</span>
-                    <strong>Tai khoan, thoi diem va hash noi dung</strong>
+                    <span class="signature-provider-kicker">Nội bộ</span>
+                    <strong>Tài khoản, thời điểm và hash nội dung</strong>
                 </div>
-                <p class="signature-provider-copy">Chu ky noi bo gan voi tai khoan dang nhap, thoi diem ky, anh chu ky ve tay va metadata ho so tai luc ky.</p>
+                <p class="signature-provider-copy">Chữ ký nội bộ gắn với tài khoản đăng nhập, thời điểm ký, ảnh chữ ký vẽ tay và metadata hồ sơ tại lúc ký.</p>
                 <div class="signature-pad-panel">
-                    <label class="admin-form-field-label is-required" for="@SignatureCanvasId">Chu ky noi bo</label>
-                    <canvas id="@SignatureCanvasId" class="signature-pad-canvas" aria-label="Vung ve chu ky noi bo"></canvas>
+                    <label class="admin-form-field-label is-required" for="@SignatureCanvasId">Chữ ký nội bộ</label>
+                    <canvas id="@SignatureCanvasId" class="signature-pad-canvas" aria-label="Vùng vẽ chữ ký nội bộ"></canvas>
                 </div>
             </section>
         }
     </ChildContent>
     <FooterContent>
-        <button type="button" class="admin-btn admin-btn-ghost" @onclick="ClearSignaturePad">Xoa chu ky</button>
-        <button type="button" class="admin-btn admin-btn-ghost" @onclick="CloseSignModal">Huy</button>
-        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">Ky noi bo</button>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="ClearSignaturePad">Xóa chữ ký</button>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="CloseSignModal">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">Ký nội bộ</button>
     </FooterContent>
 </AdminModal>
 
@@ -666,7 +666,7 @@
             {
                 await CloseSignModal();
                 Store.Refresh(publish: true);
-                Toasts.Show("Da ky xac nhan ho so", "Chu ky noi bo da duoc luu.", ToastVariant.Success);
+                Toasts.Show("Đã ký xác nhận hồ sơ", "Chữ ký nội bộ đã được lưu.", ToastVariant.Success);
                 Recompute();
                 return;
             }
@@ -823,8 +823,8 @@
             s.TargetId == applicationId);
     private static string SignatureBadgeLabel(Sql.SignatureRecord signature)
         => string.Equals(signature.ProviderCode, "internal", StringComparison.OrdinalIgnoreCase)
-            ? "Ky noi bo"
-            : "Chu ky noi bo";
+            ? "Ký nội bộ"
+            : "Chữ ký nội bộ";
     private bool CanCurrentUserSign()
         => IsCurrentAdmin()
            || UserContext.HasPermission("SCR_CLINICAL:SIGN_PROTOCOL_APPLICATION")

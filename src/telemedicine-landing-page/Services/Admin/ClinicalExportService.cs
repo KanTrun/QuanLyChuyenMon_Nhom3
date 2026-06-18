@@ -212,16 +212,16 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
         var signature = SignatureFor(app.PatientProtocolApplicationId);
 
         html.AppendLine("<article class=\"signature-evidence\">");
-        html.AppendLine("<h3 class=\"signature-heading\">X\u00e1c nh\u1eadn ch\u1eef k\u00fd \u0111i\u1ec7n t\u1eed</h3>");
-        html.AppendLine($"<p class=\"signature-summary\">Ph\u00e1c \u0111\u1ed3 \u0111\u01b0\u1ee3c x\u00e1c nh\u1eadn: <strong>{Text(ProtocolVersionName(app.ClinicalProtocolVersionId))}</strong>. B\u1eb1ng ch\u1ee9ng k\u00fd \u0111\u01b0\u1ee3c l\u01b0u k\u00e8m h\u1ed3 s\u01a1 l\u00e2m s\u00e0ng tr\u00ean QLCM Pro.</p>");
+        html.AppendLine("<h3 class=\"signature-heading\">X\u00e1c nh\u1eadn n\u1ed9i b\u1ed9</h3>");
+        html.AppendLine($"<p class=\"signature-summary\">Ph\u00e1c \u0111\u1ed3 \u0111\u01b0\u1ee3c x\u00e1c nh\u1eadn n\u1ed9i b\u1ed9: <strong>{Text(ProtocolVersionName(app.ClinicalProtocolVersionId))}</strong>. B\u1eb1ng ch\u1ee9ng x\u00e1c nh\u1eadn \u0111\u01b0\u1ee3c l\u01b0u k\u00e8m h\u1ed3 s\u01a1 l\u00e2m s\u00e0ng tr\u00ean QLCM Pro.</p>");
         if (app.ApplicationStatus == "revoked")
         {
-            html.AppendLine("<p class=\"revoked\">CH\u1eee K\u00dd \u0110\u00c3 THU H\u1ed2I</p>");
+            html.AppendLine("<p class=\"revoked\">X\u00c1C NH\u1eacN \u0110\u00c3 THU H\u1ed2I</p>");
         }
 
         if (signature is null)
         {
-            html.AppendLine("<p class=\"empty\">Kh\u00f4ng c\u00f3 b\u1eb1ng ch\u1ee9ng ch\u1eef k\u00fd \u0111\u00e3 l\u01b0u.</p>");
+            html.AppendLine("<p class=\"empty\">Kh\u00f4ng c\u00f3 b\u1eb1ng ch\u1ee9ng x\u00e1c nh\u1eadn n\u1ed9i b\u1ed9 \u0111\u00e3 l\u01b0u.</p>");
             html.AppendLine("</article>");
             return;
         }
@@ -229,34 +229,21 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
         html.AppendLine("<div class=\"signature-layout\">");
         html.AppendLine("<div>");
         html.AppendLine("<table class=\"signature-meta\"><tbody>");
-        AppendRow(html, "Ng\u01b0\u1eddi k\u00fd", signature.SignerUsername);
-        AppendRow(html, "Th\u1eddi \u0111i\u1ec3m k\u00fd", AdminDateTimeDisplay.DateTime(signature.SignedAt));
-        AppendRow(html, "H\u00ecnh th\u1ee9c x\u00e1c nh\u1eadn", "X\u00e1c nh\u1eadn n\u1ed9i b\u1ed9");
-        AppendRow(html, "Nh\u00e0 cung c\u1ea5p", ProviderName(signature.ProviderCode));
+        AppendRow(html, "Ng\u01b0\u1eddi x\u00e1c nh\u1eadn", signature.SignerUsername);
+        AppendRow(html, "Th\u1eddi \u0111i\u1ec3m x\u00e1c nh\u1eadn", AdminDateTimeDisplay.DateTime(signature.SignedAt));
+        AppendRow(html, "H\u00ecnh th\u1ee9c x\u00e1c nh\u1eadn", "K\u00fd tay tr\u1ef1c ti\u1ebfp n\u1ed9i b\u1ed9");
         AppendRow(html, "Hash x\u00e1c nh\u1eadn", signature.SignatureHash);
         AppendRow(html, "Ph\u1ea1m vi hi\u1ec7u l\u1ef1c", "N\u1ed9i b\u1ed9 QLCM");
-        if (!string.IsNullOrWhiteSpace(signature.CertificateSerial))
-        {
-            AppendRow(html, "Serial ch\u1ee9ng th\u01b0", signature.CertificateSerial);
-        }
-        if (!string.IsNullOrWhiteSpace(signature.CertificateSubject))
-        {
-            AppendRow(html, "Ch\u1ee7 th\u1ec3 ch\u1ee9ng th\u01b0", signature.CertificateSubject);
-        }
-        if (signature.CertificateExpiry.HasValue)
-        {
-            AppendRow(html, "H\u1ebft h\u1ea1n ch\u1ee9ng th\u01b0", AdminDateTimeDisplay.DateTime(signature.CertificateExpiry.Value));
-        }
         html.AppendLine("</tbody></table>");
         html.AppendLine("<p class=\"signature-note\">Vi\u1ec7c k\u00fd x\u00e1c nh\u1eadn th\u1ec3 hi\u1ec7n ng\u01b0\u1eddi k\u00fd \u0111\u00e3 ki\u1ec3m tra v\u00e0 ch\u1ea5p thu\u1eadn n\u1ed9i dung \u00e1p d\u1ee5ng ph\u00e1c \u0111\u1ed3 trong h\u1ed3 s\u01a1 n\u00e0y.</p>");
         html.AppendLine("</div>");
-        html.AppendLine("<div class=\"signature-visual\" aria-label=\"V\u00f9ng ch\u1eef k\u00fd \u0111i\u1ec7n t\u1eed\">");
+        html.AppendLine("<div class=\"signature-visual\" aria-label=\"V\u00f9ng ch\u1eef k\u00fd tay n\u1ed9i b\u1ed9\">");
         if (TryReadSignatureImageDataUrl(signature.MetadataJson, out var imageDataUrl))
         {
             html.AppendLine("<div class=\"signature-image-wrap\">");
-            html.AppendLine($"<img class=\"signature-image\" src=\"{Text(imageDataUrl)}\" alt=\"Ch\u1eef k\u00fd ng\u01b0\u1eddi x\u00e1c nh\u1eadn\">");
+            html.AppendLine($"<img class=\"signature-image\" src=\"{Text(imageDataUrl)}\" alt=\"Ch\u1eef k\u00fd tay n\u1ed9i b\u1ed9\">");
             html.AppendLine("</div>");
-            html.AppendLine("<div class=\"signature-line\">Ch\u1eef k\u00fd ng\u01b0\u1eddi x\u00e1c nh\u1eadn</div>");
+            html.AppendLine("<div class=\"signature-line\">Ch\u1eef k\u00fd tay n\u1ed9i b\u1ed9</div>");
         }
         else
         {
@@ -269,11 +256,11 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
 
     private static void AppendSignatureStamp(StringBuilder html, ModelsSql.SignatureRecord signature)
     {
-        html.AppendLine("<div class=\"signature-stamp\" aria-label=\"Chữ ký điện tử\">");
-        html.AppendLine("<div class=\"signature-stamp-title\">Đã ký điện tử</div>");
+        html.AppendLine("<div class=\"signature-stamp\" aria-label=\"X\u00e1c nh\u1eadn n\u1ed9i b\u1ed9\">");
+        html.AppendLine("<div class=\"signature-stamp-title\">\u0110\u00e3 x\u00e1c nh\u1eadn n\u1ed9i b\u1ed9</div>");
         html.AppendLine($"<div class=\"signature-stamp-name\">{Text(signature.SignerUsername)}</div>");
         html.AppendLine($"<div class=\"signature-stamp-meta\">{Text(AdminDateTimeDisplay.DateTime(signature.SignedAt))}</div>");
-        html.AppendLine("<div class=\"signature-stamp-meta\">Xác nhận ký điện tử - hồ sơ QLCM Pro</div>");
+        html.AppendLine("<div class=\"signature-stamp-meta\">K\u00fd tay tr\u1ef1c ti\u1ebfp n\u1ed9i b\u1ed9 - h\u1ed3 s\u01a1 QLCM Pro</div>");
         html.AppendLine("</div>");
     }
 
@@ -435,12 +422,6 @@ public sealed class ClinicalExportService(IMedDataStore store, IWebHostEnvironme
         var service = store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == id);
         return service is null ? "-" : $"{service.ServiceCode} - {service.Name}";
     }
-    private static string ProviderName(string? code)
-        => code switch
-        {
-            "internal" or "demo" => "QLCM Pro - ky xac nhan noi bo",
-            _ => Blank(code)
-        };
     private static string DisplayPatient(ModelsSql.PatientRef patient) => patient.DisplayName ?? patient.PatientCode ?? patient.ExternalPatientId;
     private static string Lookup(IReadOnlyList<ModelsSql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "-";
     private static string Blank(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value;

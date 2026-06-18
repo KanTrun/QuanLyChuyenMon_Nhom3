@@ -94,8 +94,10 @@ public sealed class ClinicalExportServiceTests
         Assert.Contains("B\u1ec7nh vi\u1ec7n \u0110a khoa", html);
         Assert.Contains("H\u1ed2 S\u01a0 L\u00c2M S\u00c0NG", html);
         Assert.Contains("I. TH\u00d4NG TIN NG\u01af\u1edcI B\u1ec6NH", html);
-        Assert.Contains("CH\u1eee K\u00dd \u0110\u00c3 THU H\u1ed2I", html);
+        Assert.Contains("X\u00c1C NH\u1eacN \u0110\u00c3 THU H\u1ed2I", html);
         Assert.Contains(ValidPngDataUrl, html);
+        Assert.DoesNotContain("ch\u1ee9ng th\u01b0", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Nh\u00e0 cung c\u1ea5p", html);
     }
 
     [Fact]
@@ -132,14 +134,16 @@ public sealed class ClinicalExportServiceTests
             MedDataStoreSeed.PatientMauId,
             new DateTime(2026, 6, 2, 9, 0, 0, DateTimeKind.Utc));
 
-        Assert.Contains("X\u00e1c nh\u1eadn ch\u1eef k\u00fd", html);
+        Assert.Contains("X\u00e1c nh\u1eadn n\u1ed9i b\u1ed9", html);
         Assert.Contains(ValidPngDataUrl, html);
         Assert.Contains("signature-layout", html);
         Assert.Contains("signature-visual", html);
-        Assert.Contains("Ch\u1eef k\u00fd ng\u01b0\u1eddi x\u00e1c nh\u1eadn", html);
+        Assert.Contains("Ch\u1eef k\u00fd tay n\u1ed9i b\u1ed9", html);
         Assert.Contains("signature-note", html);
         Assert.Contains("QLCM Pro", html);
         Assert.DoesNotContain(">demo<", html);
+        Assert.DoesNotContain("k\u00fd \u0111i\u1ec7n t\u1eed", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("ch\u1ee9ng th\u01b0", html, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -175,9 +179,10 @@ public sealed class ClinicalExportServiceTests
             MedDataStoreSeed.PatientMauId,
             new DateTime(2026, 6, 2, 9, 0, 0, DateTimeKind.Utc));
 
-        Assert.Contains("X\u00e1c nh\u1eadn ch\u1eef k\u00fd", html);
-        Assert.Contains("\u0110\u00e3 k\u00fd \u0111i\u1ec7n t\u1eed", html);
+        Assert.Contains("X\u00e1c nh\u1eadn n\u1ed9i b\u1ed9", html);
+        Assert.Contains("\u0110\u00e3 x\u00e1c nh\u1eadn n\u1ed9i b\u1ed9", html);
         Assert.Contains("signature-stamp-name\">admin", html);
+        Assert.DoesNotContain("k\u00fd \u0111i\u1ec7n t\u1eed", html, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -212,7 +217,9 @@ public sealed class ClinicalExportServiceTests
             MedDataStoreSeed.PatientMauId,
             new DateTime(2026, 6, 4, 9, 0, 0, DateTimeKind.Utc));
 
-        Assert.Contains("QLCM Pro - ky xac nhan noi bo", html);
+        Assert.Contains("K\u00fd tay tr\u1ef1c ti\u1ebfp n\u1ed9i b\u1ed9", html);
+        Assert.DoesNotContain("Nh\u00e0 cung c\u1ea5p", html);
+        Assert.DoesNotContain("ch\u1ee9ng th\u01b0", html, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("internal-hash", html);
     }
     [Fact]
