@@ -823,6 +823,30 @@
     backdrop-filter: blur(8px);
 }
 
+.procedure-signoff-table {
+    min-width: 760px;
+}
+
+.procedure-signoff-table th:nth-child(1) {
+    width: 150px;
+}
+
+.procedure-signoff-table th:nth-child(2) {
+    width: 170px;
+}
+
+.procedure-signoff-table th:nth-child(4) {
+    width: 130px;
+}
+
+.procedure-signoff-table th:last-child {
+    width: 220px;
+}
+
+.procedure-signoff-table td {
+    vertical-align: middle;
+}
+
 .admin-callout {
     padding: 12px 14px;
     border-left: 4px solid var(--color-primary);

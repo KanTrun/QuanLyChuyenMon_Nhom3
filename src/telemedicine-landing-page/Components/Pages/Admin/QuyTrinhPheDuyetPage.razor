@@ -134,6 +134,45 @@
                 <dd>@AdminDateTimeDisplay.DateTime(_selected.Version.ApprovedAt)</dd>
             </dl>
 
+            <h3 class="admin-panel-title">Chữ ký nội bộ</h3>
+            <div class="admin-table-wrapper">
+                <table class="admin-table procedure-signoff-table">
+                    <thead><tr><th>Vai trò</th><th>Trạng thái</th><th>Người ký</th><th>Thời điểm</th><th>Hành động</th></tr></thead>
+                    <tbody>
+                        @foreach (var signoff in SignoffDisplays(_selected.Version))
+                        {
+                            <tr>
+                                <td><strong>@signoff.RoleLabel</strong></td>
+                                <td><AdminBadge Tone="@signoff.Tone">@signoff.StatusLabel</AdminBadge></td>
+                                <td>@signoff.SignerLabel</td>
+                                <td>@signoff.SignedAtLabel</td>
+                                <td>
+                                    @if (CanSignFromApproval(_selected, signoff.Role))
+                                    {
+                                        @if (signoff.Role == "approver")
+                                        {
+                                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => PrepareApproveAsync(_selected)">
+                                                Ký phê duyệt và ban hành
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => OpenSignModal(_selected.Version, "checker")'>
+                                                Ký kiểm tra
+                                            </button>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="admin-table-cell-muted">@ApprovalSignoffHint(_selected.Version, signoff.Role)</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
             <h3 class="admin-panel-title">Các bước quy trình</h3>
             <ol class="admin-step-list">
                 @foreach (var step in Store.ProcedureSteps.Where(s => s.ProcedureVersionId == _selected.Version.ProcedureVersionId).OrderBy(s => s.StepNo))
@@ -428,6 +467,44 @@
         _ => role
     };
 
+    private IReadOnlyList<SignoffDisplay> SignoffDisplays(Sql.ProcedureVersion version)
+        => new[] { "writer", "checker", "approver" }.Select(role => BuildSignoffDisplay(version, role)).ToList();
+
+    private SignoffDisplay BuildSignoffDisplay(Sql.ProcedureVersion version, string role)
+    {
+        var latest = Store.ProcedureSignoffRecords
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId &&
+                           string.Equals(item.SignoffRole, role, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(item => item.SignedAt)
+            .FirstOrDefault();
+        var isCurrent = latest is not null && Signoffs.HasCurrentSignoff(version.ProcedureVersionId, role);
+        var status = latest is null ? "Chưa ký" : isCurrent ? "Đã ký hợp lệ" : "Chữ ký đã cũ";
+        var tone = latest is null ? "tone-muted" : isCurrent ? "tone-success" : "tone-warning";
+
+        return new SignoffDisplay(
+            role,
+            SignoffRoleLabel(role),
+            status,
+            tone,
+            latest?.SignerFullName ?? latest?.SignerUsername ?? "—",
+            latest is null ? "—" : AdminDateTimeDisplay.ShortDateTime(latest.SignedAt));
+    }
+
+    private bool CanSignFromApproval(ApprovalRow row, string role)
+        => row.Version.StatusCode == "pending_approval" &&
+           (role == "checker" ||
+            (role == "approver" && Signoffs.HasCurrentSignoff(row.Version.ProcedureVersionId, "checker")));
+
+    private string ApprovalSignoffHint(Sql.ProcedureVersion version, string role) => role switch
+    {
+        "writer" => "Người viết ký trước khi gửi kiểm tra",
+        "checker" => version.StatusCode == "pending_approval" ? "Có thể ký kiểm tra tại đây" : "Chỉ ký khi chờ duyệt",
+        "approver" => Signoffs.HasCurrentSignoff(version.ProcedureVersionId, "checker")
+            ? "Ký khi bấm phê duyệt"
+            : "Cần chữ ký kiểm tra hợp lệ trước",
+        _ => "Theo chuỗi ký nội bộ"
+    };
+
     private Task RejectAsync(ApprovalRow row)
     {
         if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "từ chối quy trình")) return Task.CompletedTask;
@@ -531,6 +608,8 @@
     };
 
     public void Dispose() => Store.StateChanged -= OnChanged;
+
+    private sealed record SignoffDisplay(string Role, string RoleLabel, string StatusLabel, string Tone, string SignerLabel, string SignedAtLabel);
 
     private sealed record ApprovalRow(Sql.ProfessionalProcedure Procedure, Sql.ProcedureVersion Version);
 }

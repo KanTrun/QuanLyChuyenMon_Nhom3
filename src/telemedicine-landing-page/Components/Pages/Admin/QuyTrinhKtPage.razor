@@ -144,6 +144,39 @@
                 <dd>@AdminDateTimeDisplay.DateTime(_selected.Procedure.UpdatedAt)</dd>
             </dl>
 
+            @if (_selected.LatestVersion is not null)
+            {
+                <h3 class="admin-panel-title">Chữ ký nội bộ</h3>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table procedure-signoff-table">
+                        <thead><tr><th>Vai trò</th><th>Trạng thái</th><th>Người ký</th><th>Thời điểm</th><th>Hành động</th></tr></thead>
+                        <tbody>
+                            @foreach (var signoff in SignoffDisplays(_selected.LatestVersion))
+                            {
+                                <tr>
+                                    <td><strong>@signoff.RoleLabel</strong></td>
+                                    <td><AdminBadge Tone="@signoff.Tone">@signoff.StatusLabel</AdminBadge></td>
+                                    <td>@signoff.SignerLabel</td>
+                                    <td>@signoff.SignedAtLabel</td>
+                                    <td>
+                                        @if (CanSignFromList(_selected.LatestVersion, signoff.Role))
+                                        {
+                                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => OpenSignModal(_selected.LatestVersion, signoff.Role)">
+                                                @SignActionLabel(signoff.Role)
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="admin-table-cell-muted">@SignoffLocationHint(signoff.Role)</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
             <h3 class="admin-panel-title">Phiên bản</h3>
             <div class="admin-table-wrapper">
                 <table class="admin-table">
@@ -427,6 +460,49 @@
         _ => role
     };
 
+    private IReadOnlyList<SignoffDisplay> SignoffDisplays(Sql.ProcedureVersion version)
+        => new[] { "writer", "checker", "approver" }.Select(role => BuildSignoffDisplay(version, role)).ToList();
+
+    private SignoffDisplay BuildSignoffDisplay(Sql.ProcedureVersion version, string role)
+    {
+        var latest = Store.ProcedureSignoffRecords
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId &&
+                           string.Equals(item.SignoffRole, role, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(item => item.SignedAt)
+            .FirstOrDefault();
+        var isCurrent = latest is not null && Signoffs.HasCurrentSignoff(version.ProcedureVersionId, role);
+        var status = latest is null ? "Chưa ký" : isCurrent ? "Đã ký hợp lệ" : "Chữ ký đã cũ";
+        var tone = latest is null ? "tone-muted" : isCurrent ? "tone-success" : "tone-warning";
+
+        return new SignoffDisplay(
+            role,
+            SignoffRoleLabel(role),
+            status,
+            tone,
+            latest?.SignerFullName ?? latest?.SignerUsername ?? "—",
+            latest is null ? "—" : AdminDateTimeDisplay.ShortDateTime(latest.SignedAt));
+    }
+
+    private static bool CanSignFromList(Sql.ProcedureVersion version, string role)
+        => (role == "writer" && version.StatusCode == "draft") ||
+           (role == "checker" && version.StatusCode == "pending_approval");
+
+    private static string SignActionLabel(string role) => role switch
+    {
+        "writer" => "Ký người viết",
+        "checker" => "Ký kiểm tra",
+        "approver" => "Ký phê duyệt",
+        _ => "Ký nội bộ"
+    };
+
+    private static string SignoffLocationHint(string role) => role switch
+    {
+        "writer" => "Ký trước khi gửi kiểm tra",
+        "checker" => "Ký ở trạng thái chờ duyệt",
+        "approver" => "Ký khi ban hành tại trang phê duyệt",
+        _ => "Theo chuỗi ký nội bộ"
+    };
+
     private async Task ExportVersionAsync(Sql.ProcedureVersion version)
     {
         try
@@ -536,6 +612,8 @@
     };
 
     public void Dispose() => Store.StateChanged -= OnChanged;
+
+    private sealed record SignoffDisplay(string Role, string RoleLabel, string StatusLabel, string Tone, string SignerLabel, string SignedAtLabel);
 
     private sealed record ProcedureRow(Sql.ProfessionalProcedure Procedure, Sql.ProcedureVersion? LatestVersion, Guid? DepartmentId);
 }

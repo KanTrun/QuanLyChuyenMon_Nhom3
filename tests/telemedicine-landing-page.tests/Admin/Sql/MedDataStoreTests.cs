@@ -16,11 +16,13 @@ public sealed class MedDataStoreTests
         var version = store.ProcedureVersions.Single(item => item.ProcedureId == procedure.ProcedureId);
 
         Assert.Equal("Quy trình xử lý dụng cụ phẫu thuật", procedure.Name);
-        Assert.Contains("đang chờ trích xuất và đối chiếu", procedure.Description);
+        Assert.Contains("PDF nguồn được gắn kèm", procedure.Description);
         Assert.Equal("v01", version.VersionLabel);
+        Assert.Contains("OCR_EXTRACTED", version.Summary);
         Assert.Contains(store.ProcedureDocumentSections, item => item.ProcedureVersionId == version.ProcedureVersionId && item.Title == "Mục đích");
         Assert.Contains(store.ProcedureSteps, item => item.ProcedureVersionId == version.ProcedureVersionId && item.Name == "Tiệt khuẩn dụng cụ");
         Assert.Contains(store.ProcedureDistributionRecipients, item => item.ProcedureVersionId == version.ProcedureVersionId && item.RecipientName == "Ban Giám đốc");
+        Assert.DoesNotContain("chờ trích xuất", procedure.Description, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(store.ProcedureDocumentSections, item => item.ProcedureVersionId == version.ProcedureVersionId && item.ContentText?.Contains("OCR_PENDING", StringComparison.OrdinalIgnoreCase) == true);
         Assert.DoesNotContain(store.ProcedureSteps, item => item.ProcedureVersionId == version.ProcedureVersionId && item.Description?.Contains("OCR_PENDING", StringComparison.OrdinalIgnoreCase) == true);
     }

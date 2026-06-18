@@ -136,6 +136,44 @@
         </div>
     </article>
 
+    <article class="admin-panel procedure-signoff-panel">
+        <header class="admin-panel-head">
+            <div>
+                <h2 class="admin-panel-title">Chữ ký nội bộ trực tiếp</h2>
+                <p class="admin-form-field-hint">Người dùng ký bằng tay trong khung vẽ; hệ thống lưu ảnh chữ ký, tài khoản, thời điểm và hash nội dung tại lúc ký.</p>
+            </div>
+        </header>
+        <div class="admin-table-wrapper">
+            <table class="admin-table procedure-signoff-table">
+                <thead><tr><th>Vai trò</th><th>Trạng thái</th><th>Nơi thực hiện</th><th>Hành động</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Người viết</strong></td>
+                        <td><AdminBadge Tone="tone-warning">Ký trước khi gửi kiểm tra</AdminBadge></td>
+                        <td>Trang tạo/cập nhật quy trình hiện tại</td>
+                        <td>
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" disabled="@_isSaving" @onclick="OpenWriterSignature">
+                                Mở khung ký tay
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Người kiểm tra</strong></td>
+                        <td><AdminBadge Tone="tone-muted">Sau khi gửi kiểm tra</AdminBadge></td>
+                        <td>Trang Phê duyệt hoặc chi tiết phiên bản chờ duyệt</td>
+                        <td><span class="admin-table-cell-muted">Ký khi phiên bản ở trạng thái chờ duyệt</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Người phê duyệt</strong></td>
+                        <td><AdminBadge Tone="tone-muted">Ký khi ban hành</AdminBadge></td>
+                        <td>Trang Phê duyệt, ngay trước khi xuất bản phiên bản</td>
+                        <td><span class="admin-table-cell-muted">Chỉ mở sau khi có chữ ký kiểm tra hợp lệ</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
+
     <aside class="admin-callout">
         <strong>@(IsUpdateMode ? "Nguyên tắc phiên bản:" : "Chuỗi xác nhận nội bộ:")</strong>
         @(IsUpdateMode

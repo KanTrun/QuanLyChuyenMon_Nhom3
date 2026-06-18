@@ -551,7 +551,7 @@ public static class MedDataStoreSeed
             Name = title,
             ProcedureType = "technical",
             OwnerDepartmentId = DeptHcId,
-            Description = "Nhập từ PDF scan 2145; đang chờ trích xuất và đối chiếu đầy đủ từng trang trước khi ban hành.",
+            Description = "Trích xuất từ PDF scan 2145; PDF nguồn được gắn kèm làm căn cứ kiểm soát nội dung.",
             CreatedBy = AdminUserId
         });
 
@@ -564,7 +564,7 @@ public static class MedDataStoreSeed
             StatusCode = "draft",
             DepartmentId = DeptHcId,
             Title = title,
-            Summary = "{\"ocrStatus\":\"OCR_PENDING\",\"note\":\"PDF scan là nguồn sự thật; chỉ seed metadata và lưu đồ đã spot-check từ ảnh render.\"}",
+            Summary = "{\"ocrStatus\":\"OCR_EXTRACTED\",\"note\":\"Nội dung chính và lưu đồ đã được nhập từ OCR; PDF scan nguồn được giữ kèm để kiểm soát.\"}",
             ChangeReason = "Nhập quy trình KSNK từ PDF scan",
             IssueDate = new DateTime(2026, 3, 19),
             IssueNumber = 2,
@@ -573,11 +573,11 @@ public static class MedDataStoreSeed
             CreatedBy = AdminUserId
         });
 
-        AddDefaultProcedureSections(store, versionId);
+        AddDefaultProcedureSections(store, versionId, code);
         store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 1, RecipientName = "Ban Giám đốc" });
         store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 2, RecipientName = "Khoa Kiểm soát nhiễm khuẩn" });
         store.AddProcedureDistributionRecipient(new ProcedureDistributionRecipient { ProcedureVersionId = versionId, DisplayOrder = 3, RecipientName = "Các khoa/phòng sử dụng dụng cụ" });
-        store.AddProcedureRevisionEntry(new ProcedureRevisionEntry { ProcedureVersionId = versionId, DisplayOrder = 1, RevisionDate = new DateTime(2026, 3, 19), PageRef = "Toàn văn", SectionRef = "Lần 02", Summary = "Ban hành theo PDF scan số 2145; nội dung chi tiết chờ trích xuất và đối chiếu." });
+        store.AddProcedureRevisionEntry(new ProcedureRevisionEntry { ProcedureVersionId = versionId, DisplayOrder = 1, RevisionDate = new DateTime(2026, 3, 19), PageRef = "Toàn văn", SectionRef = "Lần 02", Summary = "Ban hành theo PDF scan số 2145; nội dung chính và lưu đồ đã nhập từ OCR, PDF nguồn được giữ kèm để kiểm soát." });
 
         var flowDetails = KsnkFlowDetails(code, steps);
         for (var i = 0; i < steps.Count; i++)
@@ -627,15 +627,15 @@ public static class MedDataStoreSeed
         {
             return
             [
-                new("Làm sạch dụng cụ", "ĐD dụng cụ - khoa GMHS", "", "BM.KSNK.09.01\nBM.KSNK.09.02", "terminator", "5.2.1", 10),
-                new("Giao nhận dụng cụ sau khi làm sạch", "- ĐD dụng cụ - khoa GMHS\n- NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.09.09\nPhụ lục I\nPhụ lục II", "process", "5.2.2", 10),
-                new("Làm sạch, khử khuẩn dụng cụ", "NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.09.03\nBM.KSNK.09.04", "process", "5.2.3", 10),
-                new("Bảo dưỡng - kiểm tra dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "", "Phụ lục III\nPhụ lục IV\nPhụ lục V\nPhụ lục VI", "process", "5.2.4", 10),
-                new("Đóng gói dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "", "BM.KSNK.09.05\nBM.KSNK.09.06\nBM.KSNK.09.07", "process", "5.2.5", 10),
+                new("Làm sạch dụng cụ", "ĐD dụng cụ - khoa GMHS", "Sau sử dụng, dụng cụ được đưa về khu vực xử lý riêng; nhân viên mang phương tiện PHCN, pha hóa chất theo khuyến cáo, loại bỏ chất thải còn sót, tháo rời và mở các khớp/góc. Dụng cụ được ngâm ngập trong hóa chất làm sạch chứa enzyme đúng thời gian, chà rửa bằng dụng cụ chuyên dụng, tráng nước sạch và làm khô bằng khăn/gạc sạch hoặc để khô tự nhiên.", "BM.KSNK.09.01\nBM.KSNK.09.02", "terminator", "5.2.1", 10),
+                new("Giao nhận dụng cụ sau khi làm sạch", "- ĐD dụng cụ - khoa GMHS\n- NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "ĐD dụng cụ kiểm tra dụng cụ đã sạch, khô, không còn máu, mủ, dịch tiết hoặc hóa chất; đặt dụng cụ vào thùng có nắp đậy và vận chuyển an toàn tới nơi nhận dụng cụ bẩn của khoa KSNK. Hai bên kiểm đếm, đối chiếu sổ giao nhận; trường hợp hư hỏng, thất lạc hoặc cần dùng khẩn cấp phải ghi nhận, ký xác nhận và báo điều dưỡng trưởng liên quan.", "BM.KSNK.09.09\nPhụ lục I\nPhụ lục II", "process", "5.2.2", 10),
+                new("Làm sạch, khử khuẩn dụng cụ", "NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "NV KSNK nhận dụng cụ, kiểm tra độ sạch và số lượng, báo trả khoa sử dụng nếu còn tồn dư bẩn. Dụng cụ được xử lý lại theo nhóm phù hợp bằng phương tiện làm sạch, máy rửa/khử khuẩn hoặc thao tác thủ công, tuân thủ hóa chất, nồng độ, thời gian tiếp xúc, tráng và làm khô trước khi chuyển sang đóng gói.", "BM.KSNK.09.03\nBM.KSNK.09.04", "process", "5.2.3", 10),
+                new("Bảo dưỡng - kiểm tra dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "Dụng cụ sau làm sạch được bảo dưỡng theo khuyến cáo của nhà sản xuất, kiểm tra bằng mắt thường hoặc kính/đèn phóng đại. Nhân viên kiểm tra khớp, khóa, lòng ống, răng cưa, bề mặt, độ sắc bén, độ khô, tình trạng gỉ sét/hư hỏng và loại bỏ hoặc báo sửa chữa dụng cụ không đạt.", "Phụ lục III\nPhụ lục IV\nPhụ lục V\nPhụ lục VI", "process", "5.2.4", 10),
+                new("Đóng gói dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "Đóng gói dụng cụ bằng bao túi ép chuyên dụng, hộp hoặc khay theo chủng loại dụng cụ. Bố trí dụng cụ đúng vị trí, đặt chỉ thị hóa học phù hợp, hàn kín, ghi/dán nhãn thông tin lô, ngày đóng gói, người đóng gói, hạn dùng và chuyển sang khu vực tiệt khuẩn.", "BM.KSNK.09.05\nBM.KSNK.09.06\nBM.KSNK.09.07", "process", "5.2.5", 10),
                 new("Tiệt khuẩn dụng cụ", "NV vận hành máy hấp - khoa KSNK", "Vận hành máy hấp phù hợp với loại dụng cụ cần tiệt khuẩn:\n- Dụng cụ chịu nhiệt: Máy hấp nhiệt độ cao\n- Dụng cụ không chịu nhiệt: Máy hấp nhiệt độ thấp", "", "process", "", 10),
-                new("Giám sát chất lượng tiệt khuẩn dụng cụ", "NV vận hành máy hấp - khoa KSNK", "", "BM.KSNK.09.08\nPhụ lục VII\nPhụ lục VIII", "process", "5.2.6", 10),
-                new("Lưu trữ dụng cụ", "NV kho vô khuẩn - khoa KSNK", "", "BM.KSNK.09.11", "process", "5.2.7", 10),
-                new("Giao nhận dụng cụ sau khi tiệt khuẩn", "- NV khu vực cấp phát dụng cụ - khoa KSNK\n- ĐD dụng cụ - khoa GMHS", "", "BM.KSNK.09.10\nPhụ lục IX\nPhụ lục X", "terminator", "5.2.8", 10)
+                new("Giám sát chất lượng tiệt khuẩn dụng cụ", "NV vận hành máy hấp - khoa KSNK", "Theo dõi đầy đủ các thông số chu trình, chỉ thị cơ học, hóa học và sinh học/PCD theo quy định. Kết quả giám sát phải được ghi nhận; mẻ không đạt phải cách ly, xử lý lại và báo người phụ trách trước khi cấp phát.", "BM.KSNK.09.08\nPhụ lục VII\nPhụ lục VIII", "process", "5.2.6", 10),
+                new("Lưu trữ dụng cụ", "NV kho vô khuẩn - khoa KSNK", "Dụng cụ đạt yêu cầu sau tiệt khuẩn được lưu tại kho vô khuẩn, bảo đảm nguyên vẹn bao gói, khô sạch, đúng hạn dùng và được sắp xếp theo nguyên tắc nhập trước - xuất trước.", "BM.KSNK.09.11", "process", "5.2.7", 10),
+                new("Giao nhận dụng cụ sau khi tiệt khuẩn", "- NV khu vực cấp phát dụng cụ - khoa KSNK\n- ĐD dụng cụ - khoa GMHS", "NV cấp phát kiểm tra tình trạng vô khuẩn, nhãn, hạn dùng và số lượng trước khi giao. ĐD dụng cụ khoa GMHS tiếp nhận, kiểm đếm, ký sổ giao nhận; mọi sai lệch, rách ướt bao gói hoặc dụng cụ quá hạn phải trả lại để xử lý lại.", "BM.KSNK.09.10\nPhụ lục IX\nPhụ lục X", "terminator", "5.2.8", 10)
             ];
         }
 
@@ -643,15 +643,15 @@ public static class MedDataStoreSeed
         {
             return
             [
-                new("Làm sạch, khử khuẩn dụng cụ", "NV khoa sử dụng", "", "BM.KSNK.12.01\nBM.KSNK.12.02", "terminator", "5.2.1", 10),
-                new("Giao nhận dụng cụ sau khi làm sạch, khử khuẩn", "- NV khoa sử dụng\n- NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.12.09\nPhụ lục I", "process", "5.2.2", 10),
-                new("Làm sạch, khử khuẩn dụng cụ", "NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.12.03\nBM.KSNK.12.04", "process", "5.2.3", 10),
-                new("Bảo dưỡng - kiểm tra dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "", "Phụ lục II\nPhụ lục III", "process", "5.2.4", 10),
-                new("Đóng gói dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "", "BM.KSNK.12.05\nBM.KSNK.12.06\nBM.KSNK.12.07", "process", "5.2.5", 10),
+                new("Làm sạch, khử khuẩn dụng cụ", "NV khoa sử dụng", "Sau sử dụng, dụng cụ được đưa về khu vực xử lý riêng tại khoa sử dụng. Nhân viên mang PHCN, pha hóa chất theo khuyến cáo, loại bỏ chất thải, tháo rời/mở các khớp và xả nước sạch. Dụng cụ được làm sạch bằng hóa chất chứa enzyme, chà rửa, tráng, làm khô; với dụng cụ có ngóc ngách hoặc dính máu, mủ, dịch tiết thì thực hiện thêm bước khử khuẩn mức độ trung bình theo đúng thời gian và nồng độ.", "BM.KSNK.12.01\nBM.KSNK.12.02", "terminator", "5.2.1", 10),
+                new("Giao nhận dụng cụ sau khi làm sạch, khử khuẩn", "- NV khoa sử dụng\n- NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "Khoa sử dụng kiểm tra dụng cụ sạch, khô, đặt trong hộp/thùng có nắp đậy và ghi rõ số lượng, chủng loại vào sổ giao nhận. Dụng cụ được bàn giao trực tiếp cho khoa KSNK theo thời gian, địa điểm quy định; hai bên kiểm đếm, ký nhận và xử lý ngay các sai lệch.", "BM.KSNK.12.09\nPhụ lục I", "process", "5.2.2", 10),
+                new("Làm sạch, khử khuẩn dụng cụ", "NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "NV KSNK kiểm tra độ sạch, số lượng, chủng loại và chất lượng dụng cụ đã nhận. Dụng cụ được làm sạch/khử khuẩn lại bằng máy rửa khử khuẩn hoặc bằng tay tùy loại, tuân thủ bảng hướng dẫn hóa chất, thời gian, nồng độ, quy trình tráng và làm khô trước khi đóng gói.", "BM.KSNK.12.03\nBM.KSNK.12.04", "process", "5.2.3", 10),
+                new("Bảo dưỡng - kiểm tra dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "Thực hiện bảo dưỡng, bôi trơn nếu cần; kiểm tra chức năng, khóa khớp, lòng ống, vết bẩn còn sót, gỉ sét, biến dạng và độ khô. Dụng cụ không đạt được tách riêng để xử lý lại, sửa chữa hoặc loại bỏ theo quy định.", "Phụ lục II\nPhụ lục III", "process", "5.2.4", 10),
+                new("Đóng gói dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "Đóng gói bằng bao túi ép chuyên dụng, hộp hoặc khay phù hợp; đặt chỉ thị hóa học, sắp xếp dụng cụ đúng nguyên tắc, hàn/niêm kín, ghi nhãn ngày đóng gói, người đóng gói, lô hấp và hạn dùng trước khi chuyển tiệt khuẩn.", "BM.KSNK.12.05\nBM.KSNK.12.06\nBM.KSNK.12.07", "process", "5.2.5", 10),
                 new("Tiệt khuẩn dụng cụ", "NV vận hành máy hấp - khoa KSNK", "Vận hành máy hấp phù hợp với loại dụng cụ cần tiệt khuẩn theo khuyến cáo của nhà sản xuất:\n- Dụng cụ chịu nhiệt: Máy hấp nhiệt độ cao\n- Dụng cụ không chịu nhiệt: Máy hấp nhiệt độ thấp", "", "process", "", 10),
-                new("Giám sát chất lượng tiệt khuẩn dụng cụ", "NV vận hành máy hấp - khoa KSNK", "", "BM.KSNK.12.08\nPhụ lục IV\nPhụ lục V", "process", "5.2.6", 10),
-                new("Lưu trữ dụng cụ", "NV kho vô khuẩn - khoa KSNK", "", "BM.KSNK.12.11", "process", "5.2.7", 10),
-                new("Giao nhận dụng cụ sau khi tiệt khuẩn", "- NV khu vực cấp phát dụng cụ - khoa KSNK\n- NV khoa sử dụng", "", "BM.KSNK.12.10\nPhụ lục I", "terminator", "5.2.8", 10)
+                new("Giám sát chất lượng tiệt khuẩn dụng cụ", "NV vận hành máy hấp - khoa KSNK", "Giám sát thông số mẻ hấp, chỉ thị hóa học, chỉ thị sinh học/PCD theo quy định; ghi nhận kết quả và cách ly toàn bộ mẻ nếu không đạt để xử lý lại.", "BM.KSNK.12.08\nPhụ lục IV\nPhụ lục V", "process", "5.2.6", 10),
+                new("Lưu trữ dụng cụ", "NV kho vô khuẩn - khoa KSNK", "Lưu dụng cụ đã tiệt khuẩn tại kho vô khuẩn, kiểm tra bao gói nguyên vẹn, nhãn và hạn dùng; sắp xếp tránh ẩm, bụi, đè ép và cấp phát theo nguyên tắc nhập trước - xuất trước.", "BM.KSNK.12.11", "process", "5.2.7", 10),
+                new("Giao nhận dụng cụ sau khi tiệt khuẩn", "- NV khu vực cấp phát dụng cụ - khoa KSNK\n- NV khoa sử dụng", "NV cấp phát kiểm tra dụng cụ vô khuẩn trước khi giao; khoa sử dụng kiểm đếm, ký nhận và bảo quản tới khi dùng. Dụng cụ hư bao gói, quá hạn hoặc nghi ngờ nhiễm bẩn phải trả lại khoa KSNK.", "BM.KSNK.12.10\nPhụ lục I", "terminator", "5.2.8", 10)
             ];
         }
 
@@ -659,12 +659,12 @@ public static class MedDataStoreSeed
         {
             return
             [
-                new("Làm sạch dụng cụ", "NV khoa sử dụng", "", "BM.KSNK.16.01", "terminator", "5.2.1", 10),
-                new("Giao nhận dụng cụ sau khi làm sạch", "- NV khoa sử dụng\n- NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.16.02\nPhụ lục I", "process", "5.2.2", 10),
-                new("Khử khuẩn mức độ cao dụng cụ", "NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "", "BM.KSNK.16.03\nPhụ lục II\nPhụ lục III", "process", "5.2.3", 10),
+                new("Làm sạch dụng cụ", "NV khoa sử dụng", "Dụng cụ bán thiết yếu/hỗ trợ hô hấp sau sử dụng được đưa về khu xử lý riêng. Nhân viên mang PHCN, pha hóa chất làm sạch chứa enzyme, loại bỏ chất thải, tháo rời, xả nước, ngâm đúng thời gian/nồng độ, chà rửa bằng phương tiện chuyên dụng, tráng nước sạch và làm khô.", "BM.KSNK.16.01", "terminator", "5.2.1", 10),
+                new("Giao nhận dụng cụ sau khi làm sạch", "- NV khoa sử dụng\n- NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "Khoa sử dụng kiểm tra dụng cụ sạch, khô; đặt vào hộp có nắp đậy và ghi đầy đủ số lượng, chủng loại vào sổ giao nhận. NV KSNK kiểm đếm, đối chiếu, ký nhận; nếu còn bẩn hoặc sai lệch phải yêu cầu xử lý lại hoặc điều chỉnh sổ ngay tại thời điểm giao nhận.", "BM.KSNK.16.02\nPhụ lục I", "process", "5.2.2", 10),
+                new("Khử khuẩn mức độ cao dụng cụ", "NV khu vực làm sạch, khử khuẩn dụng cụ - khoa KSNK", "NV KSNK chuẩn bị bồn/khay ngâm có nắp, que thử nồng độ, đồng hồ đếm ngược, khăn vô khuẩn, máy sấy và hóa chất KKMĐC còn hạn. Kiểm tra nồng độ hóa chất từ mẻ đầu và đầu mỗi ngày, ngâm dụng cụ ngập hoàn toàn theo thời gian quy định, tráng bằng nước vô khuẩn/đạt yêu cầu, làm khô và chuyển đóng gói vô khuẩn.", "BM.KSNK.16.03\nPhụ lục II\nPhụ lục III", "process", "5.2.3", 10),
                 new("Đóng gói dụng cụ", "NV khu vực đóng gói dụng cụ - khoa KSNK", "- Mang phương tiện PHCN: nón, khẩu trang\n- Vệ sinh tay\n- Trải khăn vô khuẩn lên bàn đóng gói dụng cụ KKMĐC\n- Mang áo choàng vô khuẩn, găng vô khuẩn\n- Lấy dụng cụ ra từ tủ sấy và kiểm tra độ khô; để dụng cụ lên bàn đã trải khăn vô khuẩn\n- Đóng gói dụng cụ bằng bao túi ép chuyên dụng đã được hàn một đầu và hấp tiệt khuẩn\n- Đóng dấu hoặc dán nhãn thông tin: ngày đóng gói, nhân viên đóng gói, hạn sử dụng 14 ngày\n- Chuyển dụng cụ qua kho vô khuẩn bằng hộp trung chuyển (Passbox)", "BM.KSNK.16.04", "process", "", 10),
-                new("Lưu trữ dụng cụ tại khoa KSNK", "NV kho vô khuẩn - khoa KSNK", "Lưu trữ dụng cụ sau khi xử lý tại khoa KSNK để duy trì độ vô khuẩn đến khi bàn giao cho khoa sử dụng.", "", "process", "", 10),
-                new("Giao nhận dụng cụ vô khuẩn", "- NV khu vực cấp phát dụng cụ - khoa KSNK\n- NV khoa sử dụng", "", "BM.KSNK.16.05", "terminator", "5.2.4", 10)
+                new("Lưu trữ dụng cụ tại khoa KSNK", "NV kho vô khuẩn - khoa KSNK", "Lưu trữ dụng cụ KKMĐC đã đóng gói tại kho vô khuẩn, duy trì bao gói khô, sạch, nguyên vẹn và đúng hạn sử dụng 14 ngày đến khi bàn giao.", "", "process", "", 10),
+                new("Giao nhận dụng cụ vô khuẩn", "- NV khu vực cấp phát dụng cụ - khoa KSNK\n- NV khoa sử dụng", "NV kho cấp phát kiểm tra bao gói, hạn dùng và số lượng; khoa sử dụng tiếp nhận, ký sổ giao nhận và bảo quản dụng cụ vô khuẩn theo quy định trước khi dùng.", "BM.KSNK.16.05", "terminator", "5.2.4", 10)
             ];
         }
 
@@ -672,15 +672,15 @@ public static class MedDataStoreSeed
         {
             return
             [
-                new("Chuẩn bị", "NV khoa sử dụng", "", "", "terminator", "5.2.2", 10),
-                new("Làm sạch", "NV khoa sử dụng", "", "", "process", "5.2.3", 10),
-                new("Khử khuẩn", "NV khoa sử dụng", "", "", "process", "5.2.4", 10),
+                new("Chuẩn bị", "NV khoa sử dụng", "Nhân viên chuẩn bị khăn sạch, bàn chải, hóa chất khử khuẩn bề mặt, dầu bôi trơn chuyên dụng cho tay khoan và mang PHCN đúng quy định gồm trùm tóc, kính hoặc mạng che mặt, khẩu trang, tạp dề và găng tay.", "", "terminator", "5.2.2", 10),
+                new("Làm sạch", "NV khoa sử dụng", "Sau khi sử dụng trong miệng người bệnh, tay khoan được cho chạy không tải 10 - 15 giây để loại bỏ nước bọt, máu đọng trong lòng tay khoan; tháo mũi khoan, cọ rửa dưới vòi nước chảy, không ngâm ngập trong nước, làm khô bên ngoài bằng khăn sạch và làm khô bên trong bằng hơi 10 - 15 giây đối với tay khoan tốc độ cao.", "", "process", "5.2.3", 10),
+                new("Khử khuẩn", "NV khoa sử dụng", "Lau bên ngoài tay khoan bằng khăn/giấy thấm hóa chất khử khuẩn bề mặt phù hợp và tuân thủ thời gian tiếp xúc theo khuyến cáo. Không ngâm tay khoan trong hóa chất; sau khử khuẩn xả lại dưới vòi nước chảy, làm khô bên ngoài và thổi khô bên trong 10 - 15 giây với tay khoan tốc độ cao.", "", "process", "5.2.4", 10),
                 new("Tra dầu bôi trơn", "NV khoa sử dụng", "Tra dầu bôi trơn theo hướng dẫn của nhà sản xuất và cho chạy nhẹ trong 10 - 15 giây với dầu bôi trơn.", "", "process", "", 10),
-                new("Giao nhận dụng cụ sau khi làm sạch, khử khuẩn", "- NV khoa sử dụng\n- NV khoa KSNK", "", "", "process", "5.2.5", 10),
-                new("Đóng gói", "NV khoa KSNK", "", "", "process", "5.2.6", 10),
-                new("Tiệt khuẩn", "NV khoa KSNK", "Tiệt khuẩn dụng cụ theo hướng dẫn của nhà sản xuất.", "", "process", "", 10),
-                new("Lưu trữ tại khoa KSNK", "NV khoa KSNK", "Dụng cụ sau khi tiệt khuẩn được lưu trữ tại kho vô khuẩn theo quy định.", "", "process", "", 10),
-                new("Giao nhận dụng cụ sau khi tiệt khuẩn", "- NV khoa KSNK\n- NV khoa sử dụng", "", "", "terminator", "5.2.7", 10)
+                new("Giao nhận dụng cụ sau khi làm sạch, khử khuẩn", "- NV khoa sử dụng\n- NV khoa KSNK", "Khoa sử dụng chuyển tay khoan đã làm sạch/khử khuẩn cho khoa KSNK, ghi số lượng và tình trạng vào sổ giao nhận. Hai bên kiểm đếm, ký xác nhận và xử lý ngay sai lệch hoặc dụng cụ hư hỏng.", "", "process", "5.2.5", 10),
+                new("Đóng gói", "NV khoa KSNK", "NV khoa KSNK kiểm tra tay khoan khô, sạch, tra dầu/bảo dưỡng theo hướng dẫn nhà sản xuất nếu cần, đóng gói bằng vật liệu phù hợp và ghi nhãn trước tiệt khuẩn.", "", "process", "5.2.6", 10),
+                new("Tiệt khuẩn", "NV khoa KSNK", "Tiệt khuẩn tay khoan theo hướng dẫn của nhà sản xuất, lựa chọn phương pháp và chu trình phù hợp với cấu tạo tay khoan; ghi nhận mẻ tiệt khuẩn và kết quả giám sát.", "", "process", "", 10),
+                new("Lưu trữ tại khoa KSNK", "NV khoa KSNK", "Dụng cụ sau tiệt khuẩn được lưu trữ tại kho vô khuẩn, bảo đảm bao gói nguyên vẹn, khô sạch, đúng nhãn và còn hạn sử dụng.", "", "process", "", 10),
+                new("Giao nhận dụng cụ sau khi tiệt khuẩn", "- NV khoa KSNK\n- NV khoa sử dụng", "Khoa KSNK kiểm tra số lượng, tình trạng vô khuẩn và bàn giao tay khoan cho khoa sử dụng; khoa sử dụng ký nhận và bảo quản đến khi sử dụng cho người bệnh.", "", "terminator", "5.2.7", 10)
             ];
         }
 
@@ -712,20 +712,78 @@ public static class MedDataStoreSeed
     private static string DefaultKsnkStepDescription(string step, int index)
         => $"{index + 1}. {step}: thực hiện theo diễn giải chi tiết trong PDF scan nguồn; ghi nhận hồ sơ và biểu mẫu tương ứng trước khi chuyển bước tiếp theo.";
 
-    private static void AddDefaultProcedureSections(MedDataStore store, Guid versionId)
+    private static string KsnkPurpose(string code) => code switch
+    {
+        "QT.KSNK.09" => "Thống nhất quy trình xử lý dụng cụ phẫu thuật; tăng cường thực hành tốt xử lý dụng cụ, hạn chế thấp nhất nguy cơ nhiễm khuẩn, bảo đảm an toàn người bệnh và chất lượng phẫu thuật.",
+        "QT.KSNK.12" => "Thống nhất quy trình xử lý dụng cụ y tế nhằm cung cấp đầy đủ và duy trì chất lượng khử khuẩn, tiệt khuẩn cho dụng cụ y tế sử dụng lại trong bệnh viện, đáp ứng yêu cầu an toàn người bệnh và nâng cao chất lượng khám chữa bệnh.",
+        "QT.KSNK.16" => "Thống nhất quy trình khử khuẩn mức độ cao nhằm cung cấp đầy đủ và duy trì chất lượng khử khuẩn cho dụng cụ y tế sử dụng lại trong bệnh viện, đáp ứng yêu cầu an toàn người bệnh và nâng cao chất lượng điều trị.",
+        "QT.KSNK.17" => "Tiệt khuẩn tay khoan nha khoa nhằm kiểm soát, phòng chống lây nhiễm chéo cho người bệnh trong thực hiện thủ thuật, đáp ứng yêu cầu an toàn người bệnh và nâng cao chất lượng điều trị.",
+        _ => "Thống nhất quy trình xử lý dụng cụ y tế theo yêu cầu kiểm soát nhiễm khuẩn của bệnh viện."
+    };
+
+    private static string KsnkScope(string code) => code switch
+    {
+        "QT.KSNK.09" => "Áp dụng cho khoa Gây mê hồi sức và khoa Kiểm soát nhiễm khuẩn trong tiếp nhận, xử lý, tiệt khuẩn, lưu trữ và bàn giao dụng cụ phẫu thuật phục vụ phẫu thuật tại Bệnh viện Ung Bướu.",
+        "QT.KSNK.12" => "Áp dụng cho các khoa lâm sàng, cận lâm sàng đang quản lý dụng cụ y tế gửi khoa Kiểm soát nhiễm khuẩn để xử lý tập trung; áp dụng cho nhân viên các khoa liên quan trong tiếp nhận, xử lý và bàn giao dụng cụ y tế.",
+        "QT.KSNK.16" => "Áp dụng đối với dụng cụ bán thiết yếu và dụng cụ hỗ trợ hô hấp không thể tiệt khuẩn; áp dụng cho nhân viên các khoa lâm sàng, cận lâm sàng và khoa Kiểm soát nhiễm khuẩn được giao nhiệm vụ xử lý dụng cụ.",
+        "QT.KSNK.17" => "Áp dụng cho bác sĩ, trợ thủ nha khoa, nhân viên phòng khám răng miệng và nhân viên khoa Kiểm soát nhiễm khuẩn trong quá trình xử lý tay khoan nha khoa tại Bệnh viện Ung Bướu.",
+        _ => "Áp dụng cho các khoa/phòng sử dụng dụng cụ và khoa Kiểm soát nhiễm khuẩn."
+    };
+
+    private static string KsnkBasis(string code)
+    {
+        var common = "Quyết định 3671/QĐ-BYT ngày 27/9/2012 của Bộ Y tế về Hướng dẫn khử khuẩn, tiệt khuẩn dụng cụ trong các cơ sở khám bệnh, chữa bệnh.\nThông tư 16/2018/TT-BYT ngày 20/7/2018 của Bộ Y tế quy định về kiểm soát nhiễm khuẩn trong các cơ sở khám bệnh, chữa bệnh.";
+        return code switch
+        {
+            "QT.KSNK.09" => common + "\nQuyết định 3916/QĐ-BYT ngày 28/8/2017 của Bộ Y tế về Hướng dẫn xử lý dụng cụ phẫu thuật nội soi trong các cơ sở khám bệnh, chữa bệnh.",
+            "QT.KSNK.17" => "Quyết định 3671/QĐ-BYT ngày 27/9/2012 của Bộ Y tế về Hướng dẫn khử khuẩn, tiệt khuẩn dụng cụ trong các cơ sở khám bệnh, chữa bệnh.\nQuyết định 5991/QĐ-BYT ngày 26/12/2019 của Bộ Y tế về Hướng dẫn kiểm soát nhiễm khuẩn trong khám bệnh, chữa bệnh răng miệng.",
+            _ => common
+        };
+    }
+
+    private static string KsnkDefinitions(string code) => code switch
+    {
+        "QT.KSNK.16" => "Dụng cụ bán thiết yếu: dụng cụ tiếp xúc với niêm mạc hoặc da bị tổn thương.\nDụng cụ hỗ trợ hô hấp: dụng cụ sử dụng để hỗ trợ quá trình hô hấp của người bệnh hoặc thực hiện kỹ thuật chăm sóc, điều trị liên quan đến đường hô hấp.\nKhử khuẩn mức độ cao: quá trình tiêu diệt toàn bộ vi sinh vật và một số bào tử vi khuẩn.\nLàm sạch: quá trình dùng biện pháp cơ học và hóa học để loại bỏ tác nhân nhiễm khuẩn và chất hữu cơ bám trên dụng cụ trước khi khử khuẩn/tiệt khuẩn.\nTừ viết tắt: LS - làm sạch; KKMĐC - khử khuẩn mức độ cao; KSNK - kiểm soát nhiễm khuẩn; NV - nhân viên; NSX - nhà sản xuất; PHCN - phòng hộ cá nhân.",
+        "QT.KSNK.17" => "Tay khoan nha khoa: dụng cụ cơ học cầm tay dùng trong thủ thuật nha khoa, gồm các bộ phận cơ học tạo lực quay và cấp lực cho dụng cụ cắt.\nTay khoan tốc độ cao: tay khoan hoạt động trên 180.000 vòng/phút. Tay khoan tốc độ chậm: tay khoan hoạt động từ 600 đến 25.000 vòng/phút.\nTiệt khuẩn: quá trình tiêu diệt hoặc loại bỏ tất cả dạng vi sinh vật sống, bao gồm bào tử vi khuẩn.\nKhử khuẩn: quá trình loại bỏ hầu hết hoặc tất cả vi sinh vật gây bệnh trên dụng cụ nhưng không diệt bào tử vi khuẩn.\nLàm sạch/khử nhiễm: quá trình dùng biện pháp cơ học và hóa học để loại bỏ tác nhân nhiễm khuẩn và chất hữu cơ bám trên dụng cụ trước khử khuẩn/tiệt khuẩn.\nTừ viết tắt: ĐD - điều dưỡng; NV - nhân viên; NVYT - nhân viên y tế; NB - người bệnh; KSNK - kiểm soát nhiễm khuẩn; TKTT - tiệt khuẩn trung tâm; DC - dụng cụ; HC - hóa chất; PHCN - phòng hộ cá nhân.",
+        _ => "Tiệt khuẩn: quá trình tiêu diệt hoặc loại bỏ tất cả dạng vi sinh vật sống, bao gồm bào tử vi khuẩn.\nKhử khuẩn: quá trình loại bỏ hầu hết hoặc tất cả vi sinh vật gây bệnh trên dụng cụ nhưng không diệt bào tử vi khuẩn; gồm mức độ thấp, trung bình và cao.\nKhử khuẩn mức độ cao: quá trình tiêu diệt toàn bộ vi sinh vật và một số bào tử vi khuẩn.\nLàm sạch: quá trình dùng biện pháp cơ học và hóa học để loại bỏ tác nhân nhiễm khuẩn và chất hữu cơ bám trên dụng cụ; là bước bắt buộc trước khử khuẩn/tiệt khuẩn.\nTừ viết tắt: LS - làm sạch; KK - khử khuẩn; TK - tiệt khuẩn; KSNK - kiểm soát nhiễm khuẩn; NV - nhân viên; PHCN - phòng hộ cá nhân; ĐD - điều dưỡng; VT,TBYT - vật tư, thiết bị y tế; ĐDT - điều dưỡng trưởng."
+    };
+
+    private static string KsnkProcedureNarrative(string code) => string.Join("\n\n",
+        KsnkFlowDetails(code, code switch
+        {
+            "QT.KSNK.09" => ["Làm sạch dụng cụ", "Giao nhận dụng cụ sau khi làm sạch", "Làm sạch, khử khuẩn dụng cụ", "Bảo dưỡng - kiểm tra dụng cụ", "Đóng gói dụng cụ", "Tiệt khuẩn dụng cụ", "Giám sát chất lượng tiệt khuẩn dụng cụ", "Lưu trữ dụng cụ", "Giao nhận dụng cụ sau khi tiệt khuẩn"],
+            "QT.KSNK.12" => ["Làm sạch, khử khuẩn dụng cụ", "Giao nhận dụng cụ sau khi làm sạch", "Làm sạch, khử khuẩn dụng cụ", "Bảo dưỡng - kiểm tra dụng cụ", "Đóng gói dụng cụ", "Tiệt khuẩn dụng cụ", "Giám sát chất lượng tiệt khuẩn dụng cụ", "Lưu trữ dụng cụ", "Giao nhận dụng cụ sau khi tiệt khuẩn"],
+            "QT.KSNK.16" => ["Làm sạch dụng cụ", "Giao nhận dụng cụ sau khi làm sạch", "Khử khuẩn mức độ cao dụng cụ", "Đóng gói dụng cụ", "Lưu trữ dụng cụ tại khoa KSNK", "Giao nhận dụng cụ vô khuẩn"],
+            "QT.KSNK.17" => ["Chuẩn bị", "Làm sạch", "Khử khuẩn", "Tra dầu bôi trơn", "Giao nhận dụng cụ sau khi làm sạch, khử khuẩn", "Đóng gói", "Tiệt khuẩn", "Lưu trữ tại khoa KSNK", "Giao nhận dụng cụ sau khi tiệt khuẩn"],
+            _ => []
+        }).Select(step => $"{StepSectionLabel(step)} {step.Name}\nTrách nhiệm: {step.Responsibility}\nDiễn giải: {step.Description}\nBiểu mẫu/phụ lục: {(string.IsNullOrWhiteSpace(step.FormReference) ? "Theo hồ sơ kiểm soát của quy trình." : step.FormReference.Replace("\n", "; "))}"));
+
+    private static string StepSectionLabel(KsnkFlowStepTemplate step)
+        => string.IsNullOrWhiteSpace(step.DetailSectionNumber) ? "5.2." : $"{step.DetailSectionNumber}.";
+
+    private static string KsnkRecords(string code) => code switch
+    {
+        "QT.KSNK.09" => "BM.KSNK.09.01 Bảng kiểm chuẩn bị phương tiện làm sạch dụng cụ phẫu thuật.\nBM.KSNK.09.02 Bảng kiểm làm sạch dụng cụ phẫu thuật.\nBM.KSNK.09.03 - BM.KSNK.09.04 Bảng kiểm làm sạch, khử khuẩn dụng cụ tại khoa KSNK.\nBM.KSNK.09.05 - BM.KSNK.09.07 Bảng kiểm đóng gói dụng cụ.\nBM.KSNK.09.08 Bảng kiểm giám sát chất lượng tiệt khuẩn.\nBM.KSNK.09.09 Bảng kiểm giao nhận dụng cụ sau làm sạch.\nBM.KSNK.09.10 Bảng kiểm giao nhận dụng cụ sau tiệt khuẩn.\nBM.KSNK.09.11 Bảng kiểm lưu trữ dụng cụ.\nPhụ lục I-X theo PDF nguồn.",
+        "QT.KSNK.12" => "BM.KSNK.12.01 - BM.KSNK.12.02 Bảng kiểm chuẩn bị, làm sạch và khử khuẩn dụng cụ tại khoa sử dụng.\nBM.KSNK.12.03 - BM.KSNK.12.04 Bảng kiểm làm sạch/khử khuẩn dụng cụ tại CSSD.\nBM.KSNK.12.05 - BM.KSNK.12.07 Bảng kiểm đóng gói dụng cụ.\nBM.KSNK.12.08 Bảng kiểm giám sát chất lượng tiệt khuẩn.\nBM.KSNK.12.09 - BM.KSNK.12.10 Bảng kiểm giao nhận dụng cụ trước và sau tiệt khuẩn.\nBM.KSNK.12.11 Bảng kiểm lưu trữ dụng cụ.\nPhụ lục I-V theo PDF nguồn.",
+        "QT.KSNK.16" => "BM.KSNK.16.01 Bảng kiểm làm sạch dụng cụ.\nBM.KSNK.16.02 Bảng kiểm giao nhận dụng cụ sau làm sạch.\nBM.KSNK.16.03 Bảng kiểm khử khuẩn mức độ cao.\nBM.KSNK.16.04 Bảng kiểm đóng gói dụng cụ KKMĐC.\nBM.KSNK.16.05 Bảng kiểm giao nhận dụng cụ vô khuẩn.\nPhụ lục I-III theo PDF nguồn.",
+        "QT.KSNK.17" => "BM.KSNK.17.01 Bảng kiểm xử lý tay khoan nha khoa.\nPhụ lục I Sổ giao nhận dụng cụ y tế.",
+        _ => "Hồ sơ, biểu mẫu và phụ lục theo PDF nguồn đính kèm."
+    };
+
+    private static void AddDefaultProcedureSections(MedDataStore store, Guid versionId, string code)
     {
         (string number, string title, string kind, string text)[] sections =
         [
-            ("I", "Mục đích", "purpose", "Quy định thống nhất việc tiếp nhận, làm sạch, khử khuẩn/tiệt khuẩn, đóng gói, lưu trữ và giao nhận dụng cụ theo PDF scan nguồn, bảo đảm an toàn người bệnh và kiểm soát nhiễm khuẩn."),
-            ("II", "Phạm vi áp dụng", "scope", "Áp dụng cho khoa Kiểm soát nhiễm khuẩn và các khoa/phòng sử dụng dụng cụ thuộc phạm vi quy trình đã ban hành kèm PDF scan nguồn."),
-            ("III", "Căn cứ và tài liệu viện dẫn", "basis", "Quyết định 3671/QĐ-BYT, quy định KSNK hiện hành và PDF scan nguồn."),
-            ("IV", "Thuật ngữ và định nghĩa", "definitions", "Thuật ngữ, phân loại dụng cụ, biểu mẫu và phụ lục chuyên môn thực hiện theo bản PDF scan nguồn."),
+            ("I", "Mục đích", "purpose", KsnkPurpose(code)),
+            ("II", "Phạm vi áp dụng", "scope", KsnkScope(code)),
+            ("III", "Căn cứ và tài liệu viện dẫn", "basis", KsnkBasis(code)),
+            ("IV", "Thuật ngữ và định nghĩa", "definitions", KsnkDefinitions(code)),
             ("V", "Trách nhiệm", "responsibilities", "Người viết, người kiểm tra, người phê duyệt và các khoa/phòng liên quan chịu trách nhiệm theo bảng ký duyệt, bảng phân phối và từng bước trong lưu đồ."),
             ("VI", "Nơi nhận và phân phối", "distribution", "Xem bảng Nơi nhận trên bìa quy trình."),
             ("VII", "Theo dõi sửa đổi", "revision", "Xem bảng Theo dõi sửa đổi trên bìa quy trình."),
-            ("VIII", "Nội dung quy trình", "procedure", "Thực hiện theo trình tự các bước tại lưu đồ và diễn giải tương ứng; chỉ ban hành chính thức sau khi trích xuất, đối chiếu trực quan từng trang PDF scan nguồn."),
-            ("IX", "Lưu đồ", "flowchart", "Lưu đồ được seed theo hình trong PDF scan; cần đối chiếu lại khi OCR hoàn tất."),
-            ("X", "Hồ sơ, biểu mẫu và phụ lục", "records", "Biểu mẫu, phụ lục và hồ sơ kiểm soát được liệt kê tại cột Mô tả/Các biểu mẫu của lưu đồ và tệp PDF nguồn đính kèm."),
+            ("VIII", "Nội dung quy trình", "procedure", KsnkProcedureNarrative(code)),
+            ("IX", "Lưu đồ", "flowchart", "Lưu đồ được trình bày tại trang lưu đồ của bản in, theo bảng ba cột Trách nhiệm - Các bước thực hiện - Mô tả/Các biểu mẫu."),
+            ("X", "Hồ sơ, biểu mẫu và phụ lục", "records", KsnkRecords(code)),
             ("XI", "Tệp đính kèm", "appendices", "PDF scan nguồn được gắn kèm với checksum SHA-256.")
         ];
 
