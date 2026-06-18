@@ -328,11 +328,8 @@
 /* ── Drawer ─────────────────────────────────────── */
 
 .admin-drawer-backdrop {
-    position: absolute;
-    top: var(--admin-topbar-height);
-    right: 0;
-    bottom: 0;
-    left: 0;
+    position: fixed;
+    inset: 0;
     background: rgba(15, 23, 42, 0.32);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
@@ -340,26 +337,31 @@
 }
 
 .admin-drawer {
-    position: absolute;
-    top: var(--admin-topbar-height);
-    right: 0;
-    bottom: 0;
-    width: min(560px, 96%);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    width: min(1040px, calc(100vw - 48px));
+    height: min(86vh, 820px);
     background: var(--color-surface);
     box-shadow: var(--shadow-strong);
-    border-left: 1px solid var(--color-border-subtle);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-card);
     display: flex;
     flex-direction: column;
-    animation: drawerSlideIn var(--motion-modal);
+    overflow: hidden;
+    animation: drawerScaleIn var(--motion-modal);
     outline: none;
 }
 
-.admin-drawer.admin-drawer-wide { width: min(720px, 96%); }
-.admin-drawer.admin-drawer-narrow { width: min(420px, 96%); }
+.admin-drawer.admin-drawer-wide { width: min(1180px, calc(100vw - 48px)); }
+.admin-drawer.admin-drawer-narrow { width: min(720px, calc(100vw - 48px)); }
 
-@keyframes drawerSlideIn {
-    from { transform: translateX(8px); opacity: 0.6; }
-    to { transform: translateX(0); opacity: 1; }
+@keyframes drawerScaleIn {
+    from { transform: translate(-50%, -48%) scale(0.98); opacity: 0.72; }
+    to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
 .admin-drawer-header {
@@ -427,10 +429,31 @@
     background: var(--color-page);
 }
 
+@media (max-width: 640px) {
+    .admin-drawer,
+    .admin-drawer.admin-drawer-wide,
+    .admin-drawer.admin-drawer-narrow {
+        width: calc(100vw - 24px);
+        height: calc(100vh - 32px);
+        max-height: calc(100vh - 32px);
+    }
+
+    .admin-drawer-header,
+    .admin-drawer-body,
+    .admin-drawer-footer {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .admin-drawer-footer {
+        flex-wrap: wrap;
+    }
+}
+
 /* ── Modal (form/CSV import/reject reason) ───────── */
 
 .admin-modal-backdrop {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background: rgba(15, 23, 42, 0.32);
     backdrop-filter: blur(4px);
@@ -439,12 +462,12 @@
 }
 
 .admin-modal {
-    position: absolute;
-    top: 18vh;
+    position: fixed;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     width: min(560px, 92%);
-    max-height: 70vh;
+    max-height: min(82vh, 720px);
     background: var(--color-surface);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-card);
@@ -452,11 +475,16 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    animation: paletteScaleIn var(--motion-modal);
+    animation: modalScaleIn var(--motion-modal);
     outline: none;
 }
 
-.admin-modal-form { width: min(640px, 94%); }
+@keyframes modalScaleIn {
+    from { transform: translate(-50%, -48%) scale(0.98); opacity: 0; }
+    to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.admin-modal-form { width: min(720px, 94%); }
 .admin-confirm { width: min(440px, 94%); }
 
 .admin-modal-head {
@@ -1809,11 +1837,6 @@
    sub-navigation strips that should not appear inside
    the off-canvas panel. ── */
 
-.admin-drawer {
-    height: 100vh;
-    max-height: 100vh;
-}
-
 .admin-drawer-header,
 .admin-drawer-footer {
     flex: 0 0 auto;
@@ -1830,7 +1853,8 @@
 .admin-drawer-body .admin-tabs,
 .admin-drawer-body .admin-drawer-tabs,
 .admin-drawer-body .admin-subnav {
-    display: none !important;
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .password-strength {
