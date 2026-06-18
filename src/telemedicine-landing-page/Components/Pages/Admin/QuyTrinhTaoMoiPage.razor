@@ -145,9 +145,19 @@
 
     <div class="procedure-authoring-actions">
         <button type="button" class="admin-btn admin-btn-ghost" disabled="@_isSaving" @onclick="SaveDraftAsync">@(IsUpdateMode ? $"Cập nhật thành {_versionLabel}" : "Tạo bản v01")</button>
-        <button type="button" class="admin-btn admin-btn-primary" disabled="@_isSaving" @onclick="SignAndSubmitAsync">@(IsUpdateMode ? $"Cập nhật {_versionLabel}, ký và gửi kiểm tra" : "Tạo v01, ký và gửi kiểm tra")</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_isSaving" @onclick="OpenWriterSignature">@(IsUpdateMode ? $"Cập nhật {_versionLabel}, ký và gửi kiểm tra" : "Tạo v01, ký và gửi kiểm tra")</button>
     </div>
 </section>
+
+<ProcedureSignatureModal IsOpen="_writerSignOpen"
+                         IsOpenChanged="v => _writerSignOpen = v"
+                         CanvasId="procedure-author-signature-pad"
+                         RoleLabel="Người viết"
+                         DocumentLabel="@($"{_code} - {_name} - {_versionLabel}")"
+                         SignerName="@(UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username ?? string.Empty)"
+                         SignerUsername="@(UserContext.CurrentUser?.Username ?? string.Empty)"
+                         ConfirmText="Ký và gửi kiểm tra"
+                         SignatureConfirmed="SaveSignedVersionAsync" />
 
 @code {
     [Parameter] public Guid? ProcedureId { get; set; }
@@ -162,6 +172,7 @@
     private string _description = string.Empty;
     private string _summary = string.Empty;
     private bool _isSaving;
+    private bool _writerSignOpen;
     private Sql.ProcedureVersion? _sourceVersion;
 
     private readonly List<ProcedureSectionDraft> _sections = CreateSections();
@@ -196,9 +207,29 @@
     }
 
     private Task SaveDraftAsync() => SaveAsync(submit: false);
-    private Task SignAndSubmitAsync() => SaveAsync(submit: true);
 
-    private async Task SaveAsync(bool submit)
+    private void OpenWriterSignature()
+    {
+        var permission = IsUpdateMode ? "SCR_PROCEDURES:UPDATE" : "SCR_PROCEDURES:CREATE";
+        if (!Guard.CanDo(permission, IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình")) return;
+        var validationMessage = Validate(submit: true);
+        if (validationMessage is not null)
+        {
+            Toasts.Show("Chưa thể ký quy trình", validationMessage, ToastVariant.Warning);
+            return;
+        }
+        if (UserContext.CurrentUser is null)
+        {
+            Toasts.Show("Phiên đăng nhập không hợp lệ", "Vui lòng đăng nhập lại trước khi ký.", ToastVariant.Error);
+            return;
+        }
+        _writerSignOpen = true;
+    }
+
+    private Task SaveSignedVersionAsync(string signatureImageDataUrl)
+        => SaveAsync(submit: true, signatureImageDataUrl);
+
+    private async Task SaveAsync(bool submit, string? signatureImageDataUrl = null)
     {
         var permission = IsUpdateMode ? "SCR_PROCEDURES:UPDATE" : "SCR_PROCEDURES:CREATE";
         if (_isSaving || !Guard.CanDo(permission, IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình")) return;
@@ -256,7 +287,14 @@
 
             if (submit)
             {
-                Signoffs.Sign(versionId, "writer", user.UserId, user.Username, user.FullName, note: "Xác nhận nội dung do người soạn lập");
+                Signoffs.Sign(
+                    versionId,
+                    "writer",
+                    user.UserId,
+                    user.Username,
+                    user.FullName,
+                    signatureImageDataUrl,
+                    "Chữ ký tay trực tiếp của người soạn");
                 Lifecycle.Submit(versionId, user.UserId);
             }
 

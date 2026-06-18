@@ -165,11 +165,11 @@
                                     }
                                     @if (version.StatusCode == "draft")
                                     {
-                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SignVersion(version, "writer")'>Ký người viết</button>
+                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => OpenSignModal(version, "writer")'>Ký người viết</button>
                                     }
                                     @if (version.StatusCode == "pending_approval")
                                     {
-                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SignVersion(version, "checker")'>Ký kiểm tra</button>
+                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => OpenSignModal(version, "checker")'>Ký kiểm tra</button>
                                     }
                                     @if (version.StatusCode == "draft")
                                     {
@@ -225,6 +225,15 @@
     </FooterContent>
 </AdminModal>
 
+<ProcedureSignatureModal IsOpen="_signOpen"
+                         IsOpenChanged="v => _signOpen = v"
+                         CanvasId="procedure-list-signature-pad"
+                         RoleLabel="@SignoffRoleLabel(_signRole)"
+                         DocumentLabel="@(_signTarget?.Title ?? string.Empty)"
+                         SignerName="@(UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username ?? string.Empty)"
+                         SignerUsername="@(UserContext.CurrentUser?.Username ?? string.Empty)"
+                         SignatureConfirmed="ConfirmSignAsync" />
+
 @code {
     private const int _pageSize = 10;
     private int _page = 1;
@@ -239,6 +248,9 @@
     private bool _withdrawOpen;
     private Sql.ProcedureVersion? _withdrawTarget;
     private string _withdrawReason = string.Empty;
+    private bool _signOpen;
+    private Sql.ProcedureVersion? _signTarget;
+    private string _signRole = "writer";
     private string VersionColumnTitle => string.IsNullOrWhiteSpace(_versionStatus) && string.IsNullOrWhiteSpace(_departmentId)
         ? "Phiên bản mới nhất"
         : "Phiên bản phù hợp";
@@ -374,25 +386,37 @@
         }
     }
 
-    private void SignVersion(Sql.ProcedureVersion version, string role)
+    private void OpenSignModal(Sql.ProcedureVersion version, string role)
     {
         var permission = role == "checker" ? "SCR_PROCEDURES:APPROVE" : "SCR_PROCEDURES:UPDATE";
         if (!Guard.CanDo(permission, "ký xác nhận quy trình")) return;
+        _signTarget = version;
+        _signRole = role;
+        _signOpen = true;
+    }
+
+    private Task ConfirmSignAsync(string signatureImageDataUrl)
+    {
+        if (_signTarget is null) return Task.CompletedTask;
         try
         {
             Signoffs.Sign(
-                version.ProcedureVersionId,
-                role,
+                _signTarget.ProcedureVersionId,
+                _signRole,
                 UserContext.CurrentUser?.UserId,
                 UserContext.CurrentUser?.Username,
-                UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username);
-            Toasts.Show("Đã ký xác nhận", $"{SignoffRoleLabel(role)}: {version.Title}", ToastVariant.Success);
+                UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username,
+                signatureImageDataUrl,
+                "Chữ ký tay trực tiếp nội bộ");
+            Toasts.Show("Đã ký trực tiếp", $"{SignoffRoleLabel(_signRole)}: {_signTarget.Title}", ToastVariant.Success);
+            _signOpen = false;
             Recompute();
         }
         catch (Exception ex)
         {
             Toasts.Show("Không thể ký", ex.Message, ToastVariant.Error);
         }
+        return Task.CompletedTask;
     }
 
     private static string SignoffRoleLabel(string role) => role switch

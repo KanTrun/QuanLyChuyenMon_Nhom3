@@ -92,12 +92,12 @@
                         <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ExportVersionAsync(row.Version)">In/PDF</button>
                         @if (row.Version.StatusCode == "pending_approval")
                         {
-                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => SignVersion(row.Version, "checker")'>Ký kiểm tra</button>
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => OpenSignModal(row.Version, "checker")'>Ký kiểm tra</button>
                         }
                         @if (row.Version.StatusCode == "pending_approval")
                         {
                             <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => RejectAsync(row)">Từ chối</button>
-                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => ApproveAsync(row)">Phê duyệt</button>
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => PrepareApproveAsync(row)">Phê duyệt</button>
                         }
                         @if (row.Version.StatusCode == "archived")
                         {
@@ -221,6 +221,16 @@
     </FooterContent>
 </AdminModal>
 
+<ProcedureSignatureModal IsOpen="_signOpen"
+                         IsOpenChanged="v => _signOpen = v"
+                         CanvasId="procedure-approval-signature-pad"
+                         RoleLabel="@SignoffRoleLabel(_signRole)"
+                         DocumentLabel="@(_signTarget?.Title ?? string.Empty)"
+                         SignerName="@(UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username ?? string.Empty)"
+                         SignerUsername="@(UserContext.CurrentUser?.Username ?? string.Empty)"
+                         ConfirmText="@(_publishAfterSign ? "Ký và ban hành" : "Ký kiểm tra")"
+                         SignatureConfirmed="ConfirmSignAsync" />
+
 @code {
     private const int _pageSize = 10;
     private int _page = 1;
@@ -240,6 +250,10 @@
     private string _editSummary = string.Empty;
     private string _editReason = string.Empty;
     private string _editDepartmentId = string.Empty;
+    private bool _signOpen;
+    private Sql.ProcedureVersion? _signTarget;
+    private string _signRole = "checker";
+    private bool _publishAfterSign;
 
     protected override void OnInitialized()
     {
@@ -332,46 +346,62 @@
         Toasts.Show("Đã cập nhật phiên bản", _editTitle.Trim(), ToastVariant.Success);
     }
 
-    private async Task ApproveAsync(ApprovalRow row)
+    private async Task PrepareApproveAsync(ApprovalRow row)
     {
         if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "phê duyệt quy trình")) return;
         var ok = await Confirm.ShowAsync("Phê duyệt quy trình", $"Phê duyệt và ban hành \"{row.Version.Title}\"?", confirmText: "Phê duyệt");
         if (!ok) return;
+        if (!Signoffs.HasCurrentSignoff(row.Version.ProcedureVersionId, "checker"))
+        {
+            Toasts.Show("Thiếu chữ ký kiểm tra", "Người kiểm tra phải ký trực tiếp trước khi ban hành.", ToastVariant.Warning);
+            return;
+        }
+        OpenSignModal(row.Version, "approver", publishAfterSign: true);
+    }
+
+    private void OpenSignModal(Sql.ProcedureVersion version, string role, bool publishAfterSign = false)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "ký xác nhận quy trình")) return;
+        _signTarget = version;
+        _signRole = role;
+        _publishAfterSign = publishAfterSign;
+        _signOpen = true;
+    }
+
+    private Task ConfirmSignAsync(string signatureImageDataUrl)
+    {
+        if (_signTarget is null) return Task.CompletedTask;
         try
         {
-            if (!Signoffs.HasCurrentSignoff(row.Version.ProcedureVersionId, "checker"))
+            Signoffs.Sign(
+                _signTarget.ProcedureVersionId,
+                _signRole,
+                UserContext.CurrentUser?.UserId,
+                UserContext.CurrentUser?.Username,
+                UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username,
+                signatureImageDataUrl,
+                "Chữ ký tay trực tiếp nội bộ");
+
+            if (_publishAfterSign)
             {
-                Toasts.Show("Thiếu chữ ký kiểm tra", "Người kiểm tra phải ký nội bộ trước khi ban hành.", ToastVariant.Warning);
-                return;
+                Lifecycle.Publish(_signTarget.ProcedureVersionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
+                var procedureName = Store.Procedures.FirstOrDefault(item => item.ProcedureId == _signTarget.ProcedureId)?.Name ?? _signTarget.Title;
+                Toasts.Show("Đã ký và ban hành quy trình", procedureName, ToastVariant.Success);
+            }
+            else
+            {
+                Toasts.Show("Đã ký trực tiếp", $"{SignoffRoleLabel(_signRole)}: {_signTarget.Title}", ToastVariant.Success);
             }
 
-            SignVersion(row.Version, "approver", showToast: false);
-            Lifecycle.Publish(row.Version.ProcedureVersionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
+            _signOpen = false;
             Recompute();
-            RefreshSelected(row.Version.ProcedureVersionId);
-            Toasts.Show("Đã phê duyệt quy trình", row.Procedure.Name, ToastVariant.Success);
+            RefreshSelected(_signTarget.ProcedureVersionId);
         }
         catch (Exception ex)
         {
-            Toasts.Show("Không thể phê duyệt", ex.Message, ToastVariant.Error);
+            Toasts.Show(_publishAfterSign ? "Không thể phê duyệt" : "Không thể ký", ex.Message, ToastVariant.Error);
         }
-    }
-
-    private void SignVersion(Sql.ProcedureVersion version, string role, bool showToast = true)
-    {
-        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "ký xác nhận quy trình")) return;
-        Signoffs.Sign(
-            version.ProcedureVersionId,
-            role,
-            UserContext.CurrentUser?.UserId,
-            UserContext.CurrentUser?.Username,
-            UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username);
-        if (showToast)
-        {
-            Toasts.Show("Đã ký xác nhận", $"{SignoffRoleLabel(role)}: {version.Title}", ToastVariant.Success);
-            Recompute();
-            RefreshSelected(version.ProcedureVersionId);
-        }
+        return Task.CompletedTask;
     }
 
     private async Task ExportVersionAsync(Sql.ProcedureVersion version)

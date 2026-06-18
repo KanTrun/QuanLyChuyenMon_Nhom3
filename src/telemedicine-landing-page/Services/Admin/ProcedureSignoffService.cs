@@ -5,6 +5,7 @@ namespace TelemedicineLandingPage.Services.Admin;
 
 public sealed class ProcedureSignoffService
 {
+    private const int MaxSignatureImageBytes = 256 * 1024;
     public static readonly string[] RequiredRoles = ["writer", "checker", "approver"];
     private readonly IMedDataStore _store;
     private readonly ProcedureDocumentSnapshotService _snapshots;
@@ -28,6 +29,7 @@ public sealed class ProcedureSignoffService
             throw new InvalidOperationException("Vai trò ký không hợp lệ.");
         if (userId is null || userId == Guid.Empty)
             throw new InvalidOperationException("Chữ ký nội bộ phải gắn với một tài khoản người dùng hợp lệ.");
+        var validatedSignatureImage = ValidateSignatureImage(signatureImageDataUrl);
 
         var normalizedRole = role.ToLowerInvariant();
         var snapshot = _snapshots.GetSnapshot(versionId);
@@ -43,7 +45,7 @@ public sealed class ProcedureSignoffService
             SignerFullName = fullName,
             SignedAt = DateTime.UtcNow,
             ContentHashSha256 = _snapshots.ComputeContentHash(versionId),
-            SignatureImageDataUrl = signatureImageDataUrl,
+            SignatureImageDataUrl = validatedSignatureImage,
             Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim()
         };
         _store.AddProcedureSignoffRecord(signoff);
@@ -52,6 +54,19 @@ public sealed class ProcedureSignoffService
 
     public bool HasCurrentSignoff(Guid versionId, string role)
         => _snapshots.HasCurrentSignoff(_snapshots.GetSnapshot(versionId), role);
+
+    public static bool IsValidSignatureImage(string? value)
+    {
+        try
+        {
+            _ = ValidateSignatureImage(value);
+            return true;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
 
     private void EnsureSigningStage(ProcedureDocumentSnapshot snapshot, string role)
     {
@@ -76,4 +91,51 @@ public sealed class ProcedureSignoffService
         "approver" => "người phê duyệt",
         _ => role
     };
+
+    private static string ValidateSignatureImage(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidOperationException("Vui lòng ký trực tiếp trong khung chữ ký trước khi xác nhận.");
+
+        var separator = value.IndexOf(',');
+        if (separator <= 0)
+            throw new InvalidOperationException("Dữ liệu chữ ký không hợp lệ.");
+
+        var mediaType = value[..separator].ToLowerInvariant();
+        if (mediaType is not ("data:image/png;base64" or "data:image/jpeg;base64" or "data:image/webp;base64"))
+            throw new InvalidOperationException("Chữ ký chỉ hỗ trợ ảnh PNG, JPEG hoặc WebP.");
+
+        var encoded = value[(separator + 1)..];
+        if (encoded.Length > ((MaxSignatureImageBytes + 2) / 3) * 4)
+            throw new InvalidOperationException("Ảnh chữ ký vượt quá dung lượng cho phép.");
+
+        byte[] bytes;
+        try
+        {
+            bytes = Convert.FromBase64String(encoded);
+        }
+        catch (FormatException)
+        {
+            throw new InvalidOperationException("Dữ liệu chữ ký không hợp lệ.");
+        }
+
+        if (bytes.Length == 0 || bytes.Length > MaxSignatureImageBytes || !MatchesImageSignature(mediaType, bytes))
+            throw new InvalidOperationException("Dữ liệu ảnh chữ ký không hợp lệ.");
+
+        return value;
+    }
+
+    private static bool MatchesImageSignature(string mediaType, byte[] bytes)
+        => mediaType switch
+        {
+            "data:image/png;base64" => bytes.Length >= 8 &&
+                bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47 &&
+                bytes[4] == 0x0D && bytes[5] == 0x0A && bytes[6] == 0x1A && bytes[7] == 0x0A,
+            "data:image/jpeg;base64" => bytes.Length >= 3 &&
+                bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF,
+            "data:image/webp;base64" => bytes.Length >= 12 &&
+                bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46 &&
+                bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50,
+            _ => false
+        };
 }

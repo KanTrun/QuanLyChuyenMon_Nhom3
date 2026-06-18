@@ -1,0 +1,145 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<AdminModal IsOpen="IsOpen" IsOpenChanged="SetOpenAsync" Title="@($"Ký trực tiếp - {RoleLabel}")">
+    <ChildContent>
+        <dl class="admin-detail-grid">
+            <dt>Người ký</dt>
+            <dd>@SignerName <span class="admin-table-cell-muted">(@SignerUsername)</span></dd>
+            <dt>Vai trò</dt>
+            <dd>@RoleLabel</dd>
+            <dt>Quy trình</dt>
+            <dd>@DocumentLabel</dd>
+            <dt>Hình thức</dt>
+            <dd>Ký tay trực tiếp nội bộ</dd>
+        </dl>
+        <section class="signature-provider-panel">
+            <div class="signature-provider-heading">
+                <span class="signature-provider-kicker">Nội bộ</span>
+                <strong>Chữ ký gắn với tài khoản, thời điểm và hash nội dung hiện tại</strong>
+            </div>
+            <div class="signature-pad-panel">
+                <label class="admin-form-field-label is-required" for="@CanvasId">Vẽ chữ ký</label>
+                <canvas id="@CanvasId" class="signature-pad-canvas" aria-label="@($"Vùng ký tay của {RoleLabel}")"></canvas>
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <div class="procedure-signature-error" role="alert">@_error</div>
+                }
+            </div>
+        </section>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" disabled="@_busy" @onclick="ClearAsync">Xóa nét ký</button>
+        <button type="button" class="admin-btn admin-btn-ghost" disabled="@_busy" @onclick="CloseAsync">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@(_busy || !_padReady)" @onclick="ConfirmAsync">@ConfirmText</button>
+    </FooterContent>
+</AdminModal>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter, EditorRequired] public string CanvasId { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string RoleLabel { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string DocumentLabel { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string SignerName { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string SignerUsername { get; set; } = string.Empty;
+    [Parameter] public string ConfirmText { get; set; } = "Ký nội bộ";
+    [Parameter] public EventCallback<string> SignatureConfirmed { get; set; }
+
+    private bool _padReady;
+    private bool _busy;
+    private string? _error;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!IsOpen)
+        {
+            if (_padReady) await DisposePadAsync();
+            return;
+        }
+        if (_padReady) return;
+
+        try
+        {
+            _padReady = await JS.InvokeAsync<bool>("qlcmShell.initSignaturePad", CanvasId);
+            if (!_padReady)
+                _error = "Không thể khởi tạo vùng ký.";
+        }
+        catch (JSDisconnectedException)
+        {
+            _error = "Kết nối trình duyệt đã bị gián đoạn.";
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ConfirmAsync()
+    {
+        if (_busy || !_padReady) return;
+        _busy = true;
+        _error = null;
+        try
+        {
+            var image = await JS.InvokeAsync<string?>("qlcmShell.getSignaturePadDataUrl", CanvasId);
+            if (string.IsNullOrWhiteSpace(image))
+            {
+                _error = "Vui lòng ký trực tiếp trong khung trước khi xác nhận.";
+                return;
+            }
+
+            await SignatureConfirmed.InvokeAsync(image);
+        }
+        catch (JSDisconnectedException)
+        {
+            _error = "Kết nối trình duyệt đã bị gián đoạn.";
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ClearAsync()
+    {
+        _error = null;
+        try
+        {
+            await JS.InvokeVoidAsync("qlcmShell.clearSignaturePad", CanvasId);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+    }
+
+    private Task SetOpenAsync(bool open) => open ? Task.CompletedTask : CloseAsync();
+
+    private async Task CloseAsync()
+    {
+        await DisposePadAsync();
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    private async Task DisposePadAsync()
+    {
+        _padReady = false;
+        _error = null;
+        try
+        {
+            await JS.InvokeVoidAsync("qlcmShell.disposeSignaturePad", CanvasId);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
+    }
+
+    public async ValueTask DisposeAsync() => await DisposePadAsync();
+}

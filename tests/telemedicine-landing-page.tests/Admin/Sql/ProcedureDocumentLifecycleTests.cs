@@ -8,6 +8,7 @@ namespace TelemedicineLandingPage.Tests.Admin.Sql;
 
 public sealed class ProcedureDocumentLifecycleTests : IDisposable
 {
+    private const string ValidSignature = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
     private readonly MedDbContext _db = TestDbHelper.CreateSeededContext();
 
     [Fact]
@@ -19,7 +20,7 @@ public sealed class ProcedureDocumentLifecycleTests : IDisposable
             lifecycle.Submit(versionId, MedDataStoreSeed.AdminUserId));
         Assert.Equal(50027, exception.SqlErrorNumber);
 
-        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Quản trị viên");
+        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Quản trị viên", ValidSignature);
         lifecycle.Submit(versionId, MedDataStoreSeed.AdminUserId);
 
         Assert.Equal("pending_approval", _db.ProcedureVersions.Single(item => item.ProcedureVersionId == versionId).StatusCode);
@@ -29,15 +30,15 @@ public sealed class ProcedureDocumentLifecycleTests : IDisposable
     public void Publish_RequiresWriterCheckerAndApproverOnCurrentHash()
     {
         var (versionId, lifecycle, signoffs) = CreateCompleteDocument();
-        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Người soạn");
+        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Người soạn", ValidSignature);
         lifecycle.Submit(versionId, MedDataStoreSeed.AdminUserId);
 
         var exception = Assert.Throws<MedDomainException>(() =>
             lifecycle.Publish(versionId, MedDataStoreSeed.AdminUserId));
         Assert.Equal(50028, exception.SqlErrorNumber);
 
-        signoffs.Sign(versionId, "checker", MedDataStoreSeed.AdminUserId, "admin", "Người kiểm tra");
-        signoffs.Sign(versionId, "approver", MedDataStoreSeed.AdminUserId, "admin", "Người phê duyệt");
+        signoffs.Sign(versionId, "checker", MedDataStoreSeed.AdminUserId, "admin", "Người kiểm tra", ValidSignature);
+        signoffs.Sign(versionId, "approver", MedDataStoreSeed.AdminUserId, "admin", "Người phê duyệt", ValidSignature);
         lifecycle.Publish(versionId, MedDataStoreSeed.AdminUserId);
 
         Assert.Equal("active", _db.ProcedureVersions.Single(item => item.ProcedureVersionId == versionId).StatusCode);

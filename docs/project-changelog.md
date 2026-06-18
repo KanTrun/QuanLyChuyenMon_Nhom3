@@ -1,5 +1,25 @@
 # Project Changelog
 
+## 2026-06-18
+### Added
+| Item | Description |
+|---|---|
+| Drawn internal procedure signatures | Added a reusable procedure signature modal so writer, checker and approver must draw a direct internal signature before the signoff record is saved |
+| Procedure signoff evidence validation | Procedure signoffs now reject missing, malformed, unsupported or oversized signature images before storing the content-hash-bound signoff |
+
+### Changed
+| Item | Description |
+|---|---|
+| Compact A4 section flow | Short Roman sections now continue on the same A4 page; long sections split into continuation pages only when needed |
+| A4 overflow protection | Long flow descriptions, recipient lists, revision history, attachment lists and signoff logs now create continuation pages instead of being clipped by fixed A4 pages |
+
+### Verification
+| Check | Result |
+|---|---|
+| Build/test | Release build clean with `0 warnings, 0 errors`; `242/242` tests passed |
+| Printable PDF | QT.KSNK.09 signed preview exported as 6 A4 pages; Chromium audit found `0` overflowing pages |
+| Visual smoke | Cover shows hospital logo and writer/checker/approver signoff blocks; flowchart renders all nine source rows with content inside the shapes |
+
 ## 2026-06-15
 ### Changed
 | Item | Description |
