@@ -214,20 +214,24 @@
             <section class="signature-provider-panel">
                 <div class="signature-provider-heading">
                     <span class="signature-provider-kicker">Nội bộ</span>
-                    <strong>Tài khoản, thời điểm và hash nội dung</strong>
+                    <strong>Tài khoản, thời điểm và chữ ký vẽ tay</strong>
                 </div>
-                <p class="signature-provider-copy">Chữ ký nội bộ gắn với tài khoản đăng nhập, thời điểm ký, ảnh chữ ký vẽ tay và metadata hồ sơ tại lúc ký.</p>
+                <p class="signature-provider-copy">Chữ ký nội bộ gắn với tài khoản đăng nhập, thời điểm ký và ảnh chữ ký vẽ tay tại lúc ký.</p>
                 <div class="signature-pad-panel">
                     <label class="admin-form-field-label is-required" for="@SignatureCanvasId">Chữ ký nội bộ</label>
                     <canvas id="@SignatureCanvasId" class="signature-pad-canvas" aria-label="Vùng vẽ chữ ký nội bộ"></canvas>
                 </div>
+                @if (!string.IsNullOrWhiteSpace(_signatureMessage))
+                {
+                    <div class="signature-inline-message">@_signatureMessage</div>
+                }
             </section>
         }
     </ChildContent>
     <FooterContent>
         <button type="button" class="admin-btn admin-btn-ghost" @onclick="ClearSignaturePad">Xóa chữ ký</button>
         <button type="button" class="admin-btn admin-btn-ghost" @onclick="CloseSignModal">Hủy</button>
-        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">Ký nội bộ</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_signatureBusy" @onclick="ConfirmSign">@(_signatureBusy ? "Đang ký..." : "Ký nội bộ")</button>
     </FooterContent>
 </AdminModal>
 
@@ -277,6 +281,7 @@
     private bool _signaturePadReady;
     private ClinicalRow? _signingRow;
     private string _revokeReason = string.Empty;
+    private string? _signatureMessage;
 
     protected override void OnInitialized()
     {
@@ -577,6 +582,8 @@
 
         _signingRow = row;
         _signaturePadReady = false;
+        _signatureBusy = false;
+        _signatureMessage = null;
         _signModalOpen = true;
     }
 
@@ -611,6 +618,7 @@
 
     private async Task ClearSignaturePad()
     {
+        _signatureMessage = null;
         try
         {
             await JS.InvokeVoidAsync("qlcmShell.clearSignaturePad", SignatureCanvasId);
@@ -626,6 +634,8 @@
     {
         _signModalOpen = false;
         _signaturePadReady = false;
+        _signatureBusy = false;
+        _signatureMessage = null;
         try
         {
             await JS.InvokeVoidAsync("qlcmShell.disposeSignaturePad", SignatureCanvasId);
@@ -637,13 +647,28 @@
     private async Task ConfirmSign()
     {
         if (_signingRow is null || UserContext.CurrentUser is null) return;
+        _signatureMessage = null;
+        if (!_signaturePadReady)
+        {
+            await InitializeSignaturePadAsync();
+        }
+
+        if (!_signaturePadReady)
+        {
+            _signatureMessage = "Bảng ký chưa sẵn sàng. Vui lòng đóng và mở lại khung ký.";
+            Toasts.Show("Chưa thể ký", _signatureMessage, ToastVariant.Warning);
+            return;
+        }
+
         _signatureBusy = true;
+        await InvokeAsync(StateHasChanged);
         try
         {
             var signatureImageDataUrl = await JS.InvokeAsync<string?>("qlcmShell.getSignaturePadDataUrl", SignatureCanvasId);
             if (string.IsNullOrWhiteSpace(signatureImageDataUrl))
             {
-                Toasts.Show("Thiếu chữ ký", "Vui lòng ký trực tiếp trong bảng trước khi xác nhận.", ToastVariant.Warning);
+                _signatureMessage = "Chưa nhận được nét ký. Vui lòng ký trực tiếp trong khung chữ ký rồi bấm lại.";
+                Toasts.Show("Thiếu chữ ký", _signatureMessage, ToastVariant.Warning);
                 return;
             }
 
@@ -676,15 +701,18 @@
                 : result.Result == SignatureResult.Unauthorized
                     ? "Tài khoản hiện tại không có quyền ký."
                     : "Hồ sơ không ở trạng thái có thể ký.";
+            _signatureMessage = message;
             Toasts.Show("Không thể ký", message, ToastVariant.Warning);
         }
         catch (Exception ex)
         {
+            _signatureMessage = ex.Message;
             Toasts.Show("Không thể ký", ex.Message, ToastVariant.Error);
         }
         finally
         {
             _signatureBusy = false;
+            await InvokeAsync(StateHasChanged);
         }
     }
 

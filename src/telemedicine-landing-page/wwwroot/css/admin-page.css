@@ -1283,6 +1283,18 @@
     touch-action: none;
 }
 
+.signature-inline-message {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid rgba(245, 158, 11, 0.32);
+    border-radius: var(--radius-sm);
+    background: rgba(245, 158, 11, 0.10);
+    color: var(--color-ink);
+    font-size: 0.86rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
 .procedure-signature-error {
     color: var(--color-danger);
     font-size: 0.84rem;

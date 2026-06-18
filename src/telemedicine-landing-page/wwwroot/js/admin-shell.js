@@ -463,8 +463,21 @@
 
     function getSignaturePadDataUrl(canvasId) {
         var entry = state.signaturePads.get(canvasId);
-        if (!entry || !entry.pad || entry.pad.isEmpty()) return null;
+        if (!entry || !entry.pad) return null;
+        if (entry.pad.isEmpty() && !canvasHasInk(entry.canvas)) return null;
         return normalizeSignatureDataUrl(entry.canvas);
+    }
+
+    function canvasHasInk(canvas) {
+        try {
+            var ctx = canvas.getContext('2d', { willReadFrequently: true });
+            if (!ctx) return false;
+            var image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            for (var i = 0; i < image.data.length; i += 4) {
+                if (image.data[i + 3] > 12) return true;
+            }
+        } catch (_) { /* ignore */ }
+        return false;
     }
 
     function normalizeSignatureDataUrl(canvas) {
