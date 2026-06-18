@@ -46,17 +46,18 @@ public sealed class QlcmChatbotContextBuilder : IChatbotContextBuilder
             }
         }
 
-        builder.AppendLine().AppendLine("Route người dùng hiện tại được phép mở:");
-        var routes = Flatten(_gate.Filter(_navigation.NavItems)).Take(32).ToList();
-        if (routes.Count == 0)
+        builder.AppendLine().AppendLine("Mục điều hướng người dùng hiện tại được phép mở:");
+        builder.AppendLine("Chỉ dùng tên mục bên dưới khi hướng dẫn; không hiển thị route kỹ thuật, URL hoặc path.");
+        var navigationLabels = FlattenLabels(_gate.Filter(_navigation.NavItems)).Take(32).ToList();
+        if (navigationLabels.Count == 0)
         {
-            builder.AppendLine("- Không có route nghiệp vụ khả dụng.");
+            builder.AppendLine("- Không có mục nghiệp vụ khả dụng.");
         }
         else
         {
-            foreach (var route in routes)
+            foreach (var label in navigationLabels)
             {
-                builder.Append("- ").Append(route.Label).Append(": ").AppendLine(route.Url);
+                builder.Append("- ").AppendLine(label);
             }
         }
 
@@ -73,20 +74,24 @@ public sealed class QlcmChatbotContextBuilder : IChatbotContextBuilder
         return builder.ToString();
     }
 
-    private static IEnumerable<AdminNavItem> Flatten(IEnumerable<AdminNavItem> items)
+    private static IEnumerable<string> FlattenLabels(IEnumerable<AdminNavItem> items, string? parentLabel = null)
     {
         foreach (var item in items)
         {
+            var label = string.IsNullOrWhiteSpace(parentLabel)
+                ? item.Label
+                : parentLabel + " > " + item.Label;
+
             if (item.Children is { Count: > 0 })
             {
-                foreach (var child in Flatten(item.Children))
+                foreach (var child in FlattenLabels(item.Children, label))
                 {
                     yield return child;
                 }
             }
             else
             {
-                yield return item;
+                yield return label;
             }
         }
     }

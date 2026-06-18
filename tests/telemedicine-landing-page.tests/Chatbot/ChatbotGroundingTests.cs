@@ -24,8 +24,16 @@ public sealed class ChatbotGroundingTests
             .Single();
 
         Assert.Equal("signatures", topic.Code);
-        Assert.Contains("noi bo", topic.DemoReply);
+        Assert.Contains("nội bộ", topic.DemoReply);
     }
+
+    [Fact]
+    public void IsProjectScoped_OnlyAllowsQlcmQuestions()
+    {
+        Assert.True(QlcmChatbotKnowledgeCatalog.IsProjectScoped("cách duyệt tài khoản người dùng"));
+        Assert.False(QlcmChatbotKnowledgeCatalog.IsProjectScoped("hôm nay thời tiết thế nào"));
+    }
+
     [Fact]
     public void BuildSystemPrompt_UserCustomizationCannotReplaceCoreRules()
     {
@@ -37,6 +45,7 @@ public sealed class ChatbotGroundingTests
             "Chỉ trả lời thật ngắn.");
 
         Assert.Contains("Không chẩn đoán", prompt);
+        Assert.Contains("không hiển thị route kỹ thuật", prompt, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Hướng dẫn mặc định.", prompt);
         Assert.Contains("Chỉ trả lời thật ngắn.", prompt);
     }

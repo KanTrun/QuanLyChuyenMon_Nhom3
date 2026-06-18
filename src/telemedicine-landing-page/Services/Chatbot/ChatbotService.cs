@@ -56,6 +56,15 @@ public sealed class ChatbotService : IChatbotService, IDisposable
             return;
         }
 
+        if (!QlcmChatbotKnowledgeCatalog.IsProjectScoped(trimmed))
+        {
+            _store.AppendUser(trimmed);
+            var scopedAssistantId = _store.AppendAssistantPlaceholder();
+            _store.ReplaceAssistantContent(scopedAssistantId, QlcmChatbotKnowledgeCatalog.OutOfScopeReply);
+            _store.MarkStreamingComplete(scopedAssistantId);
+            return;
+        }
+
         _store.AppendUser(trimmed);
         var assistantId = _store.AppendAssistantPlaceholder();
 

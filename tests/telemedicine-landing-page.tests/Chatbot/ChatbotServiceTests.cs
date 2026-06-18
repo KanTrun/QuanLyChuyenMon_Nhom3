@@ -29,14 +29,14 @@ public class ChatbotServiceTests
         var client = new RecordingChatbotClient(new[] { "ok" });
         var service = new ChatbotService(client, store);
 
-        await service.SendAsync("test", CancellationToken.None);
+        await service.SendAsync("quy trinh", CancellationToken.None);
 
         Assert.NotNull(client.LastConversation);
         // Greeting + user message; the placeholder must NOT be sent to the client.
         Assert.Equal(2, client.LastConversation!.Count);
         Assert.Equal(ChatRole.Assistant, client.LastConversation[0].Role);
         Assert.Equal(ChatRole.User, client.LastConversation[1].Role);
-        Assert.Equal("test", client.LastConversation[1].Content);
+        Assert.Equal("quy trinh", client.LastConversation[1].Content);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class ChatbotServiceTests
         var client = new ThrowingChatbotClient();
         var service = new ChatbotService(client, store);
 
-        await service.SendAsync("Hỏi gì đó", CancellationToken.None);
+        await service.SendAsync("quy trinh", CancellationToken.None);
 
         var last = service.Messages.Last();
         Assert.Equal(ChatRole.Assistant, last.Role);
@@ -62,7 +62,7 @@ public class ChatbotServiceTests
         var client = new RecordingChatbotClient(new[] { "xin", " chào" });
         var service = new ChatbotService(client, store);
 
-        await service.SendAsync("Hỏi", CancellationToken.None);
+        await service.SendAsync("quy trinh", CancellationToken.None);
         await service.ClearAsync();
 
         Assert.Single(service.Messages);
@@ -91,6 +91,20 @@ public class ChatbotServiceTests
         Assert.Null(client.LastConversation);
         Assert.Equal(ChatbotPrivacyGuard.BlockedUserMarker, service.Messages[^2].Content);
         Assert.Contains("không thể gửi", service.Messages[^1].Content, StringComparison.OrdinalIgnoreCase);
+        Assert.False(service.IsStreaming);
+    }
+
+    [Fact]
+    public async Task SendAsync_OutOfProjectScope_IsBlockedBeforeTransport()
+    {
+        var store = new ChatbotConversationStore();
+        var client = new RecordingChatbotClient(new[] { "should not stream" });
+        var service = new ChatbotService(client, store);
+
+        await service.SendAsync("thời tiết hôm nay thế nào", CancellationToken.None);
+
+        Assert.Null(client.LastConversation);
+        Assert.Contains("QLCM Pro", service.Messages[^1].Content);
         Assert.False(service.IsStreaming);
     }
 

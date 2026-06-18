@@ -7,8 +7,7 @@ namespace TelemedicineLandingPage.Services.Chatbot;
 /// <summary>
 /// Offline-friendly chatbot client used when no Anthropic API key is configured.
 /// It produces a deterministic Vietnamese response routed by simple keyword
-/// matching and emits the reply in ~30-character chunks with a small delay so
-/// that the UI exercises the same streaming code path as the live client.
+/// matching and emits the reply in small chunks so the UI exercises streaming.
 /// </summary>
 public sealed class DemoChatbotClient : IChatbotClient
 {
@@ -85,12 +84,12 @@ public sealed class DemoChatbotClient : IChatbotClient
 
         if (string.IsNullOrEmpty(normalized))
         {
-            return "Bạn vui lòng nhập câu hỏi cụ thể nhé. Tôi có thể hỗ trợ về tài khoản, quy trình kỹ thuật, phân quyền, tài nguyên, chỉ định, phác đồ, báo cáo, chu ky noi bo và cài đặt.";
+            return "Bạn vui lòng nhập câu hỏi cụ thể nhé. Tôi có thể hỗ trợ về tài khoản, quy trình kỹ thuật, phân quyền, tài nguyên, chỉ định, phác đồ, báo cáo, chữ ký nội bộ và cài đặt QLCM Pro.";
         }
 
         if (Contains(normalized, "chao") || Contains(normalized, "xin chao") || Contains(normalized, "hello"))
         {
-            return "Xin chào! Rất vui được hỗ trợ bạn. Bạn có thể hỏi tôi về **tài khoản**, **quy trình kỹ thuật**, **phân quyền**, **tài nguyên**, **chỉ định**, **phác đồ**, **báo cáo** hoặc **chu ky noi bo** trong QLCM Pro.";
+            return "Xin chào! Bạn có thể hỏi tôi về tài khoản, quy trình kỹ thuật, phân quyền, tài nguyên, chỉ định, phác đồ, báo cáo hoặc chữ ký nội bộ trong QLCM Pro.";
         }
 
         var topic = QlcmChatbotKnowledgeCatalog.FindRelevant(normalized, limit: 1).FirstOrDefault();
@@ -99,7 +98,7 @@ public sealed class DemoChatbotClient : IChatbotClient
             return topic.DemoReply;
         }
 
-        return "Tôi đã ghi nhận câu hỏi. Trong chế độ demo, hãy hỏi theo chủ đề **tài khoản**, **quy trình**, **phân quyền**, **tài nguyên**, **chỉ định**, **phác đồ**, **báo cáo**, **thông báo**, **chu ky noi bo** hoặc **cài đặt**.";
+        return QlcmChatbotKnowledgeCatalog.OutOfScopeReply;
     }
 
     private static bool Contains(string source, string needle) =>
