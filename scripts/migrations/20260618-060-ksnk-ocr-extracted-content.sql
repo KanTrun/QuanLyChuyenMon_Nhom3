@@ -13,8 +13,7 @@ WHERE procedure_code IN (N'QT.KSNK.09', N'QT.KSNK.12', N'QT.KSNK.16', N'QT.KSNK.
 
 UPDATE v
 SET summary = @summary,
-    change_reason = N'Nhập nội dung chính từ OCR PDF scan 2145',
-    updated_at = SYSUTCDATETIME()
+    change_reason = N'Nhập nội dung chính từ OCR PDF scan 2145'
 FROM med.procedure_versions v
 JOIN med.professional_procedures p ON p.procedure_id = v.procedure_id
 WHERE p.procedure_code IN (N'QT.KSNK.09', N'QT.KSNK.12', N'QT.KSNK.16', N'QT.KSNK.17');
