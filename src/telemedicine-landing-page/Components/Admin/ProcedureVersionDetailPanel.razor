@@ -1,0 +1,238 @@
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@inject ProcedureDocumentSnapshotService Snapshots
+@inject ProcedureSignoffService Signoffs
+@inject IMedDataStore Store
+
+@if (_snapshot is not null)
+{
+    <ProcedureWorkflowStatusBar VersionId="_snapshot.Version.ProcedureVersionId" StatusCode="_snapshot.Version.StatusCode" />
+
+    <section class="procedure-detail-section">
+        <h3 class="admin-panel-title">Thông tin kiểm soát</h3>
+        <dl class="admin-detail-grid">
+            <dt>Mã quy trình</dt>
+            <dd>@_snapshot.Procedure.ProcedureCode</dd>
+            <dt>Tên quy trình</dt>
+            <dd>@_snapshot.Procedure.Name</dd>
+            <dt>Loại quy trình</dt>
+            <dd>@ProcedureTypeName(_snapshot.Procedure.ProcedureType)</dd>
+            <dt>Khoa/phòng</dt>
+            <dd>@(_snapshot.DepartmentName ?? "—")</dd>
+            <dt>Phiên bản</dt>
+            <dd>@VersionLabel(_snapshot.Version)</dd>
+            <dt>Tiêu đề phiên bản</dt>
+            <dd>@_snapshot.Version.Title</dd>
+            <dt>Tóm tắt</dt>
+            <dd>@ProcedureVersionSummaryFormatter.Display(_snapshot.Version.Summary)</dd>
+            <dt>Lý do thay đổi</dt>
+            <dd>@(_snapshot.Version.ChangeReason ?? "—")</dd>
+            <dt>Lần ban hành</dt>
+            <dd>@(_snapshot.Version.IssueNumber?.ToString() ?? "—")</dd>
+            <dt>Ngày ban hành</dt>
+            <dd>@AdminDateTimeDisplay.Date(_snapshot.Version.IssueDate)</dd>
+            <dt>Trạng thái</dt>
+            <dd><AdminBadge Tone="@VersionTone(_snapshot.Version.StatusCode)">@StatusLabel(_snapshot.Version.StatusCode)</AdminBadge></dd>
+            <dt>Gửi duyệt</dt>
+            <dd>@AdminDateTimeDisplay.DateTime(_snapshot.Version.SubmittedAt)</dd>
+            <dt>Phê duyệt</dt>
+            <dd>@AdminDateTimeDisplay.DateTime(_snapshot.Version.ApprovedAt)</dd>
+            <dt>Ban hành</dt>
+            <dd>@AdminDateTimeDisplay.DateTime(_snapshot.Version.PublishedAt)</dd>
+            <dt>Hiệu lực từ</dt>
+            <dd>@AdminDateTimeDisplay.Date(_snapshot.Version.EffectiveFrom)</dd>
+            <dt>PDF nguồn</dt>
+            <dd>@(_snapshot.Version.SourcePdfFileName ?? "—")</dd>
+        </dl>
+    </section>
+
+    <section class="procedure-detail-section">
+        <h3 class="admin-panel-title">Chữ ký nội bộ</h3>
+        <div class="admin-table-wrapper">
+            <table class="admin-table procedure-signoff-table">
+                <thead><tr><th>Vai trò</th><th>Trạng thái</th><th>Người ký</th><th>Thời điểm</th></tr></thead>
+                <tbody>
+                    @foreach (var signoff in SignoffRows)
+                    {
+                        <tr>
+                            <td><strong>@signoff.RoleLabel</strong></td>
+                            <td><AdminBadge Tone="@signoff.Tone">@signoff.StatusLabel</AdminBadge></td>
+                            <td>@signoff.SignerLabel</td>
+                            <td>@signoff.SignedAtLabel</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    @if (_snapshot.Sections.Count > 0)
+    {
+        <section class="procedure-detail-section">
+            <h3 class="admin-panel-title">Nội dung tài liệu</h3>
+            @foreach (var docSection in _snapshot.Sections)
+            {
+                <article class="procedure-detail-card">
+                    <header class="procedure-detail-card-head">
+                        <strong>@docSection.SectionNumber. @docSection.Title</strong>
+                    </header>
+                    <div class="procedure-detail-card-body">@(string.IsNullOrWhiteSpace(docSection.ContentText) ? "—" : docSection.ContentText)</div>
+                </article>
+            }
+        </section>
+    }
+
+    @if (_snapshot.Recipients.Count > 0)
+    {
+        <section class="procedure-detail-section">
+            <h3 class="admin-panel-title">Nơi nhận và phân phối</h3>
+            <ul class="admin-step-list">
+                @foreach (var recipient in _snapshot.Recipients)
+                {
+                    <li class="admin-step-card">
+                        <span class="admin-table-cell-strong">@recipient.RecipientName</span>
+                        @if (recipient.IsMarked)
+                        {
+                            <span class="admin-table-cell-muted"> • Đánh dấu phân phối</span>
+                        }
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
+    @if (_snapshot.Revisions.Count > 0)
+    {
+        <section class="procedure-detail-section">
+            <h3 class="admin-panel-title">Theo dõi sửa đổi</h3>
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead><tr><th>Ngày</th><th>Trang</th><th>Mục</th><th>Nội dung</th></tr></thead>
+                    <tbody>
+                        @foreach (var revision in _snapshot.Revisions)
+                        {
+                            <tr>
+                                <td>@AdminDateTimeDisplay.Date(revision.RevisionDate)</td>
+                                <td>@(revision.PageRef ?? "—")</td>
+                                <td>@(revision.SectionRef ?? "—")</td>
+                                <td>@revision.Summary</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+
+    @if (_snapshot.Steps.Count > 0)
+    {
+        <section class="procedure-detail-section">
+            <h3 class="admin-panel-title">Lưu đồ thực hiện</h3>
+            <ol class="admin-step-list">
+                @foreach (var step in _snapshot.Steps)
+                {
+                    <li class="admin-step-card">
+                        <div class="admin-step-card-head">
+                            <span class="admin-step-card-seq">Bước @step.StepNo</span>
+                            <span class="admin-table-cell-muted">@((step.StandardDurationMinutes?.ToString() ?? "—")) phút</span>
+                        </div>
+                        <div class="admin-table-cell-strong">@step.Name</div>
+                        @if (!string.IsNullOrWhiteSpace(step.ResponsibilityText))
+                        {
+                            <div class="admin-table-cell-muted">Trách nhiệm: @step.ResponsibilityText</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(step.Description))
+                        {
+                            <div class="admin-table-cell-muted">@step.Description</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(step.FormReferenceText))
+                        {
+                            <div class="admin-table-cell-muted">Biểu mẫu: @step.FormReferenceText</div>
+                        }
+                    </li>
+                }
+            </ol>
+        </section>
+    }
+
+    @if (_snapshot.Attachments.Count > 0)
+    {
+        <section class="procedure-detail-section">
+            <h3 class="admin-panel-title">Tệp đính kèm</h3>
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead><tr><th>Tệp</th><th>Loại</th><th>Dung lượng</th><th>Checksum</th></tr></thead>
+                    <tbody>
+                        @foreach (var attachment in _snapshot.Attachments)
+                        {
+                            <tr>
+                                <td>@attachment.FileName</td>
+                                <td>@AttachmentTypeName(attachment.AttachmentType)</td>
+                                <td>@FormatBytes(attachment.FileSizeBytes ?? 0)</td>
+                                <td class="admin-table-cell-muted">@(attachment.ChecksumSha256 ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public Guid ProcedureVersionId { get; set; }
+
+    private ProcedureDocumentSnapshot? _snapshot;
+    private IReadOnlyList<SignoffRow> SignoffRows { get; set; } = [];
+
+    protected override void OnParametersSet()
+    {
+        _snapshot = Snapshots.GetSnapshot(ProcedureVersionId);
+        SignoffRows = new[] { "writer", "checker", "approver" }
+            .Select(BuildSignoffRow)
+            .ToList();
+    }
+
+    private SignoffRow BuildSignoffRow(string role)
+    {
+        var latest = _snapshot!.Signoffs
+            .Where(item => string.Equals(item.SignoffRole, role, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(item => item.SignedAt)
+            .FirstOrDefault();
+        var isCurrent = latest is not null && Signoffs.HasCurrentSignoff(ProcedureVersionId, role);
+        return new SignoffRow(
+            RoleLabel(role),
+            latest is null ? "Chưa ký" : isCurrent ? "Đã ký hợp lệ" : "Chữ ký đã cũ",
+            latest is null ? "tone-muted" : isCurrent ? "tone-success" : "tone-warning",
+            latest?.SignerFullName ?? latest?.SignerUsername ?? "—",
+            latest is null ? "—" : AdminDateTimeDisplay.ShortDateTime(latest.SignedAt));
+    }
+
+    private static string RoleLabel(string role) => role switch
+    {
+        "writer" => "Người viết",
+        "checker" => "Người kiểm tra",
+        "approver" => "Người phê duyệt",
+        _ => role
+    };
+
+    private static string ProcedureTypeName(string code)
+        => Sql.MedLookups.ProcedureTypes.FirstOrDefault(item => item.Code == code)?.Name ?? code;
+
+    private static string AttachmentTypeName(string code)
+        => Sql.MedLookups.AttachmentTypes.FirstOrDefault(item => item.Code == code)?.Name ?? code;
+
+    private static string VersionLabel(Sql.ProcedureVersion version) => version.VersionLabel ?? $"v{version.VersionNo:00}";
+    private static string StatusLabel(string status) => Sql.MedLookups.VersionStatuses.FirstOrDefault(s => s.Code == status)?.Name ?? status;
+    private static string VersionTone(string status) => status switch
+    {
+        "active" => "tone-success",
+        "pending_approval" => "tone-warning",
+        "rejected" or "archived" => "tone-danger",
+        "draft" => "tone-muted",
+        _ => "tone-muted"
+    };
+
+    private static string FormatBytes(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
+
+    private sealed record SignoffRow(string RoleLabel, string StatusLabel, string Tone, string SignerLabel, string SignedAtLabel);
+}
