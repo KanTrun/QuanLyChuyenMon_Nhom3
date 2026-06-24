@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Admin.Sql;
 
@@ -45,9 +46,12 @@ public sealed class CurrentUserContext : ICurrentUserContext
     /// <summary>Đăng nhập bằng username + password và phân biệt tài khoản chưa kích hoạt.</summary>
     public LoginAttemptResult LoginByUsernameDetailed(string username, string password)
     {
-        var user = _db.Users.FirstOrDefault(u => u.Username == username && u.Status == "active");
+        // Always read the latest activation state — admin may have approved on another tab/circuit.
+        _db.ChangeTracker.Clear();
+
+        var user = _db.Users.AsNoTracking().FirstOrDefault(u => u.Username == username && u.Status == "active");
         var inactiveUser = user is null
-            ? _db.Users.FirstOrDefault(u => u.Username == username && u.Status != "active" && u.DeletedAt == null)
+            ? _db.Users.AsNoTracking().FirstOrDefault(u => u.Username == username && u.Status != "active" && u.DeletedAt == null)
             : null;
         var candidate = user ?? inactiveUser;
         if (candidate is null) return new LoginAttemptResult(LoginAttemptStatus.InvalidCredentials);

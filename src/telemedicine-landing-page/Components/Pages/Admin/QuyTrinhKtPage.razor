@@ -110,9 +110,9 @@
                             @if (row.LatestVersion is not null)
                             {
                                 <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => ExportVersionAsync(row.LatestVersion)">In/PDF</button>
-                                @if (SourceAttachment(row.LatestVersion.ProcedureVersionId) is { } source)
+                                @foreach (var attachment in VersionAttachments(row.LatestVersion.ProcedureVersionId))
                                 {
-                                    <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => DownloadAttachmentAsync(source)">Tệp nguồn</button>
+                                    <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => DownloadAttachmentAsync(attachment)">Tải @attachment.FileName</button>
                                 }
                             }
                             <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenUpdate(row)">Cập nhật phiên bản</button>
@@ -175,9 +175,9 @@
                                         </PrimaryContent>
                                         <ChildContent>
                                             <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => ExportVersionAsync(version)">In/PDF</button>
-                                            @if (SourceAttachment(version.ProcedureVersionId) is { } sourceAttachment)
+                                            @foreach (var attachment in VersionAttachments(version.ProcedureVersionId))
                                             {
-                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => DownloadAttachmentAsync(sourceAttachment)">Tệp nguồn</button>
+                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => DownloadAttachmentAsync(attachment)">Tải @attachment.FileName</button>
                                             }
                                             @if (CanSignFromList(version, "writer"))
                                             {
@@ -447,7 +447,7 @@
     {
         try
         {
-            var html = ProcedureExport.BuildProcedureDocumentHtml(version.ProcedureVersionId, DateTime.UtcNow);
+            var html = ProcedureExport.BuildProcedureDocumentHtml(version.ProcedureVersionId, DateTime.UtcNow, Navigation.BaseUri);
             var code = Store.Procedures.FirstOrDefault(p => p.ProcedureId == version.ProcedureId)?.ProcedureCode ?? "quy-trinh";
             var fileName = $"{SafeFileNamePart(code)}-{SafeFileNamePart(version.VersionLabel ?? $"v{version.VersionNo}")}.html";
             var ok = await JS.InvokeAsync<bool>("qlcmShell.openPrintableHtml", fileName, html);
@@ -462,9 +462,12 @@
         }
     }
 
-    private Sql.ProcedureAttachment? SourceAttachment(Guid versionId)
-        => Store.ProcedureAttachments.FirstOrDefault(attachment =>
-            attachment.ProcedureVersionId == versionId && attachment.AttachmentType == "source_pdf");
+    private IReadOnlyList<Sql.ProcedureAttachment> VersionAttachments(Guid versionId)
+        => Store.ProcedureAttachments
+            .Where(attachment => attachment.ProcedureVersionId == versionId)
+            .OrderBy(attachment => attachment.AttachmentType)
+            .ThenBy(attachment => attachment.FileName)
+            .ToList();
 
     private async Task DownloadAttachmentAsync(Sql.ProcedureAttachment attachment)
     {
@@ -473,7 +476,7 @@
             attachment.ProcedureAttachmentId,
             attachment.FileName);
         Toasts.Show(
-            ok ? "Đã tải tệp nguồn" : "Không thể tải tệp nguồn",
+            ok ? "Đã tải tệp" : "Không thể tải tệp",
             ok ? attachment.FileName : "Phiên đăng nhập không hợp lệ hoặc tệp không còn tồn tại.",
             ok ? ToastVariant.Success : ToastVariant.Warning);
     }

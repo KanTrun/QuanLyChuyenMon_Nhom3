@@ -2,6 +2,7 @@
 @inject ProcedureDocumentSnapshotService Snapshots
 @inject ProcedureSignoffService Signoffs
 @inject IMedDataStore Store
+@inject IJSRuntime JS
 
 @if (_snapshot is not null)
 {
@@ -144,7 +145,18 @@
                         {
                             <div class="admin-table-cell-muted">@step.Description</div>
                         }
-                        @if (!string.IsNullOrWhiteSpace(step.FormReferenceText))
+                        @{
+                            var linkedAttachment = ResolveStepAttachment(step);
+                        }
+                        @if (linkedAttachment is not null)
+                        {
+                            <div class="procedure-step-attachment-link">
+                                <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => DownloadAttachmentAsync(linkedAttachment)">
+                                    Tải @linkedAttachment.FileName
+                                </button>
+                            </div>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(step.FormReferenceText))
                         {
                             <div class="admin-table-cell-muted">Biểu mẫu: @step.FormReferenceText</div>
                         }
@@ -160,7 +172,7 @@
             <h3 class="admin-panel-title">Tệp đính kèm</h3>
             <div class="admin-table-wrapper">
                 <table class="admin-table">
-                    <thead><tr><th>Tệp</th><th>Loại</th><th>Dung lượng</th><th>Checksum</th></tr></thead>
+                    <thead><tr><th>Tệp</th><th>Loại</th><th>Dung lượng</th><th></th></tr></thead>
                     <tbody>
                         @foreach (var attachment in _snapshot.Attachments)
                         {
@@ -168,7 +180,9 @@
                                 <td>@attachment.FileName</td>
                                 <td>@AttachmentTypeName(attachment.AttachmentType)</td>
                                 <td>@FormatBytes(attachment.FileSizeBytes ?? 0)</td>
-                                <td class="admin-table-cell-muted">@(attachment.ChecksumSha256 ?? "—")</td>
+                                <td>
+                                    <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => DownloadAttachmentAsync(attachment)">Tải</button>
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -205,6 +219,23 @@
             latest is null ? "tone-muted" : isCurrent ? "tone-success" : "tone-warning",
             latest?.SignerFullName ?? latest?.SignerUsername ?? "—",
             latest is null ? "—" : AdminDateTimeDisplay.ShortDateTime(latest.SignedAt));
+    }
+
+    private Sql.ProcedureAttachment? ResolveStepAttachment(Sql.ProcedureStep step)
+        => step.FormAttachmentId is { } id
+            ? _snapshot?.Attachments.FirstOrDefault(item => item.ProcedureAttachmentId == id)
+            : null;
+
+    private async Task DownloadAttachmentAsync(Sql.ProcedureAttachment attachment)
+    {
+        var ok = await JS.InvokeAsync<bool>(
+            "qlcmShell.downloadProcedureAttachment",
+            attachment.ProcedureAttachmentId,
+            attachment.FileName);
+        if (!ok)
+        {
+            // no toast service here — parent pages handle errors when needed
+        }
     }
 
     private static string RoleLabel(string role) => role switch

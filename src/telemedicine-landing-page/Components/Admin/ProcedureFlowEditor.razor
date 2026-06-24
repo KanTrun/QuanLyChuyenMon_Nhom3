@@ -4,7 +4,7 @@
     <header class="admin-panel-head">
         <div>
             <h2 class="admin-panel-title">Lưu đồ và diễn giải từng bước</h2>
-            <p class="admin-form-field-hint">Chọn đúng hình theo chức năng: bắt đầu/kết thúc, xử lý, quyết định, dữ liệu hoặc tài liệu.</p>
+            <p class="admin-form-field-hint">Chọn hình lưu đồ phù hợp; gắn tệp hướng dẫn từ mục <strong>Tệp gắn kèm</strong> để nhân viên biết cách xử lý từng bước.</p>
         </div>
         <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddStep">Thêm bước</button>
     </header>
@@ -54,11 +54,23 @@
                         </label>
                         <label class="admin-form-field">
                             <span class="admin-form-field-label">Mục diễn giải</span>
-                            <input class="admin-input" @bind="step.DetailSectionNumber" placeholder="VD: VII.3" />
+                            <input class="admin-input" @bind="step.DetailSectionNumber" placeholder="VD: VIII.3" />
                         </label>
                         <label class="admin-form-field">
-                            <span class="admin-form-field-label">Biểu mẫu/tài liệu liên quan</span>
-                            <input class="admin-input" @bind="step.FormReference" />
+                            <span class="admin-form-field-label">Tệp hướng dẫn bước</span>
+                            <select class="admin-select"
+                                    value="@(step.LinkedAttachmentClientId?.ToString() ?? string.Empty)"
+                                    @onchange="e => OnLinkedAttachmentChanged(step, e)">
+                                <option value="">Không gắn tệp</option>
+                                @foreach (var attachment in AvailableAttachments)
+                                {
+                                    <option value="@attachment.ClientId">@attachment.FileName (@AttachmentTypeName(attachment.AttachmentType))</option>
+                                }
+                            </select>
+                        </label>
+                        <label class="admin-form-field">
+                            <span class="admin-form-field-label">Ghi chú biểu mẫu</span>
+                            <input class="admin-input" @bind="step.FormReference" placeholder="VD: Mã BM, trang áp dụng" />
                         </label>
                         <label class="admin-form-field admin-form-field-full">
                             <span class="admin-form-field-label is-required">Diễn giải thao tác</span>
@@ -88,6 +100,9 @@
     [Parameter, EditorRequired]
     public required IReadOnlyList<Sql.Role> Roles { get; set; }
 
+    [Parameter]
+    public IReadOnlyList<ProcedureAuthoringAttachmentOption> AvailableAttachments { get; set; } = [];
+
     private void AddStep() => Steps.Add(new ProcedureFlowStepDraft
     {
         Code = $"BUOC-{Steps.Count + 1:00}",
@@ -95,4 +110,13 @@
     });
 
     private void RemoveStep(ProcedureFlowStepDraft step) => Steps.Remove(step);
+
+    private void OnLinkedAttachmentChanged(ProcedureFlowStepDraft step, ChangeEventArgs args)
+    {
+        var value = args.Value?.ToString();
+        step.LinkedAttachmentClientId = Guid.TryParse(value, out var id) ? id : null;
+    }
+
+    private static string AttachmentTypeName(string code)
+        => Sql.MedLookups.AttachmentTypes.FirstOrDefault(item => item.Code == code)?.Name ?? code;
 }

@@ -20,6 +20,7 @@ public sealed class ProcedureFlowStepDraft
     public string Responsibility { get; set; } = string.Empty;
     public string ShapeCode { get; set; } = "process";
     public string FormReference { get; set; } = string.Empty;
+    public Guid? LinkedAttachmentClientId { get; set; }
     public string DetailSectionNumber { get; set; } = string.Empty;
     public int Minutes { get; set; } = 5;
     public string Description { get; set; } = string.Empty;
@@ -40,12 +41,18 @@ public sealed class ProcedureRevisionDraft
 }
 
 public sealed record ProcedureStoredAttachmentDraft(
+    Guid ClientId,
     string AttachmentType,
     string FileName,
     string FileUri,
     string? MimeType,
     long? FileSizeBytes,
     string? ChecksumSha256);
+
+public sealed record ProcedureAuthoringAttachmentOption(
+    Guid ClientId,
+    string FileName,
+    string AttachmentType);
 
 public sealed record ProcedureAuthoringCommand(
     Guid VersionId,

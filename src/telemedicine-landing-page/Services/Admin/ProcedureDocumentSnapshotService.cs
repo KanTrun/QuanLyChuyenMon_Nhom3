@@ -50,7 +50,7 @@ public sealed class ProcedureDocumentSnapshotService
             Sections = snapshot.Sections.Select(s => new { s.SectionOrder, s.SectionNumber, s.Title, s.SectionKind, s.ContentText, s.IsRequired }),
             Recipients = snapshot.Recipients.Select(r => new { r.DisplayOrder, r.RecipientName, r.IsMarked }),
             Revisions = snapshot.Revisions.Select(r => new { r.DisplayOrder, r.RevisionDate, r.PageRef, r.SectionRef, r.Summary }),
-            Steps = snapshot.Steps.Select(s => new { s.StepNo, s.StepCode, s.Name, s.Description, s.ResponsibilityText, s.FlowShapeCode, s.FormReferenceText, s.DetailSectionNumber, s.StandardDurationMinutes, s.IsRequired }),
+            Steps = snapshot.Steps.Select(s => new { s.StepNo, s.StepCode, s.Name, s.Description, s.ResponsibilityText, s.FlowShapeCode, s.FormReferenceText, s.FormAttachmentId, s.DetailSectionNumber, s.StandardDurationMinutes, s.IsRequired }),
             Attachments = snapshot.Attachments.Select(a => new { a.AttachmentType, a.FileName, a.FileUri, a.MimeType, a.FileSizeBytes, a.ChecksumSha256 })
         };
         var json = JsonSerializer.Serialize(canonical, new JsonSerializerOptions(JsonSerializerDefaults.Web));

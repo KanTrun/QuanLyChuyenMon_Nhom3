@@ -2022,11 +2022,12 @@
 }
 
 .admin-row-action-flyout {
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: auto;
     min-width: 190px;
-    z-index: 30;
+    z-index: 1200;
     padding: 6px;
 }
 
@@ -2035,6 +2036,17 @@
     flex-wrap: wrap;
     gap: 10px;
     align-items: center;
+}
+
+.procedure-authoring-guide-list {
+    margin: 10px 0 0;
+    padding-left: 20px;
+    display: grid;
+    gap: 6px;
+}
+
+.procedure-step-attachment-link {
+    margin-top: 6px;
 }
 
 @media (max-width: 900px) {

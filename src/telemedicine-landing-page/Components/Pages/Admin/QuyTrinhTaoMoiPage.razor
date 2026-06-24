@@ -85,15 +85,13 @@
         </div>
     </article>
 
-    <ProcedureGovernanceEditor Recipients="_recipients" Revisions="_revisions" />
-    <ProcedureDocumentSectionsEditor Sections="_sections" />
-    <ProcedureFlowEditor Steps="_steps" Roles="ActiveRoles" />
+    <ProcedureAuthoringGuidePanel />
 
     <article class="admin-panel">
         <header class="admin-panel-head">
             <div>
                 <h2 class="admin-panel-title">Tệp gắn kèm</h2>
-                <p class="admin-form-field-hint">Tệp được lưu nội bộ, tính SHA-256 và chỉ tải xuống qua phiên đăng nhập.</p>
+                <p class="admin-form-field-hint">Upload trước khi soạn lưu đồ. Cần ít nhất một PDF nguồn; biểu mẫu/hướng dẫn có thể gắn vào từng bước.</p>
             </div>
             <InputFile OnChange="OnFilesSelectedAsync" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
         </header>
@@ -104,10 +102,10 @@
                 <tbody>
                     @foreach (var attachment in _existingAttachments)
                     {
-                        <tr @key="attachment.ProcedureAttachmentId">
-                            <td>@attachment.FileName <span class="admin-table-cell-muted">(từ @SourceVersionLabel)</span></td>
-                            <td>@AttachmentTypeName(attachment.AttachmentType)</td>
-                            <td>@FormatBytes(attachment.FileSizeBytes ?? 0)</td>
+                        <tr @key="attachment.ClientId">
+                            <td>@attachment.Attachment.FileName <span class="admin-table-cell-muted">(từ @SourceVersionLabel)</span></td>
+                            <td>@AttachmentTypeName(attachment.Attachment.AttachmentType)</td>
+                            <td>@FormatBytes(attachment.Attachment.FileSizeBytes ?? 0)</td>
                             <td></td>
                         </tr>
                     }
@@ -117,7 +115,7 @@
                     }
                     @foreach (var attachment in _attachments)
                     {
-                        <tr @key="attachment">
+                        <tr @key="attachment.ClientId">
                             <td>@attachment.FileName</td>
                             <td>
                                 <select class="admin-select" @bind="attachment.AttachmentType">
@@ -135,6 +133,10 @@
             </table>
         </div>
     </article>
+
+    <ProcedureGovernanceEditor Recipients="_recipients" Revisions="_revisions" />
+    <ProcedureDocumentSectionsEditor Sections="_sections" />
+    <ProcedureFlowEditor Steps="_steps" Roles="ActiveRoles" AvailableAttachments="AvailableAttachments" />
 
     <article class="admin-panel procedure-signoff-panel">
         <header class="admin-panel-head">
@@ -223,7 +225,13 @@
     private readonly List<ProcedureRecipientDraft> _recipients = [new()];
     private readonly List<ProcedureRevisionDraft> _revisions = [new() { Summary = "Ban hành lần đầu" }];
     private readonly List<PendingAttachment> _attachments = [];
-    private readonly List<Sql.ProcedureAttachment> _existingAttachments = [];
+    private readonly List<ExistingAttachmentEntry> _existingAttachments = [];
+
+    private IReadOnlyList<ProcedureAuthoringAttachmentOption> AvailableAttachments =>
+        _existingAttachments
+            .Select(item => new ProcedureAuthoringAttachmentOption(item.ClientId, item.Attachment.FileName, item.Attachment.AttachmentType))
+            .Concat(_attachments.Select(item => new ProcedureAuthoringAttachmentOption(item.ClientId, item.FileName, item.AttachmentType)))
+            .ToList();
 
     private IReadOnlyList<Sql.Role> ActiveRoles => Store.Roles.Where(item => item.Status == "active").OrderBy(item => item.Code).ToList();
     private bool IsUpdateMode => ProcedureId.HasValue && _sourceVersion is not null;
@@ -250,8 +258,10 @@
             }
 
             var isFirstPdf = !_attachments.Any(item => item.AttachmentType == "source_pdf") &&
+                             !_existingAttachments.Any(item => item.Attachment.AttachmentType == "source_pdf") &&
                              file.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
             _attachments.Add(new PendingAttachment(
+                Guid.NewGuid(),
                 file.Name,
                 string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
                 content,
@@ -316,12 +326,23 @@
             }
             var hasNewSourcePdf = storedAttachments.Any(item => item.Draft.AttachmentType == "source_pdf");
             var attachments = _existingAttachments
-                .Where(item => !hasNewSourcePdf || item.AttachmentType != "source_pdf")
+                .Where(item => !hasNewSourcePdf || item.Attachment.AttachmentType != "source_pdf")
                 .Select(item => new ProcedureStoredAttachmentDraft(
-                    item.AttachmentType, item.FileName, item.FileUri, item.MimeType, item.FileSizeBytes, item.ChecksumSha256))
+                    item.ClientId,
+                    item.Attachment.AttachmentType,
+                    item.Attachment.FileName,
+                    item.Attachment.FileUri,
+                    item.Attachment.MimeType,
+                    item.Attachment.FileSizeBytes,
+                    item.Attachment.ChecksumSha256))
                 .Concat(storedAttachments.Select(item => new ProcedureStoredAttachmentDraft(
-                    item.Draft.AttachmentType, item.Stored.FileName, item.Stored.FileUri, item.Stored.MimeType,
-                    item.Stored.FileSizeBytes, item.Stored.ChecksumSha256)))
+                    item.Draft.ClientId,
+                    item.Draft.AttachmentType,
+                    item.Stored.FileName,
+                    item.Stored.FileUri,
+                    item.Stored.MimeType,
+                    item.Stored.FileSizeBytes,
+                    item.Stored.ChecksumSha256)))
                 .ToList();
 
             var result = Authoring.CreateVersion(new ProcedureAuthoringCommand(
@@ -437,6 +458,7 @@
                 Responsibility = item.ResponsibilityText ?? string.Empty,
                 ShapeCode = item.FlowShapeCode,
                 FormReference = item.FormReferenceText ?? string.Empty,
+                LinkedAttachmentClientId = item.FormAttachmentId,
                 DetailSectionNumber = item.DetailSectionNumber ?? string.Empty,
                 Minutes = item.StandardDurationMinutes ?? 5,
                 Description = item.Description ?? string.Empty
@@ -445,7 +467,8 @@
         _existingAttachments.Clear();
         _existingAttachments.AddRange(Store.ProcedureAttachments
             .Where(item => item.ProcedureVersionId == source.ProcedureVersionId)
-            .OrderBy(item => item.UploadedAt));
+            .OrderBy(item => item.UploadedAt)
+            .Select(item => new ExistingAttachmentEntry(item.ProcedureAttachmentId, item)));
     }
 
     private string? Validate(bool submit)
@@ -464,7 +487,7 @@
             return "Mỗi bước phải có tên, trách nhiệm và diễn giải thao tác.";
         if (!_recipients.Any(item => !string.IsNullOrWhiteSpace(item.Name))) return "Thêm ít nhất một nơi nhận.";
         if (!_revisions.Any(item => !string.IsNullOrWhiteSpace(item.Summary))) return "Thêm ít nhất một dòng theo dõi sửa đổi.";
-        if (!_existingAttachments.Any(item => item.AttachmentType == "source_pdf") &&
+        if (!_existingAttachments.Any(item => item.Attachment.AttachmentType == "source_pdf") &&
             !_attachments.Any(item => item.AttachmentType == "source_pdf" && item.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)))
             return "Chọn một tệp PDF và đặt loại là PDF nguồn.";
         return null;
@@ -490,12 +513,15 @@
     private static string FormatBytes(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
     private static string AttachmentTypeName(string code) => Sql.MedLookups.AttachmentTypes.FirstOrDefault(item => item.Code == code)?.Name ?? code;
 
-    private sealed class PendingAttachment(string fileName, string contentType, byte[] content, string attachmentType)
+    private sealed class PendingAttachment(Guid clientId, string fileName, string contentType, byte[] content, string attachmentType)
     {
+        public Guid ClientId { get; } = clientId;
         public string FileName { get; } = fileName;
         public string ContentType { get; } = contentType;
         public byte[] Content { get; } = content;
         public long Size => Content.LongLength;
         public string AttachmentType { get; set; } = attachmentType;
     }
+
+    private sealed record ExistingAttachmentEntry(Guid ClientId, Sql.ProcedureAttachment Attachment);
 }

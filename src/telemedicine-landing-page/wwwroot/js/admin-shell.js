@@ -556,6 +556,38 @@
         }
     }
 
+    function positionAnchoredFlyout(anchorId, flyoutId) {
+        var anchor = document.getElementById(anchorId);
+        var flyout = document.getElementById(flyoutId);
+        if (!anchor || !flyout) return false;
+
+        flyout.style.visibility = 'hidden';
+        flyout.style.display = 'block';
+
+        var anchorRect = anchor.getBoundingClientRect();
+        var flyoutRect = flyout.getBoundingClientRect();
+        var margin = 8;
+        var gap = 6;
+        var top = anchorRect.bottom + gap;
+        var left = anchorRect.right - flyoutRect.width;
+
+        if (left < margin) left = margin;
+        if (left + flyoutRect.width > window.innerWidth - margin) {
+            left = Math.max(margin, window.innerWidth - flyoutRect.width - margin);
+        }
+
+        if (top + flyoutRect.height > window.innerHeight - margin) {
+            top = anchorRect.top - flyoutRect.height - gap;
+        }
+        if (top < margin) top = margin;
+
+        flyout.style.top = top + 'px';
+        flyout.style.left = left + 'px';
+        flyout.style.right = 'auto';
+        flyout.style.visibility = 'visible';
+        return true;
+    }
+
     function setSessionJson(key, json) {
         if (!key || typeof json !== 'string') return false;
         try {
@@ -605,6 +637,7 @@
         downloadProcedureAttachment: downloadProcedureAttachment,
         registerOutsideClick: registerOutsideClick,
         unregisterOutsideClick: unregisterOutsideClick,
+        positionAnchoredFlyout: positionAnchoredFlyout,
         setSessionJson: setSessionJson,
         consumeSessionJson: consumeSessionJson,
         scrollToBottom: scrollToBottom,

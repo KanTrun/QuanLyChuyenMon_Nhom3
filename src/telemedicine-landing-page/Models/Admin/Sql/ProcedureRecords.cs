@@ -149,6 +149,9 @@ public sealed record ProcedureStep
     [Column("form_reference_text")]
     public string? FormReferenceText { get; init; }
 
+    [Column("form_attachment_id")]
+    public Guid? FormAttachmentId { get; init; }
+
     [Column("detail_section_number")]
     public string? DetailSectionNumber { get; init; }
 

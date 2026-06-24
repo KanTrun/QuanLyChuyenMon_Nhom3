@@ -121,7 +121,33 @@ public sealed class ProcedureAuthoringService
                 Summary = item.value.Summary.Trim()
             });
 
+        var attachmentIdByClient = new Dictionary<Guid, Guid>();
+        foreach (var attachment in command.Attachments)
+        {
+            var persisted = new ProcedureAttachment
+            {
+                ProcedureVersionId = version.ProcedureVersionId,
+                AttachmentType = attachment.AttachmentType,
+                FileName = attachment.FileName,
+                FileUri = attachment.FileUri,
+                MimeType = attachment.MimeType,
+                FileSizeBytes = attachment.FileSizeBytes,
+                ChecksumSha256 = attachment.ChecksumSha256,
+                UploadedBy = command.UserId
+            };
+            _store.AddProcedureAttachment(persisted);
+            attachmentIdByClient[attachment.ClientId] = persisted.ProcedureAttachmentId;
+        }
+
         foreach (var item in command.Steps.Where(item => !string.IsNullOrWhiteSpace(item.Name)).Select((value, index) => (value, index)))
+        {
+            Guid? formAttachmentId = null;
+            if (item.value.LinkedAttachmentClientId is { } clientId &&
+                attachmentIdByClient.TryGetValue(clientId, out var resolvedId))
+            {
+                formAttachmentId = resolvedId;
+            }
+
             _store.AddProcedureStep(new Models.Admin.Sql.ProcedureStep
             {
                 ProcedureVersionId = version.ProcedureVersionId,
@@ -133,22 +159,11 @@ public sealed class ProcedureAuthoringService
                 ResponsibilityText = NullIfWhiteSpace(item.value.Responsibility),
                 FlowShapeCode = item.value.ShapeCode,
                 FormReferenceText = NullIfWhiteSpace(item.value.FormReference),
+                FormAttachmentId = formAttachmentId,
                 DetailSectionNumber = NullIfWhiteSpace(item.value.DetailSectionNumber),
                 StandardDurationMinutes = item.value.Minutes
             });
-
-        foreach (var attachment in command.Attachments)
-            _store.AddProcedureAttachment(new ProcedureAttachment
-            {
-                ProcedureVersionId = version.ProcedureVersionId,
-                AttachmentType = attachment.AttachmentType,
-                FileName = attachment.FileName,
-                FileUri = attachment.FileUri,
-                MimeType = attachment.MimeType,
-                FileSizeBytes = attachment.FileSizeBytes,
-                ChecksumSha256 = attachment.ChecksumSha256,
-                UploadedBy = command.UserId
-            });
+        }
     }
 
     private void ArchiveSourceDraft(ProcedureVersion? source, string nextVersionLabel)

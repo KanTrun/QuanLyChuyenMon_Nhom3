@@ -6,15 +6,19 @@
   {
     <div class="procedure-action-primary">@PrimaryContent</div>
   }
-  <button type="button"
+  <button id="@_triggerId"
+          type="button"
           class="admin-icon-btn admin-row-action-trigger"
           title="@MenuTitle"
           aria-haspopup="menu"
           aria-expanded="@_open"
-          @onclick="Toggle">⋮</button>
+          @onclick="ToggleAsync">⋮</button>
   @if (_open)
   {
-    <div class="admin-flyout admin-row-action-flyout" role="menu" @onclick:stopPropagation="true">
+    <div id="@_flyoutId"
+         class="admin-flyout admin-row-action-flyout"
+         role="menu"
+         @onclick:stopPropagation="true">
       @ChildContent
     </div>
   }
@@ -26,24 +30,52 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private readonly string _menuId = $"row-action-{Guid.NewGuid():N}";
+    private readonly string _triggerId = $"row-action-trigger-{Guid.NewGuid():N}";
+    private readonly string _flyoutId = $"row-action-flyout-{Guid.NewGuid():N}";
     private bool _open;
+    private bool _needsPosition;
     private int _outsideHandle = -1;
     private DotNetObjectReference<AdminRowActionMenu>? _self;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _self is not null) return;
-        _self = DotNetObjectReference.Create(this);
-        _outsideHandle = await JS.InvokeAsync<int>("qlcmShell.registerOutsideClick", _menuId, _self, nameof(Close));
+        if (firstRender && _self is null)
+        {
+            _self = DotNetObjectReference.Create(this);
+            _outsideHandle = await JS.InvokeAsync<int>("qlcmShell.registerOutsideClick", _menuId, _self, nameof(Close));
+        }
+
+        if (_open && _needsPosition)
+        {
+            _needsPosition = false;
+            try
+            {
+                await JS.InvokeAsync<bool>("qlcmShell.positionAnchoredFlyout", _triggerId, _flyoutId);
+            }
+            catch (JSDisconnectedException)
+            {
+                // Circuit gone — ignore.
+            }
+        }
     }
 
-    private void Toggle() => _open = !_open;
+  private Task ToggleAsync()
+  {
+    _open = !_open;
+    if (_open)
+    {
+      _needsPosition = true;
+    }
+
+    return Task.CompletedTask;
+  }
 
     [JSInvokable]
     public void Close()
     {
         if (!_open) return;
         _open = false;
+        _needsPosition = false;
         InvokeAsync(StateHasChanged);
     }
 

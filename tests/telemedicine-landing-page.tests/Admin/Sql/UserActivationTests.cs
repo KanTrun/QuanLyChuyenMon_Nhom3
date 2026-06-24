@@ -48,6 +48,41 @@ public sealed class UserActivationTests
     }
 
     [Fact]
+    public void LoginByUsernameDetailed_SucceedsAfterActivationInSameDbContext()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var userId = Guid.NewGuid();
+        db.Users.Add(new AppUser
+        {
+            UserId = userId,
+            Username = "activated_same_context",
+            FullName = "Activated Same Context",
+            PasswordHash = CurrentUserContext.HashPassword("secret123"),
+            Status = "inactive",
+            OnboardingStatus = "submitted"
+        });
+        db.SaveChanges();
+
+        var store = new MedDbDataStore(db);
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+        var inactiveUser = db.Users.First(u => u.UserId == userId);
+
+        var before = context.LoginByUsernameDetailed("activated_same_context", "secret123");
+        Assert.Equal(LoginAttemptStatus.Inactive, before.Status);
+
+        store.UpdateUser(inactiveUser with
+        {
+            Status = "active",
+            OnboardingStatus = "active",
+            UpdatedAt = DateTime.UtcNow
+        });
+
+        var after = context.LoginByUsernameDetailed("activated_same_context", "secret123");
+        Assert.Equal(LoginAttemptStatus.Success, after.Status);
+        Assert.Equal(userId, after.User?.UserId);
+    }
+
+    [Fact]
     public void LoginByUsernameDetailed_ReturnsInactiveForRegisteredUserWaitingActivation()
     {
         using var db = TestDbHelper.CreateSeededContext();
