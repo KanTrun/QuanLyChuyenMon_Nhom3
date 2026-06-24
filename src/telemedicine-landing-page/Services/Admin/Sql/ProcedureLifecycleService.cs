@@ -125,6 +125,7 @@ public sealed class ProcedureLifecycleService
 
         // Hủy kích hoạt phiên bản đang hiệu lực hiện tại (one-active guard)
         EnsureDocumentReady(versionId, requireAllSignoffs: true);
+        EnsurePublishSeparation(versionId, approvedBy);
 
         var currentPublished = _db.ProcedureVersions
             .Where(v => v.ProcedureId == ver.ProcedureId && v.StatusCode == "active")
@@ -340,6 +341,31 @@ public sealed class ProcedureLifecycleService
                 constraintName,
                 errorNumber,
                 $"Thiếu chữ ký {SignoffRoleLabel(role)} hợp lệ hoặc chữ ký đã cũ sau khi nội dung thay đổi.");
+        }
+    }
+
+    private void EnsurePublishSeparation(Guid versionId, Guid approvedBy)
+    {
+        if (_documents is null) return;
+        var snapshot = _documents.GetSnapshot(versionId);
+        var hash = _documents.ComputeContentHash(versionId);
+        var writerUserId = snapshot.Signoffs
+            .Where(signoff => string.Equals(signoff.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(signoff => signoff.SignedAt)
+            .FirstOrDefault()?.SignerUserId;
+        var checkerUserId = snapshot.Signoffs
+            .Where(signoff => string.Equals(signoff.SignoffRole, "checker", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(signoff => signoff.SignedAt)
+            .FirstOrDefault()?.SignerUserId;
+
+        if (writerUserId == approvedBy || checkerUserId == approvedBy)
+        {
+            throw MedDomainException.Constraint(
+                "CK_procedure_publish_separation",
+                50029,
+                "Người ban hành phải khác người viết và người kiểm tra.");
         }
     }
 

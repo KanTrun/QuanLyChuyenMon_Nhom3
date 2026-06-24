@@ -34,6 +34,8 @@ public sealed class ProcedureSignoffService
         var normalizedRole = role.ToLowerInvariant();
         var snapshot = _snapshots.GetSnapshot(versionId);
         EnsureSigningStage(snapshot, normalizedRole);
+        EnsureNotAlreadySigned(snapshot, normalizedRole);
+        EnsureSeparationOfDuties(snapshot, normalizedRole, userId.Value);
 
         var signoff = new ProcedureSignoffRecord
         {
@@ -54,6 +56,48 @@ public sealed class ProcedureSignoffService
 
     public bool HasCurrentSignoff(Guid versionId, string role)
         => _snapshots.HasCurrentSignoff(_snapshots.GetSnapshot(versionId), role);
+
+    public Guid? GetCurrentSignerUserId(Guid versionId, string role)
+    {
+        var snapshot = _snapshots.GetSnapshot(versionId);
+        var hash = _snapshots.ComputeContentHash(versionId);
+        return snapshot.Signoffs
+            .Where(signoff =>
+                string.Equals(signoff.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(signoff => signoff.SignedAt)
+            .FirstOrDefault()?.SignerUserId;
+    }
+
+    public bool CanUserSign(Guid versionId, string role, Guid userId, out string? reason)
+    {
+        reason = null;
+        if (userId == Guid.Empty)
+        {
+            reason = "Chữ ký nội bộ phải gắn với một tài khoản người dùng hợp lệ.";
+            return false;
+        }
+
+        try
+        {
+            var snapshot = _snapshots.GetSnapshot(versionId);
+            var normalizedRole = role.ToLowerInvariant();
+            EnsureSigningStage(snapshot, normalizedRole);
+            if (_snapshots.HasCurrentSignoff(snapshot, normalizedRole))
+            {
+                reason = $"Chữ ký {RoleLabel(normalizedRole)} đã được xác nhận trên nội dung hiện tại.";
+                return false;
+            }
+
+            EnsureSeparationOfDuties(snapshot, normalizedRole, userId);
+            return true;
+        }
+        catch (InvalidOperationException exception)
+        {
+            reason = exception.Message;
+            return false;
+        }
+    }
 
     public static bool IsValidSignatureImage(string? value)
     {
@@ -82,6 +126,40 @@ public sealed class ProcedureSignoffService
 
         if (role == "approver" && !_snapshots.HasCurrentSignoff(snapshot, "checker"))
             throw new InvalidOperationException("Người kiểm tra phải ký nội bộ trước khi người phê duyệt ký.");
+    }
+
+    private void EnsureNotAlreadySigned(ProcedureDocumentSnapshot snapshot, string role)
+    {
+        if (_snapshots.HasCurrentSignoff(snapshot, role))
+            throw new InvalidOperationException($"Chữ ký {RoleLabel(role)} đã được xác nhận trên nội dung hiện tại.");
+    }
+
+    private void EnsureSeparationOfDuties(ProcedureDocumentSnapshot snapshot, string role, Guid userId)
+    {
+        var writerUserId = GetCurrentSignerUserId(snapshot, "writer");
+        var checkerUserId = GetCurrentSignerUserId(snapshot, "checker");
+
+        if (role == "checker" && writerUserId == userId)
+            throw new InvalidOperationException("Người kiểm tra phải là tài khoản khác người viết.");
+
+        if (role == "approver")
+        {
+            if (writerUserId == userId)
+                throw new InvalidOperationException("Người phê duyệt phải khác người viết.");
+            if (checkerUserId == userId)
+                throw new InvalidOperationException("Người phê duyệt phải khác người kiểm tra.");
+        }
+    }
+
+    private Guid? GetCurrentSignerUserId(ProcedureDocumentSnapshot snapshot, string role)
+    {
+        var hash = _snapshots.ComputeContentHash(snapshot.Version.ProcedureVersionId);
+        return snapshot.Signoffs
+            .Where(signoff =>
+                string.Equals(signoff.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(signoff => signoff.SignedAt)
+            .FirstOrDefault()?.SignerUserId;
     }
 
     private static string RoleLabel(string role) => role switch

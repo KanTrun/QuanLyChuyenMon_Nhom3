@@ -68,10 +68,13 @@ public sealed class ProcedureDocumentServicesTests
         store.UpdateProcedureVersion(version with { StatusCode = "pending_approval" });
 
         Assert.Throws<InvalidOperationException>(() =>
-            signoffs.Sign(versionId, "approver", MedDataStoreSeed.AdminUserId, "admin", "Người phê duyệt", ValidSignature));
+            signoffs.Sign(versionId, "approver", MedDataStoreSeed.BacSiNoiId, "bacsi.noi", "Người phê duyệt", ValidSignature));
 
-        signoffs.Sign(versionId, "checker", MedDataStoreSeed.AdminUserId, "admin", "Người kiểm tra", ValidSignature);
-        var approval = signoffs.Sign(versionId, "approver", MedDataStoreSeed.AdminUserId, "admin", "Người phê duyệt", ValidSignature);
+        Assert.Throws<InvalidOperationException>(() =>
+            signoffs.Sign(versionId, "checker", MedDataStoreSeed.AdminUserId, "admin", "Người kiểm tra", ValidSignature));
+
+        signoffs.Sign(versionId, "checker", MedDataStoreSeed.TruongKhoaNoiId, "truongkhoa.noi", "Người kiểm tra", ValidSignature);
+        var approval = signoffs.Sign(versionId, "approver", MedDataStoreSeed.BacSiNoiId, "bacsi.noi", "Người phê duyệt", ValidSignature);
 
         Assert.Equal("approver", approval.SignoffRole);
     }

@@ -34,14 +34,43 @@ public sealed class ProcedureDocumentLifecycleTests : IDisposable
         lifecycle.Submit(versionId, MedDataStoreSeed.AdminUserId);
 
         var exception = Assert.Throws<MedDomainException>(() =>
-            lifecycle.Publish(versionId, MedDataStoreSeed.AdminUserId));
+            lifecycle.Publish(versionId, MedDataStoreSeed.BacSiNoiId));
         Assert.Equal(50028, exception.SqlErrorNumber);
 
-        signoffs.Sign(versionId, "checker", MedDataStoreSeed.AdminUserId, "admin", "Người kiểm tra", ValidSignature);
-        signoffs.Sign(versionId, "approver", MedDataStoreSeed.AdminUserId, "admin", "Người phê duyệt", ValidSignature);
-        lifecycle.Publish(versionId, MedDataStoreSeed.AdminUserId);
+        signoffs.Sign(versionId, "checker", MedDataStoreSeed.TruongKhoaNoiId, "truongkhoa.noi", "Trưởng khoa Nội", ValidSignature);
+        signoffs.Sign(versionId, "approver", MedDataStoreSeed.BacSiNoiId, "bacsi.noi", "Bác sĩ Nội", ValidSignature);
+        lifecycle.Publish(versionId, MedDataStoreSeed.BacSiNoiId);
 
         Assert.Equal("active", _db.ProcedureVersions.Single(item => item.ProcedureVersionId == versionId).StatusCode);
+    }
+
+    [Fact]
+    public void Sign_CheckerCannotBeSameUserAsWriter()
+    {
+        var (versionId, lifecycle, signoffs) = CreateCompleteDocument();
+        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Người soạn", ValidSignature);
+        lifecycle.Submit(versionId, MedDataStoreSeed.AdminUserId);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            signoffs.Sign(versionId, "checker", MedDataStoreSeed.AdminUserId, "admin", "Người kiểm tra", ValidSignature));
+        Assert.Contains("khác người viết", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Sign_ApproverCannotBeSameUserAsWriterOrChecker()
+    {
+        var (versionId, lifecycle, signoffs) = CreateCompleteDocument();
+        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Người soạn", ValidSignature);
+        lifecycle.Submit(versionId, MedDataStoreSeed.AdminUserId);
+        signoffs.Sign(versionId, "checker", MedDataStoreSeed.TruongKhoaNoiId, "truongkhoa.noi", "Trưởng khoa Nội", ValidSignature);
+
+        var writerConflict = Assert.Throws<InvalidOperationException>(() =>
+            signoffs.Sign(versionId, "approver", MedDataStoreSeed.AdminUserId, "admin", "Người phê duyệt", ValidSignature));
+        Assert.Contains("khác người viết", writerConflict.Message, StringComparison.Ordinal);
+
+        var checkerConflict = Assert.Throws<InvalidOperationException>(() =>
+            signoffs.Sign(versionId, "approver", MedDataStoreSeed.TruongKhoaNoiId, "truongkhoa.noi", "Trưởng khoa Nội", ValidSignature));
+        Assert.Contains("khác người kiểm tra", checkerConflict.Message, StringComparison.Ordinal);
     }
 
     public void Dispose() => _db.Dispose();
