@@ -9,6 +9,13 @@ public interface IProcedureAttachmentStorageService
         IBrowserFile file,
         CancellationToken cancellationToken = default);
 
+    Task<StoredProcedureAttachment> SaveAsync(
+        Guid versionId,
+        string fileName,
+        string contentType,
+        Stream content,
+        CancellationToken cancellationToken = default);
+
     string? ResolveAbsolutePath(string fileUri);
 }
 

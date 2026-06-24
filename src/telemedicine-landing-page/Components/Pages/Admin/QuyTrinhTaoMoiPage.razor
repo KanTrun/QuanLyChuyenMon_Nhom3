@@ -12,8 +12,6 @@
 @inject ProcedureSignoffService Signoffs
 @inject IProcedureAttachmentStorageService AttachmentStorage
 @inject NavigationManager Navigation
-@inject IWebHostEnvironment HostEnvironment
-@using System.Text.Json
 
 <PageTitle>@(IsUpdateMode ? "Cập nhật quy trình y tế" : "Tạo quy trình y tế") | QLCM Pro</PageTitle>
 
@@ -97,7 +95,7 @@
                 <h2 class="admin-panel-title">Tệp gắn kèm</h2>
                 <p class="admin-form-field-hint">Tệp được lưu nội bộ, tính SHA-256 và chỉ tải xuống qua phiên đăng nhập.</p>
             </div>
-            <InputFile OnChange="OnFilesSelected" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
+            <InputFile OnChange="OnFilesSelectedAsync" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
         </header>
 
         <div class="admin-table-wrapper">
@@ -120,7 +118,7 @@
                     @foreach (var attachment in _attachments)
                     {
                         <tr @key="attachment">
-                            <td>@attachment.File.Name</td>
+                            <td>@attachment.FileName</td>
                             <td>
                                 <select class="admin-select" @bind="attachment.AttachmentType">
                                     @foreach (var type in Sql.MedLookups.AttachmentTypes)
@@ -129,7 +127,7 @@
                                     }
                                 </select>
                             </td>
-                            <td>@FormatBytes(attachment.File.Size)</td>
+                            <td>@FormatBytes(attachment.Size)</td>
                             <td><button type="button" class="admin-icon-btn is-danger" title="Xóa tệp" @onclick="() => _attachments.Remove(attachment)">×</button></td>
                         </tr>
                     }
@@ -237,17 +235,28 @@
         if (ProcedureId.HasValue) LoadSourceVersion();
     }
 
-    private void OnFilesSelected(InputFileChangeEventArgs args)
+    private async Task OnFilesSelectedAsync(InputFileChangeEventArgs args)
     {
         foreach (var file in args.GetMultipleFiles(10))
         {
+            await using var stream = file.OpenReadStream(ProcedureAttachmentStorageService.MaxFileSizeBytes);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            var content = buffer.ToArray();
+            if (content.Length == 0 || content.Length > ProcedureAttachmentStorageService.MaxFileSizeBytes)
+            {
+                Toasts.Show("Tệp không hợp lệ", "Mỗi tệp phải có dung lượng từ 1 byte đến 50 MB.", ToastVariant.Warning);
+                continue;
+            }
+
             var isFirstPdf = !_attachments.Any(item => item.AttachmentType == "source_pdf") &&
                              file.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
-            _attachments.Add(new PendingAttachment(file, isFirstPdf ? "source_pdf" : "other"));
+            _attachments.Add(new PendingAttachment(
+                file.Name,
+                string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
+                content,
+                isFirstPdf ? "source_pdf" : "other"));
         }
-        // #region agent log
-        AgentLog("QuyTrinhTaoMoiPage.OnFilesSelected", "files selected", new { count = _attachments.Count, names = _attachments.Select(a => a.File.Name).ToArray() }, "D");
-        // #endregion
     }
 
     private Task SaveDraftAsync() => SaveAsync(submit: false);
@@ -267,9 +276,6 @@
             Toasts.Show("Phiên đăng nhập không hợp lệ", "Vui lòng đăng nhập lại trước khi ký.", ToastVariant.Error);
             return;
         }
-        // #region agent log
-        AgentLog("QuyTrinhTaoMoiPage.OpenWriterSignature", "opening signature modal", new { attachmentCount = _attachments.Count, writerSignOpen = _writerSignOpen }, "A");
-        // #endregion
         _writerSignOpen = true;
     }
 
@@ -297,27 +303,16 @@
         _isSaving = true;
         try
         {
-            // #region agent log
-            AgentLog("QuyTrinhTaoMoiPage.SaveAsync", "save started", new { submit, attachmentCount = _attachments.Count, isSaving = _isSaving, writerSignOpen = _writerSignOpen }, "C");
-            // #endregion
             var versionId = Guid.NewGuid();
             var storedAttachments = new List<(PendingAttachment Draft, StoredProcedureAttachment Stored)>();
             foreach (var attachment in _attachments)
             {
-                // #region agent log
-                AgentLog("QuyTrinhTaoMoiPage.SaveAsync", "before OpenReadStream", new { fileName = attachment.File.Name, fileSize = attachment.File.Size, attachmentType = attachment.AttachmentType }, "A");
-                try
-                {
-                    await using var probe = attachment.File.OpenReadStream(ProcedureAttachmentStorageService.MaxFileSizeBytes);
-                    AgentLog("QuyTrinhTaoMoiPage.SaveAsync", "OpenReadStream probe ok", new { fileName = attachment.File.Name, canRead = probe.CanRead }, "B");
-                }
-                catch (Exception probeEx)
-                {
-                    AgentLog("QuyTrinhTaoMoiPage.SaveAsync", "OpenReadStream probe failed", new { fileName = attachment.File.Name, error = probeEx.Message }, "A");
-                    throw;
-                }
-                // #endregion
-                storedAttachments.Add((attachment, await AttachmentStorage.SaveAsync(versionId, attachment.File)));
+                await using var contentStream = new MemoryStream(attachment.Content);
+                storedAttachments.Add((attachment, await AttachmentStorage.SaveAsync(
+                    versionId,
+                    attachment.FileName,
+                    attachment.ContentType,
+                    contentStream)));
             }
             var hasNewSourcePdf = storedAttachments.Any(item => item.Draft.AttachmentType == "source_pdf");
             var attachments = _existingAttachments
@@ -367,9 +362,6 @@
         }
         catch (Exception exception)
         {
-            // #region agent log
-            AgentLog("QuyTrinhTaoMoiPage.SaveAsync", "save failed", new { error = exception.Message, type = exception.GetType().Name }, "E");
-            // #endregion
             Toasts.Show($"Không thể {ActionVerb}", exception.Message, ToastVariant.Error);
         }
         finally
@@ -473,7 +465,7 @@
         if (!_recipients.Any(item => !string.IsNullOrWhiteSpace(item.Name))) return "Thêm ít nhất một nơi nhận.";
         if (!_revisions.Any(item => !string.IsNullOrWhiteSpace(item.Summary))) return "Thêm ít nhất một dòng theo dõi sửa đổi.";
         if (!_existingAttachments.Any(item => item.AttachmentType == "source_pdf") &&
-            !_attachments.Any(item => item.AttachmentType == "source_pdf" && item.File.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)))
+            !_attachments.Any(item => item.AttachmentType == "source_pdf" && item.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)))
             return "Chọn một tệp PDF và đặt loại là PDF nguồn.";
         return null;
     }
@@ -498,43 +490,12 @@
     private static string FormatBytes(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
     private static string AttachmentTypeName(string code) => Sql.MedLookups.AttachmentTypes.FirstOrDefault(item => item.Code == code)?.Name ?? code;
 
-    private sealed class PendingAttachment(IBrowserFile file, string attachmentType)
+    private sealed class PendingAttachment(string fileName, string contentType, byte[] content, string attachmentType)
     {
-        public IBrowserFile File { get; } = file;
+        public string FileName { get; } = fileName;
+        public string ContentType { get; } = contentType;
+        public byte[] Content { get; } = content;
+        public long Size => Content.LongLength;
         public string AttachmentType { get; set; } = attachmentType;
     }
-
-    // #region agent log
-    private void AgentLog(string location, string message, object? data, string hypothesisId)
-    {
-        try
-        {
-            var line = JsonSerializer.Serialize(new
-            {
-                sessionId = "c592a1",
-                hypothesisId,
-                location,
-                message,
-                data,
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-            }) + Environment.NewLine;
-            var candidates = new[]
-            {
-                Path.Combine(HostEnvironment.ContentRootPath, "App_Data", "procedure-attachments", "uploads", "debug-c592a1.log"),
-                Path.GetFullPath(Path.Combine(HostEnvironment.ContentRootPath, "..", "..", "..", "..", "debug-c592a1.log"))
-            };
-            foreach (var path in candidates)
-            {
-                try
-                {
-                    var dir = Path.GetDirectoryName(path);
-                    if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                    File.AppendAllText(path, line);
-                }
-                catch { /* ignore path */ }
-            }
-        }
-        catch { /* ignore logging */ }
-    }
-    // #endregion
 }

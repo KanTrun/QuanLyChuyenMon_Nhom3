@@ -13,7 +13,7 @@ public sealed class ProcedureAttachmentStorageService : IProcedureAttachmentStor
         _rootPath = Path.GetFullPath(Path.Combine(environment.ContentRootPath, "App_Data", "procedure-attachments"));
     }
 
-    public async Task<StoredProcedureAttachment> SaveAsync(
+    public Task<StoredProcedureAttachment> SaveAsync(
         Guid versionId,
         IBrowserFile file,
         CancellationToken cancellationToken = default)
@@ -21,12 +21,27 @@ public sealed class ProcedureAttachmentStorageService : IProcedureAttachmentStor
         if (file.Size <= 0 || file.Size > MaxFileSizeBytes)
             throw new InvalidOperationException("Tệp phải có dung lượng từ 1 byte đến 50 MB.");
 
-        var safeName = SanitizeFileName(file.Name);
+        return SaveAsync(
+            versionId,
+            file.Name,
+            string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
+            file.OpenReadStream(MaxFileSizeBytes, cancellationToken),
+            cancellationToken);
+    }
+
+    public async Task<StoredProcedureAttachment> SaveAsync(
+        Guid versionId,
+        string fileName,
+        string contentType,
+        Stream content,
+        CancellationToken cancellationToken = default)
+    {
+        var safeName = SanitizeFileName(fileName);
         var relativePath = Path.Combine("uploads", versionId.ToString("N"), $"{Guid.NewGuid():N}-{safeName}");
         var absolutePath = GetVerifiedPath(relativePath);
         Directory.CreateDirectory(Path.GetDirectoryName(absolutePath)!);
 
-        await using var input = file.OpenReadStream(MaxFileSizeBytes, cancellationToken);
+        await using var input = content;
         await using var output = new FileStream(absolutePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true);
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         var buffer = new byte[81920];
@@ -41,10 +56,13 @@ public sealed class ProcedureAttachmentStorageService : IProcedureAttachmentStor
             bytesWritten += read;
         }
 
+        if (bytesWritten <= 0 || bytesWritten > MaxFileSizeBytes)
+            throw new InvalidOperationException("Tệp phải có dung lượng từ 1 byte đến 50 MB.");
+
         return new StoredProcedureAttachment(
             safeName,
             relativePath.Replace('\\', '/'),
-            string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
+            string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType,
             bytesWritten,
             Convert.ToHexString(hash.GetHashAndReset()));
     }

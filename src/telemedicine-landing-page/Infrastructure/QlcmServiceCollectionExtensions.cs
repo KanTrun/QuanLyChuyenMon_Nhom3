@@ -145,7 +145,12 @@ public static class QlcmServiceCollectionExtensions
         services.AddScoped<IWorkflowGuard<PatientProtocolApplication, string>, PatientProtocolApplicationWorkflowGuard>();
         services.AddScoped<ISignatureService, SignatureService>();
         services.AddScoped<PermissionChangeRequestService>();
-        services.AddScoped<ProcedureLifecycleService>();
+        services.AddScoped<ProcedureLifecycleService>(sp =>
+            new ProcedureLifecycleService(
+                sp.GetRequiredService<MedDbContext>(),
+                sp.GetRequiredService<AuditTrailService>(),
+                sp.GetRequiredService<IWorkflowGuard<ProcedureVersion, string>>(),
+                sp.GetRequiredService<ProcedureDocumentSnapshotService>()));
         services.AddScoped<ProcedureAuthoringService>();
         services.AddScoped<ProcedureDocumentSnapshotService>();
         services.AddScoped<ProcedureSignoffService>();
