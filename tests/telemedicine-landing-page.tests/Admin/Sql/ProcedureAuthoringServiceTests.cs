@@ -76,9 +76,47 @@ public sealed class ProcedureAuthoringServiceTests
         Assert.Equal("draft", updated.Version.StatusCode);
     }
 
-    private static ProcedureAuthoringCommand CreateCommand(Guid? procedureId = null, Guid? sourceVersionId = null)
+    [Fact]
+    public void CreateVersion_LinksStepToUploadedFormAttachment()
+    {
+        var store = new MedDataStore();
+        var service = new ProcedureAuthoringService(store);
+        var sourceClientId = Guid.NewGuid();
+        var formClientId = Guid.NewGuid();
+        var command = CreateCommand(
+            attachments:
+            [
+                new ProcedureStoredAttachmentDraft(sourceClientId, "source_pdf", "source.pdf", "test/source.pdf", "application/pdf", 1024, "ABC123"),
+                new ProcedureStoredAttachmentDraft(formClientId, "form", "phieu-theo-doi.pdf", "test/phieu.pdf", "application/pdf", 512, "DEF456")
+            ],
+            steps:
+            [
+                new ProcedureFlowStepDraft
+                {
+                    Code = "BUOC-01",
+                    Name = "Thực hiện",
+                    Responsibility = "Điều dưỡng",
+                    Description = "Thực hiện đúng hướng dẫn",
+                    LinkedAttachmentClientId = formClientId
+                }
+            ]);
+
+        var result = service.CreateVersion(command);
+        var step = store.ProcedureSteps.Single(item => item.ProcedureVersionId == result.Version.ProcedureVersionId);
+        var formAttachment = store.ProcedureAttachments.Single(item =>
+            item.ProcedureVersionId == result.Version.ProcedureVersionId && item.AttachmentType == "form");
+
+        Assert.Equal(formAttachment.ProcedureAttachmentId, step.FormAttachmentId);
+    }
+
+    private static ProcedureAuthoringCommand CreateCommand(
+        Guid? procedureId = null,
+        Guid? sourceVersionId = null,
+        IReadOnlyList<ProcedureStoredAttachmentDraft>? attachments = null,
+        IReadOnlyList<ProcedureFlowStepDraft>? steps = null)
     {
         var isUpdate = procedureId.HasValue;
+        var sourceClientId = Guid.NewGuid();
         return new ProcedureAuthoringCommand(
             Guid.NewGuid(),
             procedureId,
@@ -102,13 +140,17 @@ public sealed class ProcedureAuthoringServiceTests
             }],
             [new ProcedureRecipientDraft { Name = "Khoa Nội" }],
             [new ProcedureRevisionDraft { Summary = isUpdate ? "Cập nhật v02" : "Ban hành v01" }],
-            [new ProcedureFlowStepDraft
-            {
-                Code = "BUOC-01",
-                Name = "Thực hiện",
-                Responsibility = "Điều dưỡng",
-                Description = "Thực hiện đúng hướng dẫn"
-            }],
-            [new ProcedureStoredAttachmentDraft("source_pdf", "source.pdf", "test/source.pdf", "application/pdf", 1024, "ABC123")]);
+            steps ??
+            [
+                new ProcedureFlowStepDraft
+                {
+                    Code = "BUOC-01",
+                    Name = "Thực hiện",
+                    Responsibility = "Điều dưỡng",
+                    Description = "Thực hiện đúng hướng dẫn"
+                }
+            ],
+            attachments ??
+            [new ProcedureStoredAttachmentDraft(sourceClientId, "source_pdf", "source.pdf", "test/source.pdf", "application/pdf", 1024, "ABC123")]);
     }
 }

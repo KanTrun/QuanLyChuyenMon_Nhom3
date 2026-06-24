@@ -156,6 +156,7 @@ public static class QlcmServiceCollectionExtensions
         services.AddScoped<ProcedureSignoffService>();
         services.AddScoped<IProcedureDocumentExportService, ProcedureDocumentExportService>();
         services.AddScoped<IProcedureAttachmentStorageService, ProcedureAttachmentStorageService>();
+        services.AddScoped<IProcedureAttachmentAccessTokenService, ProcedureAttachmentAccessTokenService>();
         services.AddScoped<ITechnicalOrderWorkflowService, TechnicalOrderWorkflowService>();
         services.AddScoped<ProcedureRuntimeGuard>();
         services.AddScoped<IInventoryAvailabilityService, InventoryAvailabilityService>();

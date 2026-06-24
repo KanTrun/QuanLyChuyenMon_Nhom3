@@ -15,10 +15,14 @@ public static class ProcedureAttachmentEndpoints
                 MedDbContext db,
                 IProcedureAttachmentStorageService storage,
                 BrowserSessionTokenService sessionTokens,
+                IProcedureAttachmentAccessTokenService accessTokens,
                 CancellationToken cancellationToken) =>
             {
+                var accessToken = request.Query["accessToken"].FirstOrDefault();
                 var sessionToken = request.Headers["X-QLCM-Session"].FirstOrDefault();
-                if (!sessionTokens.TryValidateToken(sessionToken, out _)) return Results.Unauthorized();
+                var authorizedByToken = accessTokens.TryValidateToken(attachmentId, accessToken, DateTime.UtcNow);
+                var authorizedBySession = sessionTokens.TryValidateToken(sessionToken, out _);
+                if (!authorizedByToken && !authorizedBySession) return Results.Unauthorized();
 
                 var attachment = await db.ProcedureAttachments
                     .AsNoTracking()

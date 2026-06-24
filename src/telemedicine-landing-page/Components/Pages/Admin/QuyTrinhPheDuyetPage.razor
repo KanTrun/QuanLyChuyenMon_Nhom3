@@ -11,6 +11,7 @@
 @inject ProcedureSignoffService Signoffs
 @inject IProcedureDocumentExportService ProcedureExport
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
 @implements IDisposable
 
 <PageTitle>Phê duyệt quy trình | QLCM Pro</PageTitle>
@@ -409,7 +410,7 @@
     {
         try
         {
-            var html = ProcedureExport.BuildProcedureDocumentHtml(version.ProcedureVersionId, DateTime.UtcNow);
+            var html = ProcedureExport.BuildProcedureDocumentHtml(version.ProcedureVersionId, DateTime.UtcNow, Navigation.BaseUri);
             var procedure = Store.Procedures.FirstOrDefault(p => p.ProcedureId == version.ProcedureId);
             var fileName = $"{SafeFileNamePart(procedure?.ProcedureCode)}-{SafeFileNamePart(version.VersionLabel ?? $"v{version.VersionNo}")}.html";
             var ok = await JS.InvokeAsync<bool>("qlcmShell.downloadFile", fileName, html, "text/html;charset=utf-8");

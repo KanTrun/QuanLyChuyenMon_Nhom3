@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.AspNetCore.DataProtection;
 using TelemedicineLandingPage.Models.Admin.Sql;
 using TelemedicineLandingPage.Services.Admin;
 using TelemedicineLandingPage.Services.Admin.Sql;
@@ -162,7 +163,7 @@ public sealed class ProcedureDocumentServicesTests
             ContentHashSha256 = "stale-hash"
         });
         Assert.Equal(4, store.ProcedureSignoffRecords.Count(item => item.ProcedureVersionId == versionId));
-        var html = new ProcedureDocumentExportService(snapshots)
+        var html = CreateExportService(store)
             .BuildProcedureDocumentHtml(versionId, new DateTime(2026, 6, 13, 8, 0, 0, DateTimeKind.Utc));
         var visibleText = WebUtility.HtmlDecode(html);
 
@@ -203,7 +204,7 @@ public sealed class ProcedureDocumentServicesTests
     {
         var (store, versionId) = CreateCompleteDocument();
 
-        var html = new ProcedureDocumentExportService(new ProcedureDocumentSnapshotService(store))
+        var html = CreateExportService(store)
             .BuildProcedureDocumentHtml(versionId, new DateTime(2026, 6, 15, 8, 0, 0, DateTimeKind.Utc));
         var visibleHtml = WebUtility.HtmlDecode(html);
 
@@ -227,7 +228,7 @@ public sealed class ProcedureDocumentServicesTests
             .Select(index => $"{index}. Nội dung kiểm soát chuyên môn và hồ sơ liên quan."));
         store.UpdateProcedureDocumentSection(purpose with { ContentText = manyLines });
 
-        var html = new ProcedureDocumentExportService(new ProcedureDocumentSnapshotService(store))
+        var html = CreateExportService(store)
             .BuildProcedureDocumentHtml(versionId, new DateTime(2026, 6, 15, 8, 0, 0, DateTimeKind.Utc));
         var visibleHtml = WebUtility.HtmlDecode(html);
 
@@ -242,7 +243,7 @@ public sealed class ProcedureDocumentServicesTests
         var longDescription = string.Join(' ', Enumerable.Repeat("Thực hiện thao tác chuyên môn, kiểm tra điều kiện và ghi nhận đầy đủ hồ sơ.", 25));
         var (store, versionId) = CreateCompleteDocument(stepDescription: longDescription);
 
-        var html = new ProcedureDocumentExportService(new ProcedureDocumentSnapshotService(store))
+        var html = CreateExportService(store)
             .BuildProcedureDocumentHtml(versionId, new DateTime(2026, 6, 15, 8, 0, 0, DateTimeKind.Utc));
 
         Assert.True(Count(html, "LƯU ĐỒ QUY TRÌNH") >= 2);
@@ -293,7 +294,7 @@ public sealed class ProcedureDocumentServicesTests
             });
         }
 
-        var html = new ProcedureDocumentExportService(new ProcedureDocumentSnapshotService(store))
+        var html = CreateExportService(store)
             .BuildProcedureDocumentHtml(versionId, new DateTime(2026, 6, 15, 8, 0, 0, DateTimeKind.Utc));
         var visibleHtml = WebUtility.HtmlDecode(html);
 
@@ -304,6 +305,21 @@ public sealed class ProcedureDocumentServicesTests
         Assert.Contains("Khoa/phòng nhận bản kiểm soát 18", visibleHtml);
         Assert.Contains("phu-luc-18.pdf", visibleHtml);
         Assert.Contains("Người ký nội bộ 18", visibleHtml);
+    }
+
+    [Fact]
+    public void Export_WithPublicBaseUrl_RendersSubtleDownloadLinksWithoutRawPaths()
+    {
+        var (store, versionId) = CreateCompleteDocument();
+        var generatedAt = new DateTime(2026, 6, 24, 10, 0, 0, DateTimeKind.Utc);
+
+        var html = CreateExportService(store)
+            .BuildProcedureDocumentHtml(versionId, generatedAt, "https://localhost:8080");
+
+        Assert.Contains("file-download-link", html);
+        Assert.Contains("accessToken=", html);
+        Assert.Contains("source.pdf", html);
+        Assert.DoesNotContain("test/source.pdf", html);
     }
 
     [Theory]
@@ -319,7 +335,7 @@ public sealed class ProcedureDocumentServicesTests
         var procedure = store.Procedures.Single(item => item.ProcedureCode == procedureCode);
         var version = store.ProcedureVersions.Single(item => item.ProcedureId == procedure.ProcedureId);
 
-        var html = new ProcedureDocumentExportService(new ProcedureDocumentSnapshotService(store))
+        var html = CreateExportService(store)
             .BuildProcedureDocumentHtml(version.ProcedureVersionId, new DateTime(2026, 6, 15, 8, 0, 0, DateTimeKind.Utc));
         var visibleText = WebUtility.HtmlDecode(html);
 
@@ -413,6 +429,11 @@ public sealed class ProcedureDocumentServicesTests
 
         return (store, version.ProcedureVersionId);
     }
+
+    private static ProcedureDocumentExportService CreateExportService(MedDataStore store)
+        => new(
+            new ProcedureDocumentSnapshotService(store),
+            new ProcedureAttachmentAccessTokenService(new EphemeralDataProtectionProvider()));
 
     private static int Count(string value, string token)
         => (value.Length - value.Replace(token, string.Empty, StringComparison.Ordinal).Length) / token.Length;
