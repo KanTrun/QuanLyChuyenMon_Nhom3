@@ -96,7 +96,7 @@ public sealed class RoutingIntegrityTests
         var shellScript = File.ReadAllText(Path.Combine(root, "src", "telemedicine-landing-page", "wwwroot", "js", "admin-shell.js"));
 
         Assert.Contains(">In/PDF</button>", procedurePage);
-        Assert.Contains("Xem bản in / PDF", procedurePage);
+        Assert.Contains("AdminRowActionMenu", procedurePage);
         Assert.Contains("qlcmShell.openPrintableHtml", procedurePage);
         Assert.Contains("openPrintableHtml: openPrintableHtml", shellScript);
         Assert.Contains("window.open(url, '_blank')", shellScript);

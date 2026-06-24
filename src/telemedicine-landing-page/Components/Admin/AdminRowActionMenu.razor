@@ -1,0 +1,56 @@
+@implements IDisposable
+@inject IJSRuntime JS
+
+<div id="@_menuId" class="admin-row-action-menu" @onclick:stopPropagation="true">
+  @if (PrimaryContent is not null)
+  {
+    <div class="procedure-action-primary">@PrimaryContent</div>
+  }
+  <button type="button"
+          class="admin-icon-btn admin-row-action-trigger"
+          title="@MenuTitle"
+          aria-haspopup="menu"
+          aria-expanded="@_open"
+          @onclick="Toggle">⋮</button>
+  @if (_open)
+  {
+    <div class="admin-flyout admin-row-action-flyout" role="menu" @onclick:stopPropagation="true">
+      @ChildContent
+    </div>
+  }
+</div>
+
+@code {
+    [Parameter] public string MenuTitle { get; set; } = "Thêm hành động";
+    [Parameter] public RenderFragment? PrimaryContent { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private readonly string _menuId = $"row-action-{Guid.NewGuid():N}";
+    private bool _open;
+    private int _outsideHandle = -1;
+    private DotNetObjectReference<AdminRowActionMenu>? _self;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _self is not null) return;
+        _self = DotNetObjectReference.Create(this);
+        _outsideHandle = await JS.InvokeAsync<int>("qlcmShell.registerOutsideClick", _menuId, _self, nameof(Close));
+    }
+
+    private void Toggle() => _open = !_open;
+
+    [JSInvokable]
+    public void Close()
+    {
+        if (!_open) return;
+        _open = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (_outsideHandle >= 0)
+            _ = JS.InvokeVoidAsync("qlcmShell.unregisterOutsideClick", _outsideHandle);
+        _self?.Dispose();
+    }
+}

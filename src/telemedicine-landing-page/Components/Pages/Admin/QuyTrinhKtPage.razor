@@ -102,22 +102,30 @@
                 </td>
                 <td class="admin-table-cell-muted">@AdminDateTimeDisplay.ShortDateTime(row.Procedure.UpdatedAt)</td>
                 <td style="text-align:right;" @onclick:stopPropagation="true">
-                    <div class="admin-row-actions">
-                        <button type="button" class="admin-icon-btn" title="Xem" @onclick="() => OpenDetail(row)">☰</button>
-                        @if (row.LatestVersion is not null)
-                        {
-                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => ExportVersionAsync(row.LatestVersion)">In/PDF</button>
-                        }
-                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenUpdate(row)">Cập nhật</button>
-                        @if (row.Procedure.Status == "archived")
-                        {
-                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => RestoreAsync(row)">Khôi phục</button>
-                        }
-                        else
-                        {
-                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ArchiveAsync(row)">Lưu trữ</button>
-                        }
-                    </div>
+                    <AdminRowActionMenu MenuTitle="Hành động quy trình">
+                        <PrimaryContent>
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => OpenDetail(row)">Xem</button>
+                        </PrimaryContent>
+                        <ChildContent>
+                            @if (row.LatestVersion is not null)
+                            {
+                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => ExportVersionAsync(row.LatestVersion)">In/PDF</button>
+                                @if (SourceAttachment(row.LatestVersion.ProcedureVersionId) is { } source)
+                                {
+                                    <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => DownloadAttachmentAsync(source)">Tệp nguồn</button>
+                                }
+                            }
+                            <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenUpdate(row)">Cập nhật phiên bản</button>
+                            @if (row.Procedure.Status == "archived")
+                            {
+                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => RestoreAsync(row)">Khôi phục</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => ArchiveAsync(row)">Lưu trữ</button>
+                            }
+                        </ChildContent>
+                    </AdminRowActionMenu>
                 </td>
             </tr>
         </RowTemplate>
@@ -131,50 +139,20 @@
     <ChildContent>
         @if (_selected is not null)
         {
-            <dl class="admin-detail-grid">
-                <dt>Loại quy trình</dt>
-                <dd>@_selected.Procedure.ProcedureType</dd>
-                <dt>Trạng thái hồ sơ</dt>
-                <dd>@StatusLabel(_selected.Procedure.Status)</dd>
-                <dt>Phiên bản mới nhất</dt>
-                <dd>@(_selected.LatestVersion?.Title ?? "Chưa có phiên bản")</dd>
-                <dt>Hiệu lực từ</dt>
-                <dd>@AdminDateTimeDisplay.Date(_selected.LatestVersion?.EffectiveFrom)</dd>
-                <dt>Cập nhật</dt>
-                <dd>@AdminDateTimeDisplay.DateTime(_selected.Procedure.UpdatedAt)</dd>
-            </dl>
-
             @if (_selected.LatestVersion is not null)
             {
-                <h3 class="admin-panel-title">Chữ ký nội bộ</h3>
-                <div class="admin-table-wrapper">
-                    <table class="admin-table procedure-signoff-table">
-                        <thead><tr><th>Vai trò</th><th>Trạng thái</th><th>Người ký</th><th>Thời điểm</th><th>Hành động</th></tr></thead>
-                        <tbody>
-                            @foreach (var signoff in SignoffDisplays(_selected.LatestVersion))
-                            {
-                                <tr>
-                                    <td><strong>@signoff.RoleLabel</strong></td>
-                                    <td><AdminBadge Tone="@signoff.Tone">@signoff.StatusLabel</AdminBadge></td>
-                                    <td>@signoff.SignerLabel</td>
-                                    <td>@signoff.SignedAtLabel</td>
-                                    <td>
-                                        @if (CanSignFromList(_selected.LatestVersion, signoff.Role))
-                                        {
-                                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => OpenSignModal(_selected.LatestVersion, signoff.Role)">
-                                                @SignActionLabel(signoff.Role)
-                                            </button>
-                                        }
-                                        else
-                                        {
-                                            <span class="admin-table-cell-muted">@SignoffLocationHint(signoff.Role)</span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                <ProcedureVersionDetailPanel ProcedureVersionId="_selected.LatestVersion.ProcedureVersionId" />
+            }
+            else
+            {
+                <dl class="admin-detail-grid">
+                    <dt>Loại quy trình</dt>
+                    <dd>@_selected.Procedure.ProcedureType</dd>
+                    <dt>Trạng thái hồ sơ</dt>
+                    <dd>@StatusLabel(_selected.Procedure.Status)</dd>
+                    <dt>Mô tả</dt>
+                    <dd>@(_selected.Procedure.Description ?? "—")</dd>
+                </dl>
             }
 
             <h3 class="admin-panel-title">Phiên bản</h3>
@@ -191,51 +169,40 @@
                                 <td>@AdminDateTimeDisplay.ShortDateTime(version.SubmittedAt)</td>
                                 <td>@AdminDateTimeDisplay.ShortDateTime(version.PublishedAt)</td>
                                 <td style="text-align:right;">
-                                    <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => ExportVersionAsync(version)">Xem bản in / PDF</button>
-                                    @if (SourceAttachment(version.ProcedureVersionId) is { } sourceAttachment)
-                                    {
-                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => DownloadAttachmentAsync(sourceAttachment)">Tệp nguồn</button>
-                                    }
-                                    @if (version.StatusCode == "draft")
-                                    {
-                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => OpenSignModal(version, "writer")'>Ký người viết</button>
-                                    }
-                                    @if (version.StatusCode == "pending_approval")
-                                    {
-                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick='() => OpenSignModal(version, "checker")'>Ký kiểm tra</button>
-                                    }
-                                    @if (version.StatusCode == "draft")
-                                    {
-                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => SubmitAsync(version)">Gửi duyệt</button>
-                                    }
-                                    @if (version.StatusCode == "active")
-                                    {
-                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => WithdrawAsync(version)">Thu hồi</button>
-                                    }
+                                    <AdminRowActionMenu MenuTitle="Hành động phiên bản">
+                                        <PrimaryContent>
+                                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ExportVersionAsync(version)">In/PDF</button>
+                                        </PrimaryContent>
+                                        <ChildContent>
+                                            <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => ExportVersionAsync(version)">In/PDF</button>
+                                            @if (SourceAttachment(version.ProcedureVersionId) is { } sourceAttachment)
+                                            {
+                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => DownloadAttachmentAsync(sourceAttachment)">Tệp nguồn</button>
+                                            }
+                                            @if (CanSignFromList(version, "writer"))
+                                            {
+                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick='() => OpenSignModal(version, "writer")'>Ký người viết</button>
+                                            }
+                                            @if (CanSignFromList(version, "checker"))
+                                            {
+                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick='() => OpenSignModal(version, "checker")'>Ký kiểm tra</button>
+                                            }
+                                            @if (version.StatusCode == "draft")
+                                            {
+                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => SubmitAsync(version)">Gửi duyệt</button>
+                                            }
+                                            @if (version.StatusCode == "active")
+                                            {
+                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => WithdrawAsync(version)">Thu hồi</button>
+                                            }
+                                        </ChildContent>
+                                    </AdminRowActionMenu>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
-
-            @if (_selected.LatestVersion is not null)
-            {
-                <h3 class="admin-panel-title">Các bước thực hiện</h3>
-                <ol class="admin-step-list">
-                    @foreach (var step in Store.ProcedureSteps.Where(s => s.ProcedureVersionId == _selected.LatestVersion.ProcedureVersionId).OrderBy(s => s.StepNo))
-                    {
-                        <li class="admin-step-card">
-                            <div class="admin-step-card-head">
-                                <span class="admin-step-card-seq">Bước @step.StepNo</span>
-                                <span class="admin-table-cell-muted">@((step.StandardDurationMinutes?.ToString() ?? "—")) phút</span>
-                            </div>
-                            <div class="admin-table-cell-strong">@step.Name</div>
-                            <div class="admin-table-cell-muted">@step.Description</div>
-                        </li>
-                    }
-                </ol>
-            }
         }
     </ChildContent>
     <FooterContent>
@@ -423,6 +390,12 @@
     {
         var permission = role == "checker" ? "SCR_PROCEDURES:APPROVE" : "SCR_PROCEDURES:UPDATE";
         if (!Guard.CanDo(permission, "ký xác nhận quy trình")) return;
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (!Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out var reason))
+        {
+            Toasts.Show("Không thể ký", reason ?? "Tài khoản hiện tại không đủ điều kiện ký vai trò này.", ToastVariant.Warning);
+            return;
+        }
         _signTarget = version;
         _signRole = role;
         _signOpen = true;
@@ -460,48 +433,15 @@
         _ => role
     };
 
-    private IReadOnlyList<SignoffDisplay> SignoffDisplays(Sql.ProcedureVersion version)
-        => new[] { "writer", "checker", "approver" }.Select(role => BuildSignoffDisplay(version, role)).ToList();
-
-    private SignoffDisplay BuildSignoffDisplay(Sql.ProcedureVersion version, string role)
+    private bool CanSignFromList(Sql.ProcedureVersion version, string role)
     {
-        var latest = Store.ProcedureSignoffRecords
-            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId &&
-                           string.Equals(item.SignoffRole, role, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(item => item.SignedAt)
-            .FirstOrDefault();
-        var isCurrent = latest is not null && Signoffs.HasCurrentSignoff(version.ProcedureVersionId, role);
-        var status = latest is null ? "Chưa ký" : isCurrent ? "Đã ký hợp lệ" : "Chữ ký đã cũ";
-        var tone = latest is null ? "tone-muted" : isCurrent ? "tone-success" : "tone-warning";
-
-        return new SignoffDisplay(
-            role,
-            SignoffRoleLabel(role),
-            status,
-            tone,
-            latest?.SignerFullName ?? latest?.SignerUsername ?? "—",
-            latest is null ? "—" : AdminDateTimeDisplay.ShortDateTime(latest.SignedAt));
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (role == "writer" && version.StatusCode == "draft")
+            return Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out _);
+        if (role == "checker" && version.StatusCode == "pending_approval")
+            return Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out _);
+        return false;
     }
-
-    private static bool CanSignFromList(Sql.ProcedureVersion version, string role)
-        => (role == "writer" && version.StatusCode == "draft") ||
-           (role == "checker" && version.StatusCode == "pending_approval");
-
-    private static string SignActionLabel(string role) => role switch
-    {
-        "writer" => "Ký người viết",
-        "checker" => "Ký kiểm tra",
-        "approver" => "Ký phê duyệt",
-        _ => "Ký nội bộ"
-    };
-
-    private static string SignoffLocationHint(string role) => role switch
-    {
-        "writer" => "Ký trước khi gửi kiểm tra",
-        "checker" => "Ký ở trạng thái chờ duyệt",
-        "approver" => "Ký khi ban hành tại trang phê duyệt",
-        _ => "Theo chuỗi ký nội bộ"
-    };
 
     private async Task ExportVersionAsync(Sql.ProcedureVersion version)
     {
@@ -612,8 +552,6 @@
     };
 
     public void Dispose() => Store.StateChanged -= OnChanged;
-
-    private sealed record SignoffDisplay(string Role, string RoleLabel, string StatusLabel, string Tone, string SignerLabel, string SignedAtLabel);
 
     private sealed record ProcedureRow(Sql.ProfessionalProcedure Procedure, Sql.ProcedureVersion? LatestVersion, Guid? DepartmentId);
 }
