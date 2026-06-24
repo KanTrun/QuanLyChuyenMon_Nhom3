@@ -91,6 +91,9 @@
                 return;
             }
 
+            // #region agent log
+            try { await JS.InvokeVoidAsync("qlcmShell.debugAgentLog", "ProcedureSignatureModal.ConfirmAsync", "signature confirmed, invoking save", new { imageLength = image.Length }, "E"); } catch { }
+            // #endregion
             await SignatureConfirmed.InvokeAsync(image);
         }
         catch (JSDisconnectedException)

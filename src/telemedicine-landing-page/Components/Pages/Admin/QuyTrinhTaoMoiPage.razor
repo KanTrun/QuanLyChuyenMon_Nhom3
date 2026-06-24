@@ -12,6 +12,8 @@
 @inject ProcedureSignoffService Signoffs
 @inject IProcedureAttachmentStorageService AttachmentStorage
 @inject NavigationManager Navigation
+@inject IWebHostEnvironment HostEnvironment
+@using System.Text.Json
 
 <PageTitle>@(IsUpdateMode ? "Cập nhật quy trình y tế" : "Tạo quy trình y tế") | QLCM Pro</PageTitle>
 
@@ -227,6 +229,7 @@
 
     private IReadOnlyList<Sql.Role> ActiveRoles => Store.Roles.Where(item => item.Status == "active").OrderBy(item => item.Code).ToList();
     private bool IsUpdateMode => ProcedureId.HasValue && _sourceVersion is not null;
+    private string ActionVerb => IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình";
     private string SourceVersionLabel => _sourceVersion?.VersionLabel ?? (_sourceVersion is null ? "phiên bản trước" : ProcedureAuthoringService.FormatVersionLabel(_sourceVersion.VersionNo));
 
     protected override void OnInitialized()
@@ -242,6 +245,9 @@
                              file.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
             _attachments.Add(new PendingAttachment(file, isFirstPdf ? "source_pdf" : "other"));
         }
+        // #region agent log
+        AgentLog("QuyTrinhTaoMoiPage.OnFilesSelected", "files selected", new { count = _attachments.Count, names = _attachments.Select(a => a.File.Name).ToArray() }, "D");
+        // #endregion
     }
 
     private Task SaveDraftAsync() => SaveAsync(submit: false);
@@ -261,6 +267,9 @@
             Toasts.Show("Phiên đăng nhập không hợp lệ", "Vui lòng đăng nhập lại trước khi ký.", ToastVariant.Error);
             return;
         }
+        // #region agent log
+        AgentLog("QuyTrinhTaoMoiPage.OpenWriterSignature", "opening signature modal", new { attachmentCount = _attachments.Count, writerSignOpen = _writerSignOpen }, "A");
+        // #endregion
         _writerSignOpen = true;
     }
 
@@ -274,24 +283,40 @@
         var validationMessage = Validate(submit);
         if (validationMessage is not null)
         {
-            Toasts.Show("Chưa thể lưu quy trình", validationMessage, ToastVariant.Warning);
+            Toasts.Show($"Chưa thể {ActionVerb}", validationMessage, ToastVariant.Warning);
             return;
         }
 
         var user = UserContext.CurrentUser;
         if (user is null)
         {
-            Toasts.Show("Phiên đăng nhập không hợp lệ", "Vui lòng đăng nhập lại trước khi lưu.", ToastVariant.Error);
+            Toasts.Show("Phiên đăng nhập không hợp lệ", $"Vui lòng đăng nhập lại trước khi {ActionVerb}.", ToastVariant.Error);
             return;
         }
 
         _isSaving = true;
         try
         {
+            // #region agent log
+            AgentLog("QuyTrinhTaoMoiPage.SaveAsync", "save started", new { submit, attachmentCount = _attachments.Count, isSaving = _isSaving, writerSignOpen = _writerSignOpen }, "C");
+            // #endregion
             var versionId = Guid.NewGuid();
             var storedAttachments = new List<(PendingAttachment Draft, StoredProcedureAttachment Stored)>();
             foreach (var attachment in _attachments)
             {
+                // #region agent log
+                AgentLog("QuyTrinhTaoMoiPage.SaveAsync", "before OpenReadStream", new { fileName = attachment.File.Name, fileSize = attachment.File.Size, attachmentType = attachment.AttachmentType }, "A");
+                try
+                {
+                    await using var probe = attachment.File.OpenReadStream(ProcedureAttachmentStorageService.MaxFileSizeBytes);
+                    AgentLog("QuyTrinhTaoMoiPage.SaveAsync", "OpenReadStream probe ok", new { fileName = attachment.File.Name, canRead = probe.CanRead }, "B");
+                }
+                catch (Exception probeEx)
+                {
+                    AgentLog("QuyTrinhTaoMoiPage.SaveAsync", "OpenReadStream probe failed", new { fileName = attachment.File.Name, error = probeEx.Message }, "A");
+                    throw;
+                }
+                // #endregion
                 storedAttachments.Add((attachment, await AttachmentStorage.SaveAsync(versionId, attachment.File)));
             }
             var hasNewSourcePdf = storedAttachments.Any(item => item.Draft.AttachmentType == "source_pdf");
@@ -342,7 +367,10 @@
         }
         catch (Exception exception)
         {
-            Toasts.Show("Không thể lưu quy trình", exception.Message, ToastVariant.Error);
+            // #region agent log
+            AgentLog("QuyTrinhTaoMoiPage.SaveAsync", "save failed", new { error = exception.Message, type = exception.GetType().Name }, "E");
+            // #endregion
+            Toasts.Show($"Không thể {ActionVerb}", exception.Message, ToastVariant.Error);
         }
         finally
         {
@@ -475,4 +503,38 @@
         public IBrowserFile File { get; } = file;
         public string AttachmentType { get; set; } = attachmentType;
     }
+
+    // #region agent log
+    private void AgentLog(string location, string message, object? data, string hypothesisId)
+    {
+        try
+        {
+            var line = JsonSerializer.Serialize(new
+            {
+                sessionId = "c592a1",
+                hypothesisId,
+                location,
+                message,
+                data,
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            }) + Environment.NewLine;
+            var candidates = new[]
+            {
+                Path.Combine(HostEnvironment.ContentRootPath, "App_Data", "procedure-attachments", "uploads", "debug-c592a1.log"),
+                Path.GetFullPath(Path.Combine(HostEnvironment.ContentRootPath, "..", "..", "..", "..", "debug-c592a1.log"))
+            };
+            foreach (var path in candidates)
+            {
+                try
+                {
+                    var dir = Path.GetDirectoryName(path);
+                    if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                    File.AppendAllText(path, line);
+                }
+                catch { /* ignore path */ }
+            }
+        }
+        catch { /* ignore logging */ }
+    }
+    // #endregion
 }

@@ -616,5 +616,21 @@
         hasSignaturePadInk: hasSignaturePadInk,
         clearSignaturePad: clearSignaturePad,
         disposeSignaturePad: disposeSignaturePad,
+        // #region agent log
+        debugAgentLog: function (location, message, data, hypothesisId) {
+            fetch('http://127.0.0.1:7857/ingest/02f953eb-d638-4403-8995-399505bf881e', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'c592a1' },
+                body: JSON.stringify({
+                    sessionId: 'c592a1',
+                    location: location,
+                    message: message,
+                    data: data || {},
+                    hypothesisId: hypothesisId || '',
+                    timestamp: Date.now()
+                })
+            }).catch(function () { });
+        }
+        // #endregion
     };
 })(window);
