@@ -120,6 +120,38 @@ public sealed class ProcedureDocumentServicesTests
     }
 
     [Fact]
+    public void CheckReadiness_MultipleWritersRequireAllWriterSignatures()
+    {
+        var (store, versionId) = CreateCompleteDocument();
+        var version = store.ProcedureVersions.First(item => item.ProcedureVersionId == versionId);
+        store.UpdateProcedureVersion(version with { RequiredWriterSignatures = 2 });
+        store.AddProcedureVersionAuthorAssignment(new ProcedureVersionAuthorAssignment
+        {
+            ProcedureVersionId = versionId,
+            DisplayOrder = 1,
+            AssignedUserId = MedDataStoreSeed.AdminUserId,
+            AssignedUsername = "admin",
+            AssignedFullName = "Quản trị viên"
+        });
+        store.AddProcedureVersionAuthorAssignment(new ProcedureVersionAuthorAssignment
+        {
+            ProcedureVersionId = versionId,
+            DisplayOrder = 2,
+            AssignedUserId = MedDataStoreSeed.TruongKhoaNoiId,
+            AssignedUsername = "truongkhoa.noi",
+            AssignedFullName = "Trưởng khoa Nội"
+        });
+
+        var signoffs = new ProcedureSignoffService(store, new ProcedureDocumentSnapshotService(store));
+        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Quản trị viên", ValidSignature);
+
+        var readiness = new ProcedureDocumentSnapshotService(store).CheckReadiness(versionId, requireSignoffs: true);
+
+        Assert.False(readiness.IsReady);
+        Assert.Contains("Chữ ký Người viết", readiness.MissingItems);
+    }
+
+    [Fact]
     public void Export_EscapesContentAndRendersFlowShapeAndSourceMetadata()
     {
         var (store, versionId) = CreateCompleteDocument("Quy trình <script>alert(1)</script>");
@@ -197,6 +229,8 @@ public sealed class ProcedureDocumentServicesTests
         Assert.Contains("Trang 1 /", html);
         Assert.Contains("height:297mm", html);
         Assert.Contains("<small>VIII · Đối chiếu hồ sơ và điều kiện thực hiện</small>", visibleText);
+        Assert.Contains("grid-template-columns:repeat(2,minmax(0,1fr))", html);
+        Assert.Contains("shape-decision{width:31mm;height:31mm", html);
     }
 
     [Fact]
@@ -374,6 +408,14 @@ public sealed class ProcedureDocumentServicesTests
             CreatedBy = MedDataStoreSeed.AdminUserId
         };
         store.AddProcedureVersion(version);
+        store.AddProcedureVersionAuthorAssignment(new ProcedureVersionAuthorAssignment
+        {
+            ProcedureVersionId = version.ProcedureVersionId,
+            DisplayOrder = 1,
+            AssignedUserId = MedDataStoreSeed.AdminUserId,
+            AssignedUsername = "admin",
+            AssignedFullName = "Quản trị viên"
+        });
 
         foreach (var item in RequiredSections.Select((section, index) => (section, index)))
             store.AddProcedureDocumentSection(new ProcedureDocumentSection

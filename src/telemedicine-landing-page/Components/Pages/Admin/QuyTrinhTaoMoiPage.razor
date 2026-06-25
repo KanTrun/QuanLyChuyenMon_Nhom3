@@ -90,6 +90,38 @@
     <article class="admin-panel">
         <header class="admin-panel-head">
             <div>
+                <h2 class="admin-panel-title">Người viết quy trình</h2>
+                <p class="admin-form-field-hint">Có thể gán nhiều người viết. Mỗi người được phân công phải tự ký bằng tài khoản của mình trước khi bản nháp được gửi kiểm tra.</p>
+            </div>
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddWriterAssignment">Thêm người viết</button>
+        </header>
+        <div class="admin-step-rows">
+            @for (var writerIndex = 0; writerIndex < _writerAssignments.Count; writerIndex++)
+            {
+                var writer = _writerAssignments[writerIndex];
+                <article class="admin-step-row" @key="writer">
+                    <div class="admin-step-row-bullet">@(writerIndex + 1)</div>
+                    <div class="procedure-flow-step-fields">
+                        <label class="admin-form-field">
+                            <span class="admin-form-field-label is-required">Người viết @(writerIndex + 1)</span>
+                            <select class="admin-select" @bind="writer.UserId">
+                                <option value="">Chọn người viết</option>
+                                @foreach (var user in ActiveUsers)
+                                {
+                                    <option value="@user.UserId">@user.FullName (@user.Username)</option>
+                                }
+                            </select>
+                        </label>
+                    </div>
+                    <button type="button" class="admin-icon-btn is-danger" title="Xóa người viết" @onclick="() => RemoveWriterAssignment(writer)" disabled="@(_writerAssignments.Count <= 1)">×</button>
+                </article>
+            }
+        </div>
+    </article>
+
+    <article class="admin-panel">
+        <header class="admin-panel-head">
+            <div>
                 <h2 class="admin-panel-title">Tệp gắn kèm</h2>
                 <p class="admin-form-field-hint">Upload trước khi soạn lưu đồ. Cần ít nhất một PDF nguồn; biểu mẫu/hướng dẫn có thể gắn vào từng bước.</p>
             </div>
@@ -136,13 +168,13 @@
 
     <ProcedureGovernanceEditor Recipients="_recipients" Revisions="_revisions" />
     <ProcedureDocumentSectionsEditor Sections="_sections" />
-    <ProcedureFlowEditor Steps="_steps" Roles="ActiveRoles" AvailableAttachments="AvailableAttachments" />
+    <ProcedureFlowEditor Steps="_steps" Roles="ActiveRoles" Departments="ActiveDepartments" AvailableAttachments="AvailableAttachments" />
 
     <article class="admin-panel procedure-signoff-panel">
         <header class="admin-panel-head">
             <div>
                 <h2 class="admin-panel-title">Chữ ký nội bộ trực tiếp</h2>
-                <p class="admin-form-field-hint">Người dùng ký bằng tay trong khung vẽ; hệ thống lưu ảnh chữ ký, tài khoản, thời điểm và hash nội dung tại lúc ký.</p>
+                <p class="admin-form-field-hint">Người dùng ký bằng tay trong khung vẽ; hệ thống lưu ảnh chữ ký, tài khoản, thời điểm và hash nội dung tại lúc ký. Nếu có nhiều người viết, mỗi người viết cần ký riêng bằng chính tài khoản của mình.</p>
             </div>
         </header>
         <div class="admin-table-wrapper">
@@ -150,12 +182,12 @@
                 <thead><tr><th>Vai trò</th><th>Trạng thái</th><th>Nơi thực hiện</th><th>Hành động</th></tr></thead>
                 <tbody>
                     <tr>
-                        <td><strong>Người viết</strong></td>
-                        <td><AdminBadge Tone="tone-warning">Ký trước khi gửi kiểm tra</AdminBadge></td>
+                        <td><strong>Người viết (@RequiredWriterCount)</strong></td>
+                        <td><AdminBadge Tone="tone-warning">Ký đủ trước khi gửi kiểm tra</AdminBadge></td>
                         <td>Trang tạo/cập nhật quy trình hiện tại</td>
                         <td>
                             <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" disabled="@_isSaving" @onclick="OpenWriterSignature">
-                                Mở khung ký tay
+                                Ký người viết hiện tại
                             </button>
                         </td>
                     </tr>
@@ -180,12 +212,12 @@
         <strong>@(IsUpdateMode ? "Nguyên tắc phiên bản:" : "Chuỗi xác nhận nội bộ:")</strong>
         @(IsUpdateMode
             ? $"{SourceVersionLabel} không bị ghi đè. Hệ thống tạo {_versionLabel} độc lập; chữ ký cũ không được sao chép và phiên bản đang hiệu lực chỉ chuyển thành đã thay thế sau khi bản mới được ban hành."
-            : "Người soạn ký trên hash hiện tại khi gửi; người kiểm tra ký ở hàng chờ duyệt; người phê duyệt ký khi ban hành. Mọi chỉnh sửa nội dung làm chữ ký cũ hết hiệu lực.")
+            : "Mỗi người viết được phân công ký trên hash hiện tại. Chỉ khi đủ chữ ký người viết thì bản nháp mới được gửi kiểm tra; sau đó người kiểm tra và người phê duyệt tiếp tục ký. Mọi chỉnh sửa nội dung làm chữ ký cũ hết hiệu lực.")
     </aside>
 
     <div class="procedure-authoring-actions">
         <button type="button" class="admin-btn admin-btn-ghost" disabled="@_isSaving" @onclick="SaveDraftAsync">@(IsUpdateMode ? $"Cập nhật thành {_versionLabel}" : "Tạo bản v01")</button>
-        <button type="button" class="admin-btn admin-btn-primary" disabled="@_isSaving" @onclick="OpenWriterSignature">@(IsUpdateMode ? $"Cập nhật {_versionLabel}, ký và gửi kiểm tra" : "Tạo v01, ký và gửi kiểm tra")</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_isSaving" @onclick="OpenWriterSignature">@(IsUpdateMode ? $"Cập nhật {_versionLabel}, ký người viết" : "Tạo v01, ký người viết")</button>
     </div>
 </section>
 
@@ -196,7 +228,7 @@
                          DocumentLabel="@($"{_code} - {_name} - {_versionLabel}")"
                          SignerName="@(UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username ?? string.Empty)"
                          SignerUsername="@(UserContext.CurrentUser?.Username ?? string.Empty)"
-                         ConfirmText="Ký và gửi kiểm tra"
+                         ConfirmText="Ký người viết"
                          SignatureConfirmed="SaveSignedVersionAsync" />
 
 @code {
@@ -226,6 +258,7 @@
     private readonly List<ProcedureRevisionDraft> _revisions = [new() { Summary = "Ban hành lần đầu" }];
     private readonly List<PendingAttachment> _attachments = [];
     private readonly List<ExistingAttachmentEntry> _existingAttachments = [];
+    private readonly List<ProcedureWriterAssignmentDraft> _writerAssignments = [new(), new()];
 
     private IReadOnlyList<ProcedureAuthoringAttachmentOption> AvailableAttachments =>
         _existingAttachments
@@ -234,12 +267,21 @@
             .ToList();
 
     private IReadOnlyList<Sql.Role> ActiveRoles => Store.Roles.Where(item => item.Status == "active").OrderBy(item => item.Code).ToList();
+    private IReadOnlyList<Sql.Department> ActiveDepartments => Store.Departments.Where(item => item.Status == "active").OrderBy(item => item.Code).ToList();
+    private IReadOnlyList<Sql.AppUser> ActiveUsers => Store.Users.Where(item => item.Status == "active").OrderBy(item => item.FullName).ToList();
     private bool IsUpdateMode => ProcedureId.HasValue && _sourceVersion is not null;
     private string ActionVerb => IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình";
     private string SourceVersionLabel => _sourceVersion?.VersionLabel ?? (_sourceVersion is null ? "phiên bản trước" : ProcedureAuthoringService.FormatVersionLabel(_sourceVersion.VersionNo));
+    private int RequiredWriterCount => _writerAssignments
+        .Select(item => ParseGuid(item.UserId))
+        .Where(item => item.HasValue)
+        .Select(item => item!.Value)
+        .Distinct()
+        .Count();
 
     protected override void OnInitialized()
     {
+        EnsureCurrentUserWriterAssignment();
         if (ProcedureId.HasValue) LoadSourceVersion();
     }
 
@@ -358,6 +400,7 @@
                 _issueDate!.Value,
                 _issueNumber,
                 user.UserId,
+                _writerAssignments,
                 _sections,
                 _recipients,
                 _revisions,
@@ -374,11 +417,28 @@
                     user.FullName,
                     signatureImageDataUrl,
                     "Chữ ký tay trực tiếp của người soạn");
-                Lifecycle.Submit(versionId, user.UserId);
+                var outstandingWriters = Signoffs.GetOutstandingWriterSignatures(versionId);
+                if (outstandingWriters == 0)
+                {
+                    Lifecycle.Submit(versionId, user.UserId);
+                }
+                else
+                {
+                    Toasts.Show(
+                        "Đã lưu bản nháp và ghi nhận chữ ký người viết",
+                        $"Còn thiếu {outstandingWriters} chữ ký người viết trước khi gửi kiểm tra.",
+                        ToastVariant.Info);
+                }
             }
 
             var title = IsUpdateMode ? $"Đã cập nhật thành {result.Version.VersionLabel}" : "Đã tạo bản v01";
-            Toasts.Show(submit ? $"{title}, đã ký và gửi kiểm tra" : title, result.Procedure.Name, ToastVariant.Success);
+            var finalOutstandingWriters = submit ? Signoffs.GetOutstandingWriterSignatures(versionId) : 0;
+            Toasts.Show(
+                submit
+                    ? (finalOutstandingWriters == 0 ? $"{title}, đã ký và gửi kiểm tra" : $"{title}, đã ký người viết")
+                    : title,
+                result.Procedure.Name,
+                ToastVariant.Success);
             Navigation.NavigateTo("/qlcm/quy-trinh");
         }
         catch (Exception exception)
@@ -446,6 +506,19 @@
             Summary = $"Cập nhật từ {SourceVersionLabel} lên {_versionLabel}"
         });
 
+        _writerAssignments.Clear();
+        _writerAssignments.AddRange(Store.ProcedureVersionAuthorAssignments
+            .Where(item => item.ProcedureVersionId == source.ProcedureVersionId && item.SignoffRole == "writer")
+            .OrderBy(item => item.DisplayOrder)
+            .Select(item => new ProcedureWriterAssignmentDraft
+            {
+                UserId = item.AssignedUserId.ToString()
+            }));
+        if (_writerAssignments.Count == 0)
+        {
+            EnsureCurrentUserWriterAssignment();
+        }
+
         _steps.Clear();
         _steps.AddRange(Store.ProcedureSteps
             .Where(item => item.ProcedureVersionId == source.ProcedureVersionId)
@@ -455,10 +528,25 @@
                 Code = item.StepCode ?? string.Empty,
                 Name = item.Name,
                 RoleId = item.ActorRoleId?.ToString() ?? string.Empty,
+                RoleIds = Store.ProcedureStepRoleAssignments
+                    .Where(assignment => assignment.ProcedureStepId == item.ProcedureStepId)
+                    .OrderBy(assignment => assignment.DisplayOrder)
+                    .Select(assignment => assignment.RoleId.ToString())
+                    .ToList(),
+                LocationDepartmentIds = Store.ProcedureStepLocationAssignments
+                    .Where(assignment => assignment.ProcedureStepId == item.ProcedureStepId)
+                    .OrderBy(assignment => assignment.DisplayOrder)
+                    .Select(assignment => assignment.DepartmentId.ToString())
+                    .ToList(),
                 Responsibility = item.ResponsibilityText ?? string.Empty,
                 ShapeCode = item.FlowShapeCode,
                 FormReference = item.FormReferenceText ?? string.Empty,
                 LinkedAttachmentClientId = item.FormAttachmentId,
+                LinkedAttachmentClientIds = Store.ProcedureStepAttachmentAssignments
+                    .Where(assignment => assignment.ProcedureStepId == item.ProcedureStepId)
+                    .OrderBy(assignment => assignment.DisplayOrder)
+                    .Select(assignment => assignment.ProcedureAttachmentId)
+                    .ToList(),
                 DetailSectionNumber = item.DetailSectionNumber ?? string.Empty,
                 Minutes = item.StandardDurationMinutes ?? 5,
                 Description = item.Description ?? string.Empty
@@ -481,6 +569,7 @@
             return "Phiên bản mới nhất đang chờ phê duyệt. Hãy hoàn tất hoặc từ chối trước khi tạo bản kế tiếp.";
         if (!Guid.TryParse(_departmentId, out _)) return "Chọn khoa/phòng chủ trì.";
         if (_issueDate is null || _issueNumber < 1) return "Nhập ngày và lần ban hành hợp lệ.";
+        if (RequiredWriterCount == 0) return "Chọn ít nhất một người viết.";
         if (!submit) return null;
         if (_sections.Any(item => item.IsRequired && string.IsNullOrWhiteSpace(item.Content))) return "Hoàn thiện tất cả mục La Mã bắt buộc.";
         if (_steps.Count == 0 || _steps.Any(item => string.IsNullOrWhiteSpace(item.Name) || string.IsNullOrWhiteSpace(item.Responsibility) || string.IsNullOrWhiteSpace(item.Description)))
@@ -491,6 +580,30 @@
             !_attachments.Any(item => item.AttachmentType == "source_pdf" && item.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)))
             return "Chọn một tệp PDF và đặt loại là PDF nguồn.";
         return null;
+    }
+
+    private void AddWriterAssignment() => _writerAssignments.Add(new ProcedureWriterAssignmentDraft());
+
+    private void RemoveWriterAssignment(ProcedureWriterAssignmentDraft writer)
+    {
+        if (_writerAssignments.Count > 1)
+        {
+            _writerAssignments.Remove(writer);
+        }
+    }
+
+    private void EnsureCurrentUserWriterAssignment()
+    {
+        if (_writerAssignments.Count == 0)
+        {
+            _writerAssignments.Add(new ProcedureWriterAssignmentDraft());
+        }
+
+        var currentUserId = UserContext.CurrentUser?.UserId.ToString();
+        if (!string.IsNullOrWhiteSpace(currentUserId) && string.IsNullOrWhiteSpace(_writerAssignments[0].UserId))
+        {
+            _writerAssignments[0].UserId = currentUserId;
+        }
     }
 
     private static List<ProcedureSectionDraft> CreateSections() =>

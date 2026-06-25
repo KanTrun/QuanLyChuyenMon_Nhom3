@@ -44,6 +44,34 @@
                                 }
                             </select>
                         </label>
+                        <div class="admin-form-field admin-form-field-full">
+                            <span class="admin-form-field-label">Các vai trò cùng thực hiện</span>
+                            <div class="procedure-flow-multi-select">
+                                @foreach (var role in Roles)
+                                {
+                                    <label class="procedure-flow-check">
+                                        <input type="checkbox"
+                                               checked="@step.RoleIds.Contains(role.RoleId.ToString())"
+                                               @onchange="e => OnRoleCheckedChanged(step, role.RoleId.ToString(), e)" />
+                                        <span>@role.Name</span>
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                        <div class="admin-form-field admin-form-field-full">
+                            <span class="admin-form-field-label">Nơi thực hiện</span>
+                            <div class="procedure-flow-multi-select">
+                                @foreach (var department in Departments)
+                                {
+                                    <label class="procedure-flow-check">
+                                        <input type="checkbox"
+                                               checked="@step.LocationDepartmentIds.Contains(department.DepartmentId.ToString())"
+                                               @onchange="e => OnLocationCheckedChanged(step, department.DepartmentId.ToString(), e)" />
+                                        <span>@department.Name</span>
+                                    </label>
+                                }
+                            </div>
+                        </div>
                         <label class="admin-form-field">
                             <span class="admin-form-field-label is-required">Người/bộ phận chịu trách nhiệm</span>
                             <input class="admin-input" @bind="step.Responsibility" />
@@ -56,18 +84,20 @@
                             <span class="admin-form-field-label">Mục diễn giải</span>
                             <input class="admin-input" @bind="step.DetailSectionNumber" placeholder="VD: VIII.3" />
                         </label>
-                        <label class="admin-form-field">
+                        <div class="admin-form-field admin-form-field-full">
                             <span class="admin-form-field-label">Tệp hướng dẫn bước</span>
-                            <select class="admin-select"
-                                    value="@(step.LinkedAttachmentClientId?.ToString() ?? string.Empty)"
-                                    @onchange="e => OnLinkedAttachmentChanged(step, e)">
-                                <option value="">Không gắn tệp</option>
+                            <div class="procedure-flow-multi-select">
                                 @foreach (var attachment in AvailableAttachments)
                                 {
-                                    <option value="@attachment.ClientId">@attachment.FileName (@AttachmentTypeName(attachment.AttachmentType))</option>
+                                    <label class="procedure-flow-check">
+                                        <input type="checkbox"
+                                               checked="@step.LinkedAttachmentClientIds.Contains(attachment.ClientId)"
+                                               @onchange="e => OnAttachmentCheckedChanged(step, attachment.ClientId, e)" />
+                                        <span>@attachment.FileName (@AttachmentTypeName(attachment.AttachmentType))</span>
+                                    </label>
                                 }
-                            </select>
-                        </label>
+                            </div>
+                        </div>
                         <label class="admin-form-field">
                             <span class="admin-form-field-label">Ghi chú biểu mẫu</span>
                             <input class="admin-input" @bind="step.FormReference" placeholder="VD: Mã BM, trang áp dụng" />
@@ -100,6 +130,9 @@
     [Parameter, EditorRequired]
     public required IReadOnlyList<Sql.Role> Roles { get; set; }
 
+    [Parameter, EditorRequired]
+    public required IReadOnlyList<Sql.Department> Departments { get; set; }
+
     [Parameter]
     public IReadOnlyList<ProcedureAuthoringAttachmentOption> AvailableAttachments { get; set; } = [];
 
@@ -115,6 +148,42 @@
     {
         var value = args.Value?.ToString();
         step.LinkedAttachmentClientId = Guid.TryParse(value, out var id) ? id : null;
+    }
+
+    private static void OnRoleCheckedChanged(ProcedureFlowStepDraft step, string roleId, ChangeEventArgs args)
+        => ToggleString(step.RoleIds, roleId, args.Value as bool? == true);
+
+    private static void OnLocationCheckedChanged(ProcedureFlowStepDraft step, string departmentId, ChangeEventArgs args)
+        => ToggleString(step.LocationDepartmentIds, departmentId, args.Value as bool? == true);
+
+    private static void OnAttachmentCheckedChanged(ProcedureFlowStepDraft step, Guid attachmentId, ChangeEventArgs args)
+    {
+        ToggleGuid(step.LinkedAttachmentClientIds, attachmentId, args.Value as bool? == true);
+        step.LinkedAttachmentClientId = step.LinkedAttachmentClientIds.FirstOrDefault();
+    }
+
+    private static void ToggleString(ICollection<string> values, string value, bool enabled)
+    {
+        if (enabled)
+        {
+            if (!values.Contains(value)) values.Add(value);
+        }
+        else
+        {
+            values.Remove(value);
+        }
+    }
+
+    private static void ToggleGuid(ICollection<Guid> values, Guid value, bool enabled)
+    {
+        if (enabled)
+        {
+            if (!values.Contains(value)) values.Add(value);
+        }
+        else
+        {
+            values.Remove(value);
+        }
     }
 
     private static string AttachmentTypeName(string code)

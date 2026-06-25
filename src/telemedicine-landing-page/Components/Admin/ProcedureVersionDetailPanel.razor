@@ -1,3 +1,4 @@
+@using System.Text.Json.Nodes
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject ProcedureDocumentSnapshotService Snapshots
 @inject ProcedureSignoffService Signoffs
@@ -43,8 +44,26 @@
             <dd>@AdminDateTimeDisplay.Date(_snapshot.Version.EffectiveFrom)</dd>
             <dt>PDF nguồn</dt>
             <dd>@(_snapshot.Version.SourcePdfFileName ?? "—")</dd>
+            <dt>Số người viết cần ký</dt>
+            <dd>@_snapshot.Version.RequiredWriterSignatures</dd>
         </dl>
     </section>
+
+    @if (_snapshot.WriterAssignments.Count > 0)
+    {
+        <section class="procedure-detail-section">
+            <h3 class="admin-panel-title">Phân công người viết</h3>
+            <ul class="admin-step-list">
+                @foreach (var writer in _snapshot.WriterAssignments)
+                {
+                    <li class="admin-step-card">
+                        <span class="admin-table-cell-strong">@WriterName(writer)</span>
+                        <span class="admin-table-cell-muted"> • thứ tự @writer.DisplayOrder</span>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
 
     <section class="procedure-detail-section">
         <h3 class="admin-panel-title">Chữ ký nội bộ</h3>
@@ -65,6 +84,45 @@
             </table>
         </div>
     </section>
+
+    @if (_snapshot.VersionSnapshots.Count > 0 || CurrentDiff is not null)
+    {
+        <section class="procedure-detail-section">
+            <h3 class="admin-panel-title">Lịch sử phiên bản và so sánh</h3>
+            @if (_snapshot.VersionSnapshots.Count > 0)
+            {
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead><tr><th>Loại snapshot</th><th>Hash</th><th>Thời điểm</th></tr></thead>
+                        <tbody>
+                            @foreach (var snapshotRecord in _snapshot.VersionSnapshots)
+                            {
+                                <tr>
+                                    <td>@snapshotRecord.SnapshotKind</td>
+                                    <td>@snapshotRecord.ContentHashSha256[..Math.Min(12, snapshotRecord.ContentHashSha256.Length)]</td>
+                                    <td>@AdminDateTimeDisplay.ShortDateTime(snapshotRecord.CreatedAt)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            @if (CurrentDiff is not null)
+            {
+                <div class="procedure-detail-card">
+                    <header class="procedure-detail-card-head">
+                        <strong>So sánh với phiên bản trước</strong>
+                    </header>
+                    <div class="procedure-detail-card-body">
+                        @foreach (var item in DiffLines(CurrentDiff))
+                        {
+                            <div>@item</div>
+                        }
+                    </div>
+                </div>
+            }
+        </section>
+    }
 
     @if (_snapshot.Sections.Count > 0)
     {
@@ -141,19 +199,30 @@
                         {
                             <div class="admin-table-cell-muted">Trách nhiệm: @step.ResponsibilityText</div>
                         }
+                        @if (StepRoles(step).Count > 0)
+                        {
+                            <div class="admin-table-cell-muted">Vai trò: @string.Join(", ", StepRoles(step))</div>
+                        }
+                        @if (StepLocations(step).Count > 0)
+                        {
+                            <div class="admin-table-cell-muted">Nơi thực hiện: @string.Join(", ", StepLocations(step))</div>
+                        }
                         @if (!string.IsNullOrWhiteSpace(step.Description))
                         {
                             <div class="admin-table-cell-muted">@step.Description</div>
                         }
                         @{
-                            var linkedAttachment = ResolveStepAttachment(step);
+                            var linkedAttachments = ResolveStepAttachments(step);
                         }
-                        @if (linkedAttachment is not null)
+                        @if (linkedAttachments.Count > 0)
                         {
                             <div class="procedure-step-attachment-link">
-                                <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => DownloadAttachmentAsync(linkedAttachment)">
-                                    Tải @linkedAttachment.FileName
-                                </button>
+                                @foreach (var attachment in linkedAttachments)
+                                {
+                                    <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => DownloadAttachmentAsync(attachment)">
+                                        Tải @attachment.FileName
+                                    </button>
+                                }
                             </div>
                         }
                         else if (!string.IsNullOrWhiteSpace(step.FormReferenceText))
@@ -197,6 +266,7 @@
 
     private ProcedureDocumentSnapshot? _snapshot;
     private IReadOnlyList<SignoffRow> SignoffRows { get; set; } = [];
+    private Sql.ProcedureVersionDiffRecord? CurrentDiff { get; set; }
 
     protected override void OnParametersSet()
     {
@@ -204,6 +274,8 @@
         SignoffRows = new[] { "writer", "checker", "approver" }
             .Select(BuildSignoffRow)
             .ToList();
+        CurrentDiff = Store.ProcedureVersionDiffRecords
+            .FirstOrDefault(item => item.ToVersionId == ProcedureVersionId);
     }
 
     private SignoffRow BuildSignoffRow(string role)
@@ -213,18 +285,90 @@
             .OrderByDescending(item => item.SignedAt)
             .FirstOrDefault();
         var isCurrent = latest is not null && Signoffs.HasCurrentSignoff(ProcedureVersionId, role);
+        var signerLabel = role == "writer"
+            ? string.Join(", ", Snapshots.GetCurrentSignoffs(_snapshot!, "writer")
+                .Select(item => item.SignerFullName ?? item.SignerUsername ?? "—"))
+            : latest?.SignerFullName ?? latest?.SignerUsername ?? "—";
         return new SignoffRow(
             RoleLabel(role),
-            latest is null ? "Chưa ký" : isCurrent ? "Đã ký hợp lệ" : "Chữ ký đã cũ",
+            latest is null ? "Chưa ký" : isCurrent ? $"Đã ký hợp lệ ({CurrentSignoffCount(role)}/{RequiredSignoffCount(role)})" : "Chữ ký đã cũ",
             latest is null ? "tone-muted" : isCurrent ? "tone-success" : "tone-warning",
-            latest?.SignerFullName ?? latest?.SignerUsername ?? "—",
+            signerLabel,
             latest is null ? "—" : AdminDateTimeDisplay.ShortDateTime(latest.SignedAt));
     }
 
-    private Sql.ProcedureAttachment? ResolveStepAttachment(Sql.ProcedureStep step)
-        => step.FormAttachmentId is { } id
-            ? _snapshot?.Attachments.FirstOrDefault(item => item.ProcedureAttachmentId == id)
-            : null;
+    private int RequiredSignoffCount(string role) => _snapshot is null ? 1 : Snapshots.RequiredSignoffCount(_snapshot, role);
+    private int CurrentSignoffCount(string role) => _snapshot is null ? 0 : Snapshots.GetCurrentSignoffs(_snapshot, role).Count;
+
+    private IReadOnlyList<Sql.ProcedureAttachment> ResolveStepAttachments(Sql.ProcedureStep step)
+    {
+        if (_snapshot is null) return [];
+        var attachmentIds = _snapshot.StepAttachmentAssignments
+            .Where(item => item.ProcedureStepId == step.ProcedureStepId)
+            .OrderBy(item => item.DisplayOrder)
+            .Select(item => item.ProcedureAttachmentId)
+            .ToList();
+        if (attachmentIds.Count == 0 && step.FormAttachmentId is { } legacyId)
+        {
+            attachmentIds.Add(legacyId);
+        }
+        return _snapshot.Attachments
+            .Where(item => attachmentIds.Contains(item.ProcedureAttachmentId))
+            .ToList();
+    }
+
+    private IReadOnlyList<string> StepRoles(Sql.ProcedureStep step)
+        => _snapshot is null
+            ? []
+            : _snapshot.StepRoleAssignments
+                .Where(item => item.ProcedureStepId == step.ProcedureStepId)
+                .OrderBy(item => item.DisplayOrder)
+                .Select(item => Store.Roles.FirstOrDefault(role => role.RoleId == item.RoleId)?.Name ?? item.RoleId.ToString())
+                .ToList();
+
+    private IReadOnlyList<string> StepLocations(Sql.ProcedureStep step)
+        => _snapshot is null
+            ? []
+            : _snapshot.StepLocationAssignments
+                .Where(item => item.ProcedureStepId == step.ProcedureStepId)
+                .OrderBy(item => item.DisplayOrder)
+                .Select(item => Store.Departments.FirstOrDefault(department => department.DepartmentId == item.DepartmentId)?.Name ?? item.DepartmentId.ToString())
+                .ToList();
+
+    private static string WriterName(Sql.ProcedureVersionAuthorAssignment writer)
+        => writer.AssignedFullName ?? writer.AssignedUsername ?? writer.AssignedUserId.ToString();
+
+    private static IReadOnlyList<string> DiffLines(Sql.ProcedureVersionDiffRecord diff)
+    {
+        if (string.IsNullOrWhiteSpace(diff.DiffJson)) return ["Không có dữ liệu so sánh."];
+        var node = JsonNode.Parse(diff.DiffJson);
+        if (node is null) return ["Không có dữ liệu so sánh."];
+
+        var lines = new List<string>();
+        if (node["metadata"] is JsonArray metadata)
+        {
+            foreach (var item in metadata)
+            {
+                if (item?["changed"]?.GetValue<bool>() == true)
+                {
+                    lines.Add($"{item["label"]}: {item["before"]} -> {item["after"]}");
+                }
+            }
+        }
+
+        foreach (var key in new[] { "writers", "sections", "steps", "attachments" })
+        {
+            if (node[key] is JsonObject listChange)
+            {
+                var added = listChange["added"]?.AsArray().Select(item => item?.ToString()).Where(item => !string.IsNullOrWhiteSpace(item)).ToList() ?? [];
+                var removed = listChange["removed"]?.AsArray().Select(item => item?.ToString()).Where(item => !string.IsNullOrWhiteSpace(item)).ToList() ?? [];
+                if (added.Count > 0) lines.Add($"{key}: thêm {string.Join("; ", added)}");
+                if (removed.Count > 0) lines.Add($"{key}: bỏ {string.Join("; ", removed)}");
+            }
+        }
+
+        return lines.Count == 0 ? ["Không phát hiện thay đổi có cấu trúc."] : lines;
+    }
 
     private async Task DownloadAttachmentAsync(Sql.ProcedureAttachment attachment)
     {

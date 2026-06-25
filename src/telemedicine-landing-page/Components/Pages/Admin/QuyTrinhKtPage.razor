@@ -521,6 +521,7 @@
         }
 
         var status = row.LatestVersion?.StatusCode ?? row.Procedure.Status;
+        var stepSearch = row.LatestVersion is null ? [] : MatchingStepTexts(row.LatestVersion.ProcedureVersionId);
         return Contains(row.Procedure.ProcedureCode, search)
             || Contains(row.Procedure.Name, search)
             || Contains(row.Procedure.Description, search)
@@ -530,8 +531,24 @@
             || Contains(row.LatestVersion?.Summary, search)
             || Contains(GetDeptName(row.DepartmentId), search)
             || Contains(StatusLabel(status), search)
-            || Contains(status, search);
+            || Contains(status, search)
+            || stepSearch.Any(item => Contains(item, search));
     }
+
+    private IReadOnlyList<string> MatchingStepTexts(Guid versionId)
+        => Store.ProcedureSteps
+            .Where(step => step.ProcedureVersionId == versionId)
+            .SelectMany(step => new[]
+            {
+                step.Name,
+                step.Description,
+                step.ResponsibilityText,
+                step.FormReferenceText,
+                step.DetailSectionNumber
+            })
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Cast<string>()
+            .ToList();
 
     private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
     private static bool Contains(string? value, string search) => value?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false;
