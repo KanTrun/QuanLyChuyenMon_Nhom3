@@ -70,7 +70,8 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
     {
         var pages = new List<string>
         {
-            CoverPage(s, hash, readiness)
+            CoverPage(s, hash, readiness),
+            SignatureApprovalPage(s, hash)
         };
 
         pages.AddRange(BuildControlPages(s, hash));
@@ -88,25 +89,21 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 
     private static IReadOnlyList<string> BuildControlPages(ProcedureDocumentSnapshot snapshot, string currentHash)
     {
-        const int firstPageRows = 4;
-        var pages = new List<string>
+        var pages = new List<string> { ControlSummaryPage(snapshot, currentHash) };
+
+        if (snapshot.Recipients.Count > 0)
         {
-            ControlPage(
-                snapshot,
-                currentHash,
-                snapshot.Recipients.Take(firstPageRows),
-                snapshot.Revisions.Take(firstPageRows))
-        };
+            var recipientGroups = snapshot.Recipients.Chunk(10).ToList();
+            for (var index = 0; index < recipientGroups.Count; index++)
+                pages.Add(RecipientContinuationPage(recipientGroups[index], index + 1, recipientGroups.Count));
+        }
 
-        var remainingRecipients = snapshot.Recipients.Skip(firstPageRows).ToList();
-        var recipientGroups = remainingRecipients.Chunk(12).ToList();
-        for (var index = 0; index < recipientGroups.Count; index++)
-            pages.Add(RecipientContinuationPage(recipientGroups[index], index + 1, recipientGroups.Count));
-
-        var remainingRevisions = snapshot.Revisions.Skip(firstPageRows).ToList();
-        var revisionGroups = remainingRevisions.Chunk(8).ToList();
-        for (var index = 0; index < revisionGroups.Count; index++)
-            pages.Add(RevisionContinuationPage(revisionGroups[index], index + 1, revisionGroups.Count));
+        if (snapshot.Revisions.Count > 0)
+        {
+            var revisionGroups = snapshot.Revisions.Chunk(8).ToList();
+            for (var index = 0; index < revisionGroups.Count; index++)
+                pages.Add(RevisionContinuationPage(revisionGroups[index], index + 1, revisionGroups.Count));
+        }
 
         return pages;
     }
@@ -228,25 +225,28 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 <div class="document-category">QUY TRÌNH CHUYÊN MÔN</div>
 <h1 class="cover-title">{{H(s.Procedure.Name)}}</h1>
 <div class="document-code">Mã số: <strong>{{H(s.Procedure.ProcedureCode)}}</strong> • Phiên bản: <strong>{{H(s.Version.VersionLabel ?? $"v{s.Version.VersionNo:00}")}}</strong></div>
-<table class="meta-table">
+<table class="meta-table cover-meta">
 <tr><th>Khoa/phòng chủ trì</th><td>{{H(s.DepartmentName)}}</td><th>Lần ban hành</th><td>{{H(s.Version.IssueNumber)}}</td></tr>
 <tr><th>Ngày ban hành</th><td>{{DateOnly(s.Version.IssueDate)}}</td><th>Trạng thái</th><td>{{H(StatusLabel(s.Version.StatusCode))}}</td></tr>
 </table>
 {{warning}}
-<h2 class="block-title">Xác nhận và phê duyệt nội bộ</h2>
-<div class="signature-grid">
-{{WriterSignCards(s, hash)}}
-{{SignCard(s, "checker", "Người kiểm tra", hash)}}
-{{SignCard(s, "approver", "Người phê duyệt", hash)}}
-</div>
 """;
     }
 
-    private static string ControlPage(
-        ProcedureDocumentSnapshot s,
-        string currentHash,
-        IEnumerable<ProcedureDistributionRecipient> recipients,
-        IEnumerable<ProcedureRevisionEntry> revisions)
+    private static string SignatureApprovalPage(ProcedureDocumentSnapshot s, string hash)
+        => $$"""
+<div class="signature-page">
+  <h1 class="section-title signature-page-title">XÁC NHẬN VÀ PHÊ DUYỆT NỘI BỘ</h1>
+  <p class="signature-page-note">Chữ ký điện tử nội bộ được gắn với tài khoản, thời điểm ký và nội dung hiện hành của phiên bản.</p>
+  <div class="signature-grid">
+  {{WriterSignCards(s, hash)}}
+  {{SignCard(s, "checker", "Người kiểm tra", hash)}}
+  {{SignCard(s, "approver", "Người phê duyệt", hash)}}
+  </div>
+</div>
+""";
+
+    private static string ControlSummaryPage(ProcedureDocumentSnapshot s, string currentHash)
     {
         var authorities = string.Join("", new[]
         {
@@ -263,11 +263,7 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 <tr><th>Lý do thay đổi</th><td colspan="3">{{H(s.Version.ChangeReason)}}</td></tr>
 </table>
 <h2 class="block-title">Phân công và thẩm quyền xác nhận</h2>
-<table class="authority-table"><thead><tr><th>Vai trò</th><th>Trách nhiệm</th><th>Người đảm nhận</th><th>Tình trạng</th></tr></thead><tbody>{{authorities}}</tbody></table>
-<h2 class="block-title">Nơi nhận và phân phối</h2>
-<table><thead><tr><th>STT</th><th>Đơn vị nhận</th><th>Loại bản</th></tr></thead><tbody>{{RecipientRows(recipients)}}</tbody></table>
-<h2 class="block-title">Theo dõi sửa đổi</h2>
-<table><thead><tr><th>Lần</th><th>Ngày</th><th>Trang</th><th>Mục</th><th>Nội dung thay đổi</th></tr></thead><tbody>{{RevisionRows(revisions)}}</tbody></table>
+<table class="authority-table print-avoid-break"><thead><tr><th>Vai trò</th><th>Trách nhiệm</th><th>Người đảm nhận</th><th>Tình trạng</th></tr></thead><tbody>{{authorities}}</tbody></table>
 """;
     }
 
@@ -402,7 +398,7 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
         => $$"""
 <section class="page">
   <header class="page-header"><div class="mini-brand">{{LogoHtml("mini-logo")}}<div><strong>{{HospitalName}}</strong><span>QUẢN LÝ CHUYÊN MÔN</span></div></div><div class="page-document"><strong>{{H(s.Procedure.ProcedureCode)}}</strong><span>{{H(versionLabel)}}</span></div></header>
-  <main>{{content}}</main>
+  <main class="page-main">{{content}}</main>
   <footer class="page-footer"><span>{{H(s.Version.Title)}}</span><span>Trang {{page}} / {{total}}</span></footer>
 </section>
 """;
@@ -701,6 +697,6 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
     private static string FileSize(long? bytes) => bytes.HasValue ? $"{bytes.Value / 1024d / 1024d:0.##} MB" : "";
 
     private const string PrintCss = """
-@page{size:A4;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:"Times New Roman",serif;color:#111;background:#d7dce2;font-size:12.5pt;line-height:1.42}.print-toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:center;gap:16px;padding:10px;background:#10263d;color:#fff;font-family:Arial,sans-serif}.print-toolbar button{border:0;border-radius:4px;background:#69be45;color:#10263d;font-weight:700;padding:9px 18px;cursor:pointer}.page{width:210mm;height:297mm;margin:12px auto;background:#fff;padding:10mm 14mm 12mm;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 5px 22px #0002;break-after:page;page-break-after:always}.page:last-child{break-after:auto;page-break-after:auto}.page-header{height:19mm;flex:0 0 19mm;border-bottom:1.5px solid #1f5ea8;display:flex;align-items:center;justify-content:space-between;padding-bottom:3mm}.mini-brand{display:flex;align-items:center;gap:3mm}.mini-brand div{display:flex;flex-direction:column}.mini-brand strong{font-size:10pt;color:#1f5ea8}.mini-brand span{font:7.5pt Arial,sans-serif;color:#555}.mini-logo{width:13mm;height:13mm;object-fit:contain}.page-document{text-align:right;display:flex;flex-direction:column}.page-document strong{color:#1f5ea8}.page-document span{font-size:10pt}.page main{flex:1;min-height:0;padding-top:7mm}.page-footer{flex:0 0 auto;border-top:1px solid #777;padding-top:2.5mm;margin-top:6mm;display:flex;justify-content:space-between;font-size:9pt;color:#555}.cover-brand{display:flex;align-items:center;justify-content:center;gap:8mm;margin-top:7mm;text-align:left}.cover-logo{width:32mm;height:32mm;object-fit:contain}.hospital-name{font-weight:700;color:#1f5ea8;font-size:18pt}.hospital-unit{font:9pt Arial,sans-serif;letter-spacing:.08em;color:#555}.document-category{text-align:center;margin-top:11mm;color:#1f5ea8;font-weight:700;letter-spacing:.14em}.cover-title{text-align:center;text-transform:uppercase;font-size:22pt;line-height:1.25;margin:7mm 8mm}.document-code{text-align:center;margin-bottom:7mm}.section-stack{display:flex;flex-direction:column}.procedure-section+.procedure-section{margin-top:7mm}.procedure-section .section-title{margin-bottom:4mm}.section-title{font-size:17pt;color:#1f5ea8;border-bottom:2px solid #69be45;padding-bottom:3mm;margin:0 0 8mm}.flow-page-title{padding-bottom:2mm;margin-bottom:2mm}.continuation{font-size:10pt;color:#555;font-weight:400}.block-title{font-size:13pt;color:#1f5ea8;margin:5mm 0 2mm}.section-body{white-space:pre-wrap;text-align:justify;font-size:12.5pt;line-height:1.55}.meta-table,table{width:100%;border-collapse:collapse;margin:3mm 0}th,td{border:1px solid #555;padding:2.2mm 2.6mm;vertical-align:top}th{background:#eaf1f8;text-align:left;color:#163f6d}.meta-table th{width:20%}.authority-table{font-size:10.5pt}.authority-table th:nth-child(1){width:17%}.authority-table th:nth-child(2){width:37%}.authority-table th:nth-child(3){width:24%}.warning-banner,.ready-banner{padding:3mm 4mm;margin:4mm 0;border-left:4px solid}.warning-banner{background:#fff4e5;border-color:#b45309}.ready-banner{background:#edf8e8;border-color:#4b9b2f}.signature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3.5mm;margin-top:1.5mm}.signature-card{border:1px solid #8da4bf;min-height:54mm;display:flex;flex-direction:column;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%)}.signature-card-head{display:flex;align-items:center;justify-content:space-between;gap:2mm;padding:2.4mm 3mm;border-bottom:1px solid #cad6e3;background:#eef4fb}.signature-role{font-weight:700;color:#163f6d;font-size:10.5pt}.signature-badge{display:inline-flex;align-items:center;justify-content:center;padding:1mm 2.2mm;border-radius:999px;font:700 7.6pt Arial,sans-serif;letter-spacing:.02em;border:1px solid}.signature-badge.is-signed{color:#2f7f22;border-color:#69be45;background:#edf8e8}.signature-badge.is-pending{color:#9a3412;border-color:#d6a45d;background:#fff4e5}.signature-card-body{flex:1;display:flex;align-items:center;justify-content:center;padding:2mm 3mm 1mm}.signature-space{height:22mm;width:100%;border-bottom:1px dashed #b8c4d1;display:flex;align-items:center;justify-content:center}.signature-placeholder{margin-top:1.5mm;color:#7a5a20;font-style:italic;text-align:center;font-size:9pt;line-height:1.35}.signed-mark{font:700 9pt Arial,sans-serif;color:#2f7f22;border:1px solid #69be45;background:#edf8e8;padding:2mm 4mm}.signature-image{width:100%;height:20mm;object-fit:contain;filter:brightness(0) contrast(10)}.signature-card-foot{padding:2mm 3mm 2.4mm;border-top:1px solid #d9e2ec;text-align:center;display:flex;flex-direction:column;gap:.6mm;min-height:16mm}.signature-card-foot strong{color:#163f6d;font-size:10pt;line-height:1.2}.signature-card-foot span{font-size:8.4pt}.sign-account{color:#555}.sign-time{color:#4a5568}.signature-card.is-empty .signature-card-foot strong{color:#6b7280}.empty{color:#777;font-style:italic;text-align:center}.sign-state{display:inline-block;font:700 8pt Arial,sans-serif;padding:1mm 1.5mm;border:1px solid}.sign-state.is-current{color:#2f7f22;border-color:#69be45;background:#edf8e8}.sign-state.is-stale{color:#9a3412;border-color:#c2410c;background:#fff4e5}.signoff-log{font-size:9pt}.flow-table{table-layout:fixed;margin-top:1mm;font-size:9pt;line-height:1.16}.flow-table-row{break-inside:avoid;page-break-inside:avoid}.flow-table th{text-align:center;padding:1.2mm}.flow-table th:nth-child(1){width:29%}.flow-table th:nth-child(2){width:38%}.flow-table th:nth-child(3){width:33%}.flow-table td{padding:1.2mm 1.8mm;vertical-align:middle}.flow-responsibility,.flow-note{white-space:normal}.flow-step-cell{text-align:center}.flow-symbol{width:50mm;min-height:18mm;margin:0 auto;border:1.5px solid #163f6d;display:flex;align-items:center;justify-content:center;background:#fff;color:#163f6d;text-align:center;line-height:1.12;padding:1.5mm 3mm}.flow-symbol strong{display:block}.flow-symbol small{display:block;margin-top:1mm;color:#333;font-size:7.6pt;font-weight:400;line-height:1.15}.shape-terminator{border-radius:999px}.shape-process{border-radius:2px}.shape-decision{width:31mm;height:31mm;min-height:31mm;transform:rotate(45deg);padding:0;margin:4mm auto}.shape-decision span{transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:3mm}.shape-data{transform:skew(-13deg)}.shape-data span{transform:skew(13deg);display:block}.shape-document{border-radius:2px 2px 9mm 9mm}.flow-arrow{font-size:13pt;color:#111;line-height:1;margin:.5mm 0 -1.5mm}.flow-form-lines{margin-top:.5mm}.flow-meta{margin-top:.8mm;font-size:8pt;color:#555}.flow-page-link{text-align:center;color:#555;font-size:8.5pt;font-style:italic;margin-bottom:1mm}.flow-page-next{margin-top:1mm}.trace-box{border:1.5px solid #1f5ea8;background:#f5f9fd;padding:4mm;margin-top:6mm}.file-download-link{color:#1f5ea8;text-decoration:none;border-bottom:1px dotted #1f5ea8;font-size:inherit}.file-download-link:hover{color:#163f6d;border-bottom-style:solid}.file-download-mark{margin-left:1mm;font-size:.82em;opacity:.75}.logo-fallback{border:1px solid #1f5ea8;display:flex;align-items:center;justify-content:center;color:#1f5ea8;font-weight:700}@media print{body{background:#fff}.no-print{display:none!important}.page{margin:0;box-shadow:none}.file-download-link{color:#1f5ea8;text-decoration:underline}}
+@page{size:A4;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:"Times New Roman",serif;color:#111;background:#d7dce2;font-size:12.5pt;line-height:1.42}.print-toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:center;gap:16px;padding:10px;background:#10263d;color:#fff;font-family:Arial,sans-serif}.print-toolbar button{border:0;border-radius:4px;background:#69be45;color:#10263d;font-weight:700;padding:9px 18px;cursor:pointer}.page{width:210mm;height:297mm;margin:12px auto;background:#fff;padding:10mm 14mm 12mm;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 5px 22px #0002;break-after:page;page-break-after:always}.page:last-child{break-after:auto;page-break-after:auto}.page-header{height:19mm;flex:0 0 19mm;border-bottom:1.5px solid #1f5ea8;display:flex;align-items:center;justify-content:space-between;padding-bottom:3mm}.mini-brand{display:flex;align-items:center;gap:3mm}.mini-brand div{display:flex;flex-direction:column}.mini-brand strong{font-size:10pt;color:#1f5ea8}.mini-brand span{font:7.5pt Arial,sans-serif;color:#555}.mini-logo{width:13mm;height:13mm;object-fit:contain}.page-document{text-align:right;display:flex;flex-direction:column}.page-document strong{color:#1f5ea8}.page-document span{font-size:10pt}.page-main{flex:1;min-height:0;max-height:100%;overflow:hidden;padding-top:5mm;display:flex;flex-direction:column}.page-footer{flex:0 0 auto;border-top:1px solid #777;padding-top:2.5mm;margin-top:auto;display:flex;justify-content:space-between;font-size:9pt;color:#555}.cover-brand{display:flex;align-items:center;justify-content:center;gap:6mm;margin-top:4mm;text-align:left}.cover-logo{width:28mm;height:28mm;object-fit:contain}.hospital-name{font-weight:700;color:#1f5ea8;font-size:17pt}.hospital-unit{font:8.5pt Arial,sans-serif;letter-spacing:.08em;color:#555}.document-category{text-align:center;margin-top:6mm;color:#1f5ea8;font-weight:700;letter-spacing:.14em;font-size:11pt}.cover-title{text-align:center;text-transform:uppercase;font-size:20pt;line-height:1.22;margin:4mm 8mm 3mm}.document-code{text-align:center;margin-bottom:4mm;font-size:11pt}.cover-meta{margin-bottom:2mm}.section-stack{display:flex;flex-direction:column}.procedure-section+.procedure-section{margin-top:7mm}.procedure-section .section-title{margin-bottom:4mm}.section-title{font-size:17pt;color:#1f5ea8;border-bottom:2px solid #69be45;padding-bottom:3mm;margin:0 0 8mm}.flow-page-title{padding-bottom:2mm;margin-bottom:2mm}.continuation{font-size:10pt;color:#555;font-weight:400}.block-title{font-size:13pt;color:#1f5ea8;margin:5mm 0 2mm}.section-body{white-space:pre-wrap;text-align:justify;font-size:12.5pt;line-height:1.55}.meta-table,table{width:100%;border-collapse:collapse;margin:2mm 0}th,td{border:1px solid #555;padding:2mm 2.4mm;vertical-align:top}th{background:#eaf1f8;text-align:left;color:#163f6d}.meta-table th{width:20%}.authority-table{font-size:10pt}.authority-table th:nth-child(1){width:17%}.authority-table th:nth-child(2){width:37%}.authority-table th:nth-child(3){width:24%}.print-avoid-break,.signature-page,.block-title+table{break-inside:avoid;page-break-inside:avoid}.warning-banner{background:#fff4e5;border-color:#b45309}.ready-banner{background:#edf8e8;border-color:#4b9b2f}.warning-banner,.ready-banner{padding:2.5mm 3.5mm;margin:3mm 0;border-left:4px solid;font-size:10.5pt;line-height:1.35}.signature-page{display:flex;flex-direction:column;gap:2mm;min-height:0}.signature-page-title{margin-bottom:1mm;padding-bottom:2mm}.signature-page-note{margin:0 0 2mm;color:#555;font-size:10pt;line-height:1.4}.signature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3mm;margin-top:1mm;break-inside:avoid;page-break-inside:avoid}.signature-card{border:1px solid #8da4bf;min-height:46mm;display:flex;flex-direction:column;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);break-inside:avoid;page-break-inside:avoid}.signature-card-head{display:flex;align-items:center;justify-content:space-between;gap:2mm;padding:2.4mm 3mm;border-bottom:1px solid #cad6e3;background:#eef4fb}.signature-role{font-weight:700;color:#163f6d;font-size:10.5pt}.signature-badge{display:inline-flex;align-items:center;justify-content:center;padding:1mm 2.2mm;border-radius:999px;font:700 7.6pt Arial,sans-serif;letter-spacing:.02em;border:1px solid}.signature-badge.is-signed{color:#2f7f22;border-color:#69be45;background:#edf8e8}.signature-badge.is-pending{color:#9a3412;border-color:#d6a45d;background:#fff4e5}.signature-card-body{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5mm 2.5mm 1mm}.signature-space{height:17mm;width:100%;border-bottom:1px dashed #b8c4d1;display:flex;align-items:center;justify-content:center}.signature-placeholder{margin-top:1mm;color:#7a5a20;font-style:italic;text-align:center;font-size:8.5pt;line-height:1.3}.signed-mark{font:700 8.5pt Arial,sans-serif;color:#2f7f22;border:1px solid #69be45;background:#edf8e8;padding:1.5mm 3mm}.signature-image{width:100%;height:16mm;object-fit:contain;filter:brightness(0) contrast(10)}.signature-card-foot{padding:1.5mm 2.5mm 2mm;border-top:1px solid #d9e2ec;text-align:center;display:flex;flex-direction:column;gap:.4mm;min-height:13mm}.signature-card-foot strong{color:#163f6d;font-size:10pt;line-height:1.2}.signature-card-foot span{font-size:8.4pt}.sign-account{color:#555}.sign-time{color:#4a5568}.signature-card.is-empty .signature-card-foot strong{color:#6b7280}.empty{color:#777;font-style:italic;text-align:center}.sign-state{display:inline-block;font:700 8pt Arial,sans-serif;padding:1mm 1.5mm;border:1px solid}.sign-state.is-current{color:#2f7f22;border-color:#69be45;background:#edf8e8}.sign-state.is-stale{color:#9a3412;border-color:#c2410c;background:#fff4e5}.signoff-log{font-size:9pt}.flow-table{table-layout:fixed;margin-top:1mm;font-size:9pt;line-height:1.16}.flow-table-row{break-inside:avoid;page-break-inside:avoid}.flow-table th{text-align:center;padding:1.2mm}.flow-table th:nth-child(1){width:29%}.flow-table th:nth-child(2){width:38%}.flow-table th:nth-child(3){width:33%}.flow-table td{padding:1.2mm 1.8mm;vertical-align:middle}.flow-responsibility,.flow-note{white-space:normal}.flow-step-cell{text-align:center}.flow-symbol{width:50mm;min-height:18mm;margin:0 auto;border:1.5px solid #163f6d;display:flex;align-items:center;justify-content:center;background:#fff;color:#163f6d;text-align:center;line-height:1.12;padding:1.5mm 3mm}.flow-symbol strong{display:block}.flow-symbol small{display:block;margin-top:1mm;color:#333;font-size:7.6pt;font-weight:400;line-height:1.15}.shape-terminator{border-radius:999px}.shape-process{border-radius:2px}.shape-decision{width:31mm;height:31mm;min-height:31mm;transform:rotate(45deg);padding:0;margin:4mm auto}.shape-decision span{transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:3mm}.shape-data{transform:skew(-13deg)}.shape-data span{transform:skew(13deg);display:block}.shape-document{border-radius:2px 2px 9mm 9mm}.flow-arrow{font-size:13pt;color:#111;line-height:1;margin:.5mm 0 -1.5mm}.flow-form-lines{margin-top:.5mm}.flow-meta{margin-top:.8mm;font-size:8pt;color:#555}.flow-page-link{text-align:center;color:#555;font-size:8.5pt;font-style:italic;margin-bottom:1mm}.flow-page-next{margin-top:1mm}.trace-box{border:1.5px solid #1f5ea8;background:#f5f9fd;padding:4mm;margin-top:6mm}.file-download-link{color:#1f5ea8;text-decoration:none;border-bottom:1px dotted #1f5ea8;font-size:inherit}.file-download-link:hover{color:#163f6d;border-bottom-style:solid}.file-download-mark{margin-left:1mm;font-size:.82em;opacity:.75}.logo-fallback{border:1px solid #1f5ea8;display:flex;align-items:center;justify-content:center;color:#1f5ea8;font-weight:700}@media print{body{background:#fff}.no-print{display:none!important}.page{margin:0;box-shadow:none}.file-download-link{color:#1f5ea8;text-decoration:underline}}
 """;
 }

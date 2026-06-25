@@ -225,7 +225,9 @@ public sealed class ProcedureDocumentServicesTests
         Assert.Contains("BM.KSNK.01", html);
         Assert.Contains("LƯU ĐỒ QUY TRÌNH <span class=\"continuation\">(1/1)</span>", html);
         Assert.DoesNotContain("OCR_PENDING", html);
-        Assert.InRange(Count(html, "<section class=\"page\">"), 5, 8);
+        Assert.Contains("XÁC NHẬN VÀ PHÊ DUYỆT NỘI BỘ", visibleText);
+        Assert.Contains("signature-page", html);
+        Assert.InRange(Count(html, "<section class=\"page\">"), 6, 10);
         Assert.Contains("Trang 1 /", html);
         Assert.Contains("height:297mm", html);
         Assert.Contains("<small>VIII · Đối chiếu hồ sơ và điều kiện thực hiện</small>", visibleText);
