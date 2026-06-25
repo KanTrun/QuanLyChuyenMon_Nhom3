@@ -62,18 +62,17 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 """;
     }
 
+    private const int CoverPageUnitLimit = 58;
+    private const int ControlPageUnitLimit = 52;
+
     private List<string> BuildPages(
         ProcedureDocumentSnapshot s,
         string hash,
         ProcedureDocumentReadiness readiness,
         DateTime generatedAt)
     {
-        var pages = new List<string>
-        {
-            CoverPage(s, hash, readiness),
-            SignatureApprovalPage(s, hash)
-        };
-
+        var pages = new List<string>();
+        pages.AddRange(BuildCoverPages(s, hash, readiness));
         pages.AddRange(BuildControlPages(s, hash));
         pages.AddRange(BuildSectionPages(s.Sections));
 
@@ -87,26 +86,74 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
         return pages;
     }
 
+    private IReadOnlyList<string> BuildCoverPages(
+        ProcedureDocumentSnapshot snapshot,
+        string hash,
+        ProcedureDocumentReadiness readiness)
+    {
+        var cover = CoverPage(snapshot, readiness);
+        var signatures = SignatureBlock(snapshot, hash, standalone: false);
+        if (EstimateCoverUnits(snapshot, readiness) <= CoverPageUnitLimit)
+            return [$"{cover}{signatures}"];
+
+        return [cover, SignatureApprovalPage(snapshot, hash)];
+    }
+
     private static IReadOnlyList<string> BuildControlPages(ProcedureDocumentSnapshot snapshot, string currentHash)
     {
-        var pages = new List<string> { ControlSummaryPage(snapshot, currentHash) };
+        var recipients = snapshot.Recipients.ToList();
+        var revisions = snapshot.Revisions.ToList();
+        if (EstimateControlUnits(recipients.Count, revisions.Count) <= ControlPageUnitLimit)
+            return [ControlPage(snapshot, currentHash, recipients, revisions)];
 
-        if (snapshot.Recipients.Count > 0)
+        const int firstRecipientRows = 4;
+        const int firstRevisionRows = 3;
+        var pages = new List<string>
         {
-            var recipientGroups = snapshot.Recipients.Chunk(10).ToList();
+            ControlPage(
+                snapshot,
+                currentHash,
+                recipients.Take(firstRecipientRows),
+                revisions.Take(firstRevisionRows))
+        };
+
+        var remainingRecipients = recipients.Skip(firstRecipientRows).ToList();
+        if (remainingRecipients.Count > 0)
+        {
+            var recipientGroups = remainingRecipients.Chunk(12).ToList();
             for (var index = 0; index < recipientGroups.Count; index++)
                 pages.Add(RecipientContinuationPage(recipientGroups[index], index + 1, recipientGroups.Count));
         }
 
-        if (snapshot.Revisions.Count > 0)
+        var remainingRevisions = revisions.Skip(firstRevisionRows).ToList();
+        if (remainingRevisions.Count > 0)
         {
-            var revisionGroups = snapshot.Revisions.Chunk(8).ToList();
+            var revisionGroups = remainingRevisions.Chunk(8).ToList();
             for (var index = 0; index < revisionGroups.Count; index++)
                 pages.Add(RevisionContinuationPage(revisionGroups[index], index + 1, revisionGroups.Count));
         }
 
         return pages;
     }
+
+    private const int ControlSummaryUnits = 24;
+
+    private static int EstimateCoverUnits(ProcedureDocumentSnapshot snapshot, ProcedureDocumentReadiness readiness)
+    {
+        var titleUnits = Math.Clamp((snapshot.Procedure.Name?.Length ?? 0) / 28, 2, 6);
+        var warningText = readiness.IsReady ? string.Empty : string.Join("; ", readiness.MissingItems);
+        var warningUnits = readiness.IsReady
+            ? 2
+            : Math.Clamp((warningText.Length / 48) + 2, 3, 8);
+        var signatureSlots = Math.Max(1, snapshot.Version.RequiredWriterSignatures) + 2;
+        var signatureRows = (int)Math.Ceiling(signatureSlots / 2.0);
+        return 26 + titleUnits + warningUnits + 4 + (signatureRows * 11);
+    }
+
+    private static int EstimateControlUnits(int recipientCount, int revisionCount)
+        => ControlSummaryUnits
+           + (int)Math.Ceiling(recipientCount * 1.75)
+           + (int)Math.Ceiling(revisionCount * 2.25);
 
     private IReadOnlyList<string> BuildTraceabilityPages(
         ProcedureDocumentSnapshot snapshot,
@@ -213,7 +260,7 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
         return splitAt > content.Length / 4 ? splitAt + 1 : midpoint;
     }
 
-    private string CoverPage(ProcedureDocumentSnapshot s, string hash, ProcedureDocumentReadiness readiness)
+    private string CoverPage(ProcedureDocumentSnapshot s, ProcedureDocumentReadiness readiness)
     {
         var logo = LogoHtml("cover-logo");
         var warning = readiness.IsReady
@@ -233,20 +280,39 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 """;
     }
 
-    private static string SignatureApprovalPage(ProcedureDocumentSnapshot s, string hash)
-        => $$"""
-<div class="signature-page">
-  <h1 class="section-title signature-page-title">XÁC NHẬN VÀ PHÊ DUYỆT NỘI BỘ</h1>
-  <p class="signature-page-note">Chữ ký điện tử nội bộ được gắn với tài khoản, thời điểm ký và nội dung hiện hành của phiên bản.</p>
-  <div class="signature-grid">
-  {{WriterSignCards(s, hash)}}
-  {{SignCard(s, "checker", "Người kiểm tra", hash)}}
-  {{SignCard(s, "approver", "Người phê duyệt", hash)}}
-  </div>
+    private static string SignatureBlock(ProcedureDocumentSnapshot s, string hash, bool standalone)
+        => standalone
+            ? SignatureGrid(s, hash)
+            : $$"""
+<h2 class="block-title signature-block-title">Xác nhận và phê duyệt nội bộ</h2>
+<div class="signature-page signature-page-inline">
+  {{SignatureGrid(s, hash)}}
 </div>
 """;
 
-    private static string ControlSummaryPage(ProcedureDocumentSnapshot s, string currentHash)
+    private static string SignatureApprovalPage(ProcedureDocumentSnapshot s, string hash)
+        => $$"""
+<div class="signature-page signature-page-standalone">
+  <h1 class="section-title signature-page-title">XÁC NHẬN VÀ PHÊ DUYỆT NỘI BỘ</h1>
+  <p class="signature-page-note">Chữ ký điện tử nội bộ được gắn với tài khoản, thời điểm ký và nội dung hiện hành của phiên bản.</p>
+  {{SignatureGrid(s, hash)}}
+</div>
+""";
+
+    private static string SignatureGrid(ProcedureDocumentSnapshot s, string hash)
+        => $$"""
+<div class="signature-grid">
+{{WriterSignCards(s, hash)}}
+{{SignCard(s, "checker", "Người kiểm tra", hash)}}
+{{SignCard(s, "approver", "Người phê duyệt", hash)}}
+</div>
+""";
+
+    private static string ControlPage(
+        ProcedureDocumentSnapshot s,
+        string currentHash,
+        IEnumerable<ProcedureDistributionRecipient> recipients,
+        IEnumerable<ProcedureRevisionEntry> revisions)
     {
         var authorities = string.Join("", new[]
         {
@@ -254,6 +320,18 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
             AuthorityRow(s, "checker", "Người kiểm tra", "Kiểm tra tính đầy đủ và phù hợp chuyên môn", currentHash),
             AuthorityRow(s, "approver", "Người phê duyệt", "Phê duyệt, ban hành và chịu trách nhiệm hiệu lực", currentHash)
         });
+        var recipientSection = recipients.Any()
+            ? $$"""
+<h2 class="block-title">Nơi nhận và phân phối</h2>
+<table class="print-avoid-break"><thead><tr><th>STT</th><th>Đơn vị nhận</th><th>Loại bản</th></tr></thead><tbody>{{RecipientRows(recipients)}}</tbody></table>
+"""
+            : string.Empty;
+        var revisionSection = revisions.Any()
+            ? $$"""
+<h2 class="block-title">Theo dõi sửa đổi</h2>
+<table class="print-avoid-break"><thead><tr><th>Lần</th><th>Ngày</th><th>Trang</th><th>Mục</th><th>Nội dung thay đổi</th></tr></thead><tbody>{{RevisionRows(revisions)}}</tbody></table>
+"""
+            : string.Empty;
 
         return $$"""
 <h1 class="section-title">KIỂM SOÁT TÀI LIỆU</h1>
@@ -264,6 +342,8 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 </table>
 <h2 class="block-title">Phân công và thẩm quyền xác nhận</h2>
 <table class="authority-table print-avoid-break"><thead><tr><th>Vai trò</th><th>Trách nhiệm</th><th>Người đảm nhận</th><th>Tình trạng</th></tr></thead><tbody>{{authorities}}</tbody></table>
+{{recipientSection}}
+{{revisionSection}}
 """;
     }
 
@@ -697,6 +777,6 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
     private static string FileSize(long? bytes) => bytes.HasValue ? $"{bytes.Value / 1024d / 1024d:0.##} MB" : "";
 
     private const string PrintCss = """
-@page{size:A4;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:"Times New Roman",serif;color:#111;background:#d7dce2;font-size:12.5pt;line-height:1.42}.print-toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:center;gap:16px;padding:10px;background:#10263d;color:#fff;font-family:Arial,sans-serif}.print-toolbar button{border:0;border-radius:4px;background:#69be45;color:#10263d;font-weight:700;padding:9px 18px;cursor:pointer}.page{width:210mm;height:297mm;margin:12px auto;background:#fff;padding:10mm 14mm 12mm;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 5px 22px #0002;break-after:page;page-break-after:always}.page:last-child{break-after:auto;page-break-after:auto}.page-header{height:19mm;flex:0 0 19mm;border-bottom:1.5px solid #1f5ea8;display:flex;align-items:center;justify-content:space-between;padding-bottom:3mm}.mini-brand{display:flex;align-items:center;gap:3mm}.mini-brand div{display:flex;flex-direction:column}.mini-brand strong{font-size:10pt;color:#1f5ea8}.mini-brand span{font:7.5pt Arial,sans-serif;color:#555}.mini-logo{width:13mm;height:13mm;object-fit:contain}.page-document{text-align:right;display:flex;flex-direction:column}.page-document strong{color:#1f5ea8}.page-document span{font-size:10pt}.page-main{flex:1;min-height:0;max-height:100%;overflow:hidden;padding-top:5mm;display:flex;flex-direction:column}.page-footer{flex:0 0 auto;border-top:1px solid #777;padding-top:2.5mm;margin-top:auto;display:flex;justify-content:space-between;font-size:9pt;color:#555}.cover-brand{display:flex;align-items:center;justify-content:center;gap:6mm;margin-top:4mm;text-align:left}.cover-logo{width:28mm;height:28mm;object-fit:contain}.hospital-name{font-weight:700;color:#1f5ea8;font-size:17pt}.hospital-unit{font:8.5pt Arial,sans-serif;letter-spacing:.08em;color:#555}.document-category{text-align:center;margin-top:6mm;color:#1f5ea8;font-weight:700;letter-spacing:.14em;font-size:11pt}.cover-title{text-align:center;text-transform:uppercase;font-size:20pt;line-height:1.22;margin:4mm 8mm 3mm}.document-code{text-align:center;margin-bottom:4mm;font-size:11pt}.cover-meta{margin-bottom:2mm}.section-stack{display:flex;flex-direction:column}.procedure-section+.procedure-section{margin-top:7mm}.procedure-section .section-title{margin-bottom:4mm}.section-title{font-size:17pt;color:#1f5ea8;border-bottom:2px solid #69be45;padding-bottom:3mm;margin:0 0 8mm}.flow-page-title{padding-bottom:2mm;margin-bottom:2mm}.continuation{font-size:10pt;color:#555;font-weight:400}.block-title{font-size:13pt;color:#1f5ea8;margin:5mm 0 2mm}.section-body{white-space:pre-wrap;text-align:justify;font-size:12.5pt;line-height:1.55}.meta-table,table{width:100%;border-collapse:collapse;margin:2mm 0}th,td{border:1px solid #555;padding:2mm 2.4mm;vertical-align:top}th{background:#eaf1f8;text-align:left;color:#163f6d}.meta-table th{width:20%}.authority-table{font-size:10pt}.authority-table th:nth-child(1){width:17%}.authority-table th:nth-child(2){width:37%}.authority-table th:nth-child(3){width:24%}.print-avoid-break,.signature-page,.block-title+table{break-inside:avoid;page-break-inside:avoid}.warning-banner{background:#fff4e5;border-color:#b45309}.ready-banner{background:#edf8e8;border-color:#4b9b2f}.warning-banner,.ready-banner{padding:2.5mm 3.5mm;margin:3mm 0;border-left:4px solid;font-size:10.5pt;line-height:1.35}.signature-page{display:flex;flex-direction:column;gap:2mm;min-height:0}.signature-page-title{margin-bottom:1mm;padding-bottom:2mm}.signature-page-note{margin:0 0 2mm;color:#555;font-size:10pt;line-height:1.4}.signature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3mm;margin-top:1mm;break-inside:avoid;page-break-inside:avoid}.signature-card{border:1px solid #8da4bf;min-height:46mm;display:flex;flex-direction:column;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);break-inside:avoid;page-break-inside:avoid}.signature-card-head{display:flex;align-items:center;justify-content:space-between;gap:2mm;padding:2.4mm 3mm;border-bottom:1px solid #cad6e3;background:#eef4fb}.signature-role{font-weight:700;color:#163f6d;font-size:10.5pt}.signature-badge{display:inline-flex;align-items:center;justify-content:center;padding:1mm 2.2mm;border-radius:999px;font:700 7.6pt Arial,sans-serif;letter-spacing:.02em;border:1px solid}.signature-badge.is-signed{color:#2f7f22;border-color:#69be45;background:#edf8e8}.signature-badge.is-pending{color:#9a3412;border-color:#d6a45d;background:#fff4e5}.signature-card-body{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5mm 2.5mm 1mm}.signature-space{height:17mm;width:100%;border-bottom:1px dashed #b8c4d1;display:flex;align-items:center;justify-content:center}.signature-placeholder{margin-top:1mm;color:#7a5a20;font-style:italic;text-align:center;font-size:8.5pt;line-height:1.3}.signed-mark{font:700 8.5pt Arial,sans-serif;color:#2f7f22;border:1px solid #69be45;background:#edf8e8;padding:1.5mm 3mm}.signature-image{width:100%;height:16mm;object-fit:contain;filter:brightness(0) contrast(10)}.signature-card-foot{padding:1.5mm 2.5mm 2mm;border-top:1px solid #d9e2ec;text-align:center;display:flex;flex-direction:column;gap:.4mm;min-height:13mm}.signature-card-foot strong{color:#163f6d;font-size:10pt;line-height:1.2}.signature-card-foot span{font-size:8.4pt}.sign-account{color:#555}.sign-time{color:#4a5568}.signature-card.is-empty .signature-card-foot strong{color:#6b7280}.empty{color:#777;font-style:italic;text-align:center}.sign-state{display:inline-block;font:700 8pt Arial,sans-serif;padding:1mm 1.5mm;border:1px solid}.sign-state.is-current{color:#2f7f22;border-color:#69be45;background:#edf8e8}.sign-state.is-stale{color:#9a3412;border-color:#c2410c;background:#fff4e5}.signoff-log{font-size:9pt}.flow-table{table-layout:fixed;margin-top:1mm;font-size:9pt;line-height:1.16}.flow-table-row{break-inside:avoid;page-break-inside:avoid}.flow-table th{text-align:center;padding:1.2mm}.flow-table th:nth-child(1){width:29%}.flow-table th:nth-child(2){width:38%}.flow-table th:nth-child(3){width:33%}.flow-table td{padding:1.2mm 1.8mm;vertical-align:middle}.flow-responsibility,.flow-note{white-space:normal}.flow-step-cell{text-align:center}.flow-symbol{width:50mm;min-height:18mm;margin:0 auto;border:1.5px solid #163f6d;display:flex;align-items:center;justify-content:center;background:#fff;color:#163f6d;text-align:center;line-height:1.12;padding:1.5mm 3mm}.flow-symbol strong{display:block}.flow-symbol small{display:block;margin-top:1mm;color:#333;font-size:7.6pt;font-weight:400;line-height:1.15}.shape-terminator{border-radius:999px}.shape-process{border-radius:2px}.shape-decision{width:31mm;height:31mm;min-height:31mm;transform:rotate(45deg);padding:0;margin:4mm auto}.shape-decision span{transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:3mm}.shape-data{transform:skew(-13deg)}.shape-data span{transform:skew(13deg);display:block}.shape-document{border-radius:2px 2px 9mm 9mm}.flow-arrow{font-size:13pt;color:#111;line-height:1;margin:.5mm 0 -1.5mm}.flow-form-lines{margin-top:.5mm}.flow-meta{margin-top:.8mm;font-size:8pt;color:#555}.flow-page-link{text-align:center;color:#555;font-size:8.5pt;font-style:italic;margin-bottom:1mm}.flow-page-next{margin-top:1mm}.trace-box{border:1.5px solid #1f5ea8;background:#f5f9fd;padding:4mm;margin-top:6mm}.file-download-link{color:#1f5ea8;text-decoration:none;border-bottom:1px dotted #1f5ea8;font-size:inherit}.file-download-link:hover{color:#163f6d;border-bottom-style:solid}.file-download-mark{margin-left:1mm;font-size:.82em;opacity:.75}.logo-fallback{border:1px solid #1f5ea8;display:flex;align-items:center;justify-content:center;color:#1f5ea8;font-weight:700}@media print{body{background:#fff}.no-print{display:none!important}.page{margin:0;box-shadow:none}.file-download-link{color:#1f5ea8;text-decoration:underline}}
+@page{size:A4;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:"Times New Roman",serif;color:#111;background:#d7dce2;font-size:12.5pt;line-height:1.42}.print-toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:center;gap:16px;padding:10px;background:#10263d;color:#fff;font-family:Arial,sans-serif}.print-toolbar button{border:0;border-radius:4px;background:#69be45;color:#10263d;font-weight:700;padding:9px 18px;cursor:pointer}.page{width:210mm;height:297mm;margin:12px auto;background:#fff;padding:10mm 14mm 12mm;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 5px 22px #0002;break-after:page;page-break-after:always}.page:last-child{break-after:auto;page-break-after:auto}.page-header{height:19mm;flex:0 0 19mm;border-bottom:1.5px solid #1f5ea8;display:flex;align-items:center;justify-content:space-between;padding-bottom:3mm}.mini-brand{display:flex;align-items:center;gap:3mm}.mini-brand div{display:flex;flex-direction:column}.mini-brand strong{font-size:10pt;color:#1f5ea8}.mini-brand span{font:7.5pt Arial,sans-serif;color:#555}.mini-logo{width:13mm;height:13mm;object-fit:contain}.page-document{text-align:right;display:flex;flex-direction:column}.page-document strong{color:#1f5ea8}.page-document span{font-size:10pt}.page-main{flex:1;min-height:0;max-height:100%;overflow:hidden;padding-top:5mm;display:block}.page-footer{flex:0 0 auto;border-top:1px solid #777;padding-top:2.5mm;margin-top:4mm;display:flex;justify-content:space-between;font-size:9pt;color:#555}.cover-brand{display:flex;align-items:center;justify-content:center;gap:6mm;margin-top:4mm;text-align:left}.cover-logo{width:28mm;height:28mm;object-fit:contain}.hospital-name{font-weight:700;color:#1f5ea8;font-size:17pt}.hospital-unit{font:8.5pt Arial,sans-serif;letter-spacing:.08em;color:#555}.document-category{text-align:center;margin-top:6mm;color:#1f5ea8;font-weight:700;letter-spacing:.14em;font-size:11pt}.cover-title{text-align:center;text-transform:uppercase;font-size:20pt;line-height:1.22;margin:4mm 8mm 3mm}.document-code{text-align:center;margin-bottom:4mm;font-size:11pt}.cover-meta{margin-bottom:2mm}.section-stack{display:flex;flex-direction:column}.procedure-section+.procedure-section{margin-top:7mm}.procedure-section .section-title{margin-bottom:4mm}.section-title{font-size:17pt;color:#1f5ea8;border-bottom:2px solid #69be45;padding-bottom:3mm;margin:0 0 8mm}.flow-page-title{padding-bottom:2mm;margin-bottom:2mm}.continuation{font-size:10pt;color:#555;font-weight:400}.block-title{font-size:13pt;color:#1f5ea8;margin:5mm 0 2mm}.section-body{white-space:pre-wrap;text-align:justify;font-size:12.5pt;line-height:1.55}.meta-table,table{width:100%;border-collapse:collapse;margin:2mm 0}th,td{border:1px solid #555;padding:2mm 2.4mm;vertical-align:top}th{background:#eaf1f8;text-align:left;color:#163f6d}.meta-table th{width:20%}.authority-table{font-size:10pt}.authority-table th:nth-child(1){width:17%}.authority-table th:nth-child(2){width:37%}.authority-table th:nth-child(3){width:24%}.print-avoid-break,.signature-page,.block-title+table{break-inside:avoid;page-break-inside:avoid}.warning-banner{background:#fff4e5;border-color:#b45309}.ready-banner{background:#edf8e8;border-color:#4b9b2f}.warning-banner,.ready-banner{padding:2.5mm 3.5mm;margin:3mm 0;border-left:4px solid;font-size:10.5pt;line-height:1.35}.signature-page{display:block}.signature-page-inline{margin-top:1mm}.signature-page-standalone{display:flex;flex-direction:column;gap:2mm}.signature-block-title{margin-top:2mm;margin-bottom:1mm}.signature-page-title{margin-bottom:1mm;padding-bottom:2mm}.signature-page-note{margin:0 0 2mm;color:#555;font-size:10pt;line-height:1.4}.signature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3mm;margin-top:1mm;break-inside:avoid;page-break-inside:avoid}.signature-card{border:1px solid #8da4bf;min-height:46mm;display:flex;flex-direction:column;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);break-inside:avoid;page-break-inside:avoid}.signature-card-head{display:flex;align-items:center;justify-content:space-between;gap:2mm;padding:2.4mm 3mm;border-bottom:1px solid #cad6e3;background:#eef4fb}.signature-role{font-weight:700;color:#163f6d;font-size:10.5pt}.signature-badge{display:inline-flex;align-items:center;justify-content:center;padding:1mm 2.2mm;border-radius:999px;font:700 7.6pt Arial,sans-serif;letter-spacing:.02em;border:1px solid}.signature-badge.is-signed{color:#2f7f22;border-color:#69be45;background:#edf8e8}.signature-badge.is-pending{color:#9a3412;border-color:#d6a45d;background:#fff4e5}.signature-card-body{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5mm 2.5mm 1mm}.signature-space{height:17mm;width:100%;border-bottom:1px dashed #b8c4d1;display:flex;align-items:center;justify-content:center}.signature-placeholder{margin-top:1mm;color:#7a5a20;font-style:italic;text-align:center;font-size:8.5pt;line-height:1.3}.signed-mark{font:700 8.5pt Arial,sans-serif;color:#2f7f22;border:1px solid #69be45;background:#edf8e8;padding:1.5mm 3mm}.signature-image{width:100%;height:16mm;object-fit:contain;filter:brightness(0) contrast(10)}.signature-card-foot{padding:1.5mm 2.5mm 2mm;border-top:1px solid #d9e2ec;text-align:center;display:flex;flex-direction:column;gap:.4mm;min-height:13mm}.signature-card-foot strong{color:#163f6d;font-size:10pt;line-height:1.2}.signature-card-foot span{font-size:8.4pt}.sign-account{color:#555}.sign-time{color:#4a5568}.signature-card.is-empty .signature-card-foot strong{color:#6b7280}.empty{color:#777;font-style:italic;text-align:center}.sign-state{display:inline-block;font:700 8pt Arial,sans-serif;padding:1mm 1.5mm;border:1px solid}.sign-state.is-current{color:#2f7f22;border-color:#69be45;background:#edf8e8}.sign-state.is-stale{color:#9a3412;border-color:#c2410c;background:#fff4e5}.signoff-log{font-size:9pt}.flow-table{table-layout:fixed;margin-top:1mm;font-size:9pt;line-height:1.16}.flow-table-row{break-inside:avoid;page-break-inside:avoid}.flow-table th{text-align:center;padding:1.2mm}.flow-table th:nth-child(1){width:29%}.flow-table th:nth-child(2){width:38%}.flow-table th:nth-child(3){width:33%}.flow-table td{padding:1.2mm 1.8mm;vertical-align:middle}.flow-responsibility,.flow-note{white-space:normal}.flow-step-cell{text-align:center}.flow-symbol{width:50mm;min-height:18mm;margin:0 auto;border:1.5px solid #163f6d;display:flex;align-items:center;justify-content:center;background:#fff;color:#163f6d;text-align:center;line-height:1.12;padding:1.5mm 3mm}.flow-symbol strong{display:block}.flow-symbol small{display:block;margin-top:1mm;color:#333;font-size:7.6pt;font-weight:400;line-height:1.15}.shape-terminator{border-radius:999px}.shape-process{border-radius:2px}.shape-decision{width:31mm;height:31mm;min-height:31mm;transform:rotate(45deg);padding:0;margin:4mm auto}.shape-decision span{transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:3mm}.shape-data{transform:skew(-13deg)}.shape-data span{transform:skew(13deg);display:block}.shape-document{border-radius:2px 2px 9mm 9mm}.flow-arrow{font-size:13pt;color:#111;line-height:1;margin:.5mm 0 -1.5mm}.flow-form-lines{margin-top:.5mm}.flow-meta{margin-top:.8mm;font-size:8pt;color:#555}.flow-page-link{text-align:center;color:#555;font-size:8.5pt;font-style:italic;margin-bottom:1mm}.flow-page-next{margin-top:1mm}.trace-box{border:1.5px solid #1f5ea8;background:#f5f9fd;padding:4mm;margin-top:6mm}.file-download-link{color:#1f5ea8;text-decoration:none;border-bottom:1px dotted #1f5ea8;font-size:inherit}.file-download-link:hover{color:#163f6d;border-bottom-style:solid}.file-download-mark{margin-left:1mm;font-size:.82em;opacity:.75}.logo-fallback{border:1px solid #1f5ea8;display:flex;align-items:center;justify-content:center;color:#1f5ea8;font-weight:700}@media print{body{background:#fff}.no-print{display:none!important}.page{margin:0;box-shadow:none}.file-download-link{color:#1f5ea8;text-decoration:underline}}
 """;
 }
