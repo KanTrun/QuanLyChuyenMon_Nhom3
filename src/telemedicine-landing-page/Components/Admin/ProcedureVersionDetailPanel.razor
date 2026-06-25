@@ -109,17 +109,108 @@
             }
             @if (CurrentDiff is not null)
             {
-                <div class="procedure-detail-card">
-                    <header class="procedure-detail-card-head">
-                        <strong>So sánh với phiên bản trước</strong>
-                    </header>
-                    <div class="procedure-detail-card-body">
-                        @foreach (var item in DiffLines(CurrentDiff))
+                var diffView = BuildDiffView(CurrentDiff);
+                <article class="procedure-diff-hero">
+                    <div class="procedure-diff-hero-copy">
+                        <span class="procedure-diff-kicker">So sánh phiên bản</span>
+                        <h4 class="procedure-diff-title">@diffView.FromVersionLabel -> @diffView.ToVersionLabel</h4>
+                        <p class="procedure-diff-subtitle">Tóm tắt các thay đổi chính của quy trình theo từng nhóm nội dung.</p>
+                    </div>
+                    <div class="procedure-diff-stats">
+                        <div class="procedure-diff-stat">
+                            <strong>@diffView.TotalChangedFields</strong>
+                            <span>thuộc tính đổi</span>
+                        </div>
+                        <div class="procedure-diff-stat">
+                            <strong>@diffView.TotalAddedItems</strong>
+                            <span>mục thêm mới</span>
+                        </div>
+                        <div class="procedure-diff-stat">
+                            <strong>@diffView.TotalRemovedItems</strong>
+                            <span>mục bỏ đi</span>
+                        </div>
+                    </div>
+                </article>
+
+                @if (diffView.MetadataChanges.Count > 0)
+                {
+                    <article class="procedure-diff-section-card">
+                        <header class="procedure-diff-section-head">
+                            <div>
+                                <span class="procedure-diff-section-kicker">Metadata</span>
+                                <strong>Thông tin kiểm soát thay đổi</strong>
+                            </div>
+                        </header>
+                        <div class="procedure-diff-change-list">
+                            @foreach (var change in diffView.MetadataChanges)
+                            {
+                                <div class="procedure-diff-change-row">
+                                    <div class="procedure-diff-change-label">@change.Label</div>
+                                    <div class="procedure-diff-change-values">
+                                        <div class="procedure-diff-value-box is-before">
+                                            <span class="procedure-diff-value-caption">Phiên bản cũ</span>
+                                            <strong>@DisplayDiffValue(change.Before)</strong>
+                                        </div>
+                                        <div class="procedure-diff-value-arrow">-></div>
+                                        <div class="procedure-diff-value-box is-after">
+                                            <span class="procedure-diff-value-caption">Phiên bản mới</span>
+                                            <strong>@DisplayDiffValue(change.After)</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </article>
+                }
+
+                @if (diffView.ListGroups.Count > 0)
+                {
+                    <div class="procedure-diff-grid">
+                        @foreach (var group in diffView.ListGroups)
                         {
-                            <div>@item</div>
+                            <article class="procedure-diff-section-card">
+                                <header class="procedure-diff-section-head">
+                                    <div>
+                                        <span class="procedure-diff-section-kicker">@group.Kicker</span>
+                                        <strong>@group.Title</strong>
+                                    </div>
+                                    <span class="procedure-diff-pill">@group.Summary</span>
+                                </header>
+                                @if (group.Added.Count == 0 && group.Removed.Count == 0)
+                                {
+                                    <div class="procedure-diff-empty">Không có thay đổi trong nhóm này.</div>
+                                }
+                                else
+                                {
+                                    @if (group.Added.Count > 0)
+                                    {
+                                        <div class="procedure-diff-bucket">
+                                            <span class="procedure-diff-bucket-title is-added">Thêm mới</span>
+                                            <ul class="procedure-diff-tag-list">
+                                                @foreach (var item in group.Added)
+                                                {
+                                                    <li class="procedure-diff-tag is-added">@item</li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+                                    @if (group.Removed.Count > 0)
+                                    {
+                                        <div class="procedure-diff-bucket">
+                                            <span class="procedure-diff-bucket-title is-removed">Bỏ đi</span>
+                                            <ul class="procedure-diff-tag-list">
+                                                @foreach (var item in group.Removed)
+                                                {
+                                                    <li class="procedure-diff-tag is-removed">@item</li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+                                }
+                            </article>
                         }
                     </div>
-                </div>
+                }
             }
         </section>
     }
@@ -338,37 +429,80 @@
     private static string WriterName(Sql.ProcedureVersionAuthorAssignment writer)
         => writer.AssignedFullName ?? writer.AssignedUsername ?? writer.AssignedUserId.ToString();
 
-    private static IReadOnlyList<string> DiffLines(Sql.ProcedureVersionDiffRecord diff)
+    private static ProcedureDiffView BuildDiffView(Sql.ProcedureVersionDiffRecord diff)
     {
-        if (string.IsNullOrWhiteSpace(diff.DiffJson)) return ["Không có dữ liệu so sánh."];
-        var node = JsonNode.Parse(diff.DiffJson);
-        if (node is null) return ["Không có dữ liệu so sánh."];
+        if (string.IsNullOrWhiteSpace(diff.DiffJson))
+        {
+            return new ProcedureDiffView("Phiên bản cũ", "Phiên bản mới", [], [], 0, 0, 0);
+        }
 
-        var lines = new List<string>();
+        var node = JsonNode.Parse(diff.DiffJson);
+        if (node is null)
+        {
+            return new ProcedureDiffView("Phiên bản cũ", "Phiên bản mới", [], [], 0, 0, 0);
+        }
+
+        var metadataChanges = new List<ProcedureDiffMetadataChange>();
         if (node["metadata"] is JsonArray metadata)
         {
             foreach (var item in metadata)
             {
                 if (item?["changed"]?.GetValue<bool>() == true)
                 {
-                    lines.Add($"{item["label"]}: {item["before"]} -> {item["after"]}");
+                    metadataChanges.Add(new ProcedureDiffMetadataChange(
+                        item["label"]?.ToString() ?? "Thuộc tính",
+                        item["before"]?.ToString() ?? string.Empty,
+                        item["after"]?.ToString() ?? string.Empty));
                 }
             }
         }
 
+        var groups = new List<ProcedureDiffListGroup>();
+        var totalAdded = 0;
+        var totalRemoved = 0;
         foreach (var key in new[] { "writers", "sections", "steps", "attachments" })
         {
             if (node[key] is JsonObject listChange)
             {
-                var added = listChange["added"]?.AsArray().Select(item => item?.ToString()).Where(item => !string.IsNullOrWhiteSpace(item)).ToList() ?? [];
-                var removed = listChange["removed"]?.AsArray().Select(item => item?.ToString()).Where(item => !string.IsNullOrWhiteSpace(item)).ToList() ?? [];
-                if (added.Count > 0) lines.Add($"{key}: thêm {string.Join("; ", added)}");
-                if (removed.Count > 0) lines.Add($"{key}: bỏ {string.Join("; ", removed)}");
+                var added = listChange["added"]?.AsArray().Select(item => item?.ToString()).Where(item => !string.IsNullOrWhiteSpace(item)).Cast<string>().ToList() ?? [];
+                var removed = listChange["removed"]?.AsArray().Select(item => item?.ToString()).Where(item => !string.IsNullOrWhiteSpace(item)).Cast<string>().ToList() ?? [];
+                totalAdded += added.Count;
+                totalRemoved += removed.Count;
+                groups.Add(new ProcedureDiffListGroup(
+                    key switch
+                    {
+                        "writers" => "Người viết",
+                        "sections" => "Nội dung tài liệu",
+                        "steps" => "Các bước quy trình",
+                        "attachments" => "Tệp đính kèm",
+                        _ => key
+                    },
+                    key switch
+                    {
+                        "writers" => "Phân công",
+                        "sections" => "Tài liệu",
+                        "steps" => "Lưu đồ",
+                        "attachments" => "Tệp",
+                        _ => "Khác"
+                    },
+                    added,
+                    removed,
+                    $"{added.Count} thêm / {removed.Count} bỏ"));
             }
         }
 
-        return lines.Count == 0 ? ["Không phát hiện thay đổi có cấu trúc."] : lines;
+        return new ProcedureDiffView(
+            node["fromVersionLabel"]?.ToString() ?? "Phiên bản cũ",
+            node["toVersionLabel"]?.ToString() ?? "Phiên bản mới",
+            metadataChanges,
+            groups,
+            metadataChanges.Count,
+            totalAdded,
+            totalRemoved);
     }
+
+    private static string DisplayDiffValue(string? value)
+        => string.IsNullOrWhiteSpace(value) ? "Khong co" : value;
 
     private async Task DownloadAttachmentAsync(Sql.ProcedureAttachment attachment)
     {
@@ -410,4 +544,14 @@
     private static string FormatBytes(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
 
     private sealed record SignoffRow(string RoleLabel, string StatusLabel, string Tone, string SignerLabel, string SignedAtLabel);
+    private sealed record ProcedureDiffMetadataChange(string Label, string Before, string After);
+    private sealed record ProcedureDiffListGroup(string Title, string Kicker, IReadOnlyList<string> Added, IReadOnlyList<string> Removed, string Summary);
+    private sealed record ProcedureDiffView(
+        string FromVersionLabel,
+        string ToVersionLabel,
+        IReadOnlyList<ProcedureDiffMetadataChange> MetadataChanges,
+        IReadOnlyList<ProcedureDiffListGroup> ListGroups,
+        int TotalChangedFields,
+        int TotalAddedItems,
+        int TotalRemovedItems);
 }

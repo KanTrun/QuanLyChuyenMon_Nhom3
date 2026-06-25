@@ -17,6 +17,13 @@
                 <div class="admin-step-row-bullet">@(index + 1)</div>
                 <div class="procedure-flow-step-fields">
                     <div class="admin-form-grid">
+                        <div class="admin-form-field admin-form-field-full procedure-flow-step-heading">
+                            <div>
+                                <span class="procedure-flow-step-kicker">Bước @(index + 1)</span>
+                                <strong class="procedure-flow-step-title">@(!string.IsNullOrWhiteSpace(step.Name) ? step.Name : "Chưa đặt tên bước")</strong>
+                            </div>
+                            <span class="procedure-flow-step-shape">@FlowShapeLabel(step.ShapeCode)</span>
+                        </div>
                         <label class="admin-form-field">
                             <span class="admin-form-field-label">Mã bước</span>
                             <input class="admin-input" @bind="step.Code" />
@@ -44,34 +51,6 @@
                                 }
                             </select>
                         </label>
-                        <div class="admin-form-field admin-form-field-full">
-                            <span class="admin-form-field-label">Các vai trò cùng thực hiện</span>
-                            <div class="procedure-flow-multi-select">
-                                @foreach (var role in Roles)
-                                {
-                                    <label class="procedure-flow-check">
-                                        <input type="checkbox"
-                                               checked="@step.RoleIds.Contains(role.RoleId.ToString())"
-                                               @onchange="e => OnRoleCheckedChanged(step, role.RoleId.ToString(), e)" />
-                                        <span>@role.Name</span>
-                                    </label>
-                                }
-                            </div>
-                        </div>
-                        <div class="admin-form-field admin-form-field-full">
-                            <span class="admin-form-field-label">Nơi thực hiện</span>
-                            <div class="procedure-flow-multi-select">
-                                @foreach (var department in Departments)
-                                {
-                                    <label class="procedure-flow-check">
-                                        <input type="checkbox"
-                                               checked="@step.LocationDepartmentIds.Contains(department.DepartmentId.ToString())"
-                                               @onchange="e => OnLocationCheckedChanged(step, department.DepartmentId.ToString(), e)" />
-                                        <span>@department.Name</span>
-                                    </label>
-                                }
-                            </div>
-                        </div>
                         <label class="admin-form-field">
                             <span class="admin-form-field-label is-required">Người/bộ phận chịu trách nhiệm</span>
                             <input class="admin-input" @bind="step.Responsibility" />
@@ -84,20 +63,6 @@
                             <span class="admin-form-field-label">Mục diễn giải</span>
                             <input class="admin-input" @bind="step.DetailSectionNumber" placeholder="VD: VIII.3" />
                         </label>
-                        <div class="admin-form-field admin-form-field-full">
-                            <span class="admin-form-field-label">Tệp hướng dẫn bước</span>
-                            <div class="procedure-flow-multi-select">
-                                @foreach (var attachment in AvailableAttachments)
-                                {
-                                    <label class="procedure-flow-check">
-                                        <input type="checkbox"
-                                               checked="@step.LinkedAttachmentClientIds.Contains(attachment.ClientId)"
-                                               @onchange="e => OnAttachmentCheckedChanged(step, attachment.ClientId, e)" />
-                                        <span>@attachment.FileName (@AttachmentTypeName(attachment.AttachmentType))</span>
-                                    </label>
-                                }
-                            </div>
-                        </div>
                         <label class="admin-form-field">
                             <span class="admin-form-field-label">Ghi chú biểu mẫu</span>
                             <input class="admin-input" @bind="step.FormReference" placeholder="VD: Mã BM, trang áp dụng" />
@@ -106,6 +71,76 @@
                             <span class="admin-form-field-label is-required">Diễn giải thao tác</span>
                             <textarea class="admin-textarea" rows="3" @bind="step.Description"></textarea>
                         </label>
+                        <section class="admin-form-field admin-form-field-full procedure-picker-panel">
+                            <header class="procedure-picker-panel-head">
+                                <div>
+                                    <span class="admin-form-field-label">Các vai trò cùng thực hiện</span>
+                                    <div class="admin-form-field-hint">Chọn thêm các vai trò phối hợp trong cùng bước này.</div>
+                                </div>
+                                <span class="procedure-picker-summary">@SelectionSummary(step.RoleIds.Count, "vai trò")</span>
+                            </header>
+                            <div class="procedure-picker-grid">
+                                @foreach (var role in Roles)
+                                {
+                                    <label class="procedure-picker-option @(step.RoleIds.Contains(role.RoleId.ToString()) ? "is-selected" : string.Empty)">
+                                        <input type="checkbox"
+                                               checked="@step.RoleIds.Contains(role.RoleId.ToString())"
+                                               @onchange="e => OnRoleCheckedChanged(step, role.RoleId.ToString(), e)" />
+                                        <span>@role.Name</span>
+                                    </label>
+                                }
+                            </div>
+                        </section>
+                        <section class="admin-form-field admin-form-field-full procedure-picker-panel">
+                            <header class="procedure-picker-panel-head">
+                                <div>
+                                    <span class="admin-form-field-label">Nơi thực hiện</span>
+                                    <div class="admin-form-field-hint">Có thể chọn nhiều khoa/phòng cùng tham gia thực hiện bước.</div>
+                                </div>
+                                <span class="procedure-picker-summary">@SelectionSummary(step.LocationDepartmentIds.Count, "bộ phận")</span>
+                            </header>
+                            <div class="procedure-picker-grid">
+                                @foreach (var department in Departments)
+                                {
+                                    <label class="procedure-picker-option @(step.LocationDepartmentIds.Contains(department.DepartmentId.ToString()) ? "is-selected" : string.Empty)">
+                                        <input type="checkbox"
+                                               checked="@step.LocationDepartmentIds.Contains(department.DepartmentId.ToString())"
+                                               @onchange="e => OnLocationCheckedChanged(step, department.DepartmentId.ToString(), e)" />
+                                        <span>@department.Name</span>
+                                    </label>
+                                }
+                            </div>
+                        </section>
+                        <section class="admin-form-field admin-form-field-full procedure-picker-panel procedure-attachment-panel">
+                            <header class="procedure-picker-panel-head">
+                                <div>
+                                    <span class="admin-form-field-label">Tệp hướng dẫn bước</span>
+                                    <div class="admin-form-field-hint">Gán biểu mẫu, checklist hoặc tài liệu áp dụng riêng cho bước này.</div>
+                                </div>
+                                <span class="procedure-picker-summary">@SelectionSummary(step.LinkedAttachmentClientIds.Count, "tệp")</span>
+                            </header>
+                            @if (AvailableAttachments.Count == 0)
+                            {
+                                <div class="procedure-picker-empty">
+                                    Chưa có tệp nào để gán. Hãy upload trong mục <strong>Tệp gắn kèm</strong> phía trên trước.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="procedure-picker-grid">
+                                    @foreach (var attachment in AvailableAttachments)
+                                    {
+                                        <label class="procedure-picker-option procedure-picker-option-attachment @(step.LinkedAttachmentClientIds.Contains(attachment.ClientId) ? "is-selected" : string.Empty)">
+                                            <input type="checkbox"
+                                                   checked="@step.LinkedAttachmentClientIds.Contains(attachment.ClientId)"
+                                                   @onchange="e => OnAttachmentCheckedChanged(step, attachment.ClientId, e)" />
+                                            <span>@attachment.FileName</span>
+                                            <small>@AttachmentTypeName(attachment.AttachmentType)</small>
+                                        </label>
+                                    }
+                                </div>
+                            }
+                        </section>
                     </div>
                 </div>
                 <button type="button" class="admin-icon-btn is-danger" title="Xóa bước" @onclick="() => RemoveStep(step)">×</button>
@@ -188,4 +223,10 @@
 
     private static string AttachmentTypeName(string code)
         => Sql.MedLookups.AttachmentTypes.FirstOrDefault(item => item.Code == code)?.Name ?? code;
+
+    private static string SelectionSummary(int count, string noun)
+        => count == 0 ? $"Chưa chọn {noun}" : $"Đã chọn {count} {noun}";
+
+    private static string FlowShapeLabel(string shapeCode)
+        => FlowShapes.FirstOrDefault(shape => shape.Code == shapeCode).Name;
 }
