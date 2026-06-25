@@ -34,7 +34,7 @@ public sealed class ProcedureSignoffService
         var normalizedRole = role.ToLowerInvariant();
         var snapshot = _snapshots.GetSnapshot(versionId);
         EnsureSigningStage(snapshot, normalizedRole);
-        EnsureNotAlreadySigned(snapshot, normalizedRole);
+        EnsureNotAlreadySigned(snapshot, normalizedRole, userId.Value);
         EnsureSeparationOfDuties(snapshot, normalizedRole, userId.Value);
 
         var signoff = new ProcedureSignoffRecord
@@ -56,6 +56,18 @@ public sealed class ProcedureSignoffService
 
     public bool HasCurrentSignoff(Guid versionId, string role)
         => _snapshots.HasCurrentSignoff(_snapshots.GetSnapshot(versionId), role);
+
+    public int GetOutstandingWriterSignatures(Guid versionId)
+    {
+        var snapshot = _snapshots.GetSnapshot(versionId);
+        var current = _snapshots.GetCurrentSignoffs(snapshot, "writer")
+            .Select(item => item.SignerUserId)
+            .Where(item => item.HasValue)
+            .Select(item => item!.Value)
+            .Distinct()
+            .Count();
+        return Math.Max(0, _snapshots.RequiredSignoffCount(snapshot, "writer") - current);
+    }
 
     public Guid? GetCurrentSignerUserId(Guid versionId, string role)
     {
@@ -83,7 +95,7 @@ public sealed class ProcedureSignoffService
             var snapshot = _snapshots.GetSnapshot(versionId);
             var normalizedRole = role.ToLowerInvariant();
             EnsureSigningStage(snapshot, normalizedRole);
-            if (_snapshots.HasCurrentSignoff(snapshot, normalizedRole))
+            if (HasUserCurrentSignoff(snapshot, normalizedRole, userId))
             {
                 reason = $"Chữ ký {RoleLabel(normalizedRole)} đã được xác nhận trên nội dung hiện tại.";
                 return false;
@@ -128,23 +140,36 @@ public sealed class ProcedureSignoffService
             throw new InvalidOperationException("Người kiểm tra phải ký nội bộ trước khi người phê duyệt ký.");
     }
 
-    private void EnsureNotAlreadySigned(ProcedureDocumentSnapshot snapshot, string role)
+    private void EnsureNotAlreadySigned(ProcedureDocumentSnapshot snapshot, string role, Guid userId)
     {
-        if (_snapshots.HasCurrentSignoff(snapshot, role))
+        if (HasUserCurrentSignoff(snapshot, role, userId))
+            throw new InvalidOperationException($"Chữ ký {RoleLabel(role)} đã được xác nhận trên nội dung hiện tại.");
+        if (role != "writer" && _snapshots.HasCurrentSignoff(snapshot, role))
             throw new InvalidOperationException($"Chữ ký {RoleLabel(role)} đã được xác nhận trên nội dung hiện tại.");
     }
 
     private void EnsureSeparationOfDuties(ProcedureDocumentSnapshot snapshot, string role, Guid userId)
     {
-        var writerUserId = GetCurrentSignerUserId(snapshot, "writer");
+        var writerUserIds = GetCurrentSignerUserIds(snapshot, "writer");
         var checkerUserId = GetCurrentSignerUserId(snapshot, "checker");
 
-        if (role == "checker" && writerUserId == userId)
+        if (role == "writer")
+        {
+            var assignedWriterIds = snapshot.WriterAssignments
+                .Where(item => string.Equals(item.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase))
+                .Select(item => item.AssignedUserId)
+                .Distinct()
+                .ToList();
+            if (assignedWriterIds.Count > 0 && !assignedWriterIds.Contains(userId))
+                throw new InvalidOperationException("Tài khoản hiện tại không nằm trong danh sách người viết được phân công.");
+        }
+
+        if (role == "checker" && writerUserIds.Contains(userId))
             throw new InvalidOperationException("Người kiểm tra phải là tài khoản khác người viết.");
 
         if (role == "approver")
         {
-            if (writerUserId == userId)
+            if (writerUserIds.Contains(userId))
                 throw new InvalidOperationException("Người phê duyệt phải khác người viết.");
             if (checkerUserId == userId)
                 throw new InvalidOperationException("Người phê duyệt phải khác người kiểm tra.");
@@ -160,6 +185,27 @@ public sealed class ProcedureSignoffService
                 string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(signoff => signoff.SignedAt)
             .FirstOrDefault()?.SignerUserId;
+    }
+
+    private IReadOnlySet<Guid> GetCurrentSignerUserIds(ProcedureDocumentSnapshot snapshot, string role)
+    {
+        var hash = _snapshots.ComputeContentHash(snapshot.Version.ProcedureVersionId);
+        return snapshot.Signoffs
+            .Where(signoff =>
+                string.Equals(signoff.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase) &&
+                signoff.SignerUserId.HasValue)
+            .Select(signoff => signoff.SignerUserId!.Value)
+            .ToHashSet();
+    }
+
+    private bool HasUserCurrentSignoff(ProcedureDocumentSnapshot snapshot, string role, Guid userId)
+    {
+        var hash = _snapshots.ComputeContentHash(snapshot.Version.ProcedureVersionId);
+        return snapshot.Signoffs.Any(signoff =>
+            string.Equals(signoff.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
+            signoff.SignerUserId == userId &&
+            string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase));
     }
 
     private static string RoleLabel(string role) => role switch

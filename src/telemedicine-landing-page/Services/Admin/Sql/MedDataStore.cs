@@ -45,6 +45,12 @@ public sealed partial class MedDataStore : IMedDataStore
     private readonly List<ProcedureDistributionRecipient> _procedureDistributionRecipients = new();
     private readonly List<ProcedureRevisionEntry> _procedureRevisionEntries = new();
     private readonly List<ProcedureSignoffRecord> _procedureSignoffRecords = new();
+    private readonly List<ProcedureVersionAuthorAssignment> _procedureVersionAuthorAssignments = new();
+    private readonly List<ProcedureStepRoleAssignment> _procedureStepRoleAssignments = new();
+    private readonly List<ProcedureStepLocationAssignment> _procedureStepLocationAssignments = new();
+    private readonly List<ProcedureStepAttachmentAssignment> _procedureStepAttachmentAssignments = new();
+    private readonly List<ProcedureVersionSnapshotRecord> _procedureVersionSnapshots = new();
+    private readonly List<ProcedureVersionDiffRecord> _procedureVersionDiffRecords = new();
     private readonly List<PatientRef> _patientRefs = new();
     private readonly List<EncounterRef> _encounterRefs = new();
     private readonly List<TechnicalService> _technicalServices = new();
@@ -90,6 +96,12 @@ public sealed partial class MedDataStore : IMedDataStore
     public IReadOnlyList<ProcedureDistributionRecipient> ProcedureDistributionRecipients => _procedureDistributionRecipients;
     public IReadOnlyList<ProcedureRevisionEntry> ProcedureRevisionEntries => _procedureRevisionEntries;
     public IReadOnlyList<ProcedureSignoffRecord> ProcedureSignoffRecords => _procedureSignoffRecords;
+    public IReadOnlyList<ProcedureVersionAuthorAssignment> ProcedureVersionAuthorAssignments => _procedureVersionAuthorAssignments;
+    public IReadOnlyList<ProcedureStepRoleAssignment> ProcedureStepRoleAssignments => _procedureStepRoleAssignments;
+    public IReadOnlyList<ProcedureStepLocationAssignment> ProcedureStepLocationAssignments => _procedureStepLocationAssignments;
+    public IReadOnlyList<ProcedureStepAttachmentAssignment> ProcedureStepAttachmentAssignments => _procedureStepAttachmentAssignments;
+    public IReadOnlyList<ProcedureVersionSnapshotRecord> ProcedureVersionSnapshots => _procedureVersionSnapshots;
+    public IReadOnlyList<ProcedureVersionDiffRecord> ProcedureVersionDiffRecords => _procedureVersionDiffRecords;
     public IReadOnlyList<PatientRef> PatientRefs => _patientRefs;
     public IReadOnlyList<EncounterRef> EncounterRefs => _encounterRefs;
     public IReadOnlyList<TechnicalService> TechnicalServices => _technicalServices;

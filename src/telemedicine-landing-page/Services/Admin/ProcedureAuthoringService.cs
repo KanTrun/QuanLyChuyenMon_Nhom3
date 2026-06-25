@@ -8,10 +8,17 @@ namespace TelemedicineLandingPage.Services.Admin;
 public sealed class ProcedureAuthoringService
 {
     private readonly IMedDataStore _store;
+    private readonly ProcedureDocumentSnapshotService? _snapshots;
 
     public ProcedureAuthoringService(IMedDataStore store)
     {
         _store = store;
+    }
+
+    public ProcedureAuthoringService(IMedDataStore store, ProcedureDocumentSnapshotService snapshots)
+    {
+        _store = store;
+        _snapshots = snapshots;
     }
 
     public static string FormatVersionLabel(int versionNo) => $"v{versionNo:00}";
@@ -45,14 +52,23 @@ public sealed class ProcedureAuthoringService
             IssueNumber = command.IssueNumber,
             SourcePdfFileName = sourcePdf?.FileName,
             SourcePdfChecksumSha256 = sourcePdf?.ChecksumSha256,
-            CreatedBy = command.UserId
+            CreatedBy = command.UserId,
+            RequiredWriterSignatures = Math.Max(1, command.WriterAssignments
+                .Select(item => ParseGuid(item.UserId))
+                .Where(item => item.HasValue)
+                .Select(item => item!.Value)
+                .Distinct()
+                .Count())
         };
 
         _store.AddProcedureVersion(version);
         PersistDocument(command, version);
+        PersistWriterAssignments(command, version);
         CloneTechnicalMappings(source, version);
         ArchiveSourceDraft(source, versionLabel);
         if (command.ProcedureId.HasValue) _store.UpdateProcedure(procedure);
+        _snapshots?.PersistSnapshot(version.ProcedureVersionId, "draft", command.UserId);
+        _snapshots?.PersistVersionDiff(source?.ProcedureVersionId, version.ProcedureVersionId, command.UserId);
         return new ProcedureAuthoringResult(procedure, version);
     }
 
@@ -142,13 +158,18 @@ public sealed class ProcedureAuthoringService
         foreach (var item in command.Steps.Where(item => !string.IsNullOrWhiteSpace(item.Name)).Select((value, index) => (value, index)))
         {
             Guid? formAttachmentId = null;
-            if (item.value.LinkedAttachmentClientId is { } clientId &&
-                attachmentIdByClient.TryGetValue(clientId, out var resolvedId))
+            var linkedAttachmentIds = item.value.LinkedAttachmentClientIds.ToList();
+            if (linkedAttachmentIds.Count == 0 && item.value.LinkedAttachmentClientId is { } singleClientId)
+            {
+                linkedAttachmentIds.Add(singleClientId);
+            }
+            if (linkedAttachmentIds.Count > 0 &&
+                attachmentIdByClient.TryGetValue(linkedAttachmentIds[0], out var resolvedId))
             {
                 formAttachmentId = resolvedId;
             }
 
-            _store.AddProcedureStep(new Models.Admin.Sql.ProcedureStep
+            var step = new Models.Admin.Sql.ProcedureStep
             {
                 ProcedureVersionId = version.ProcedureVersionId,
                 StepNo = item.index + 1,
@@ -162,6 +183,82 @@ public sealed class ProcedureAuthoringService
                 FormAttachmentId = formAttachmentId,
                 DetailSectionNumber = NullIfWhiteSpace(item.value.DetailSectionNumber),
                 StandardDurationMinutes = item.value.Minutes
+            };
+            _store.AddProcedureStep(step);
+
+            var roleIds = item.value.RoleIds
+                .Append(item.value.RoleId)
+                .Select(ParseGuid)
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .Distinct()
+                .ToList();
+            foreach (var role in roleIds.Select((value, roleIndex) => (value, roleIndex)))
+            {
+                _store.AddProcedureStepRoleAssignment(new ProcedureStepRoleAssignment
+                {
+                    ProcedureStepId = step.ProcedureStepId,
+                    RoleId = role.value,
+                    DisplayOrder = role.roleIndex + 1
+                });
+            }
+
+            var locationIds = item.value.LocationDepartmentIds
+                .Select(ParseGuid)
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .Distinct()
+                .ToList();
+            foreach (var location in locationIds.Select((value, locationIndex) => (value, locationIndex)))
+            {
+                _store.AddProcedureStepLocationAssignment(new ProcedureStepLocationAssignment
+                {
+                    ProcedureStepId = step.ProcedureStepId,
+                    DepartmentId = location.value,
+                    DisplayOrder = location.locationIndex + 1
+                });
+            }
+
+            foreach (var attachment in linkedAttachmentIds
+                         .Distinct()
+                         .Select((value, attachmentIndex) => (value, attachmentIndex)))
+            {
+                if (!attachmentIdByClient.TryGetValue(attachment.value, out var persistedAttachmentId))
+                    continue;
+                _store.AddProcedureStepAttachmentAssignment(new ProcedureStepAttachmentAssignment
+                {
+                    ProcedureStepId = step.ProcedureStepId,
+                    ProcedureAttachmentId = persistedAttachmentId,
+                    DisplayOrder = attachment.attachmentIndex + 1
+                });
+            }
+        }
+    }
+
+    private void PersistWriterAssignments(ProcedureAuthoringCommand command, ProcedureVersion version)
+    {
+        var writers = command.WriterAssignments
+            .Select(item => ParseGuid(item.UserId))
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+        if (writers.Count == 0)
+        {
+            writers.Add(command.UserId);
+        }
+
+        foreach (var writer in writers.Select((value, index) => (value, index)))
+        {
+            var user = _store.Users.FirstOrDefault(item => item.UserId == writer.value);
+            _store.AddProcedureVersionAuthorAssignment(new ProcedureVersionAuthorAssignment
+            {
+                ProcedureVersionId = version.ProcedureVersionId,
+                SignoffRole = "writer",
+                DisplayOrder = writer.index + 1,
+                AssignedUserId = writer.value,
+                AssignedUsername = user?.Username,
+                AssignedFullName = user?.FullName
             });
         }
     }

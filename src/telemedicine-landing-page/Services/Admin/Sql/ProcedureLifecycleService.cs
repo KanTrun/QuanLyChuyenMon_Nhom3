@@ -101,6 +101,7 @@ public sealed class ProcedureLifecycleService
         };
         _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(updated);
         _db.SaveChanges();
+        _documents?.PersistSnapshot(versionId, "submitted", submittedBy);
         _workflow.OnTransitioned(updated, ver.StatusCode, updated.StatusCode, submittedBy);
 
         _audit.Append(new AuditLog
@@ -152,6 +153,7 @@ public sealed class ProcedureLifecycleService
         };
         _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(published);
         _db.SaveChanges();
+        _documents?.PersistSnapshot(versionId, "published", approvedBy);
 
         foreach (var old in currentPublished)
         {
@@ -186,6 +188,7 @@ public sealed class ProcedureLifecycleService
         };
         _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(rejected);
         _db.SaveChanges();
+        _documents?.PersistSnapshot(versionId, "rejected", rejectedBy);
         _workflow.OnTransitioned(rejected, ver.StatusCode, rejected.StatusCode, rejectedBy, reason);
 
         _audit.Append(new AuditLog
@@ -217,6 +220,7 @@ public sealed class ProcedureLifecycleService
         };
         _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(withdrawn);
         _db.SaveChanges();
+        _documents?.PersistSnapshot(versionId, "withdrawn", withdrawnBy);
         _workflow.OnTransitioned(withdrawn, ver.StatusCode, withdrawn.StatusCode, withdrawnBy, reason);
 
         _audit.Append(new AuditLog
@@ -244,6 +248,7 @@ public sealed class ProcedureLifecycleService
         };
         _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(archived);
         _db.SaveChanges();
+        _documents?.PersistSnapshot(versionId, "archived", archivedBy);
         _workflow.OnTransitioned(archived, ver.StatusCode, archived.StatusCode, archivedBy, reason);
 
         _audit.Append(new AuditLog
@@ -270,6 +275,7 @@ public sealed class ProcedureLifecycleService
         };
         _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(restored);
         _db.SaveChanges();
+        _documents?.PersistSnapshot(versionId, "restored", restoredBy);
         _workflow.OnTransitioned(restored, ver.StatusCode, restored.StatusCode, restoredBy, reason);
 
         _audit.Append(new AuditLog
@@ -349,18 +355,19 @@ public sealed class ProcedureLifecycleService
         if (_documents is null) return;
         var snapshot = _documents.GetSnapshot(versionId);
         var hash = _documents.ComputeContentHash(versionId);
-        var writerUserId = snapshot.Signoffs
+        var writerUserIds = snapshot.Signoffs
             .Where(signoff => string.Equals(signoff.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase)
-                && string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(signoff => signoff.SignedAt)
-            .FirstOrDefault()?.SignerUserId;
+                && string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase)
+                && signoff.SignerUserId.HasValue)
+            .Select(signoff => signoff.SignerUserId!.Value)
+            .ToHashSet();
         var checkerUserId = snapshot.Signoffs
             .Where(signoff => string.Equals(signoff.SignoffRole, "checker", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(signoff => signoff.SignedAt)
             .FirstOrDefault()?.SignerUserId;
 
-        if (writerUserId == approvedBy || checkerUserId == approvedBy)
+        if (writerUserIds.Contains(approvedBy) || checkerUserId == approvedBy)
         {
             throw MedDomainException.Constraint(
                 "CK_procedure_publish_separation",

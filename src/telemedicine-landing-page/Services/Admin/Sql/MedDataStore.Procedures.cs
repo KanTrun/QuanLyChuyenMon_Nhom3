@@ -157,4 +157,70 @@ public sealed partial class MedDataStore
             RaiseStateChanged();
         }
     }
+
+    public void AddProcedureVersionAuthorAssignment(ProcedureVersionAuthorAssignment assignment)
+    {
+        lock (_lock)
+        {
+            _procedureVersionAuthorAssignments.Add(assignment);
+            RaiseStateChanged();
+        }
+    }
+
+    public void AddProcedureStepRoleAssignment(ProcedureStepRoleAssignment assignment)
+    {
+        lock (_lock)
+        {
+            _procedureStepRoleAssignments.Add(assignment);
+            RaiseStateChanged();
+        }
+    }
+
+    public void AddProcedureStepLocationAssignment(ProcedureStepLocationAssignment assignment)
+    {
+        lock (_lock)
+        {
+            _procedureStepLocationAssignments.Add(assignment);
+            RaiseStateChanged();
+        }
+    }
+
+    public void AddProcedureStepAttachmentAssignment(ProcedureStepAttachmentAssignment assignment)
+    {
+        lock (_lock)
+        {
+            _procedureStepAttachmentAssignments.Add(assignment);
+            RaiseStateChanged();
+        }
+    }
+
+    public void AddProcedureVersionSnapshot(ProcedureVersionSnapshotRecord snapshot)
+    {
+        lock (_lock)
+        {
+            ValidateJson(snapshot.SnapshotJson, "snapshot_json");
+            _procedureVersionSnapshots.Add(snapshot);
+            RaiseStateChanged();
+        }
+    }
+
+    public void AddOrUpdateProcedureVersionDiff(ProcedureVersionDiffRecord diff)
+    {
+        lock (_lock)
+        {
+            ValidateJson(diff.DiffJson, "diff_json");
+            var idx = _procedureVersionDiffRecords.FindIndex(item =>
+                item.FromVersionId == diff.FromVersionId &&
+                item.ToVersionId == diff.ToVersionId);
+            if (idx >= 0)
+            {
+                _procedureVersionDiffRecords[idx] = diff;
+            }
+            else
+            {
+                _procedureVersionDiffRecords.Add(diff);
+            }
+            RaiseStateChanged();
+        }
+    }
 }

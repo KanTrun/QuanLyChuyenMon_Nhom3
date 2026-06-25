@@ -18,7 +18,9 @@ public sealed class ProcedureAuthoringServiceTests
         Assert.Equal(1, result.Version.VersionNo);
         Assert.Equal("v01", result.Version.VersionLabel);
         Assert.Equal("draft", result.Version.StatusCode);
+        Assert.Equal(2, result.Version.RequiredWriterSignatures);
         Assert.Single(store.ProcedureDocumentSections, item => item.ProcedureVersionId == result.Version.ProcedureVersionId);
+        Assert.Equal(2, store.ProcedureVersionAuthorAssignments.Count(item => item.ProcedureVersionId == result.Version.ProcedureVersionId));
     }
 
     [Fact]
@@ -107,6 +109,7 @@ public sealed class ProcedureAuthoringServiceTests
             item.ProcedureVersionId == result.Version.ProcedureVersionId && item.AttachmentType == "form");
 
         Assert.Equal(formAttachment.ProcedureAttachmentId, step.FormAttachmentId);
+        Assert.Single(store.ProcedureStepAttachmentAssignments, item => item.ProcedureStepId == step.ProcedureStepId);
     }
 
     private static ProcedureAuthoringCommand CreateCommand(
@@ -130,6 +133,10 @@ public sealed class ProcedureAuthoringServiceTests
             new DateTime(2026, 6, 13),
             isUpdate ? 2 : 1,
             MedDataStoreSeed.AdminUserId,
+            [
+                new ProcedureWriterAssignmentDraft { UserId = MedDataStoreSeed.AdminUserId.ToString() },
+                new ProcedureWriterAssignmentDraft { UserId = MedDataStoreSeed.TruongKhoaNoiId.ToString() }
+            ],
             [new ProcedureSectionDraft
             {
                 Order = 1,

@@ -17,13 +17,21 @@ public sealed class ProcedureFlowStepDraft
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string RoleId { get; set; } = string.Empty;
+    public List<string> RoleIds { get; set; } = [];
+    public List<string> LocationDepartmentIds { get; set; } = [];
     public string Responsibility { get; set; } = string.Empty;
     public string ShapeCode { get; set; } = "process";
     public string FormReference { get; set; } = string.Empty;
     public Guid? LinkedAttachmentClientId { get; set; }
+    public List<Guid> LinkedAttachmentClientIds { get; set; } = [];
     public string DetailSectionNumber { get; set; } = string.Empty;
     public int Minutes { get; set; } = 5;
     public string Description { get; set; } = string.Empty;
+}
+
+public sealed class ProcedureWriterAssignmentDraft
+{
+    public string UserId { get; set; } = string.Empty;
 }
 
 public sealed class ProcedureRecipientDraft
@@ -67,6 +75,7 @@ public sealed record ProcedureAuthoringCommand(
     DateTime IssueDate,
     int IssueNumber,
     Guid UserId,
+    IReadOnlyList<ProcedureWriterAssignmentDraft> WriterAssignments,
     IReadOnlyList<ProcedureSectionDraft> Sections,
     IReadOnlyList<ProcedureRecipientDraft> Recipients,
     IReadOnlyList<ProcedureRevisionDraft> Revisions,

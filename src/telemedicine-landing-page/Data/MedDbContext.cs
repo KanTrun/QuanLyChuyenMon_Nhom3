@@ -54,6 +54,12 @@ public class MedDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<ProcedureDistributionRecipient> ProcedureDistributionRecipients => Set<ProcedureDistributionRecipient>();
     public DbSet<ProcedureRevisionEntry> ProcedureRevisionEntries => Set<ProcedureRevisionEntry>();
     public DbSet<ProcedureSignoffRecord> ProcedureSignoffRecords => Set<ProcedureSignoffRecord>();
+    public DbSet<ProcedureVersionAuthorAssignment> ProcedureVersionAuthorAssignments => Set<ProcedureVersionAuthorAssignment>();
+    public DbSet<ProcedureStepRoleAssignment> ProcedureStepRoleAssignments => Set<ProcedureStepRoleAssignment>();
+    public DbSet<ProcedureStepLocationAssignment> ProcedureStepLocationAssignments => Set<ProcedureStepLocationAssignment>();
+    public DbSet<ProcedureStepAttachmentAssignment> ProcedureStepAttachmentAssignments => Set<ProcedureStepAttachmentAssignment>();
+    public DbSet<ProcedureVersionSnapshotRecord> ProcedureVersionSnapshots => Set<ProcedureVersionSnapshotRecord>();
+    public DbSet<ProcedureVersionDiffRecord> ProcedureVersionDiffRecords => Set<ProcedureVersionDiffRecord>();
 
     // === Bệnh nhân & Lượt khám ===
     public DbSet<PatientRef> PatientRefs => Set<PatientRef>();

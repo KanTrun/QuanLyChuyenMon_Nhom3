@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using TelemedicineLandingPage.Models.Admin.Sql;
 using TelemedicineLandingPage.Services.Admin.Sql;
 
@@ -28,16 +29,41 @@ public sealed class ProcedureDocumentSnapshotService
         var departmentId = version.DepartmentId ?? procedure.OwnerDepartmentId;
         var departmentName = _store.Departments
             .FirstOrDefault(item => item.DepartmentId == departmentId)?.Name;
+        var stepIds = _store.ProcedureSteps
+            .Where(s => s.ProcedureVersionId == versionId)
+            .OrderBy(s => s.StepNo)
+            .Select(s => s.ProcedureStepId)
+            .ToHashSet();
         return new ProcedureDocumentSnapshot(
             procedure,
             version,
             departmentName,
+            _store.ProcedureVersionAuthorAssignments
+                .Where(item => item.ProcedureVersionId == versionId)
+                .OrderBy(item => item.DisplayOrder)
+                .ToList(),
             _store.ProcedureDocumentSections.Where(s => s.ProcedureVersionId == versionId).OrderBy(s => s.SectionOrder).ToList(),
             _store.ProcedureDistributionRecipients.Where(r => r.ProcedureVersionId == versionId).OrderBy(r => r.DisplayOrder).ToList(),
             _store.ProcedureRevisionEntries.Where(r => r.ProcedureVersionId == versionId).OrderBy(r => r.DisplayOrder).ToList(),
             _store.ProcedureSteps.Where(s => s.ProcedureVersionId == versionId).OrderBy(s => s.StepNo).ToList(),
+            _store.ProcedureStepRoleAssignments
+                .Where(item => stepIds.Contains(item.ProcedureStepId))
+                .OrderBy(item => item.DisplayOrder)
+                .ToList(),
+            _store.ProcedureStepLocationAssignments
+                .Where(item => stepIds.Contains(item.ProcedureStepId))
+                .OrderBy(item => item.DisplayOrder)
+                .ToList(),
+            _store.ProcedureStepAttachmentAssignments
+                .Where(item => stepIds.Contains(item.ProcedureStepId))
+                .OrderBy(item => item.DisplayOrder)
+                .ToList(),
             _store.ProcedureAttachments.Where(a => a.ProcedureVersionId == versionId).OrderBy(a => a.FileName).ToList(),
-            _store.ProcedureSignoffRecords.Where(s => s.ProcedureVersionId == versionId).OrderBy(s => s.DisplayOrder).ThenByDescending(s => s.SignedAt).ToList());
+            _store.ProcedureSignoffRecords.Where(s => s.ProcedureVersionId == versionId).OrderBy(s => s.DisplayOrder).ThenByDescending(s => s.SignedAt).ToList(),
+            _store.ProcedureVersionSnapshots
+                .Where(item => item.ProcedureVersionId == versionId)
+                .OrderByDescending(item => item.CreatedAt)
+                .ToList());
     }
 
     public string ComputeContentHash(Guid versionId)
@@ -46,11 +72,15 @@ public sealed class ProcedureDocumentSnapshotService
         var canonical = new
         {
             Procedure = new { snapshot.Procedure.ProcedureCode, snapshot.Procedure.Name, snapshot.Procedure.ProcedureType, snapshot.Procedure.OwnerDepartmentId, snapshot.Procedure.Description },
-            Version = new { snapshot.Version.VersionNo, snapshot.Version.VersionLabel, snapshot.Version.Title, snapshot.Version.Summary, snapshot.Version.ChangeReason, snapshot.Version.DepartmentId, snapshot.Version.IssueDate, snapshot.Version.IssueNumber, snapshot.Version.SourcePdfFileName, snapshot.Version.SourcePdfChecksumSha256 },
+            Version = new { snapshot.Version.VersionNo, snapshot.Version.VersionLabel, snapshot.Version.Title, snapshot.Version.Summary, snapshot.Version.ChangeReason, snapshot.Version.DepartmentId, snapshot.Version.IssueDate, snapshot.Version.IssueNumber, snapshot.Version.SourcePdfFileName, snapshot.Version.SourcePdfChecksumSha256, snapshot.Version.RequiredWriterSignatures },
+            Writers = snapshot.WriterAssignments.Select(item => new { item.DisplayOrder, item.AssignedUserId, item.AssignedUsername, item.AssignedFullName, item.SignoffRole }),
             Sections = snapshot.Sections.Select(s => new { s.SectionOrder, s.SectionNumber, s.Title, s.SectionKind, s.ContentText, s.IsRequired }),
             Recipients = snapshot.Recipients.Select(r => new { r.DisplayOrder, r.RecipientName, r.IsMarked }),
             Revisions = snapshot.Revisions.Select(r => new { r.DisplayOrder, r.RevisionDate, r.PageRef, r.SectionRef, r.Summary }),
             Steps = snapshot.Steps.Select(s => new { s.StepNo, s.StepCode, s.Name, s.Description, s.ResponsibilityText, s.FlowShapeCode, s.FormReferenceText, s.FormAttachmentId, s.DetailSectionNumber, s.StandardDurationMinutes, s.IsRequired }),
+            StepRoles = snapshot.StepRoleAssignments.Select(item => new { item.ProcedureStepId, item.RoleId, item.DisplayOrder }),
+            StepLocations = snapshot.StepLocationAssignments.Select(item => new { item.ProcedureStepId, item.DepartmentId, item.DisplayOrder }),
+            StepAttachments = snapshot.StepAttachmentAssignments.Select(item => new { item.ProcedureStepId, item.ProcedureAttachmentId, item.DisplayOrder }),
             Attachments = snapshot.Attachments.Select(a => new { a.AttachmentType, a.FileName, a.FileUri, a.MimeType, a.FileSizeBytes, a.ChecksumSha256 })
         };
         var json = JsonSerializer.Serialize(canonical, new JsonSerializerOptions(JsonSerializerDefaults.Web));
@@ -71,6 +101,8 @@ public sealed class ProcedureDocumentSnapshotService
         if (snapshot.Steps.Count == 0) missing.Add("Nội dung các bước quy trình");
         if (snapshot.Recipients.Count == 0) missing.Add("Nơi nhận");
         if (snapshot.Revisions.Count == 0) missing.Add("Bảng theo dõi sửa đổi");
+        if (snapshot.WriterAssignments.Count < Math.Max(1, snapshot.Version.RequiredWriterSignatures))
+            missing.Add($"Phân công đủ {Math.Max(1, snapshot.Version.RequiredWriterSignatures)} người viết");
 
         foreach (var kind in RequiredSectionKinds)
         {
@@ -128,9 +160,150 @@ public sealed class ProcedureDocumentSnapshotService
     public bool HasCurrentSignoff(ProcedureDocumentSnapshot snapshot, string role)
     {
         var hash = ComputeContentHash(snapshot.Version.ProcedureVersionId);
-        return snapshot.Signoffs.Any(s =>
+        var currentCount = snapshot.Signoffs.Count(s =>
             string.Equals(s.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
             string.Equals(s.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase));
+        return currentCount >= RequiredSignoffCount(snapshot, role);
+    }
+
+    public int RequiredSignoffCount(ProcedureDocumentSnapshot snapshot, string role)
+        => string.Equals(role, "writer", StringComparison.OrdinalIgnoreCase)
+            ? Math.Max(1, snapshot.Version.RequiredWriterSignatures)
+            : 1;
+
+    public IReadOnlyList<ProcedureSignoffRecord> GetCurrentSignoffs(ProcedureDocumentSnapshot snapshot, string role)
+    {
+        var hash = ComputeContentHash(snapshot.Version.ProcedureVersionId);
+        return snapshot.Signoffs
+            .Where(s =>
+                string.Equals(s.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(s.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(s => s.DisplayOrder)
+            .ThenBy(s => s.SignedAt)
+            .ToList();
+    }
+
+    public ProcedureVersionSnapshotRecord PersistSnapshot(Guid versionId, string snapshotKind, Guid? createdBy = null)
+    {
+        var snapshot = GetSnapshot(versionId);
+        var json = SerializeSnapshot(snapshot);
+        var record = new ProcedureVersionSnapshotRecord
+        {
+            ProcedureVersionId = versionId,
+            SnapshotKind = string.IsNullOrWhiteSpace(snapshotKind) ? "draft" : snapshotKind.Trim(),
+            ContentHashSha256 = ComputeContentHash(versionId),
+            SnapshotJson = json,
+            CreatedBy = createdBy
+        };
+        _store.AddProcedureVersionSnapshot(record);
+        return record;
+    }
+
+    public ProcedureVersionDiffRecord? PersistVersionDiff(Guid? sourceVersionId, Guid targetVersionId, Guid? createdBy = null)
+    {
+        if (sourceVersionId is null) return null;
+        var source = GetSnapshot(sourceVersionId.Value);
+        var target = GetSnapshot(targetVersionId);
+        var diff = new ProcedureVersionDiffRecord
+        {
+            ProcedureId = target.Procedure.ProcedureId,
+            FromVersionId = source.Version.ProcedureVersionId,
+            ToVersionId = target.Version.ProcedureVersionId,
+            DiffJson = BuildDiffJson(source, target),
+            CreatedBy = createdBy
+        };
+        _store.AddOrUpdateProcedureVersionDiff(diff);
+        return diff;
+    }
+
+    private static string SerializeSnapshot(ProcedureDocumentSnapshot snapshot)
+    {
+        var payload = new
+        {
+            procedure = new
+            {
+                snapshot.Procedure.ProcedureId,
+                snapshot.Procedure.ProcedureCode,
+                snapshot.Procedure.Name,
+                snapshot.Procedure.ProcedureType,
+                snapshot.Procedure.OwnerDepartmentId,
+                snapshot.Procedure.Description
+            },
+            version = new
+            {
+                snapshot.Version.ProcedureVersionId,
+                snapshot.Version.VersionNo,
+                snapshot.Version.VersionLabel,
+                snapshot.Version.Title,
+                snapshot.Version.Summary,
+                snapshot.Version.ChangeReason,
+                snapshot.Version.DepartmentId,
+                snapshot.Version.IssueDate,
+                snapshot.Version.IssueNumber,
+                snapshot.Version.SourcePdfFileName,
+                snapshot.Version.SourcePdfChecksumSha256,
+                snapshot.Version.RequiredWriterSignatures
+            },
+            writers = snapshot.WriterAssignments,
+            sections = snapshot.Sections,
+            recipients = snapshot.Recipients,
+            revisions = snapshot.Revisions,
+            steps = snapshot.Steps,
+            stepRoles = snapshot.StepRoleAssignments,
+            stepLocations = snapshot.StepLocationAssignments,
+            stepAttachments = snapshot.StepAttachmentAssignments,
+            attachments = snapshot.Attachments,
+            signoffs = snapshot.Signoffs
+        };
+        return JsonSerializer.Serialize(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+    }
+
+    private static string BuildDiffJson(ProcedureDocumentSnapshot source, ProcedureDocumentSnapshot target)
+    {
+        var diff = new JsonObject
+        {
+            ["fromVersionLabel"] = source.Version.VersionLabel ?? $"v{source.Version.VersionNo:00}",
+            ["toVersionLabel"] = target.Version.VersionLabel ?? $"v{target.Version.VersionNo:00}",
+            ["metadata"] = new JsonArray(BuildTextChange("Tiêu đề", source.Version.Title, target.Version.Title),
+                BuildTextChange("Tóm tắt", source.Version.Summary, target.Version.Summary),
+                BuildTextChange("Lý do thay đổi", source.Version.ChangeReason, target.Version.ChangeReason),
+                BuildTextChange("Lần ban hành", source.Version.IssueNumber?.ToString(), target.Version.IssueNumber?.ToString())),
+            ["writers"] = BuildListChange(
+                source.WriterAssignments.Select(item => item.AssignedFullName ?? item.AssignedUsername ?? item.AssignedUserId.ToString()),
+                target.WriterAssignments.Select(item => item.AssignedFullName ?? item.AssignedUsername ?? item.AssignedUserId.ToString())),
+            ["sections"] = BuildListChange(
+                source.Sections.Select(item => $"{item.SectionNumber}|{item.Title}|{item.ContentText}"),
+                target.Sections.Select(item => $"{item.SectionNumber}|{item.Title}|{item.ContentText}")),
+            ["steps"] = BuildListChange(
+                source.Steps.Select(item => $"{item.StepNo}|{item.Name}|{item.ResponsibilityText}|{item.Description}"),
+                target.Steps.Select(item => $"{item.StepNo}|{item.Name}|{item.ResponsibilityText}|{item.Description}")),
+            ["attachments"] = BuildListChange(
+                source.Attachments.Select(item => $"{item.AttachmentType}|{item.FileName}"),
+                target.Attachments.Select(item => $"{item.AttachmentType}|{item.FileName}"))
+        };
+        return diff.ToJsonString();
+    }
+
+    private static JsonObject BuildTextChange(string label, string? before, string? after)
+        => new()
+        {
+            ["label"] = label,
+            ["before"] = before ?? string.Empty,
+            ["after"] = after ?? string.Empty,
+            ["changed"] = !string.Equals(before ?? string.Empty, after ?? string.Empty, StringComparison.Ordinal)
+        };
+
+    private static JsonObject BuildListChange(IEnumerable<string> before, IEnumerable<string> after)
+    {
+        var beforeList = before.Where(item => !string.IsNullOrWhiteSpace(item)).Distinct(StringComparer.Ordinal).OrderBy(item => item).ToList();
+        var afterList = after.Where(item => !string.IsNullOrWhiteSpace(item)).Distinct(StringComparer.Ordinal).OrderBy(item => item).ToList();
+        return new JsonObject
+        {
+            ["before"] = new JsonArray(beforeList.Select(item => JsonValue.Create(item)).ToArray()),
+            ["after"] = new JsonArray(afterList.Select(item => JsonValue.Create(item)).ToArray()),
+            ["added"] = new JsonArray(afterList.Except(beforeList, StringComparer.Ordinal).Select(item => JsonValue.Create(item)).ToArray()),
+            ["removed"] = new JsonArray(beforeList.Except(afterList, StringComparer.Ordinal).Select(item => JsonValue.Create(item)).ToArray())
+        };
     }
 }
 
@@ -138,11 +311,16 @@ public sealed record ProcedureDocumentSnapshot(
     ProfessionalProcedure Procedure,
     ProcedureVersion Version,
     string? DepartmentName,
+    IReadOnlyList<ProcedureVersionAuthorAssignment> WriterAssignments,
     IReadOnlyList<ProcedureDocumentSection> Sections,
     IReadOnlyList<ProcedureDistributionRecipient> Recipients,
     IReadOnlyList<ProcedureRevisionEntry> Revisions,
     IReadOnlyList<ProcedureStep> Steps,
+    IReadOnlyList<ProcedureStepRoleAssignment> StepRoleAssignments,
+    IReadOnlyList<ProcedureStepLocationAssignment> StepLocationAssignments,
+    IReadOnlyList<ProcedureStepAttachmentAssignment> StepAttachmentAssignments,
     IReadOnlyList<ProcedureAttachment> Attachments,
-    IReadOnlyList<ProcedureSignoffRecord> Signoffs);
+    IReadOnlyList<ProcedureSignoffRecord> Signoffs,
+    IReadOnlyList<ProcedureVersionSnapshotRecord> VersionSnapshots);
 
 public sealed record ProcedureDocumentReadiness(bool IsReady, IReadOnlyList<string> MissingItems);

@@ -100,6 +100,14 @@ public sealed class ProcedureDocumentLifecycleTests : IDisposable
         };
         _db.Procedures.Add(procedure);
         _db.ProcedureVersions.Add(version);
+        _db.ProcedureVersionAuthorAssignments.Add(new ProcedureVersionAuthorAssignment
+        {
+            ProcedureVersionId = version.ProcedureVersionId,
+            DisplayOrder = 1,
+            AssignedUserId = MedDataStoreSeed.AdminUserId,
+            AssignedUsername = "admin",
+            AssignedFullName = "Quản trị viên"
+        });
 
         var kinds = new[] { "purpose", "scope", "basis", "definitions", "responsibilities", "procedure", "flowchart", "records", "appendices" };
         for (var index = 0; index < kinds.Length; index++)

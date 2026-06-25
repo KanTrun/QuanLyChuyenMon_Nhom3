@@ -38,6 +38,12 @@ public interface IMedDataStore
     IReadOnlyList<ProcedureDistributionRecipient> ProcedureDistributionRecipients { get; }
     IReadOnlyList<ProcedureRevisionEntry> ProcedureRevisionEntries { get; }
     IReadOnlyList<ProcedureSignoffRecord> ProcedureSignoffRecords { get; }
+    IReadOnlyList<ProcedureVersionAuthorAssignment> ProcedureVersionAuthorAssignments { get; }
+    IReadOnlyList<ProcedureStepRoleAssignment> ProcedureStepRoleAssignments { get; }
+    IReadOnlyList<ProcedureStepLocationAssignment> ProcedureStepLocationAssignments { get; }
+    IReadOnlyList<ProcedureStepAttachmentAssignment> ProcedureStepAttachmentAssignments { get; }
+    IReadOnlyList<ProcedureVersionSnapshotRecord> ProcedureVersionSnapshots { get; }
+    IReadOnlyList<ProcedureVersionDiffRecord> ProcedureVersionDiffRecords { get; }
     IReadOnlyList<PatientRef> PatientRefs { get; }
     IReadOnlyList<EncounterRef> EncounterRefs { get; }
     IReadOnlyList<TechnicalService> TechnicalServices { get; }
@@ -107,6 +113,12 @@ public interface IMedDataStore
     void AddProcedureDistributionRecipient(ProcedureDistributionRecipient recipient);
     void AddProcedureRevisionEntry(ProcedureRevisionEntry revision);
     void AddProcedureSignoffRecord(ProcedureSignoffRecord signoff);
+    void AddProcedureVersionAuthorAssignment(ProcedureVersionAuthorAssignment assignment);
+    void AddProcedureStepRoleAssignment(ProcedureStepRoleAssignment assignment);
+    void AddProcedureStepLocationAssignment(ProcedureStepLocationAssignment assignment);
+    void AddProcedureStepAttachmentAssignment(ProcedureStepAttachmentAssignment assignment);
+    void AddProcedureVersionSnapshot(ProcedureVersionSnapshotRecord snapshot);
+    void AddOrUpdateProcedureVersionDiff(ProcedureVersionDiffRecord diff);
 
     void AddPatientRef(PatientRef patient);
     void UpdatePatientRef(PatientRef patient);

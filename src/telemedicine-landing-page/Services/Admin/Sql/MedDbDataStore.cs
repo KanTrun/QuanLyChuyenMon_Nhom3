@@ -62,6 +62,12 @@ public sealed class MedDbDataStore : IMedDataStore
     public IReadOnlyList<ProcedureDistributionRecipient> ProcedureDistributionRecipients => _db.ProcedureDistributionRecipients.ToList();
     public IReadOnlyList<ProcedureRevisionEntry> ProcedureRevisionEntries => _db.ProcedureRevisionEntries.ToList();
     public IReadOnlyList<ProcedureSignoffRecord> ProcedureSignoffRecords => _db.ProcedureSignoffRecords.ToList();
+    public IReadOnlyList<ProcedureVersionAuthorAssignment> ProcedureVersionAuthorAssignments => _db.ProcedureVersionAuthorAssignments.ToList();
+    public IReadOnlyList<ProcedureStepRoleAssignment> ProcedureStepRoleAssignments => _db.ProcedureStepRoleAssignments.ToList();
+    public IReadOnlyList<ProcedureStepLocationAssignment> ProcedureStepLocationAssignments => _db.ProcedureStepLocationAssignments.ToList();
+    public IReadOnlyList<ProcedureStepAttachmentAssignment> ProcedureStepAttachmentAssignments => _db.ProcedureStepAttachmentAssignments.ToList();
+    public IReadOnlyList<ProcedureVersionSnapshotRecord> ProcedureVersionSnapshots => _db.ProcedureVersionSnapshots.ToList();
+    public IReadOnlyList<ProcedureVersionDiffRecord> ProcedureVersionDiffRecords => _db.ProcedureVersionDiffRecords.ToList();
     public IReadOnlyList<PatientRef> PatientRefs => _db.PatientRefs.ToList();
     public IReadOnlyList<EncounterRef> EncounterRefs => _db.EncounterRefs.ToList();
     public IReadOnlyList<TechnicalService> TechnicalServices => _db.TechnicalServices.ToList();
@@ -345,6 +351,25 @@ public sealed class MedDbDataStore : IMedDataStore
     public void AddProcedureDistributionRecipient(ProcedureDistributionRecipient recipient) { _db.ProcedureDistributionRecipients.Add(recipient); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProcedureRevisionEntry(ProcedureRevisionEntry revision) { _db.ProcedureRevisionEntries.Add(revision); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProcedureSignoffRecord(ProcedureSignoffRecord signoff) { _db.ProcedureSignoffRecords.Add(signoff); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureVersionAuthorAssignment(ProcedureVersionAuthorAssignment assignment) { _db.ProcedureVersionAuthorAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureStepRoleAssignment(ProcedureStepRoleAssignment assignment) { _db.ProcedureStepRoleAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureStepLocationAssignment(ProcedureStepLocationAssignment assignment) { _db.ProcedureStepLocationAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureStepAttachmentAssignment(ProcedureStepAttachmentAssignment assignment) { _db.ProcedureStepAttachmentAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureVersionSnapshot(ProcedureVersionSnapshotRecord snapshot) { _db.ProcedureVersionSnapshots.Add(snapshot); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddOrUpdateProcedureVersionDiff(ProcedureVersionDiffRecord diff)
+    {
+        var existing = _db.ProcedureVersionDiffRecords.FirstOrDefault(item => item.FromVersionId == diff.FromVersionId && item.ToVersionId == diff.ToVersionId);
+        if (existing is null)
+        {
+            _db.ProcedureVersionDiffRecords.Add(diff);
+        }
+        else
+        {
+            _db.ProcedureVersionDiffRecords.Entry(existing).CurrentValues.SetValues(diff);
+        }
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void RemoveProcedureAttachment(Guid attachmentId)
     {
         var existing = _db.ProcedureAttachments.FirstOrDefault(a => a.ProcedureAttachmentId == attachmentId)

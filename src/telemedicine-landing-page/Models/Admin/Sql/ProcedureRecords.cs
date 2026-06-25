@@ -112,6 +112,9 @@ public sealed record ProcedureVersion
 
     [Column("published_at")]
     public DateTime? PublishedAt { get; init; }
+
+    [Column("required_writer_signatures")]
+    public int RequiredWriterSignatures { get; init; } = 1;
 }
 
 /// <summary>Bước trong quy trình.</summary>
@@ -288,6 +291,36 @@ public sealed record ProcedureSignoffRecord
     public string? Note { get; init; }
 }
 
+/// <summary>Danh sach nguoi viet duoc chi dinh cho phien ban quy trinh.</summary>
+[Table("procedure_version_author_assignments", Schema = "med")]
+public sealed record ProcedureVersionAuthorAssignment
+{
+    [Key]
+    [Column("procedure_version_author_assignment_id")]
+    public Guid ProcedureVersionAuthorAssignmentId { get; init; } = Guid.NewGuid();
+
+    [Column("procedure_version_id")]
+    public required Guid ProcedureVersionId { get; init; }
+
+    [Column("signoff_role")]
+    public string SignoffRole { get; init; } = "writer";
+
+    [Column("display_order")]
+    public int DisplayOrder { get; init; }
+
+    [Column("assigned_user_id")]
+    public Guid AssignedUserId { get; init; }
+
+    [Column("assigned_username")]
+    public string? AssignedUsername { get; init; }
+
+    [Column("assigned_full_name")]
+    public string? AssignedFullName { get; init; }
+
+    [Column("created_at")]
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+}
+
 /// <summary>Tài liệu đính kèm của phiên bản quy trình.</summary>
 [Table("procedure_attachments", Schema = "med")]
 public sealed record ProcedureAttachment
@@ -322,6 +355,114 @@ public sealed record ProcedureAttachment
 
     [Column("uploaded_at")]
     public DateTime UploadedAt { get; init; } = DateTime.UtcNow;
+}
+
+/// <summary>Vai tro tham gia xu ly mot buoc quy trinh.</summary>
+[Table("procedure_step_role_assignments", Schema = "med")]
+public sealed record ProcedureStepRoleAssignment
+{
+    [Key]
+    [Column("procedure_step_role_assignment_id")]
+    public Guid ProcedureStepRoleAssignmentId { get; init; } = Guid.NewGuid();
+
+    [Column("procedure_step_id")]
+    public required Guid ProcedureStepId { get; init; }
+
+    [Column("role_id")]
+    public required Guid RoleId { get; init; }
+
+    [Column("display_order")]
+    public int DisplayOrder { get; init; }
+}
+
+/// <summary>Noi thuc hien mot buoc quy trinh.</summary>
+[Table("procedure_step_location_assignments", Schema = "med")]
+public sealed record ProcedureStepLocationAssignment
+{
+    [Key]
+    [Column("procedure_step_location_assignment_id")]
+    public Guid ProcedureStepLocationAssignmentId { get; init; } = Guid.NewGuid();
+
+    [Column("procedure_step_id")]
+    public required Guid ProcedureStepId { get; init; }
+
+    [Column("department_id")]
+    public required Guid DepartmentId { get; init; }
+
+    [Column("display_order")]
+    public int DisplayOrder { get; init; }
+}
+
+/// <summary>Tep/bieu mau duoc gan vao tung buoc quy trinh.</summary>
+[Table("procedure_step_attachment_assignments", Schema = "med")]
+public sealed record ProcedureStepAttachmentAssignment
+{
+    [Key]
+    [Column("procedure_step_attachment_assignment_id")]
+    public Guid ProcedureStepAttachmentAssignmentId { get; init; } = Guid.NewGuid();
+
+    [Column("procedure_step_id")]
+    public required Guid ProcedureStepId { get; init; }
+
+    [Column("procedure_attachment_id")]
+    public required Guid ProcedureAttachmentId { get; init; }
+
+    [Column("display_order")]
+    public int DisplayOrder { get; init; }
+}
+
+/// <summary>Snapshot bat bien cua mot phien ban quy trinh de doi chieu lich su.</summary>
+[Table("procedure_version_snapshots", Schema = "med")]
+public sealed record ProcedureVersionSnapshotRecord
+{
+    [Key]
+    [Column("procedure_version_snapshot_id")]
+    public Guid ProcedureVersionSnapshotId { get; init; } = Guid.NewGuid();
+
+    [Column("procedure_version_id")]
+    public required Guid ProcedureVersionId { get; init; }
+
+    [Column("snapshot_kind")]
+    public string SnapshotKind { get; init; } = "draft";
+
+    [Column("content_hash_sha256")]
+    public required string ContentHashSha256 { get; init; }
+
+    [Column("snapshot_json")]
+    public required string SnapshotJson { get; init; }
+
+    [Column("created_by")]
+    public Guid? CreatedBy { get; init; }
+
+    [Column("created_at")]
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+}
+
+/// <summary>Ket qua so sanh giua hai phien ban quy trinh.</summary>
+[Table("procedure_version_diff_records", Schema = "med")]
+public sealed record ProcedureVersionDiffRecord
+{
+    [Key]
+    [Column("procedure_version_diff_record_id")]
+    public Guid ProcedureVersionDiffRecordId { get; init; } = Guid.NewGuid();
+
+    [Column("procedure_id")]
+    public required Guid ProcedureId { get; init; }
+
+    [Column("from_version_id")]
+    public required Guid FromVersionId { get; init; }
+
+    [Column("to_version_id")]
+    public required Guid ToVersionId { get; init; }
+
+    [Column("diff_json")]
+    public required string DiffJson { get; init; }
+
+    [Column("created_by")]
+    public Guid? CreatedBy { get; init; }
+
+    [Column("created_at")]
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 }
 
 /// <summary>Ánh xạ quy trình với màn hình.</summary>
