@@ -167,6 +167,27 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void ClearProcedureVersionDocument(Guid versionId)
+    {
+        lock (_lock)
+        {
+            var stepIds = _procedureSteps
+                .Where(item => item.ProcedureVersionId == versionId)
+                .Select(item => item.ProcedureStepId)
+                .ToHashSet();
+            _procedureStepAttachmentAssignments.RemoveAll(item => stepIds.Contains(item.ProcedureStepId));
+            _procedureStepRoleAssignments.RemoveAll(item => stepIds.Contains(item.ProcedureStepId));
+            _procedureStepLocationAssignments.RemoveAll(item => stepIds.Contains(item.ProcedureStepId));
+            _procedureSteps.RemoveAll(item => item.ProcedureVersionId == versionId);
+            _procedureDocumentSections.RemoveAll(item => item.ProcedureVersionId == versionId);
+            _procedureDistributionRecipients.RemoveAll(item => item.ProcedureVersionId == versionId);
+            _procedureRevisionEntries.RemoveAll(item => item.ProcedureVersionId == versionId);
+            _procedureVersionAuthorAssignments.RemoveAll(item => item.ProcedureVersionId == versionId);
+            _procedureAttachments.RemoveAll(item => item.ProcedureVersionId == versionId);
+            RaiseStateChanged();
+        }
+    }
+
     public void AddProcedureStepRoleAssignment(ProcedureStepRoleAssignment assignment)
     {
         lock (_lock)

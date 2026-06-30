@@ -1,5 +1,6 @@
 using TelemedicineLandingPage.Models.Admin.Sql;
 using TelemedicineLandingPage.Services.Admin.Sql;
+using System.Text.Json;
 
 namespace TelemedicineLandingPage.Services.Admin;
 
@@ -9,11 +10,13 @@ public sealed class ProcedureSignoffService
     public static readonly string[] RequiredRoles = ["writer", "checker", "approver"];
     private readonly IMedDataStore _store;
     private readonly ProcedureDocumentSnapshotService _snapshots;
+    private readonly AuditTrailService? _audit;
 
-    public ProcedureSignoffService(IMedDataStore store, ProcedureDocumentSnapshotService snapshots)
+    public ProcedureSignoffService(IMedDataStore store, ProcedureDocumentSnapshotService snapshots, AuditTrailService? audit = null)
     {
         _store = store;
         _snapshots = snapshots;
+        _audit = audit;
     }
 
     public ProcedureSignoffRecord Sign(
@@ -51,6 +54,7 @@ public sealed class ProcedureSignoffService
             Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim()
         };
         _store.AddProcedureSignoffRecord(signoff);
+        AppendProcedureSignoffAudit(snapshot, signoff);
         return signoff;
     }
 
@@ -79,6 +83,50 @@ public sealed class ProcedureSignoffService
                 string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(signoff => signoff.SignedAt)
             .FirstOrDefault()?.SignerUserId;
+    }
+
+    public bool CanUserEditDraft(Guid versionId, Guid userId, out string? reason)
+    {
+        reason = null;
+        if (userId == Guid.Empty)
+        {
+            reason = "Chỉ người viết được phân công mới có thể chỉnh sửa bản nháp.";
+            return false;
+        }
+
+        try
+        {
+            var snapshot = _snapshots.GetSnapshot(versionId);
+            if (!string.Equals(snapshot.Version.StatusCode, "draft", StringComparison.OrdinalIgnoreCase))
+            {
+                reason = "Chỉ có thể chỉnh sửa phiên bản ở trạng thái bản nháp.";
+                return false;
+            }
+
+            var assignedWriterIds = snapshot.WriterAssignments
+                .Where(item => string.Equals(item.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase))
+                .Select(item => item.AssignedUserId)
+                .Distinct()
+                .ToList();
+            if (assignedWriterIds.Count == 0 || !assignedWriterIds.Contains(userId))
+            {
+                reason = "Tài khoản hiện tại không nằm trong danh sách người viết được phân công.";
+                return false;
+            }
+
+            if (HasUserCurrentSignoff(snapshot, "writer", userId))
+            {
+                reason = "Bạn đã ký trên nội dung hiện tại. Mở chế độ xem & ký nếu cần rà soát lại.";
+                return false;
+            }
+
+            return true;
+        }
+        catch (InvalidOperationException exception)
+        {
+            reason = exception.Message;
+            return false;
+        }
     }
 
     public bool CanUserSign(Guid versionId, string role, Guid userId, out string? reason)
@@ -210,6 +258,36 @@ public sealed class ProcedureSignoffService
         "approver" => "người phê duyệt",
         _ => role
     };
+
+    private void AppendProcedureSignoffAudit(ProcedureDocumentSnapshot snapshot, ProcedureSignoffRecord signoff)
+    {
+        if (_audit is null)
+            return;
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = signoff.SignerUserId,
+            ActorUsername = signoff.SignerUsername,
+            ActionCode = "sign",
+            TargetType = "procedure_version",
+            TargetId = signoff.ProcedureVersionId.ToString(),
+            DepartmentId = snapshot.Version.DepartmentId ?? snapshot.Procedure.OwnerDepartmentId,
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_signoff",
+                signoff.SignoffRole,
+                RoleLabel = RoleLabel(signoff.SignoffRole),
+                snapshot.Procedure.ProcedureId,
+                snapshot.Procedure.ProcedureCode,
+                ProcedureName = snapshot.Procedure.Name,
+                snapshot.Version.ProcedureVersionId,
+                snapshot.Version.VersionLabel,
+                VersionTitle = snapshot.Version.Title,
+                signoff.Note
+            })
+        });
+    }
 
     private static string ValidateSignatureImage(string? value)
     {

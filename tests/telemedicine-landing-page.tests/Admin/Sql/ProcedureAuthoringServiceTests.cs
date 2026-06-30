@@ -79,6 +79,62 @@ public sealed class ProcedureAuthoringServiceTests
     }
 
     [Fact]
+    public void CreateVersion_ThenSign_RecordsCurrentWriterSignoff()
+    {
+        var store = new MedDataStore();
+        var snapshots = new ProcedureDocumentSnapshotService(store);
+        var service = new ProcedureAuthoringService(store, snapshots);
+        var signoffs = new ProcedureSignoffService(store, snapshots);
+        var created = service.CreateVersion(CreateCommand());
+
+        signoffs.Sign(
+            created.Version.ProcedureVersionId,
+            "writer",
+            MedDataStoreSeed.AdminUserId,
+            "admin",
+            "Quản trị viên",
+            ValidSignature);
+        snapshots.PersistSnapshot(created.Version.ProcedureVersionId, "draft_signed", MedDataStoreSeed.AdminUserId);
+
+        var snapshot = snapshots.GetSnapshot(created.Version.ProcedureVersionId);
+        var writerSignoffs = snapshots.GetCurrentSignoffs(snapshot, "writer");
+        Assert.Contains(writerSignoffs, item => item.SignerUserId == MedDataStoreSeed.AdminUserId);
+        Assert.Equal(1, signoffs.GetOutstandingWriterSignatures(created.Version.ProcedureVersionId));
+        Assert.False(signoffs.CanUserSign(created.Version.ProcedureVersionId, "writer", MedDataStoreSeed.AdminUserId, out _));
+    }
+
+    [Fact]
+    public void UpdateDraft_AllowsSecondWriterToContinueEditingBeforeSigning()
+    {
+        var store = new MedDataStore();
+        var snapshots = new ProcedureDocumentSnapshotService(store);
+        var service = new ProcedureAuthoringService(store, snapshots);
+        var signoffs = new ProcedureSignoffService(store, snapshots);
+        var created = service.CreateVersion(CreateCommand());
+        signoffs.Sign(
+            created.Version.ProcedureVersionId,
+            "writer",
+            MedDataStoreSeed.AdminUserId,
+            "admin",
+            "Quản trị viên",
+            ValidSignature);
+
+        Assert.False(signoffs.CanUserEditDraft(created.Version.ProcedureVersionId, MedDataStoreSeed.AdminUserId, out _));
+        Assert.True(signoffs.CanUserEditDraft(created.Version.ProcedureVersionId, MedDataStoreSeed.TruongKhoaNoiId, out _));
+
+        var updated = service.UpdateDraft(CreateCommand(
+            created.Procedure.ProcedureId,
+            versionId: created.Version.ProcedureVersionId,
+            content: "Nội dung v02 do người viết thứ hai"));
+
+        Assert.Equal("Nội dung v02 do người viết thứ hai",
+            store.ProcedureDocumentSections.Single(item => item.ProcedureVersionId == updated.Version.ProcedureVersionId).ContentText);
+        Assert.False(signoffs.HasCurrentSignoff(updated.Version.ProcedureVersionId, "writer"));
+    }
+
+    private const string ValidSignature = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+
+    [Fact]
     public void CreateVersion_LinksStepToUploadedFormAttachment()
     {
         var store = new MedDataStore();
@@ -115,13 +171,15 @@ public sealed class ProcedureAuthoringServiceTests
     private static ProcedureAuthoringCommand CreateCommand(
         Guid? procedureId = null,
         Guid? sourceVersionId = null,
+        Guid? versionId = null,
+        string? content = null,
         IReadOnlyList<ProcedureStoredAttachmentDraft>? attachments = null,
         IReadOnlyList<ProcedureFlowStepDraft>? steps = null)
     {
         var isUpdate = procedureId.HasValue;
         var sourceClientId = Guid.NewGuid();
         return new ProcedureAuthoringCommand(
-            Guid.NewGuid(),
+            versionId ?? Guid.NewGuid(),
             procedureId,
             sourceVersionId,
             "QT.TEST.VERSION",
@@ -143,7 +201,7 @@ public sealed class ProcedureAuthoringServiceTests
                 Number = "I",
                 Title = "Mục đích",
                 Kind = "purpose",
-                Content = isUpdate ? "Nội dung v02" : "Nội dung v01"
+                Content = content ?? (isUpdate ? "Nội dung v02" : "Nội dung v01")
             }],
             [new ProcedureRecipientDraft { Name = "Khoa Nội" }],
             [new ProcedureRevisionDraft { Summary = isUpdate ? "Cập nhật v02" : "Ban hành v01" }],

@@ -261,34 +261,70 @@
     private static string ShortId(string value)
         => value.Length <= 8 ? value : value[..8];
 
-    private static string DescribeLog(AuditLog log)
+    private string DescribeLog(AuditLog log)
     {
         var subject = TargetLabel(log.TargetType);
+        var targetName = ResolveTargetName(log);
         var changes = DescribeChange(log.BeforeJson, log.AfterJson);
         var reason = ReadJsonValue(log.MetadataJson, "reason");
+        var roleLabel = ReadJsonValue(log.MetadataJson, "RoleLabel") ?? ReadJsonValue(log.MetadataJson, "roleLabel");
+        var versionLabel = ReadJsonValue(log.MetadataJson, "VersionLabel") ?? ReadJsonValue(log.AfterJson, "version_label");
+        var versionTitle = ReadJsonValue(log.MetadataJson, "VersionTitle")
+            ?? ReadJsonValue(log.AfterJson, "title")
+            ?? ReadJsonValue(log.BeforeJson, "title");
+        var procedureCode = ReadJsonValue(log.MetadataJson, "ProcedureCode") ?? ReadJsonValue(log.AfterJson, "procedure_code");
+        var procedureName = ReadJsonValue(log.MetadataJson, "ProcedureName")
+            ?? ReadJsonValue(log.AfterJson, "name")
+            ?? ReadJsonValue(log.BeforeJson, "name");
+        var fromState = ReadJsonValue(log.MetadataJson, "FromState");
+        var toState = ReadJsonValue(log.MetadataJson, "ToState");
+        var eventCode = ReadJsonValue(log.MetadataJson, "Event");
+        var descriptor = BuildProcedureDescriptor(procedureCode, procedureName, versionLabel, versionTitle, targetName, subject);
 
         return log.ActionCode.ToLowerInvariant() switch
         {
-            "create" => $"Tạo mới {subject}.",
-            "update" => string.IsNullOrWhiteSpace(changes) ? $"Cập nhật {subject}." : changes,
-            "archive" => $"Lưu trữ {subject}.",
+            "create" when IsProcedureVersionTarget(log.TargetType) =>
+                $"Tạo phiên bản {versionLabel ?? targetName} cho {descriptor}.",
+            "create" when IsProcedureTarget(log.TargetType) =>
+                $"Tạo quy trình {descriptor}.",
+            "create" => $"Tạo mới {descriptor}.",
+            "update" when string.Equals(eventCode, "procedure_workflow", StringComparison.OrdinalIgnoreCase)
+                || (!string.IsNullOrWhiteSpace(fromState) && !string.IsNullOrWhiteSpace(toState)) =>
+                $"Chuyển trạng thái {descriptor} từ {StatusLabel(fromState!)} sang {StatusLabel(toState!)}.",
+            "update" when IsProcedureVersionTarget(log.TargetType) =>
+                string.IsNullOrWhiteSpace(changes) ? $"Cập nhật thông tin phiên bản {descriptor}." : $"Cập nhật phiên bản {descriptor}: {changes}",
+            "update" when IsProcedureTarget(log.TargetType) =>
+                string.IsNullOrWhiteSpace(changes) ? $"Cập nhật quy trình {descriptor}." : $"Cập nhật quy trình {descriptor}: {changes}",
+            "update" => string.IsNullOrWhiteSpace(changes) ? $"Cập nhật {descriptor}." : changes,
+            "archive" => $"Lưu trữ {descriptor}.",
             "delete" => $"Lưu trữ hoặc xoá {subject}.",
-            "restore" => $"Khôi phục {subject}.",
-            "submit" => $"Gửi {subject} sang phê duyệt.",
-            "approve" or "publish" => $"Phê duyệt và ban hành {subject}.",
-            "reject" => string.IsNullOrWhiteSpace(reason) ? $"Từ chối {subject}." : $"Từ chối {subject}: {reason}.",
-            "revoke" or "withdraw" => string.IsNullOrWhiteSpace(reason) ? $"Thu hồi {subject}." : $"Thu hồi {subject}: {reason}.",
-            _ => $"{ActionLabel(log.ActionCode)} {subject}."
+            "restore" => $"Khôi phục {descriptor}.",
+            "submit" => $"Gửi {descriptor} sang bước phê duyệt.",
+            "approve" or "publish" => $"Phê duyệt và ban hành {descriptor}.",
+            "sign" when string.Equals(eventCode, "procedure_signoff", StringComparison.OrdinalIgnoreCase) =>
+                $"Ghi nhận chữ ký {roleLabel ?? "nội bộ"} cho {descriptor}.",
+            "sign" => $"Ghi nhận chữ ký cho {descriptor}.",
+            "reject" => string.IsNullOrWhiteSpace(reason) ? $"Từ chối {descriptor}." : $"Từ chối {descriptor}: {reason}.",
+            "revoke" or "withdraw" => string.IsNullOrWhiteSpace(reason) ? $"Thu hồi {descriptor}." : $"Thu hồi {descriptor}: {reason}.",
+            "rollback" => string.IsNullOrWhiteSpace(reason) ? $"Khôi phục hiệu lực {descriptor}." : $"Khôi phục hiệu lực {descriptor}: {reason}.",
+            _ => $"{ActionLabel(log.ActionCode)} {descriptor}."
         };
     }
 
     private static string DescribeChange(string? beforeJson, string? afterJson)
     {
+        var beforeTitle = ReadJsonValue(beforeJson, "title");
+        var afterTitle = ReadJsonValue(afterJson, "title");
+        if (!string.IsNullOrWhiteSpace(beforeTitle) && !string.IsNullOrWhiteSpace(afterTitle) && !string.Equals(beforeTitle, afterTitle, StringComparison.Ordinal))
+        {
+            return $"đổi tiêu đề từ \"{beforeTitle}\" sang \"{afterTitle}\"";
+        }
+
         var beforeStatus = ReadJsonValue(beforeJson, "status") ?? ReadJsonValue(beforeJson, "statusCode") ?? ReadJsonValue(beforeJson, "StatusCode");
         var afterStatus = ReadJsonValue(afterJson, "status") ?? ReadJsonValue(afterJson, "statusCode") ?? ReadJsonValue(afterJson, "StatusCode");
         if (!string.IsNullOrWhiteSpace(beforeStatus) && !string.IsNullOrWhiteSpace(afterStatus) && beforeStatus != afterStatus)
         {
-            return $"Đổi trạng thái từ {StatusLabel(beforeStatus)} sang {StatusLabel(afterStatus)}.";
+            return $"đổi trạng thái từ {StatusLabel(beforeStatus)} sang {StatusLabel(afterStatus)}";
         }
 
         return string.Empty;
@@ -324,6 +360,7 @@
         "submit" => "Gửi phê duyệt",
         "approve" => "Phê duyệt",
         "publish" => "Ban hành",
+        "sign" => "Ký nội bộ",
         "complete_order" => "Hoàn thành chỉ định",
         "cancel_order" => "Hủy chỉ định",
         "create_order" => "Tạo chỉ định",
@@ -380,6 +417,40 @@
         => !string.IsNullOrWhiteSpace(log.BeforeJson)
            || !string.IsNullOrWhiteSpace(log.AfterJson)
            || !string.IsNullOrWhiteSpace(log.MetadataJson);
+
+    private static bool IsProcedureTarget(string targetType)
+        => targetType.Equals("procedure", StringComparison.OrdinalIgnoreCase)
+           || targetType.Equals("professionalprocedure", StringComparison.OrdinalIgnoreCase)
+           || targetType.Equals("professional_procedure", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsProcedureVersionTarget(string targetType)
+        => targetType.Equals("procedureversion", StringComparison.OrdinalIgnoreCase)
+           || targetType.Equals("procedure_version", StringComparison.OrdinalIgnoreCase);
+
+    private static string BuildProcedureDescriptor(
+        string? procedureCode,
+        string? procedureName,
+        string? versionLabel,
+        string? versionTitle,
+        string targetName,
+        string subject)
+    {
+        if (!string.IsNullOrWhiteSpace(procedureCode) && !string.IsNullOrWhiteSpace(procedureName))
+        {
+            if (!string.IsNullOrWhiteSpace(versionLabel))
+                return $"quy trình {procedureCode} - {procedureName}, phiên bản {versionLabel}";
+
+            return $"quy trình {procedureCode} - {procedureName}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(versionLabel) && !string.IsNullOrWhiteSpace(versionTitle))
+            return $"phiên bản {versionLabel} - {versionTitle}";
+
+        if (!string.IsNullOrWhiteSpace(targetName) && targetName != "—")
+            return targetName;
+
+        return subject.ToLowerInvariant();
+    }
 
     private static RenderFragment RenderJsonBlock(string title, string? json) => builder =>
     {

@@ -352,6 +352,31 @@ public sealed class MedDbDataStore : IMedDataStore
     public void AddProcedureRevisionEntry(ProcedureRevisionEntry revision) { _db.ProcedureRevisionEntries.Add(revision); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProcedureSignoffRecord(ProcedureSignoffRecord signoff) { _db.ProcedureSignoffRecords.Add(signoff); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProcedureVersionAuthorAssignment(ProcedureVersionAuthorAssignment assignment) { _db.ProcedureVersionAuthorAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }
+    public void ClearProcedureVersionDocument(Guid versionId)
+    {
+        var stepIds = _db.ProcedureSteps
+            .Where(item => item.ProcedureVersionId == versionId)
+            .Select(item => item.ProcedureStepId)
+            .ToList();
+        if (stepIds.Count > 0)
+        {
+            _db.ProcedureStepAttachmentAssignments.RemoveRange(
+                _db.ProcedureStepAttachmentAssignments.Where(item => stepIds.Contains(item.ProcedureStepId)));
+            _db.ProcedureStepRoleAssignments.RemoveRange(
+                _db.ProcedureStepRoleAssignments.Where(item => stepIds.Contains(item.ProcedureStepId)));
+            _db.ProcedureStepLocationAssignments.RemoveRange(
+                _db.ProcedureStepLocationAssignments.Where(item => stepIds.Contains(item.ProcedureStepId)));
+            _db.ProcedureSteps.RemoveRange(_db.ProcedureSteps.Where(item => item.ProcedureVersionId == versionId));
+        }
+
+        _db.ProcedureDocumentSections.RemoveRange(_db.ProcedureDocumentSections.Where(item => item.ProcedureVersionId == versionId));
+        _db.ProcedureDistributionRecipients.RemoveRange(_db.ProcedureDistributionRecipients.Where(item => item.ProcedureVersionId == versionId));
+        _db.ProcedureRevisionEntries.RemoveRange(_db.ProcedureRevisionEntries.Where(item => item.ProcedureVersionId == versionId));
+        _db.ProcedureVersionAuthorAssignments.RemoveRange(_db.ProcedureVersionAuthorAssignments.Where(item => item.ProcedureVersionId == versionId));
+        _db.ProcedureAttachments.RemoveRange(_db.ProcedureAttachments.Where(item => item.ProcedureVersionId == versionId));
+        _db.SaveChanges();
+        RaiseStateChanged();
+    }
     public void AddProcedureStepRoleAssignment(ProcedureStepRoleAssignment assignment) { _db.ProcedureStepRoleAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProcedureStepLocationAssignment(ProcedureStepLocationAssignment assignment) { _db.ProcedureStepLocationAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddProcedureStepAttachmentAssignment(ProcedureStepAttachmentAssignment assignment) { _db.ProcedureStepAttachmentAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }

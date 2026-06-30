@@ -23,6 +23,12 @@
                 Ký người viết
             </button>
         }
+        else if (CanCurrentUserEditDraft)
+        {
+            <a class="admin-btn admin-btn-primary" href="@EditDraftHref">
+                Tiếp tục soạn thảo
+            </a>
+        }
         else if (CanCurrentUserSignApprover)
         {
             <button type="button" class="admin-btn admin-btn-primary" @onclick='() => OnSignRequested.InvokeAsync("approver")'>
@@ -77,6 +83,10 @@
                                         <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => OnSignRequested.InvokeAsync("writer")'>
                                             Ký người viết
                                         </button>
+                                    }
+                                    else if (writerRow.CanEdit)
+                                    {
+                                        <a class="admin-btn admin-btn-sm admin-btn-ghost" href="@EditDraftHref">Soạn tiếp</a>
                                     }
                                 </td>
                             </tr>
@@ -474,6 +484,21 @@
         }
     }
 
+    private bool CanCurrentUserEditDraft
+    {
+        get
+        {
+            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            return userId != Guid.Empty
+                && Signoffs.CanUserEditDraft(ProcedureVersionId, userId, out _);
+        }
+    }
+
+    private string EditDraftHref
+        => _snapshot is null
+            ? "#"
+            : $"/qlcm/quy-trinh/{_snapshot.Procedure.ProcedureId}/phien-ban/{_snapshot.Version.ProcedureVersionId}/chinh-sua";
+
     private bool CanCurrentUserSignApprover
     {
         get
@@ -521,13 +546,17 @@
                 var canSign = !signed
                     && writer.AssignedUserId == currentUserId
                     && Signoffs.CanUserSign(ProcedureVersionId, "writer", currentUserId, out _);
+                var canEdit = !signed
+                    && writer.AssignedUserId == currentUserId
+                    && Signoffs.CanUserEditDraft(ProcedureVersionId, currentUserId, out _);
                 return new WriterSignoffRow(
                     WriterName(writer),
                     writer.DisplayOrder,
                     signed ? "Đã ký" : "Chưa ký",
                     signed ? "tone-success" : "tone-warning",
                     signed ? AdminDateTimeDisplay.ShortDateTime(signoff!.SignedAt) : "—",
-                    canSign);
+                    canSign,
+                    canEdit);
             })
             .ToList();
     }
@@ -710,7 +739,7 @@
     private static string FormatBytes(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
 
     private sealed record SignoffRow(string RoleLabel, string StatusLabel, string Tone, string SignerLabel, string SignedAtLabel);
-    private sealed record WriterSignoffRow(string WriterName, int DisplayOrder, string StatusLabel, string Tone, string SignedAtLabel, bool CanSign);
+    private sealed record WriterSignoffRow(string WriterName, int DisplayOrder, string StatusLabel, string Tone, string SignedAtLabel, bool CanSign, bool CanEdit);
     private sealed record ProcedureDiffMetadataChange(string Label, string Before, string After);
     private sealed record ProcedureDiffListGroup(string Title, string Kicker, IReadOnlyList<string> Added, IReadOnlyList<string> Removed, string Summary);
     private sealed record ProcedureDiffView(

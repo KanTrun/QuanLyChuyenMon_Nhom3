@@ -18,7 +18,9 @@ public sealed class ProcedureVersionWorkflowGuard : IWorkflowGuard<ProcedureVers
         ("rejected", "archived"),
         ("active", "superseded"),
         ("active", "archived"),
-        ("archived", "draft")
+        ("archived", "draft"),
+        ("superseded", "active"),
+        ("archived", "active")
     });
 
     private readonly AuditTrailService _audit;
@@ -50,7 +52,12 @@ public sealed class ProcedureVersionWorkflowGuard : IWorkflowGuard<ProcedureVers
             TargetId = entity.ProcedureVersionId.ToString(),
             MetadataJson = JsonSerializer.Serialize(new
             {
+                Event = "procedure_workflow",
                 Workflow = "procedure_version",
+                entity.ProcedureId,
+                entity.ProcedureVersionId,
+                entity.VersionLabel,
+                VersionTitle = entity.Title,
                 FromState = fromState,
                 ToState = toState,
                 Reason = reason

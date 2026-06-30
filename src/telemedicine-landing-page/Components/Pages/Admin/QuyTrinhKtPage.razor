@@ -11,6 +11,7 @@
 @inject AdminActionGuard Guard
 @inject AuditTrailService Audit
 @inject ProcedureSignoffService Signoffs
+@inject ProcedureDocumentSnapshotService Snapshots
 @inject IProcedureDocumentExportService ProcedureExport
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
@@ -427,7 +428,15 @@
         var draft = LatestDraftVersion(row.Procedure.ProcedureId);
         if (draft is not null)
         {
-            Navigation.NavigateTo(ReviewDraftUrl(row.Procedure.ProcedureId, draft.ProcedureVersionId));
+            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            if (Signoffs.CanUserEditDraft(draft.ProcedureVersionId, userId, out _))
+            {
+                Navigation.NavigateTo(EditDraftUrl(row.Procedure.ProcedureId, draft.ProcedureVersionId));
+            }
+            else
+            {
+                Navigation.NavigateTo(ReviewDraftUrl(row.Procedure.ProcedureId, draft.ProcedureVersionId));
+            }
             return;
         }
 
@@ -436,6 +445,9 @@
 
     private static string ReviewDraftUrl(Guid procedureId, Guid versionId)
         => $"/qlcm/quy-trinh/{procedureId}/phien-ban/{versionId}";
+
+    private static string EditDraftUrl(Guid procedureId, Guid versionId)
+        => $"/qlcm/quy-trinh/{procedureId}/phien-ban/{versionId}/chinh-sua";
 
     private Sql.ProcedureVersion? LatestDraftVersion(Guid procedureId)
         => Store.ProcedureVersions
@@ -581,6 +593,7 @@
                 UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username,
                 signatureImageDataUrl,
                 "Chữ ký tay trực tiếp nội bộ");
+            Snapshots.PersistSnapshot(_signTarget.ProcedureVersionId, "draft_signed", userId);
 
             var outstandingWriters = _signRole == "writer"
                 ? Signoffs.GetOutstandingWriterSignatures(_signTarget.ProcedureVersionId)

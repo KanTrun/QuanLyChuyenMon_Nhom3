@@ -90,6 +90,22 @@ public sealed class ProcedureDocumentLifecycleTests : IDisposable
         Assert.Null(approverReason);
     }
 
+    [Fact]
+    public void Sign_AppendsBusinessAuditWithRoleMetadata()
+    {
+        var (versionId, _, signoffs) = CreateCompleteDocument();
+
+        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Người soạn", ValidSignature);
+
+        var audit = _db.AuditLogs
+            .Where(item => item.ActionCode == "sign" && item.TargetId == versionId.ToString())
+            .OrderByDescending(item => item.OccurredAt)
+            .First();
+
+        Assert.Contains("\"Event\":\"procedure_signoff\"", audit.MetadataJson, StringComparison.Ordinal);
+        Assert.Contains("\"SignoffRole\":\"writer\"", audit.MetadataJson, StringComparison.Ordinal);
+    }
+
     public void Dispose() => _db.Dispose();
 
     private (Guid VersionId, ProcedureLifecycleService Lifecycle, ProcedureSignoffService Signoffs) CreateCompleteDocument()
@@ -169,10 +185,10 @@ public sealed class ProcedureDocumentLifecycleTests : IDisposable
         });
         _db.SaveChanges();
 
+        var audit = new AuditTrailService(_db);
         var store = new MedDbDataStore(_db);
         var snapshots = new ProcedureDocumentSnapshotService(store);
-        var signoffs = new ProcedureSignoffService(store, snapshots);
-        var audit = new AuditTrailService(_db);
+        var signoffs = new ProcedureSignoffService(store, snapshots, audit);
         var lifecycle = new ProcedureLifecycleService(_db, audit, new ProcedureVersionWorkflowGuard(audit), snapshots);
         return (version.ProcedureVersionId, lifecycle, signoffs);
     }

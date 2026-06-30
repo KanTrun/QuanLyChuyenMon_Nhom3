@@ -72,6 +72,54 @@ public sealed class ProcedureAuthoringService
         return new ProcedureAuthoringResult(procedure, version);
     }
 
+    public ProcedureAuthoringResult UpdateDraft(ProcedureAuthoringCommand command)
+    {
+        if (command.ProcedureId is not { } procedureId)
+            throw new InvalidOperationException("Cập nhật bản nháp phải gắn với một quy trình hiện có.");
+
+        var version = _store.ProcedureVersions.FirstOrDefault(item => item.ProcedureVersionId == command.VersionId)
+            ?? throw new InvalidOperationException("Không tìm thấy phiên bản nháp cần cập nhật.");
+        if (version.ProcedureId != procedureId)
+            throw new InvalidOperationException("Phiên bản nháp không thuộc quy trình đang chỉnh sửa.");
+        if (!string.Equals(version.StatusCode, "draft", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Chỉ có thể chỉnh sửa phiên bản ở trạng thái bản nháp.");
+
+        var procedure = _store.Procedures.First(item => item.ProcedureId == procedureId);
+        var sourcePdf = command.Attachments.LastOrDefault(item => item.AttachmentType == "source_pdf");
+        var requiredWriters = Math.Max(1, command.WriterAssignments
+            .Select(item => ParseGuid(item.UserId))
+            .Where(item => item.HasValue)
+            .Select(item => item!.Value)
+            .Distinct()
+            .Count());
+        var updatedProcedure = procedure with
+        {
+            Name = command.Name.Trim(),
+            ProcedureType = command.ProcedureType,
+            OwnerDepartmentId = command.DepartmentId,
+            Description = command.Description
+        };
+        var updatedVersion = version with
+        {
+            DepartmentId = command.DepartmentId,
+            Title = $"{updatedProcedure.Name} - {version.VersionLabel ?? FormatVersionLabel(version.VersionNo)}",
+            Summary = JsonSerializer.Serialize(new { note = command.SummaryText ?? "Cập nhật bản nháp quy trình" }),
+            IssueDate = command.IssueDate,
+            IssueNumber = command.IssueNumber,
+            SourcePdfFileName = sourcePdf?.FileName ?? version.SourcePdfFileName,
+            SourcePdfChecksumSha256 = sourcePdf?.ChecksumSha256 ?? version.SourcePdfChecksumSha256,
+            RequiredWriterSignatures = requiredWriters
+        };
+
+        _store.UpdateProcedure(updatedProcedure);
+        _store.UpdateProcedureVersion(updatedVersion);
+        _store.ClearProcedureVersionDocument(version.ProcedureVersionId);
+        PersistDocument(command, updatedVersion);
+        PersistWriterAssignments(command, updatedVersion);
+        _snapshots?.PersistSnapshot(updatedVersion.ProcedureVersionId, "draft", command.UserId);
+        return new ProcedureAuthoringResult(updatedProcedure, updatedVersion);
+    }
+
     private ProfessionalProcedure GetOrCreateProcedure(ProcedureAuthoringCommand command)
     {
         if (command.ProcedureId is { } procedureId)

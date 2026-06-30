@@ -17,6 +17,7 @@ public sealed class NavGate
         ["/admin/quy-trinh"] = "/qlcm/quy-trinh",
         ["/admin/quy-trinh/tao"] = "/qlcm/quy-trinh/tao",
         ["/admin/quy-trinh/phe-duyet"] = "/qlcm/quy-trinh/phe-duyet",
+        ["/admin/quy-trinh/lich-su"] = "/qlcm/quy-trinh/lich-su",
         ["/admin/danh-muc"] = "/qlcm/danh-muc",
         ["/admin/phac-do"] = "/qlcm/phac-do",
         ["/admin/bao-cao"] = "/qlcm/bao-cao",
@@ -35,6 +36,7 @@ public sealed class NavGate
         ["/admin/to-chuc"] = new[] { "SCR_ORG_USERS:VIEW", "PERM_PERMISSIONS_view" },
         ["/admin/quy-trinh/tao"] = new[] { "SCR_PROCEDURES:CREATE", "PERM_PROCEDURES_create" },
         ["/admin/quy-trinh/phe-duyet"] = new[] { "SCR_PROCEDURES:APPROVE", "PERM_PROCEDURES_approve" },
+        ["/admin/quy-trinh/lich-su"] = new[] { "SCR_PROCEDURES:VIEW", "PERM_PROCEDURES_view" },
         ["/admin/quy-trinh"] = new[] { "SCR_PROCEDURES:VIEW", "PERM_PROCEDURES_view" },
         ["/admin/phan-quyen"] = new[] { "SCR_PERMISSIONS:VIEW", "PERM_PERMISSIONS_view" },
         ["/admin/bao-cao/tieu-thu"] = new[] { "SCR_REPORT_CONSUMPTION:VIEW", "REPORTS:VIEW" },
@@ -126,6 +128,11 @@ public sealed class NavGate
         if (IsProcedureUpdateRoute(normalizedRoute))
         {
             return new[] { "SCR_PROCEDURES:UPDATE", "PERM_PROCEDURES_update" };
+        }
+
+        if (IsProcedureVersionRoute(normalizedRoute))
+        {
+            return new[] { "SCR_PROCEDURES:VIEW", "PERM_PROCEDURES_view" };
         }
 
         string[]? matchedPermissions = null;
@@ -257,5 +264,28 @@ public sealed class NavGate
                string.Equals(segments[1], "quy-trinh", StringComparison.OrdinalIgnoreCase) &&
                Guid.TryParse(segments[2], out _) &&
                string.Equals(segments[3], "cap-nhat", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsProcedureVersionRoute(string route)
+    {
+        var segments = route.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length < 4 ||
+            !string.Equals(segments[0], "admin", StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(segments[1], "quy-trinh", StringComparison.OrdinalIgnoreCase) ||
+            !Guid.TryParse(segments[2], out _))
+        {
+            return false;
+        }
+
+        if (segments.Length == 4 &&
+            string.Equals(segments[3], "lich-su", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return (segments.Length == 5 || segments.Length == 6) &&
+               string.Equals(segments[3], "phien-ban", StringComparison.OrdinalIgnoreCase) &&
+               Guid.TryParse(segments[4], out _) &&
+               (segments.Length == 5 || string.Equals(segments[5], "chinh-sua", StringComparison.OrdinalIgnoreCase));
     }
 }

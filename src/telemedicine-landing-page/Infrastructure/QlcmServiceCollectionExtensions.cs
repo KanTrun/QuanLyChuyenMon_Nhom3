@@ -166,7 +166,10 @@ public static class QlcmServiceCollectionExtensions
                 sp.GetRequiredService<IWorkflowGuard<ProcedureVersion, string>>(),
                 sp.GetRequiredService<ProcedureDocumentSnapshotService>(),
                 sp.GetRequiredService<IMedDataChangeBus>()));
-        services.AddScoped<ProcedureAuthoringService>();
+        services.AddScoped<ProcedureAuthoringService>(sp =>
+            new ProcedureAuthoringService(
+                sp.GetRequiredService<IMedDataStore>(),
+                sp.GetRequiredService<ProcedureDocumentSnapshotService>()));
         services.AddScoped<ProcedureDocumentSnapshotService>();
         services.AddScoped<ProcedureSignoffService>();
         services.AddScoped<IProcedureDocumentExportService, ProcedureDocumentExportService>();
@@ -178,6 +181,7 @@ public static class QlcmServiceCollectionExtensions
         services.AddScoped<IClinicalProtocolSuggestionService, ClinicalProtocolSuggestionService>();
         services.AddScoped<IClinicalExportService, ClinicalExportService>();
         services.AddScoped<ICurrentUserContext, CurrentUserContext>();
+        services.AddScoped<BrowserSessionCircuitState>();
         services.AddScoped<AdminActionGuard>();
         services.AddScoped<BrowserSessionService>();
         services.AddScoped<NavGate>();

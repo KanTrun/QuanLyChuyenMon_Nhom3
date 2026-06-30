@@ -72,20 +72,44 @@ public sealed class ProcedureDocumentSnapshotService
         var canonical = new
         {
             Procedure = new { snapshot.Procedure.ProcedureCode, snapshot.Procedure.Name, snapshot.Procedure.ProcedureType, snapshot.Procedure.OwnerDepartmentId, snapshot.Procedure.Description },
-            Version = new { snapshot.Version.VersionNo, snapshot.Version.VersionLabel, snapshot.Version.Title, snapshot.Version.Summary, snapshot.Version.ChangeReason, snapshot.Version.DepartmentId, snapshot.Version.IssueDate, snapshot.Version.IssueNumber, snapshot.Version.SourcePdfFileName, snapshot.Version.SourcePdfChecksumSha256, snapshot.Version.RequiredWriterSignatures },
+            Version = new
+            {
+                snapshot.Version.VersionNo,
+                snapshot.Version.VersionLabel,
+                snapshot.Version.Title,
+                Summary = NormalizeHashText(snapshot.Version.Summary),
+                snapshot.Version.ChangeReason,
+                snapshot.Version.DepartmentId,
+                IssueDate = ToHashDate(snapshot.Version.IssueDate),
+                snapshot.Version.IssueNumber,
+                snapshot.Version.SourcePdfFileName,
+                snapshot.Version.SourcePdfChecksumSha256,
+                snapshot.Version.RequiredWriterSignatures
+            },
             Writers = snapshot.WriterAssignments.Select(item => new { item.DisplayOrder, item.AssignedUserId, item.AssignedUsername, item.AssignedFullName, item.SignoffRole }),
-            Sections = snapshot.Sections.Select(s => new { s.SectionOrder, s.SectionNumber, s.Title, s.SectionKind, s.ContentText, s.IsRequired }),
+            Sections = snapshot.Sections.Select(s => new { s.SectionOrder, s.SectionNumber, s.Title, s.SectionKind, ContentText = NormalizeHashText(s.ContentText), s.IsRequired }),
             Recipients = snapshot.Recipients.Select(r => new { r.DisplayOrder, r.RecipientName, r.IsMarked }),
-            Revisions = snapshot.Revisions.Select(r => new { r.DisplayOrder, r.RevisionDate, r.PageRef, r.SectionRef, r.Summary }),
-            Steps = snapshot.Steps.Select(s => new { s.StepNo, s.StepCode, s.Name, s.Description, s.ResponsibilityText, s.FlowShapeCode, s.FormReferenceText, s.FormAttachmentId, s.DetailSectionNumber, s.StandardDurationMinutes, s.IsRequired }),
+            Revisions = snapshot.Revisions.Select(r => new { r.DisplayOrder, RevisionDate = ToHashDate(r.RevisionDate), r.PageRef, r.SectionRef, r.Summary }),
+            Steps = snapshot.Steps.Select(s => new { s.StepNo, s.StepCode, s.Name, Description = NormalizeHashText(s.Description), ResponsibilityText = NormalizeHashText(s.ResponsibilityText), s.FlowShapeCode, FormReferenceText = NormalizeHashText(s.FormReferenceText), s.FormAttachmentId, s.DetailSectionNumber, s.StandardDurationMinutes, s.IsRequired }),
             StepRoles = snapshot.StepRoleAssignments.Select(item => new { item.ProcedureStepId, item.RoleId, item.DisplayOrder }),
             StepLocations = snapshot.StepLocationAssignments.Select(item => new { item.ProcedureStepId, item.DepartmentId, item.DisplayOrder }),
             StepAttachments = snapshot.StepAttachmentAssignments.Select(item => new { item.ProcedureStepId, item.ProcedureAttachmentId, item.DisplayOrder }),
             Attachments = snapshot.Attachments.Select(a => new { a.AttachmentType, a.FileName, a.FileUri, a.MimeType, a.FileSizeBytes, a.ChecksumSha256 })
         };
-        var json = JsonSerializer.Serialize(canonical, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var json = JsonSerializer.Serialize(canonical, HashJsonOptions);
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json))).ToLowerInvariant();
     }
+
+    private static readonly JsonSerializerOptions HashJsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = false
+    };
+
+    private static string? NormalizeHashText(string? value)
+        => string.IsNullOrWhiteSpace(value) ? value : value.Trim();
+
+    private static string? ToHashDate(DateTime? value)
+        => value.HasValue ? DateOnly.FromDateTime(value.Value).ToString("yyyy-MM-dd") : null;
 
     public ProcedureDocumentReadiness CheckReadiness(Guid versionId, bool requireSignoffs)
     {
@@ -285,13 +309,25 @@ public sealed class ProcedureDocumentSnapshotService
     }
 
     private static JsonObject BuildTextChange(string label, string? before, string? after)
-        => new()
+    {
+        var normalizedBefore = FormatDiffField(label, before);
+        var normalizedAfter = FormatDiffField(label, after);
+        return new JsonObject
         {
             ["label"] = label,
-            ["before"] = before ?? string.Empty,
-            ["after"] = after ?? string.Empty,
-            ["changed"] = !string.Equals(before ?? string.Empty, after ?? string.Empty, StringComparison.Ordinal)
+            ["before"] = normalizedBefore,
+            ["after"] = normalizedAfter,
+            ["changed"] = !string.Equals(normalizedBefore, normalizedAfter, StringComparison.Ordinal)
         };
+    }
+
+    private static string FormatDiffField(string label, string? value)
+    {
+        if (string.Equals(label, "Tóm tắt", StringComparison.Ordinal))
+            return ProcedureVersionSummaryFormatter.Display(value);
+
+        return ProcedureVersionSummaryFormatter.NormalizeDisplayText(value);
+    }
 
     private static JsonObject BuildListChange(IEnumerable<string> before, IEnumerable<string> after)
     {

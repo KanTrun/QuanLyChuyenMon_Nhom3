@@ -2,6 +2,7 @@ using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Application.Workflow;
 using TelemedicineLandingPage.Models.Admin.Sql;
 using TelemedicineLandingPage.Services.Admin;
+using System.Text.Json;
 
 namespace TelemedicineLandingPage.Services.Admin.Sql;
 
@@ -121,7 +122,18 @@ public sealed class ProcedureLifecycleService
             ActorUserId = submittedBy,
             ActionCode = "submit",
             TargetType = "procedure_version",
-            TargetId = versionId.ToString()
+            TargetId = versionId.ToString(),
+            DepartmentId = updated.DepartmentId ?? procDepartmentId(ver.ProcedureId),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_submit",
+                ver.ProcedureId,
+                updated.ProcedureVersionId,
+                updated.VersionLabel,
+                VersionTitle = updated.Title,
+                FromState = ver.StatusCode,
+                ToState = updated.StatusCode
+            })
         });
         NotifyDataChanged();
     }
@@ -179,7 +191,18 @@ public sealed class ProcedureLifecycleService
             ActorUserId = approvedBy,
             ActionCode = "publish",
             TargetType = "procedure_version",
-            TargetId = versionId.ToString()
+            TargetId = versionId.ToString(),
+            DepartmentId = published.DepartmentId ?? procDepartmentId(ver.ProcedureId),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_publish",
+                ver.ProcedureId,
+                published.ProcedureVersionId,
+                published.VersionLabel,
+                VersionTitle = published.Title,
+                FromState = ver.StatusCode,
+                ToState = published.StatusCode
+            })
         });
         NotifyDataChanged();
     }
@@ -211,7 +234,18 @@ public sealed class ProcedureLifecycleService
             ActionCode = "reject",
             TargetType = "procedure_version",
             TargetId = versionId.ToString(),
-            MetadataJson = $"{{\"reason\":\"{reason}\"}}"
+            DepartmentId = rejected.DepartmentId ?? procDepartmentId(ver.ProcedureId),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_reject",
+                ver.ProcedureId,
+                rejected.ProcedureVersionId,
+                rejected.VersionLabel,
+                VersionTitle = rejected.Title,
+                FromState = ver.StatusCode,
+                ToState = rejected.StatusCode,
+                Reason = reason
+            })
         });
         NotifyDataChanged();
     }
@@ -243,7 +277,19 @@ public sealed class ProcedureLifecycleService
             ActorUserId = withdrawnBy,
             ActionCode = "revoke",
             TargetType = "procedure_version",
-            TargetId = versionId.ToString()
+            TargetId = versionId.ToString(),
+            DepartmentId = withdrawn.DepartmentId ?? procDepartmentId(ver.ProcedureId),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_withdraw",
+                ver.ProcedureId,
+                withdrawn.ProcedureVersionId,
+                withdrawn.VersionLabel,
+                VersionTitle = withdrawn.Title,
+                FromState = ver.StatusCode,
+                ToState = withdrawn.StatusCode,
+                Reason = reason
+            })
         });
         NotifyDataChanged();
     }
@@ -272,7 +318,19 @@ public sealed class ProcedureLifecycleService
             ActorUserId = archivedBy,
             ActionCode = "archive",
             TargetType = "procedure_version",
-            TargetId = versionId.ToString()
+            TargetId = versionId.ToString(),
+            DepartmentId = archived.DepartmentId ?? procDepartmentId(ver.ProcedureId),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_archive",
+                ver.ProcedureId,
+                archived.ProcedureVersionId,
+                archived.VersionLabel,
+                VersionTitle = archived.Title,
+                FromState = ver.StatusCode,
+                ToState = archived.StatusCode,
+                Reason = reason
+            })
         });
         NotifyDataChanged();
     }
@@ -300,7 +358,19 @@ public sealed class ProcedureLifecycleService
             ActorUserId = restoredBy,
             ActionCode = "restore",
             TargetType = "procedure_version",
-            TargetId = versionId.ToString()
+            TargetId = versionId.ToString(),
+            DepartmentId = restored.DepartmentId ?? procDepartmentId(ver.ProcedureId),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_restore",
+                ver.ProcedureId,
+                restored.ProcedureVersionId,
+                restored.VersionLabel,
+                VersionTitle = restored.Title,
+                FromState = ver.StatusCode,
+                ToState = restored.StatusCode,
+                Reason = reason
+            })
         });
         NotifyDataChanged();
     }
@@ -386,7 +456,18 @@ public sealed class ProcedureLifecycleService
             ActionCode = "rollback",
             TargetType = "procedure_version",
             TargetId = targetVersionId.ToString(),
-            MetadataJson = $"{{\"replacedVersionId\":\"{currentActive.ProcedureVersionId}\",\"reason\":\"{trimmedReason}\"}}"
+            DepartmentId = restored.DepartmentId ?? procDepartmentId(target.ProcedureId),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_rollback",
+                target.ProcedureId,
+                restored.ProcedureVersionId,
+                restored.VersionLabel,
+                VersionTitle = restored.Title,
+                ReplacedVersionId = currentActive.ProcedureVersionId,
+                ReplacedVersionLabel = currentActive.VersionLabel,
+                Reason = trimmedReason
+            })
         });
         NotifyDataChanged();
     }
@@ -511,6 +592,9 @@ public sealed class ProcedureLifecycleService
         "approver" => "Người phê duyệt",
         _ => role
     };
+
+    private Guid? procDepartmentId(Guid procedureId)
+        => _db.Procedures.FirstOrDefault(item => item.ProcedureId == procedureId)?.OwnerDepartmentId;
 
     private void NotifyDataChanged() => _changeBus?.Publish();
 }
