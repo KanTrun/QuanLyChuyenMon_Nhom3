@@ -455,6 +455,7 @@
 .admin-modal-backdrop {
     position: fixed;
     inset: 0;
+    z-index: 1040;
     background: rgba(15, 23, 42, 0.32);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
@@ -465,6 +466,7 @@
     position: fixed;
     top: 50%;
     left: 50%;
+    z-index: 1050;
     transform: translate(-50%, -50%);
     width: min(560px, 92%);
     max-height: min(82vh, 720px);
@@ -637,6 +639,83 @@
 .admin-toast-close:hover {
     color: var(--color-ink);
     background: var(--color-soft);
+}
+
+.session-ended-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+    background: rgba(8, 47, 73, 0.58);
+    backdrop-filter: blur(6px);
+    animation: sessionEndedFadeIn 220ms ease;
+}
+
+.session-ended-dialog {
+    width: min(100%, 28rem);
+    padding: 1.35rem 1.4rem 1.2rem;
+    border-radius: 12px;
+    border: 1px solid #fbbf24;
+    background: linear-gradient(180deg, #fffbeb 0%, #fff7ed 100%);
+    color: #92400e;
+    box-shadow: 0 24px 60px rgba(8, 47, 73, 0.28);
+    text-align: center;
+}
+
+.session-ended-dialog__icon {
+    width: 3rem;
+    height: 3rem;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 0.85rem;
+    border-radius: 999px;
+    background: rgba(251, 191, 36, 0.22);
+    color: #b45309;
+}
+
+.session-ended-dialog__icon svg {
+    width: 1.45rem;
+    height: 1.45rem;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
+
+.session-ended-dialog h2 {
+    margin: 0 0 0.55rem;
+    font-size: 1.2rem;
+    line-height: 1.3;
+}
+
+.session-ended-dialog p {
+    margin: 0 0 1rem;
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.session-ended-dialog__action {
+    min-height: 42px;
+    min-width: 10rem;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #b45309, #d97706);
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+@keyframes sessionEndedFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* ── Tabs ───────────────────────────────────────── */
@@ -849,6 +928,20 @@
     line-height: 1.35;
 }
 
+.procedure-flow-step-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 8px;
+    color: var(--color-muted);
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.procedure-flow-step-meta strong {
+    color: var(--color-ink);
+}
+
 .procedure-flow-step-shape {
     flex: 0 0 auto;
     padding: 6px 10px;
@@ -886,6 +979,193 @@
     white-space: nowrap;
 }
 
+.procedure-selection-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.procedure-selection-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid rgba(91, 155, 213, 0.2);
+    border-radius: 999px;
+    background: rgba(91, 155, 213, 0.08);
+    color: var(--color-primary-deep);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.procedure-selection-chip.is-removable {
+    gap: 8px;
+    cursor: pointer;
+}
+
+.procedure-selection-chip.is-removable strong {
+    font-size: 0.92rem;
+    line-height: 1;
+}
+
+.procedure-picker-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 46px;
+    padding: 0 14px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 12px;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--motion-subtle), box-shadow var(--motion-subtle), background var(--motion-subtle);
+}
+
+.procedure-picker-trigger:hover {
+    border-color: var(--color-primary-light);
+    background: var(--color-primary-tint);
+}
+
+.procedure-picker-trigger-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: rgba(91, 155, 213, 0.12);
+    color: var(--color-primary-deep);
+    font-size: 0.86rem;
+    flex: 0 0 auto;
+}
+
+.procedure-search-popover {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid rgba(91, 155, 213, 0.18);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(91, 155, 213, 0.05) 0%, var(--color-surface) 100%);
+}
+
+.procedure-search-box {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 12px;
+    background: var(--color-surface);
+}
+
+.procedure-search-box span {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+}
+
+.procedure-search-box .admin-input {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+.procedure-search-box .admin-input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.procedure-option-group {
+    display: grid;
+    gap: 10px;
+}
+
+.procedure-option-group-title {
+    color: var(--color-ink-muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.procedure-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.procedure-card-option {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) 20px;
+    align-items: center;
+    gap: 10px;
+    min-height: 72px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 14px;
+    background: var(--color-surface);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--motion-subtle), background var(--motion-subtle), box-shadow var(--motion-subtle), transform var(--motion-subtle);
+}
+
+.procedure-card-option:hover,
+.procedure-card-option.is-selected {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+    box-shadow: 0 10px 24px rgba(91, 155, 213, 0.12);
+    transform: translateY(-1px);
+}
+
+.procedure-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: rgba(91, 155, 213, 0.16);
+    color: var(--color-primary-deep);
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.procedure-card-content {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.procedure-card-content strong {
+    color: var(--color-ink);
+    font-size: 0.88rem;
+    line-height: 1.35;
+}
+
+.procedure-card-content small {
+    color: var(--color-muted);
+    font-size: 0.76rem;
+}
+
+.procedure-card-check,
+.procedure-picker-check {
+    color: transparent;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.procedure-card-option.is-selected .procedure-card-check,
+.procedure-picker-option.is-selected .procedure-picker-check {
+    color: var(--color-primary-deep);
+}
+
 .procedure-picker-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -904,6 +1184,12 @@
     background: var(--color-surface);
     cursor: pointer;
     transition: border-color var(--motion-subtle), background var(--motion-subtle), box-shadow var(--motion-subtle);
+}
+
+.procedure-picker-option.is-button {
+    width: 100%;
+    text-align: left;
+    grid-template-columns: 20px minmax(0, 1fr);
 }
 
 .procedure-picker-option:hover {
@@ -1015,6 +1301,134 @@
     background: var(--color-primary-soft);
     color: var(--color-ink);
     font-size: 0.88rem;
+}
+
+.procedure-signoff-callout {
+    margin-bottom: 14px;
+}
+
+.admin-panel-hint {
+    margin: -4px 0 10px;
+    color: var(--color-ink-muted);
+    font-size: 0.86rem;
+}
+
+.procedure-version-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.procedure-detail-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 12px;
+    background: var(--color-surface);
+}
+
+.procedure-detail-hero-kicker {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--color-ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.procedure-detail-hero-code {
+    display: block;
+    font-size: 1.35rem;
+    line-height: 1.2;
+    margin-top: 2px;
+}
+
+.procedure-detail-hero-subtitle {
+    margin: 6px 0 0;
+    color: var(--color-ink-muted);
+    font-size: 0.9rem;
+}
+
+.procedure-detail-quicknav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.procedure-detail-quicknav a {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border-subtle);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-size: 0.82rem;
+    text-decoration: none;
+}
+
+.procedure-detail-quicknav a:hover {
+    border-color: var(--color-primary-light);
+    background: var(--color-primary-soft);
+}
+
+.procedure-step-code {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.procedure-authoring-fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+.procedure-authoring-page.is-review-mode .procedure-authoring-fieldset {
+    opacity: 0.98;
+}
+
+.procedure-authoring-actions-review {
+    margin-top: 12px;
+}
+
+.procedure-version-row.is-selected {
+    background: var(--color-primary-soft);
+}
+
+.procedure-version-row.is-selected td {
+    border-top-color: color-mix(in srgb, var(--color-primary) 18%, var(--color-border-subtle));
+}
+
+.procedure-active-version-hint {
+    margin-top: 4px;
+    font-size: 0.82rem;
+    color: var(--color-ink-muted);
+}
+
+.procedure-history-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.procedure-history-active-badge {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.92rem;
 }
 
 /* ── Kanban (Lâm sàng) ──────────────────────────── */

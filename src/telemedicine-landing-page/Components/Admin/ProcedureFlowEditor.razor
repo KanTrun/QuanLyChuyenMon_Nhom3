@@ -1,3 +1,4 @@
+@using TelemedicineLandingPage.Models.Admin
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 
 <section class="admin-panel">
@@ -21,6 +22,10 @@
                             <div>
                                 <span class="procedure-flow-step-kicker">Bước @(index + 1)</span>
                                 <strong class="procedure-flow-step-title">@(!string.IsNullOrWhiteSpace(step.Name) ? step.Name : "Chưa đặt tên bước")</strong>
+                                <div class="procedure-flow-step-meta">
+                                    <span><strong>Vai trò:</strong> @SelectedRoleSummary(step)</span>
+                                    <span><strong>Nơi thực hiện:</strong> @SelectedDepartmentSummary(step)</span>
+                                </div>
                             </div>
                             <span class="procedure-flow-step-shape">@FlowShapeLabel(step.ShapeCode)</span>
                         </div>
@@ -75,41 +80,168 @@
                             <header class="procedure-picker-panel-head">
                                 <div>
                                     <span class="admin-form-field-label">Các vai trò cùng thực hiện</span>
-                                    <div class="admin-form-field-hint">Chọn thêm các vai trò phối hợp trong cùng bước này.</div>
+                                    <div class="admin-form-field-hint">Chỉ mở danh sách khi cần thêm vai trò, giúp màn hình gọn và dễ tập trung hơn.</div>
                                 </div>
                                 <span class="procedure-picker-summary">@SelectionSummary(step.RoleIds.Count, "vai trò")</span>
                             </header>
-                            <div class="procedure-picker-grid">
-                                @foreach (var role in Roles)
-                                {
-                                    <label class="procedure-picker-option @(step.RoleIds.Contains(role.RoleId.ToString()) ? "is-selected" : string.Empty)">
-                                        <input type="checkbox"
-                                               checked="@step.RoleIds.Contains(role.RoleId.ToString())"
-                                               @onchange="e => OnRoleCheckedChanged(step, role.RoleId.ToString(), e)" />
-                                        <span>@role.Name</span>
+                            <button type="button"
+                                    class="procedure-picker-trigger"
+                                    @onclick="() => ToggleRolePicker(step)">
+                                <span class="procedure-picker-trigger-icon" aria-hidden="true">+</span>
+                                <span>@RolePickerPlaceholder(step)</span>
+                            </button>
+                            @if (step.RoleIds.Count > 0)
+                            {
+                                <div class="procedure-selection-chips">
+                                    @foreach (var role in SelectedRoles(step))
+                                    {
+                                        <button type="button"
+                                                class="procedure-selection-chip is-removable"
+                                                title="Bỏ chọn vai trò"
+                                                @onclick="() => RemoveRole(step, role.RoleId.ToString())">
+                                            <span>@role.Name</span>
+                                            <strong aria-hidden="true">×</strong>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            @if (IsRolePickerOpen(step))
+                            {
+                                <div class="procedure-search-popover">
+                                    <label class="procedure-search-box">
+                                        <span aria-hidden="true">🔎</span>
+                                        <input class="admin-input"
+                                               value="@GetRoleSearch(step)"
+                                               @oninput="e => SetRoleSearch(step, e.Value?.ToString())"
+                                               placeholder="Tìm vai trò..." />
                                     </label>
-                                }
-                            </div>
+                                    @if (RecentRoles(step).Count > 0)
+                                    {
+                                        <section class="procedure-option-group">
+                                            <header class="procedure-option-group-title">Đã chọn gần đây</header>
+                                            <div class="procedure-card-grid">
+                                                @foreach (var role in RecentRoles(step))
+                                                {
+                                                    <button type="button"
+                                                            class="procedure-card-option @(step.RoleIds.Contains(role.RoleId.ToString()) ? "is-selected" : string.Empty)"
+                                                            @onclick="() => ToggleRole(step, role.RoleId.ToString())">
+                                                        <span class="procedure-card-icon">@RoleGlyph(role)</span>
+                                                        <span class="procedure-card-content">
+                                                            <strong>@role.Name</strong>
+                                                            <small>@role.Code</small>
+                                                        </span>
+                                                        <span class="procedure-card-check" aria-hidden="true">✓</span>
+                                                    </button>
+                                                }
+                                            </div>
+                                        </section>
+                                    }
+                                    <section class="procedure-option-group">
+                                        <header class="procedure-option-group-title">Tất cả vai trò</header>
+                                        <div class="procedure-card-grid">
+                                            @foreach (var role in FilteredRoles(step))
+                                            {
+                                                <button type="button"
+                                                        class="procedure-card-option @(step.RoleIds.Contains(role.RoleId.ToString()) ? "is-selected" : string.Empty)"
+                                                        @onclick="() => ToggleRole(step, role.RoleId.ToString())">
+                                                    <span class="procedure-card-icon">@RoleGlyph(role)</span>
+                                                    <span class="procedure-card-content">
+                                                        <strong>@role.Name</strong>
+                                                        <small>@role.Code</small>
+                                                    </span>
+                                                    <span class="procedure-card-check" aria-hidden="true">✓</span>
+                                                </button>
+                                            }
+                                        </div>
+                                        @if (FilteredRoles(step).Count == 0)
+                                        {
+                                            <div class="procedure-picker-empty">Không tìm thấy vai trò phù hợp với từ khóa hiện tại.</div>
+                                        }
+                                    </section>
+                                </div>
+                            }
                         </section>
                         <section class="admin-form-field admin-form-field-full procedure-picker-panel">
                             <header class="procedure-picker-panel-head">
                                 <div>
                                     <span class="admin-form-field-label">Nơi thực hiện</span>
-                                    <div class="admin-form-field-hint">Có thể chọn nhiều khoa/phòng cùng tham gia thực hiện bước.</div>
+                                    <div class="admin-form-field-hint">Thu gọn danh sách khoa/phòng, chỉ hiển thị các mục đã chọn và mở tìm kiếm khi cần.</div>
                                 </div>
                                 <span class="procedure-picker-summary">@SelectionSummary(step.LocationDepartmentIds.Count, "bộ phận")</span>
                             </header>
-                            <div class="procedure-picker-grid">
-                                @foreach (var department in Departments)
-                                {
-                                    <label class="procedure-picker-option @(step.LocationDepartmentIds.Contains(department.DepartmentId.ToString()) ? "is-selected" : string.Empty)">
-                                        <input type="checkbox"
-                                               checked="@step.LocationDepartmentIds.Contains(department.DepartmentId.ToString())"
-                                               @onchange="e => OnLocationCheckedChanged(step, department.DepartmentId.ToString(), e)" />
-                                        <span>@department.Name</span>
+                            <button type="button"
+                                    class="procedure-picker-trigger"
+                                    @onclick="() => ToggleDepartmentPicker(step)">
+                                <span class="procedure-picker-trigger-icon" aria-hidden="true">🔎</span>
+                                <span>@DepartmentPickerPlaceholder(step)</span>
+                            </button>
+                            @if (step.LocationDepartmentIds.Count > 0)
+                            {
+                                <div class="procedure-selection-chips">
+                                    @foreach (var department in SelectedDepartments(step))
+                                    {
+                                        <button type="button"
+                                                class="procedure-selection-chip is-removable"
+                                                title="Bỏ chọn khoa/phòng"
+                                                @onclick="() => RemoveDepartment(step, department.DepartmentId.ToString())">
+                                            <span>@DepartmentLabel(department)</span>
+                                            <strong aria-hidden="true">×</strong>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            @if (IsDepartmentPickerOpen(step))
+                            {
+                                <div class="procedure-search-popover">
+                                    <label class="procedure-search-box">
+                                        <span aria-hidden="true">🔎</span>
+                                        <input class="admin-input"
+                                               value="@GetDepartmentSearch(step)"
+                                               @oninput="e => SetDepartmentSearch(step, e.Value?.ToString())"
+                                               placeholder="Tìm và chọn khoa/phòng..." />
                                     </label>
-                                }
-                            </div>
+                                    @if (RecentDepartments(step).Count > 0)
+                                    {
+                                        <section class="procedure-option-group">
+                                            <header class="procedure-option-group-title">Đã chọn gần đây</header>
+                                            <div class="procedure-picker-grid">
+                                                @foreach (var department in RecentDepartments(step))
+                                                {
+                                                    <button type="button"
+                                                            class="procedure-picker-option is-button @(step.LocationDepartmentIds.Contains(department.DepartmentId.ToString()) ? "is-selected" : string.Empty)"
+                                                            @onclick="() => ToggleDepartment(step, department.DepartmentId.ToString())">
+                                                        <span class="procedure-picker-check" aria-hidden="true">✓</span>
+                                                        <span>@DepartmentLabel(department)</span>
+                                                        <small>@department.Code</small>
+                                                    </button>
+                                                }
+                                            </div>
+                                        </section>
+                                    }
+                                    @foreach (var group in FilteredDepartmentGroups(step))
+                                    {
+                                        <section class="procedure-option-group">
+                                            <header class="procedure-option-group-title">@group.Title</header>
+                                            <div class="procedure-picker-grid">
+                                                @foreach (var department in group.Items)
+                                                {
+                                                    <button type="button"
+                                                            class="procedure-picker-option is-button @(step.LocationDepartmentIds.Contains(department.DepartmentId.ToString()) ? "is-selected" : string.Empty)"
+                                                            @onclick="() => ToggleDepartment(step, department.DepartmentId.ToString())">
+                                                        <span class="procedure-picker-check" aria-hidden="true">✓</span>
+                                                        <span>@DepartmentLabel(department)</span>
+                                                        <small>@department.Code</small>
+                                                    </button>
+                                                }
+                                            </div>
+                                        </section>
+                                    }
+                                    @if (FilteredDepartmentGroups(step).Count == 0)
+                                    {
+                                        <div class="procedure-picker-empty">Không tìm thấy khoa/phòng phù hợp với từ khóa hiện tại.</div>
+                                    }
+                                </div>
+                            }
                         </section>
                         <section class="admin-form-field admin-form-field-full procedure-picker-panel procedure-attachment-panel">
                             <header class="procedure-picker-panel-head">
@@ -150,6 +282,13 @@
 </section>
 
 @code {
+    private readonly HashSet<ProcedureFlowStepDraft> _openRolePickers = [];
+    private readonly HashSet<ProcedureFlowStepDraft> _openDepartmentPickers = [];
+    private readonly Dictionary<ProcedureFlowStepDraft, string> _roleSearchTerms = [];
+    private readonly Dictionary<ProcedureFlowStepDraft, string> _departmentSearchTerms = [];
+    private readonly List<string> _recentRoleIds = [];
+    private readonly List<string> _recentDepartmentIds = [];
+
     private static readonly (string Code, string Name)[] FlowShapes =
     [
         ("terminator", "Bắt đầu / Kết thúc (bầu dục)"),
@@ -177,7 +316,14 @@
         ShapeCode = Steps.Count == 0 ? "terminator" : "process"
     });
 
-    private void RemoveStep(ProcedureFlowStepDraft step) => Steps.Remove(step);
+    private void RemoveStep(ProcedureFlowStepDraft step)
+    {
+        Steps.Remove(step);
+        _openRolePickers.Remove(step);
+        _openDepartmentPickers.Remove(step);
+        _roleSearchTerms.Remove(step);
+        _departmentSearchTerms.Remove(step);
+    }
 
     private void OnLinkedAttachmentChanged(ProcedureFlowStepDraft step, ChangeEventArgs args)
     {
@@ -229,4 +375,196 @@
 
     private static string FlowShapeLabel(string shapeCode)
         => FlowShapes.FirstOrDefault(shape => shape.Code == shapeCode).Name;
+
+    private string DepartmentLabel(Sql.Department department)
+        => AdminBusinessDisplay.DepartmentLabel(department, Departments);
+
+    private IReadOnlyList<Sql.Role> SelectedRoles(ProcedureFlowStepDraft step)
+        => Roles
+            .Where(role => step.RoleIds.Contains(role.RoleId.ToString()))
+            .ToList();
+
+    private IEnumerable<string> SelectedRoleLabels(ProcedureFlowStepDraft step)
+        => SelectedRoles(step).Select(role => role.Name);
+
+    private IReadOnlyList<Sql.Department> SelectedDepartments(ProcedureFlowStepDraft step)
+        => Departments
+            .Where(department => step.LocationDepartmentIds.Contains(department.DepartmentId.ToString()))
+            .ToList();
+
+    private IEnumerable<string> SelectedDepartmentLabels(ProcedureFlowStepDraft step)
+        => SelectedDepartments(step).Select(DepartmentLabel);
+
+    private string SelectedRoleSummary(ProcedureFlowStepDraft step)
+    {
+        var labels = SelectedRoleLabels(step).Take(2).ToList();
+        if (labels.Count == 0)
+        {
+            return "Chưa chọn";
+        }
+
+        var suffix = step.RoleIds.Count > labels.Count ? $" +{step.RoleIds.Count - labels.Count}" : string.Empty;
+        return string.Join(", ", labels) + suffix;
+    }
+
+    private string SelectedDepartmentSummary(ProcedureFlowStepDraft step)
+    {
+        var labels = SelectedDepartmentLabels(step).Take(2).ToList();
+        if (labels.Count == 0)
+        {
+            return "Chưa chọn";
+        }
+
+        var suffix = step.LocationDepartmentIds.Count > labels.Count ? $" +{step.LocationDepartmentIds.Count - labels.Count}" : string.Empty;
+        return string.Join(", ", labels) + suffix;
+    }
+
+    private void ToggleRolePicker(ProcedureFlowStepDraft step)
+    {
+        if (!_openRolePickers.Add(step))
+        {
+            _openRolePickers.Remove(step);
+        }
+    }
+
+    private void ToggleDepartmentPicker(ProcedureFlowStepDraft step)
+    {
+        if (!_openDepartmentPickers.Add(step))
+        {
+            _openDepartmentPickers.Remove(step);
+        }
+    }
+
+    private bool IsRolePickerOpen(ProcedureFlowStepDraft step) => _openRolePickers.Contains(step);
+    private bool IsDepartmentPickerOpen(ProcedureFlowStepDraft step) => _openDepartmentPickers.Contains(step);
+
+    private string GetRoleSearch(ProcedureFlowStepDraft step)
+        => _roleSearchTerms.TryGetValue(step, out var value) ? value : string.Empty;
+
+    private string GetDepartmentSearch(ProcedureFlowStepDraft step)
+        => _departmentSearchTerms.TryGetValue(step, out var value) ? value : string.Empty;
+
+    private void SetRoleSearch(ProcedureFlowStepDraft step, string? value)
+        => _roleSearchTerms[step] = value?.Trim() ?? string.Empty;
+
+    private void SetDepartmentSearch(ProcedureFlowStepDraft step, string? value)
+        => _departmentSearchTerms[step] = value?.Trim() ?? string.Empty;
+
+    private IReadOnlyList<Sql.Role> FilteredRoles(ProcedureFlowStepDraft step)
+    {
+        var query = GetRoleSearch(step);
+        return Roles
+            .Where(role => string.IsNullOrWhiteSpace(query)
+                || role.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || role.Code.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private IReadOnlyList<DepartmentGroup> FilteredDepartmentGroups(ProcedureFlowStepDraft step)
+    {
+        var query = GetDepartmentSearch(step);
+        return BuildDepartmentGroups()
+            .Select(group => new DepartmentGroup(
+                group.Title,
+                group.Items
+                    .Where(department => string.IsNullOrWhiteSpace(query)
+                        || DepartmentLabel(department).Contains(query, StringComparison.OrdinalIgnoreCase)
+                        || department.Code.Contains(query, StringComparison.OrdinalIgnoreCase))
+                    .ToList()))
+            .Where(group => group.Items.Count > 0)
+            .ToList();
+    }
+
+    private IReadOnlyList<DepartmentGroup> BuildDepartmentGroups()
+    {
+        var clinical = Departments
+            .Where(department => !department.Code.StartsWith("PHONG-", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        var functional = Departments
+            .Where(department => department.Code.StartsWith("PHONG-", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var groups = new List<DepartmentGroup>();
+        if (clinical.Count > 0)
+        {
+            groups.Add(new DepartmentGroup("Khối lâm sàng", clinical));
+        }
+
+        if (functional.Count > 0)
+        {
+            groups.Add(new DepartmentGroup("Phòng chức năng", functional));
+        }
+
+        return groups;
+    }
+
+    private IReadOnlyList<Sql.Role> RecentRoles(ProcedureFlowStepDraft step)
+        => _recentRoleIds
+            .Select(id => Roles.FirstOrDefault(role => role.RoleId.ToString() == id))
+            .Where(role => role is not null && !step.RoleIds.Contains(role.RoleId.ToString()))
+            .Take(4)
+            .Cast<Sql.Role>()
+            .ToList();
+
+    private IReadOnlyList<Sql.Department> RecentDepartments(ProcedureFlowStepDraft step)
+        => _recentDepartmentIds
+            .Select(id => Departments.FirstOrDefault(department => department.DepartmentId.ToString() == id))
+            .Where(department => department is not null && !step.LocationDepartmentIds.Contains(department.DepartmentId.ToString()))
+            .Take(6)
+            .Cast<Sql.Department>()
+            .ToList();
+
+    private void ToggleRole(ProcedureFlowStepDraft step, string roleId)
+    {
+        var enabled = !step.RoleIds.Contains(roleId);
+        ToggleString(step.RoleIds, roleId, enabled);
+        if (enabled)
+        {
+            RememberRecent(_recentRoleIds, roleId);
+        }
+    }
+
+    private void ToggleDepartment(ProcedureFlowStepDraft step, string departmentId)
+    {
+        var enabled = !step.LocationDepartmentIds.Contains(departmentId);
+        ToggleString(step.LocationDepartmentIds, departmentId, enabled);
+        if (enabled)
+        {
+            RememberRecent(_recentDepartmentIds, departmentId);
+        }
+    }
+
+    private void RemoveRole(ProcedureFlowStepDraft step, string roleId)
+        => ToggleString(step.RoleIds, roleId, false);
+
+    private void RemoveDepartment(ProcedureFlowStepDraft step, string departmentId)
+        => ToggleString(step.LocationDepartmentIds, departmentId, false);
+
+    private static void RememberRecent(ICollection<string> recentValues, string value)
+    {
+        if (recentValues.Contains(value))
+        {
+            recentValues.Remove(value);
+        }
+
+        recentValues.Add(value);
+        while (recentValues.Count > 8)
+        {
+            recentValues.Remove(recentValues.First());
+        }
+    }
+
+    private string RolePickerPlaceholder(ProcedureFlowStepDraft step)
+        => step.RoleIds.Count == 0 ? "Chọn vai trò phối hợp..." : $"Đã chọn {step.RoleIds.Count} vai trò, nhấn để chỉnh sửa";
+
+    private string DepartmentPickerPlaceholder(ProcedureFlowStepDraft step)
+        => step.LocationDepartmentIds.Count == 0 ? "Tìm và chọn khoa/phòng..." : $"Đã chọn {step.LocationDepartmentIds.Count} khoa/phòng, nhấn để chỉnh sửa";
+
+    private static string RoleGlyph(Sql.Role role)
+    {
+        var words = role.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return string.Concat(words.Take(2).Select(word => char.ToUpperInvariant(word[0])));
+    }
+
+    private sealed record DepartmentGroup(string Title, IReadOnlyList<Sql.Department> Items);
 }

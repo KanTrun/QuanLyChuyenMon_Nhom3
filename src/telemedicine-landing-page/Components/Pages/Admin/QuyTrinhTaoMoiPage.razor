@@ -1,8 +1,11 @@
 @page "/admin/quy-trinh/tao"
 @page "/qlcm/quy-trinh/tao"
 @page "/qlcm/quy-trinh/{ProcedureId:guid}/cap-nhat"
+@page "/qlcm/quy-trinh/{ProcedureId:guid}/phien-ban/{VersionId:guid}"
 @layout AdminLayout
+@using TelemedicineLandingPage.Models.Admin
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin
 @inject IMedDataStore Store
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
@@ -15,18 +18,21 @@
 
 <PageTitle>@(IsUpdateMode ? "Cập nhật quy trình y tế" : "Tạo quy trình y tế") | QLCM Pro</PageTitle>
 
-<section class="admin-page procedure-authoring-page">
+<section class="admin-page procedure-authoring-page @(IsReviewMode ? "is-review-mode" : null)">
     <header class="admin-page-header">
         <div>
-            <span class="admin-page-eyebrow">@(IsUpdateMode ? $"Phiên bản nguồn {SourceVersionLabel}" : "Quy trình kỹ thuật")</span>
-            <h1 class="admin-page-title">@(IsUpdateMode ? $"Cập nhật quy trình lên {_versionLabel}" : "Soạn quy trình y tế mới")</h1>
-            <p class="admin-page-subtitle">@(IsUpdateMode
-                ? $"Nội dung được sao chép từ {SourceVersionLabel}. Phiên bản cũ được giữ nguyên trong lịch sử."
-                : "Tạo hồ sơ có cấu trúc, lưu đồ, kiểm soát sửa đổi, tệp nguồn và chuỗi ký nội bộ.")</p>
+            <span class="admin-page-eyebrow">@(IsReviewMode ? $"Xem & ký {_versionLabel}" : IsUpdateMode ? $"Phiên bản nguồn {SourceVersionLabel}" : "Quy trình kỹ thuật")</span>
+            <h1 class="admin-page-title">@(IsReviewMode ? $"Xem và ký phiên bản nháp {_versionLabel}" : IsUpdateMode ? $"Cập nhật quy trình lên {_versionLabel}" : "Soạn quy trình y tế mới")</h1>
+            <p class="admin-page-subtitle">@(IsReviewMode
+                ? "Toàn bộ nội dung quy trình hiển thị ở chế độ chỉ đọc. Người viết được phân công ký sau khi rà soát."
+                : IsUpdateMode
+                    ? $"Nội dung được sao chép từ {SourceVersionLabel}. Phiên bản cũ được giữ nguyên trong lịch sử."
+                    : "Tạo hồ sơ có cấu trúc, lưu đồ, kiểm soát sửa đổi, tệp nguồn và chuỗi ký nội bộ.")</p>
         </div>
-        <a class="admin-btn admin-btn-ghost" href="/qlcm/quy-trinh">Hủy và quay lại</a>
+        <a class="admin-btn admin-btn-ghost" href="/qlcm/quy-trinh">@(IsReviewMode ? "Quay lại danh sách" : "Hủy và quay lại")</a>
     </header>
 
+    <fieldset class="procedure-authoring-fieldset" disabled="@IsReviewMode">
     <article class="admin-panel">
         <header class="admin-panel-head">
             <div>
@@ -56,11 +62,12 @@
                 <span class="admin-form-field-label is-required">Khoa/phòng chủ trì</span>
                 <select class="admin-select" @bind="_departmentId">
                     <option value="">Chọn khoa/phòng</option>
-                    @foreach (var department in Store.Departments.Where(item => item.Status == "active").OrderBy(item => item.Code))
+                    @foreach (var department in ActiveDepartments)
                     {
-                        <option value="@department.DepartmentId">@department.Code - @department.Name</option>
+                        <option value="@department.DepartmentId">@DisplayDepartment(department)</option>
                     }
                 </select>
+                <span class="admin-form-field-hint">Tên khoa bị trùng sẽ tự hiển thị kèm mã để tránh chọn nhầm.</span>
             </label>
             <label class="admin-form-field">
                 <span class="admin-form-field-label is-required">Phiên bản</span>
@@ -184,7 +191,13 @@
                     <tr>
                         <td><strong>Người viết (@RequiredWriterCount)</strong></td>
                         <td><AdminBadge Tone="tone-warning">Ký đủ trước khi gửi kiểm tra</AdminBadge></td>
-                        <td>Trang tạo/cập nhật quy trình hiện tại</td>
+                        <td>
+                            Người viết đầu tiên ký tại đây khi lưu.
+                            @if (RequiredWriterCount > 1)
+                            {
+                                <span class="admin-table-cell-muted"> Người viết còn lại ký tại <strong>Quy trình kỹ thuật → Chi tiết → Ký người viết</strong> trên phiên bản nháp.</span>
+                            }
+                        </td>
                         <td>
                             <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" disabled="@_isSaving" @onclick="OpenWriterSignature">
                                 Ký người viết hiện tại
@@ -215,10 +228,40 @@
             : "Mỗi người viết được phân công ký trên hash hiện tại. Chỉ khi đủ chữ ký người viết thì bản nháp mới được gửi kiểm tra; sau đó người kiểm tra và người phê duyệt tiếp tục ký. Mọi chỉnh sửa nội dung làm chữ ký cũ hết hiệu lực.")
     </aside>
 
+    </fieldset>
+
+    @if (IsReviewMode)
+    {
+        <div class="procedure-authoring-actions procedure-authoring-actions-review">
+            @if (CanSignReviewDraft)
+            {
+                <button type="button" class="admin-btn admin-btn-primary" disabled="@_isSaving" @onclick="OpenWriterSignature">
+                    Ký người viết sau khi rà soát
+                </button>
+            }
+            else if (CanSubmitReviewDraft)
+            {
+                <button type="button" class="admin-btn admin-btn-primary" disabled="@_isSaving" @onclick="SubmitReviewDraftAsync">
+                    Gửi duyệt
+                </button>
+            }
+            else if (ReviewDraftSubmitted)
+            {
+                <a class="admin-btn admin-btn-primary" href="/qlcm/quy-trinh/phe-duyet">Mở Phê duyệt quy trình</a>
+            }
+            else
+            {
+                <span class="admin-table-cell-muted">Tài khoản hiện tại không còn hành động ký trên bản nháp này.</span>
+            }
+        </div>
+    }
+    else
+    {
     <div class="procedure-authoring-actions">
         <button type="button" class="admin-btn admin-btn-ghost" disabled="@_isSaving" @onclick="SaveDraftAsync">@(IsUpdateMode ? $"Cập nhật thành {_versionLabel}" : "Tạo bản v01")</button>
         <button type="button" class="admin-btn admin-btn-primary" disabled="@_isSaving" @onclick="OpenWriterSignature">@(IsUpdateMode ? $"Cập nhật {_versionLabel}, ký người viết" : "Tạo v01, ký người viết")</button>
     </div>
+    }
 </section>
 
 <ProcedureSignatureModal IsOpen="_writerSignOpen"
@@ -233,6 +276,7 @@
 
 @code {
     [Parameter] public Guid? ProcedureId { get; set; }
+    [Parameter] public Guid? VersionId { get; set; }
 
     private string _code = string.Empty;
     private string _name = string.Empty;
@@ -246,6 +290,7 @@
     private bool _isSaving;
     private bool _writerSignOpen;
     private Sql.ProcedureVersion? _sourceVersion;
+    private Sql.ProcedureVersion? _reviewVersion;
 
     private readonly List<ProcedureSectionDraft> _sections = CreateSections();
     private readonly List<ProcedureFlowStepDraft> _steps =
@@ -258,7 +303,7 @@
     private readonly List<ProcedureRevisionDraft> _revisions = [new() { Summary = "Ban hành lần đầu" }];
     private readonly List<PendingAttachment> _attachments = [];
     private readonly List<ExistingAttachmentEntry> _existingAttachments = [];
-    private readonly List<ProcedureWriterAssignmentDraft> _writerAssignments = [new(), new()];
+    private readonly List<ProcedureWriterAssignmentDraft> _writerAssignments = [new()];
 
     private IReadOnlyList<ProcedureAuthoringAttachmentOption> AvailableAttachments =>
         _existingAttachments
@@ -267,11 +312,20 @@
             .ToList();
 
     private IReadOnlyList<Sql.Role> ActiveRoles => Store.Roles.Where(item => item.Status == "active").OrderBy(item => item.Code).ToList();
-    private IReadOnlyList<Sql.Department> ActiveDepartments => Store.Departments.Where(item => item.Status == "active").OrderBy(item => item.Code).ToList();
+    private IReadOnlyList<Sql.Department> ActiveDepartments => AdminBusinessDisplay.ActiveDepartmentsForSelection(Store.Departments);
     private IReadOnlyList<Sql.AppUser> ActiveUsers => Store.Users.Where(item => item.Status == "active").OrderBy(item => item.FullName).ToList();
-    private bool IsUpdateMode => ProcedureId.HasValue && _sourceVersion is not null;
-    private string ActionVerb => IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình";
+    private bool IsUpdateMode => ProcedureId.HasValue && _sourceVersion is not null && !IsReviewMode;
+    private bool IsReviewMode => _reviewVersion is not null;
+    private string ActionVerb => IsReviewMode ? "ký phiên bản nháp" : IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình";
     private string SourceVersionLabel => _sourceVersion?.VersionLabel ?? (_sourceVersion is null ? "phiên bản trước" : ProcedureAuthoringService.FormatVersionLabel(_sourceVersion.VersionNo));
+    private bool CanSignReviewDraft => IsReviewMode
+        && _reviewVersion?.StatusCode == "draft"
+        && UserContext.CurrentUser is { UserId: var userId }
+        && Signoffs.CanUserSign(_reviewVersion.ProcedureVersionId, "writer", userId, out _);
+    private bool CanSubmitReviewDraft => IsReviewMode
+        && _reviewVersion?.StatusCode == "draft"
+        && Signoffs.GetOutstandingWriterSignatures(_reviewVersion.ProcedureVersionId) == 0;
+    private bool ReviewDraftSubmitted => IsReviewMode && _reviewVersion?.StatusCode == "pending_approval";
     private int RequiredWriterCount => _writerAssignments
         .Select(item => ParseGuid(item.UserId))
         .Where(item => item.HasValue)
@@ -281,6 +335,12 @@
 
     protected override void OnInitialized()
     {
+        if (ProcedureId.HasValue && VersionId.HasValue)
+        {
+            LoadReviewVersion();
+            return;
+        }
+
         EnsureCurrentUserWriterAssignment();
         if (ProcedureId.HasValue) LoadSourceVersion();
     }
@@ -315,6 +375,24 @@
 
     private void OpenWriterSignature()
     {
+        if (IsReviewMode)
+        {
+            if (UserContext.CurrentUser is null)
+            {
+                Toasts.Show("Phiên đăng nhập không hợp lệ", "Vui lòng đăng nhập lại trước khi ký.", ToastVariant.Error);
+                return;
+            }
+
+            if (!CanSignReviewDraft)
+            {
+                Toasts.Show("Không thể ký", "Tài khoản hiện tại không còn được phép ký trên bản nháp này.", ToastVariant.Warning);
+                return;
+            }
+
+            _writerSignOpen = true;
+            return;
+        }
+
         var permission = IsUpdateMode ? "SCR_PROCEDURES:UPDATE" : "SCR_PROCEDURES:CREATE";
         if (!Guard.CanDo(permission, IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình")) return;
         var validationMessage = Validate(submit: true);
@@ -332,7 +410,75 @@
     }
 
     private Task SaveSignedVersionAsync(string signatureImageDataUrl)
-        => SaveAsync(submit: true, signatureImageDataUrl);
+        => IsReviewMode ? SignReviewDraftAsync(signatureImageDataUrl) : SaveAsync(submit: true, signatureImageDataUrl);
+
+    private Task SignReviewDraftAsync(string signatureImageDataUrl)
+    {
+        if (_reviewVersion is null || UserContext.CurrentUser is not { UserId: var userId })
+            return Task.CompletedTask;
+
+        _isSaving = true;
+        try
+        {
+            Signoffs.Sign(
+                _reviewVersion.ProcedureVersionId,
+                "writer",
+                userId,
+                UserContext.CurrentUser.Username,
+                UserContext.CurrentUser.FullName ?? UserContext.CurrentUser.Username,
+                signatureImageDataUrl,
+                "Chữ ký tay trực tiếp sau khi rà soát toàn bộ quy trình");
+
+            var outstandingWriters = Signoffs.GetOutstandingWriterSignatures(_reviewVersion.ProcedureVersionId);
+            if (outstandingWriters == 0)
+            {
+                Lifecycle.Submit(_reviewVersion.ProcedureVersionId, userId);
+                _reviewVersion = Store.ProcedureVersions.First(item => item.ProcedureVersionId == _reviewVersion.ProcedureVersionId);
+                Toasts.Show("Đã ký và gửi kiểm tra", _reviewVersion.Title, ToastVariant.Success);
+                Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
+            }
+            else
+            {
+                Toasts.Show("Đã ký người viết", $"Còn thiếu {outstandingWriters} chữ ký người viết.", ToastVariant.Info);
+                Navigation.NavigateTo("/qlcm/quy-trinh");
+            }
+        }
+        catch (Exception exception)
+        {
+            Toasts.Show("Không thể ký", exception.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task SubmitReviewDraftAsync()
+    {
+        if (_reviewVersion is null || UserContext.CurrentUser is not { UserId: var userId })
+            return Task.CompletedTask;
+
+        _isSaving = true;
+        try
+        {
+            Lifecycle.Submit(_reviewVersion.ProcedureVersionId, userId);
+            _reviewVersion = Store.ProcedureVersions.First(item => item.ProcedureVersionId == _reviewVersion.ProcedureVersionId);
+            Toasts.Show("Đã gửi phê duyệt", _reviewVersion.Title, ToastVariant.Success);
+            Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
+        }
+        catch (Exception exception)
+        {
+            Toasts.Show("Không thể gửi duyệt", exception.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+
+        return Task.CompletedTask;
+    }
 
     private async Task SaveAsync(bool submit, string? signatureImageDataUrl = null)
     {
@@ -451,9 +597,43 @@
         }
     }
 
+    private void LoadReviewVersion()
+    {
+        var procedure = Store.Procedures.FirstOrDefault(item => item.ProcedureId == ProcedureId);
+        var version = Store.ProcedureVersions.FirstOrDefault(item => item.ProcedureVersionId == VersionId);
+        if (procedure is null || version is null || version.ProcedureId != ProcedureId)
+        {
+            Toasts.Show("Không thể mở phiên bản", "Không tìm thấy quy trình hoặc phiên bản nháp.", ToastVariant.Error);
+            Navigation.NavigateTo("/qlcm/quy-trinh");
+            return;
+        }
+
+        if (version.StatusCode != "draft")
+        {
+            Toasts.Show("Không thể xem/ký", "Chỉ phiên bản nháp mới mở được trên trang soạn thảo.", ToastVariant.Warning);
+            Navigation.NavigateTo("/qlcm/quy-trinh");
+            return;
+        }
+
+        _reviewVersion = version;
+        LoadVersionContent(procedure, version);
+        _versionLabel = version.VersionLabel ?? ProcedureAuthoringService.FormatVersionLabel(version.VersionNo);
+        _summary = ProcedureVersionSummaryFormatter.Display(version.Summary);
+    }
+
     private void LoadSourceVersion()
     {
         var procedure = Store.Procedures.FirstOrDefault(item => item.ProcedureId == ProcedureId);
+        var existingDraft = Store.ProcedureVersions
+            .Where(item => item.ProcedureId == ProcedureId && item.StatusCode == "draft")
+            .OrderByDescending(item => item.VersionNo)
+            .FirstOrDefault();
+        if (existingDraft is not null)
+        {
+            Navigation.NavigateTo($"/qlcm/quy-trinh/{ProcedureId}/phien-ban/{existingDraft.ProcedureVersionId}");
+            return;
+        }
+
         var source = Store.ProcedureVersions
             .Where(item => item.ProcedureId == ProcedureId)
             .OrderByDescending(item => item.VersionNo)
@@ -466,17 +646,30 @@
         }
 
         _sourceVersion = source;
-        _code = procedure.ProcedureCode;
-        _name = procedure.Name;
-        _procedureType = procedure.ProcedureType;
-        _departmentId = (source.DepartmentId ?? procedure.OwnerDepartmentId)?.ToString() ?? string.Empty;
-        _description = procedure.Description ?? string.Empty;
+        LoadVersionContent(procedure, source);
         _summary = $"Cập nhật từ {SourceVersionLabel}";
         _versionLabel = ProcedureAuthoringService.FormatVersionLabel(Authoring.GetNextVersionNo(procedure.ProcedureId));
         _issueNumber = (source.IssueNumber ?? source.VersionNo) + 1;
         _issueDate = DateTime.Today;
 
-        var sourceSections = Store.ProcedureDocumentSections.Where(item => item.ProcedureVersionId == source.ProcedureVersionId).ToList();
+        _revisions.Add(new ProcedureRevisionDraft
+        {
+            RevisionDate = DateTime.Today,
+            Summary = $"Cập nhật từ {SourceVersionLabel} lên {_versionLabel}"
+        });
+    }
+
+    private void LoadVersionContent(Sql.ProfessionalProcedure procedure, Sql.ProcedureVersion version)
+    {
+        _code = procedure.ProcedureCode;
+        _name = procedure.Name;
+        _procedureType = procedure.ProcedureType;
+        _departmentId = (version.DepartmentId ?? procedure.OwnerDepartmentId)?.ToString() ?? string.Empty;
+        _description = procedure.Description ?? string.Empty;
+        _issueNumber = version.IssueNumber ?? version.VersionNo;
+        _issueDate = version.IssueDate ?? DateTime.Today;
+
+        var sourceSections = Store.ProcedureDocumentSections.Where(item => item.ProcedureVersionId == version.ProcedureVersionId).ToList();
         foreach (var section in _sections)
         {
             section.Content = sourceSections.FirstOrDefault(item => item.SectionKind == section.Kind)?.ContentText ?? string.Empty;
@@ -484,14 +677,14 @@
 
         _recipients.Clear();
         _recipients.AddRange(Store.ProcedureDistributionRecipients
-            .Where(item => item.ProcedureVersionId == source.ProcedureVersionId)
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId)
             .OrderBy(item => item.DisplayOrder)
             .Select(item => new ProcedureRecipientDraft { Name = item.RecipientName, IsMarked = item.IsMarked }));
         if (_recipients.Count == 0) _recipients.Add(new ProcedureRecipientDraft());
 
         _revisions.Clear();
         _revisions.AddRange(Store.ProcedureRevisionEntries
-            .Where(item => item.ProcedureVersionId == source.ProcedureVersionId)
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId)
             .OrderBy(item => item.DisplayOrder)
             .Select(item => new ProcedureRevisionDraft
             {
@@ -500,15 +693,11 @@
                 SectionReference = item.SectionRef ?? string.Empty,
                 Summary = item.Summary
             }));
-        _revisions.Add(new ProcedureRevisionDraft
-        {
-            RevisionDate = DateTime.Today,
-            Summary = $"Cập nhật từ {SourceVersionLabel} lên {_versionLabel}"
-        });
+        if (_revisions.Count == 0) _revisions.Add(new ProcedureRevisionDraft());
 
         _writerAssignments.Clear();
         _writerAssignments.AddRange(Store.ProcedureVersionAuthorAssignments
-            .Where(item => item.ProcedureVersionId == source.ProcedureVersionId && item.SignoffRole == "writer")
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId && item.SignoffRole == "writer")
             .OrderBy(item => item.DisplayOrder)
             .Select(item => new ProcedureWriterAssignmentDraft
             {
@@ -521,7 +710,7 @@
 
         _steps.Clear();
         _steps.AddRange(Store.ProcedureSteps
-            .Where(item => item.ProcedureVersionId == source.ProcedureVersionId)
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId)
             .OrderBy(item => item.StepNo)
             .Select(item => new ProcedureFlowStepDraft
             {
@@ -554,7 +743,7 @@
 
         _existingAttachments.Clear();
         _existingAttachments.AddRange(Store.ProcedureAttachments
-            .Where(item => item.ProcedureVersionId == source.ProcedureVersionId)
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId)
             .OrderBy(item => item.UploadedAt)
             .Select(item => new ExistingAttachmentEntry(item.ProcedureAttachmentId, item)));
     }
@@ -625,6 +814,7 @@
     private static string? NullIfWhiteSpace(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     private static string FormatBytes(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
     private static string AttachmentTypeName(string code) => Sql.MedLookups.AttachmentTypes.FirstOrDefault(item => item.Code == code)?.Name ?? code;
+    private string DisplayDepartment(Sql.Department? department) => AdminBusinessDisplay.DepartmentLabel(department, ActiveDepartments);
 
     private sealed class PendingAttachment(Guid clientId, string fileName, string contentType, byte[] content, string attachmentType)
     {
