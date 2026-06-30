@@ -5,6 +5,7 @@ using TelemedicineLandingPage.Application.Validation;
 using TelemedicineLandingPage.Application.Workflow;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
@@ -134,7 +135,19 @@ public static class QlcmServiceCollectionExtensions
 
     public static IServiceCollection AddQlcmAdminServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDataProtection();
+        var dataProtection = services.AddDataProtection();
+        var keyPath = configuration["DataProtection:KeyPath"];
+        if (!string.IsNullOrWhiteSpace(keyPath))
+        {
+            var keyDirectory = new DirectoryInfo(keyPath);
+            if (!keyDirectory.Exists)
+            {
+                keyDirectory.Create();
+            }
+
+            dataProtection.PersistKeysToFileSystem(keyDirectory);
+        }
+
         services.AddSingleton<IMedDataChangeBus, MedDataChangeBus>();
         services.AddSingleton<BrowserSessionTokenService>();
         services.AddScoped<IMedDataStore, MedDbDataStore>();

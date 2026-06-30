@@ -99,6 +99,7 @@ external/
 # Local source scans mounted as authenticated procedure attachments
 procedure-source-pdfs/
 procedure-uploads/
+app-data/dpkeys/
 
 # Git worktrees (local development only)
 worktrees/

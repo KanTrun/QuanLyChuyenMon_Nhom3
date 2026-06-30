@@ -25,6 +25,11 @@ docker compose up --build -d
 
 Do not run `docker compose down --volumes` unless you intentionally want to erase SQL Server data.
 
+### LAN multi-PC access (no domain)
+Run Compose on one host; other PCs on the same LAN open `http://<server-ipv4>:8080`. Data, accounts, uploads and realtime notifications stay in sync because all clients share one web instance and SQL Server.
+
+See [lan-deployment.md](lan-deployment.md) for firewall scripts, client URLs and troubleshooting.
+
 ### Local Bootstrap Admin
 | Username | Password |
 |---|---|
@@ -47,7 +52,7 @@ The bootstrap migration reactivates this local admin account when an older Docke
 ### Internal Procedure Documents
 Procedure confirmation is internal and requires no external provider configuration. The application records signer account, role, timestamp and the SHA-256 content hash for writer, checker and approver signoffs.
 
-Docker mounts `procedure-source-pdfs/` read-only at `/app/App_Data/procedure-attachments/imported` and persists user uploads from `procedure-uploads/` at `/app/App_Data/procedure-attachments/uploads`.
+Docker mounts `procedure-source-pdfs/` read-only at `/app/App_Data/procedure-attachments/imported`, persists user uploads from `procedure-uploads/` at `/app/App_Data/procedure-attachments/uploads`, and persists Data Protection keys at `app-data/dpkeys/` (stable browser sessions across container restarts).
 
 Creating a procedure produces `v01`. Updating from the procedure table produces the next immutable draft (`v02`, `v03`...). Existing active versions remain active until the new version is published. The publish lifecycle then marks the previous active version `superseded`.
 

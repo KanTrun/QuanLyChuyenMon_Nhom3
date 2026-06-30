@@ -12,6 +12,7 @@ services:
       Chatbot__Model: ${CHATBOT_MODEL:-gemini-2.5-flash}
       Chatbot__BaseUrl: ${CHATBOT_BASE_URL:-https://generativelanguage.googleapis.com}
       Chatbot__MaxTokens: ${CHATBOT_MAX_TOKENS:-4096}
+      DataProtection__KeyPath: /app/App_Data/dpkeys
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -20,6 +21,7 @@ services:
     volumes:
       - ./procedure-source-pdfs:/app/App_Data/procedure-attachments/imported:ro
       - ./procedure-uploads:/app/App_Data/procedure-attachments/uploads
+      - ./app-data/dpkeys:/app/App_Data/dpkeys
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/ >/dev/null || exit 1"]

@@ -120,6 +120,18 @@ docker compose up --build
 
 Xem chi tiết trong `docs/deployment-guide.md`.
 
+## Truy cập đa máy trong LAN (không cần tên miền)
+
+Chạy Docker trên **một máy chủ**; các máy khác trong mạng LAN mở trình duyệt tới `http://<IP-máy-chủ>:8080` (cùng dữ liệu và tài khoản).
+
+```powershell
+docker compose up --build -d
+.\scripts\show-lan-url.ps1          # in URL cho máy client
+.\scripts\open-lan-firewall.ps1   # Administrator — mở port 8080
+```
+
+Hướng dẫn đầy đủ: [docs/lan-deployment.md](docs/lan-deployment.md).
+
 ## Dữ liệu mẫu QLCM Pro
 Sau khi có SQL Server database đúng schema, có thể nạp dữ liệu demo/QA:
 

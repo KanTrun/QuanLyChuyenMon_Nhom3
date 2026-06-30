@@ -24,7 +24,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && (getent group app >/dev/null || groupadd --system app) \
     && (id -u app >/dev/null 2>&1 || useradd --system --gid app --home /app app) \
-    && mkdir -p /app/App_Data/procedure-attachments \
+    && mkdir -p /app/App_Data/procedure-attachments /app/App_Data/dpkeys \
     && chown -R app:app /app/App_Data
 COPY --from=build --chown=app:app /app/publish .
 
