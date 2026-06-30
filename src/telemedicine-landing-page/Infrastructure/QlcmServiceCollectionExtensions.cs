@@ -149,6 +149,7 @@ public static class QlcmServiceCollectionExtensions
         }
 
         services.AddSingleton<IMedDataChangeBus, MedDataChangeBus>();
+        services.AddSingleton<MedDataChangeSignalRNotifier>();
         services.AddSingleton<BrowserSessionTokenService>();
         services.AddScoped<IMedDataStore, MedDbDataStore>();
         services.AddScoped<EffectivePermissionResolver>();
@@ -163,7 +164,8 @@ public static class QlcmServiceCollectionExtensions
                 sp.GetRequiredService<MedDbContext>(),
                 sp.GetRequiredService<AuditTrailService>(),
                 sp.GetRequiredService<IWorkflowGuard<ProcedureVersion, string>>(),
-                sp.GetRequiredService<ProcedureDocumentSnapshotService>()));
+                sp.GetRequiredService<ProcedureDocumentSnapshotService>(),
+                sp.GetRequiredService<IMedDataChangeBus>()));
         services.AddScoped<ProcedureAuthoringService>();
         services.AddScoped<ProcedureDocumentSnapshotService>();
         services.AddScoped<ProcedureSignoffService>();

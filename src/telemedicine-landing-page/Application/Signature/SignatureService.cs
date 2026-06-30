@@ -29,15 +29,18 @@ public sealed class SignatureService : ISignatureService
     private readonly IDbContextFactory<MedDbContext> _dbFactory;
     private readonly EffectivePermissionResolver _permissions;
     private readonly IWorkflowGuard<PatientProtocolApplication, string> _workflow;
+    private readonly IMedDataChangeBus? _changeBus;
 
     public SignatureService(
         IDbContextFactory<MedDbContext> dbFactory,
         EffectivePermissionResolver permissions,
-        IWorkflowGuard<PatientProtocolApplication, string> workflow)
+        IWorkflowGuard<PatientProtocolApplication, string> workflow,
+        IMedDataChangeBus? changeBus = null)
     {
         _dbFactory = dbFactory;
         _permissions = permissions;
         _workflow = workflow;
+        _changeBus = changeBus;
     }
 
     public async Task<(SignatureResult Result, SignatureRecord? Record)> CreateInternalSignatureAsync(
@@ -107,6 +110,7 @@ public sealed class SignatureService : ISignatureService
         });
 
         await db.SaveChangesAsync(cancellationToken);
+        _changeBus?.Publish();
         return (SignatureResult.Created, record);
     }
 
@@ -160,6 +164,7 @@ public sealed class SignatureService : ISignatureService
         });
 
         await db.SaveChangesAsync(cancellationToken);
+        _changeBus?.Publish();
         return SignatureResult.Revoked;
     }
 

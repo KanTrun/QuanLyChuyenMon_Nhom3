@@ -15,6 +15,7 @@ public sealed class ProcedureLifecycleService
     private readonly AuditTrailService _audit;
     private readonly IWorkflowGuard<ProcedureVersion, string> _workflow;
     private readonly ProcedureDocumentSnapshotService? _documents;
+    private readonly IMedDataChangeBus? _changeBus;
 
     public ProcedureLifecycleService(MedDbContext db, AuditTrailService audit)
         : this(db, audit, new ProcedureVersionWorkflowGuard(audit))
@@ -25,10 +26,8 @@ public sealed class ProcedureLifecycleService
         MedDbContext db,
         AuditTrailService audit,
         IWorkflowGuard<ProcedureVersion, string> workflow)
+        : this(db, audit, workflow, documents: null, changeBus: null)
     {
-        _db = db;
-        _audit = audit;
-        _workflow = workflow;
     }
 
     public ProcedureLifecycleService(
@@ -36,11 +35,22 @@ public sealed class ProcedureLifecycleService
         AuditTrailService audit,
         IWorkflowGuard<ProcedureVersion, string> workflow,
         ProcedureDocumentSnapshotService documents)
+        : this(db, audit, workflow, documents, changeBus: null)
+    {
+    }
+
+    public ProcedureLifecycleService(
+        MedDbContext db,
+        AuditTrailService audit,
+        IWorkflowGuard<ProcedureVersion, string> workflow,
+        ProcedureDocumentSnapshotService? documents,
+        IMedDataChangeBus? changeBus)
     {
         _db = db;
         _audit = audit;
         _workflow = workflow;
         _documents = documents;
+        _changeBus = changeBus;
     }
 
     /// <summary>Tạo phiên bản mới cho quy trình (trạng thái draft).</summary>
@@ -71,6 +81,7 @@ public sealed class ProcedureLifecycleService
 
         _db.ProcedureVersions.Add(version);
         _db.SaveChanges();
+        NotifyDataChanged();
         return version;
     }
 
@@ -112,6 +123,7 @@ public sealed class ProcedureLifecycleService
             TargetType = "procedure_version",
             TargetId = versionId.ToString()
         });
+        NotifyDataChanged();
     }
 
     /// <summary>Phê duyệt và xuất bản phiên bản (pending_approval → active). Hủy bản active cũ.</summary>
@@ -169,6 +181,7 @@ public sealed class ProcedureLifecycleService
             TargetType = "procedure_version",
             TargetId = versionId.ToString()
         });
+        NotifyDataChanged();
     }
 
     /// <summary>Từ chối phiên bản (pending_approval → rejected).</summary>
@@ -200,6 +213,7 @@ public sealed class ProcedureLifecycleService
             TargetId = versionId.ToString(),
             MetadataJson = $"{{\"reason\":\"{reason}\"}}"
         });
+        NotifyDataChanged();
     }
 
     /// <summary>Thu hồi phiên bản đã xuất bản (active → archived).</summary>
@@ -231,6 +245,7 @@ public sealed class ProcedureLifecycleService
             TargetType = "procedure_version",
             TargetId = versionId.ToString()
         });
+        NotifyDataChanged();
     }
 
     /// <summary>Lấy phiên bản đang hoạt động của quy trình.</summary>
@@ -259,6 +274,7 @@ public sealed class ProcedureLifecycleService
             TargetType = "procedure_version",
             TargetId = versionId.ToString()
         });
+        NotifyDataChanged();
     }
 
     public void RestoreDraft(Guid versionId, Guid restoredBy, string? reason = null)
@@ -286,12 +302,124 @@ public sealed class ProcedureLifecycleService
             TargetType = "procedure_version",
             TargetId = versionId.ToString()
         });
+        NotifyDataChanged();
     }
 
     public ProcedureVersion? GetActiveVersion(Guid procedureId)
     {
         return _db.ProcedureVersions
             .FirstOrDefault(v => v.ProcedureId == procedureId && v.StatusCode == "active");
+    }
+
+    /// <summary>Khôi phục phiên bản cũ (superseded/archived đã từng ban hành) thành bản đang hiệu lực.</summary>
+    public void RollbackToVersion(Guid targetVersionId, Guid actorUserId, string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw MedDomainException.Constraint(
+                "CK_procedure_version_rollback_reason",
+                50030,
+                "Phải nhập lý do khôi phục phiên bản.");
+        }
+
+        var target = GetVersionOrThrow(targetVersionId);
+        var canRollbackTarget = string.Equals(target.StatusCode, "superseded", StringComparison.OrdinalIgnoreCase)
+            || (string.Equals(target.StatusCode, "archived", StringComparison.OrdinalIgnoreCase) && target.PublishedAt.HasValue);
+        if (!canRollbackTarget)
+        {
+            throw MedDomainException.Constraint(
+                "CK_procedure_version_rollback_target",
+                50031,
+                "Chỉ có thể khôi phục phiên bản đã được thay thế hoặc đã từng ban hành rồi lưu trữ.");
+        }
+
+        var currentActive = _db.ProcedureVersions
+            .FirstOrDefault(v =>
+                v.ProcedureId == target.ProcedureId
+                && v.StatusCode == "active"
+                && v.ProcedureVersionId != targetVersionId);
+        if (currentActive is null)
+        {
+            throw MedDomainException.Constraint(
+                "CK_procedure_version_rollback_active",
+                50032,
+                "Không có phiên bản đang hiệu lực để thay thế khi khôi phục.");
+        }
+
+        EnsureTransition(currentActive, "archived", "CK_procedure_version_rollback", 50033,
+            "Không thể lưu trữ phiên bản đang hiệu lực khi khôi phục.");
+        EnsureTransition(target, "active", "CK_procedure_version_rollback", 50033,
+            "Không thể khôi phục phiên bản từ trạng thái hiện tại.");
+
+        var targetLabel = target.VersionLabel ?? $"v{target.VersionNo}";
+        var activeLabel = currentActive.VersionLabel ?? $"v{currentActive.VersionNo}";
+        var trimmedReason = reason.Trim();
+
+        var archivedActive = currentActive with
+        {
+            StatusCode = "archived",
+            EffectiveTo = DateTime.UtcNow,
+            ChangeReason = $"Lưu trữ khi khôi phục {targetLabel}: {trimmedReason}"
+        };
+        var restored = target with
+        {
+            StatusCode = "active",
+            EffectiveFrom = DateTime.UtcNow,
+            EffectiveTo = null,
+            ChangeReason = $"Khôi phục hiệu lực thay cho {activeLabel}: {trimmedReason}"
+        };
+
+        _db.ProcedureVersions.Entry(currentActive).CurrentValues.SetValues(archivedActive);
+        _db.ProcedureVersions.Entry(target).CurrentValues.SetValues(restored);
+        _db.SaveChanges();
+
+        _documents?.PersistSnapshot(currentActive.ProcedureVersionId, "superseded_by_rollback", actorUserId);
+        _documents?.PersistSnapshot(targetVersionId, "rolled_back", actorUserId);
+
+        _workflow.OnTransitioned(archivedActive, currentActive.StatusCode, archivedActive.StatusCode, actorUserId, trimmedReason);
+        _workflow.OnTransitioned(restored, target.StatusCode, restored.StatusCode, actorUserId, trimmedReason);
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = actorUserId,
+            ActionCode = "rollback",
+            TargetType = "procedure_version",
+            TargetId = targetVersionId.ToString(),
+            MetadataJson = $"{{\"replacedVersionId\":\"{currentActive.ProcedureVersionId}\",\"reason\":\"{trimmedReason}\"}}"
+        });
+        NotifyDataChanged();
+    }
+
+    public bool CanRollbackToVersion(Guid targetVersionId, out string? reason)
+    {
+        reason = null;
+        var target = _db.ProcedureVersions.FirstOrDefault(v => v.ProcedureVersionId == targetVersionId);
+        if (target is null)
+        {
+            reason = "Phiên bản không tồn tại.";
+            return false;
+        }
+
+        var canRollbackTarget = string.Equals(target.StatusCode, "superseded", StringComparison.OrdinalIgnoreCase)
+            || (string.Equals(target.StatusCode, "archived", StringComparison.OrdinalIgnoreCase) && target.PublishedAt.HasValue);
+        if (!canRollbackTarget)
+        {
+            reason = "Chỉ khôi phục được bản đã thay thế hoặc bản đã từng ban hành.";
+            return false;
+        }
+
+        var hasOtherActive = _db.ProcedureVersions.Any(v =>
+            v.ProcedureId == target.ProcedureId
+            && v.StatusCode == "active"
+            && v.ProcedureVersionId != targetVersionId);
+        if (!hasOtherActive)
+        {
+            reason = "Không có phiên bản đang hiệu lực khác để thay thế.";
+            return false;
+        }
+
+        return _workflow.CanTransition(target.StatusCode, "active");
     }
 
     /// <summary>Lấy tất cả phiên bản của quy trình.</summary>
@@ -383,4 +511,6 @@ public sealed class ProcedureLifecycleService
         "approver" => "Người phê duyệt",
         _ => role
     };
+
+    private void NotifyDataChanged() => _changeBus?.Publish();
 }

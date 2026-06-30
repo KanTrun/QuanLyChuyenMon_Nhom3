@@ -96,6 +96,30 @@ public sealed class CurrentUserContext : ICurrentUserContext
         StateChanged?.Invoke();
     }
 
+    public void RefreshFromDatabase()
+    {
+        if (CurrentUser is null)
+        {
+            return;
+        }
+
+        _db.ChangeTracker.Clear();
+        var userId = CurrentUser.UserId;
+        var refreshed = _db.Users.AsNoTracking()
+            .FirstOrDefault(user => user.UserId == userId && user.DeletedAt == null);
+        if (refreshed is null ||
+            !string.Equals(refreshed.Status, "active", StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(refreshed.OnboardingStatus, "active", StringComparison.OrdinalIgnoreCase))
+        {
+            SignOut();
+            return;
+        }
+
+        CurrentUser = refreshed;
+        ClearPermissionCache();
+        StateChanged?.Invoke();
+    }
+
     public bool HasPermission(string permissionCode)
     {
         if (CurrentUser is null) return false;

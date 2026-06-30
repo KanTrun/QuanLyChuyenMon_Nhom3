@@ -1,30 +1,119 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@using TelemedicineLandingPage.Hubs
 @using TelemedicineLandingPage.Services.Admin.Sql
 @inject IMedDataStore Store
 @inject IMedDataChangeBus ChangeBus
-@implements IDisposable
+@inject ICurrentUserContext UserContext
+@inject BrowserSessionService BrowserSession
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
 
 @code {
+    private HubConnection? _hub;
+    private string? _sessionToken;
+    private long _lastAppliedRevision = -1;
     private bool _disposed;
 
     protected override void OnInitialized()
     {
-        ChangeBus.Changed += OnDataChanged;
+        ChangeBus.Changed += OnLocalDataChanged;
     }
 
-    private void OnDataChanged()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!firstRender || _disposed)
+        {
+            return;
+        }
+
+        _hub = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/hubs/notification"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hub.On<long>("DataRevisionChanged", OnRemoteRevisionAsync);
+        _hub.Reconnected += OnHubReconnectedAsync;
+
+        try
+        {
+            await _hub.StartAsync();
+            await JoinDataSyncGroupAsync();
+        }
+        catch
+        {
+            // Hub is optional; in-process bus still refreshes this circuit.
+        }
+    }
+
+    private void OnLocalDataChanged()
+    {
+        ApplyRevision(ChangeBus.Revision);
+    }
+
+    private Task OnRemoteRevisionAsync(long revision)
+    {
+        ApplyRevision(revision);
+        return Task.CompletedTask;
+    }
+
+    private async Task OnHubReconnectedAsync(string? _)
+    {
+        _sessionToken = null;
+        await JoinDataSyncGroupAsync();
+    }
+
+    private async Task JoinDataSyncGroupAsync()
+    {
+        if (_hub is null || _hub.State != HubConnectionState.Connected)
+        {
+            return;
+        }
+
+        var token = await BrowserSession.GetCurrentSessionTokenAsync();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _sessionToken = null;
+            return;
+        }
+
+        if (string.Equals(_sessionToken, token, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        await _hub.InvokeAsync("JoinDataSyncGroup", token);
+        _sessionToken = token;
+    }
+
+    private void ApplyRevision(long revision)
+    {
+        if (revision <= _lastAppliedRevision)
+        {
+            return;
+        }
+
+        _lastAppliedRevision = revision;
         _ = InvokeAsync(() =>
         {
-            if (!_disposed)
+            if (_disposed)
             {
-                Store.Refresh();
+                return Task.CompletedTask;
             }
+
+            Store.Refresh();
+            UserContext.RefreshFromDatabase();
+            return Task.CompletedTask;
         });
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         _disposed = true;
-        ChangeBus.Changed -= OnDataChanged;
+        ChangeBus.Changed -= OnLocalDataChanged;
+
+        if (_hub is not null)
+        {
+            await _hub.DisposeAsync();
+        }
     }
 }

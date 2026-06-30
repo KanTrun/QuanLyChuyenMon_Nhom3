@@ -65,6 +65,7 @@ public sealed class CurrentUserAuthenticationStateProviderTests
             => new(LoginAttemptStatus.InvalidCredentials);
         public AppUser? LoginByUsernameOnly(string username) => null;
         public void SignOut() => StateChanged?.Invoke();
+        public void RefreshFromDatabase() { }
         public bool HasPermission(string permissionCode) => false;
         public IReadOnlyList<EffectivePermissionResolver.ResolvedPermission> GetEffectivePermissions()
             => Array.Empty<EffectivePermissionResolver.ResolvedPermission>();

@@ -24,6 +24,12 @@ public sealed class NotificationHub : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, UserGroup(user.UserId));
     }
 
+    public async Task JoinDataSyncGroup(string sessionToken)
+    {
+        await ResolveActiveUserAsync(sessionToken);
+        await Groups.AddToGroupAsync(Context.ConnectionId, DataSyncGroup);
+    }
+
     public async Task LeaveUserGroup(string sessionToken)
     {
         var user = await ResolveActiveUserAsync(sessionToken);
@@ -61,6 +67,8 @@ public sealed class NotificationHub : Hub
     public static string UserGroup(Guid userId) => UserGroup(userId.ToString("D"));
 
     public static string UserGroup(string userId) => $"user:{userId.Trim().ToLowerInvariant()}";
+
+    public static string DataSyncGroup => "sync:all";
 
     public static string Group(string groupName) => $"group:{groupName.Trim().ToLowerInvariant()}";
 

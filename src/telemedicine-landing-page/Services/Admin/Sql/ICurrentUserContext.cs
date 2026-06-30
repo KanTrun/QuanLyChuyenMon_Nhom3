@@ -29,6 +29,9 @@ public interface ICurrentUserContext
     /// <summary>Đăng xuất người dùng hiện tại.</summary>
     void SignOut();
 
+    /// <summary>Tải lại hồ sơ và quyền từ SQL sau khi dữ liệu đồng bộ từ máy khác.</summary>
+    void RefreshFromDatabase();
+
     /// <summary>Kiểm tra người dùng hiện tại có quyền cụ thể hay không.</summary>
     bool HasPermission(string permissionCode);
 

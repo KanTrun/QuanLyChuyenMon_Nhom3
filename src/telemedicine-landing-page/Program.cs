@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using TelemedicineLandingPage.Components;
 using TelemedicineLandingPage.Hubs;
 using TelemedicineLandingPage.Infrastructure;
+using TelemedicineLandingPage.Services.Admin.Sql;
 using TelemedicineLandingPage.Services.Auth;
 using Serilog;
 
@@ -48,6 +49,8 @@ app.MapStaticAssets();
 app.MapHub<NotificationHub>("/hubs/notification");
 app.MapProcedureAttachmentEndpoints();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+
+_ = app.Services.GetRequiredService<MedDataChangeSignalRNotifier>();
 
 app.Run();
 

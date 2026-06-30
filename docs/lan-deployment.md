@@ -135,6 +135,16 @@ Trước khi `docker compose down --volumes`:
 - Thư mục upload: `procedure-uploads/`
 - Khóa session: `app-data/dpkeys/`
 
+### Reset database và seed lại (tất cả máy dùng chung dữ liệu mới)
+
+Chỉ chạy trên **máy chủ Docker** — các máy client chỉ cần F5 hoặc đăng nhập lại:
+
+```powershell
+.\scripts\reset-docker-seed.ps1
+```
+
+Script xóa volume SQL, xóa session keys, seed lại từ đầu. Tài khoản mặc định: `admin` / `Admin@2026`.
+
 ## Tài liệu liên quan
 
 - [deployment-guide.md](deployment-guide.md) — Docker Compose chi tiết
