@@ -87,7 +87,6 @@
                             <button type="button"
                                     class="procedure-picker-trigger"
                                     @onclick="() => ToggleRolePicker(step)">
-                                <span class="procedure-picker-trigger-icon" aria-hidden="true">+</span>
                                 <span>@RolePickerPlaceholder(step)</span>
                             </button>
                             @if (step.RoleIds.Count > 0)
@@ -109,7 +108,6 @@
                             {
                                 <div class="procedure-search-popover">
                                     <label class="procedure-search-box">
-                                        <span aria-hidden="true">🔎</span>
                                         <input class="admin-input"
                                                value="@GetRoleSearch(step)"
                                                @oninput="e => SetRoleSearch(step, e.Value?.ToString())"
@@ -125,12 +123,9 @@
                                                     <button type="button"
                                                             class="procedure-card-option @(step.RoleIds.Contains(role.RoleId.ToString()) ? "is-selected" : string.Empty)"
                                                             @onclick="() => ToggleRole(step, role.RoleId.ToString())">
-                                                        <span class="procedure-card-icon">@RoleGlyph(role)</span>
                                                         <span class="procedure-card-content">
                                                             <strong>@role.Name</strong>
-                                                            <small>@role.Code</small>
                                                         </span>
-                                                        <span class="procedure-card-check" aria-hidden="true">✓</span>
                                                     </button>
                                                 }
                                             </div>
@@ -144,12 +139,9 @@
                                                 <button type="button"
                                                         class="procedure-card-option @(step.RoleIds.Contains(role.RoleId.ToString()) ? "is-selected" : string.Empty)"
                                                         @onclick="() => ToggleRole(step, role.RoleId.ToString())">
-                                                    <span class="procedure-card-icon">@RoleGlyph(role)</span>
                                                     <span class="procedure-card-content">
                                                         <strong>@role.Name</strong>
-                                                        <small>@role.Code</small>
                                                     </span>
-                                                    <span class="procedure-card-check" aria-hidden="true">✓</span>
                                                 </button>
                                             }
                                         </div>
@@ -172,7 +164,6 @@
                             <button type="button"
                                     class="procedure-picker-trigger"
                                     @onclick="() => ToggleDepartmentPicker(step)">
-                                <span class="procedure-picker-trigger-icon" aria-hidden="true">🔎</span>
                                 <span>@DepartmentPickerPlaceholder(step)</span>
                             </button>
                             @if (step.LocationDepartmentIds.Count > 0)
@@ -194,7 +185,6 @@
                             {
                                 <div class="procedure-search-popover">
                                     <label class="procedure-search-box">
-                                        <span aria-hidden="true">🔎</span>
                                         <input class="admin-input"
                                                value="@GetDepartmentSearch(step)"
                                                @oninput="e => SetDepartmentSearch(step, e.Value?.ToString())"
@@ -210,7 +200,6 @@
                                                     <button type="button"
                                                             class="procedure-picker-option is-button @(step.LocationDepartmentIds.Contains(department.DepartmentId.ToString()) ? "is-selected" : string.Empty)"
                                                             @onclick="() => ToggleDepartment(step, department.DepartmentId.ToString())">
-                                                        <span class="procedure-picker-check" aria-hidden="true">✓</span>
                                                         <span>@DepartmentLabel(department)</span>
                                                         <small>@department.Code</small>
                                                     </button>
@@ -228,7 +217,6 @@
                                                     <button type="button"
                                                             class="procedure-picker-option is-button @(step.LocationDepartmentIds.Contains(department.DepartmentId.ToString()) ? "is-selected" : string.Empty)"
                                                             @onclick="() => ToggleDepartment(step, department.DepartmentId.ToString())">
-                                                        <span class="procedure-picker-check" aria-hidden="true">✓</span>
                                                         <span>@DepartmentLabel(department)</span>
                                                         <small>@department.Code</small>
                                                     </button>
@@ -559,12 +547,5 @@
 
     private string DepartmentPickerPlaceholder(ProcedureFlowStepDraft step)
         => step.LocationDepartmentIds.Count == 0 ? "Tìm và chọn khoa/phòng..." : $"Đã chọn {step.LocationDepartmentIds.Count} khoa/phòng, nhấn để chỉnh sửa";
-
-    private static string RoleGlyph(Sql.Role role)
-    {
-        var words = role.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return string.Concat(words.Take(2).Select(word => char.ToUpperInvariant(word[0])));
-    }
-
     private sealed record DepartmentGroup(string Title, IReadOnlyList<Sql.Department> Items);
 }

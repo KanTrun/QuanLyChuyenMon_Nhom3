@@ -1012,7 +1012,7 @@
 .procedure-picker-trigger {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
     min-height: 46px;
     padding: 0 14px;
@@ -1031,16 +1031,7 @@
 }
 
 .procedure-picker-trigger-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 999px;
-    background: rgba(91, 155, 213, 0.12);
-    color: var(--color-primary-deep);
-    font-size: 0.86rem;
-    flex: 0 0 auto;
+    display: none;
 }
 
 .procedure-search-popover {
@@ -1054,19 +1045,13 @@
 
 .procedure-search-box {
     display: grid;
-    grid-template-columns: 20px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     align-items: center;
-    gap: 10px;
     min-height: 44px;
     padding: 0 12px;
     border: 1px solid var(--color-border-subtle);
     border-radius: 12px;
     background: var(--color-surface);
-}
-
-.procedure-search-box span {
-    color: var(--color-muted);
-    font-size: 0.9rem;
 }
 
 .procedure-search-box .admin-input {
@@ -1103,9 +1088,9 @@
 
 .procedure-card-option {
     display: grid;
-    grid-template-columns: 38px minmax(0, 1fr) 20px;
+    grid-template-columns: minmax(0, 1fr);
     align-items: center;
-    gap: 10px;
+    gap: 0;
     min-height: 72px;
     padding: 10px 12px;
     border: 1px solid var(--color-border-subtle);
@@ -1125,21 +1110,12 @@
 }
 
 .procedure-card-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    background: rgba(91, 155, 213, 0.16);
-    color: var(--color-primary-deep);
-    font-size: 0.82rem;
-    font-weight: 800;
+    display: none;
 }
 
 .procedure-card-content {
     display: grid;
-    gap: 4px;
+    gap: 0;
     min-width: 0;
 }
 
@@ -1147,23 +1123,6 @@
     color: var(--color-ink);
     font-size: 0.88rem;
     line-height: 1.35;
-}
-
-.procedure-card-content small {
-    color: var(--color-muted);
-    font-size: 0.76rem;
-}
-
-.procedure-card-check,
-.procedure-picker-check {
-    color: transparent;
-    font-size: 0.9rem;
-    font-weight: 800;
-}
-
-.procedure-card-option.is-selected .procedure-card-check,
-.procedure-picker-option.is-selected .procedure-picker-check {
-    color: var(--color-primary-deep);
 }
 
 .procedure-picker-grid {
@@ -1189,7 +1148,7 @@
 .procedure-picker-option.is-button {
     width: 100%;
     text-align: left;
-    grid-template-columns: 20px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .procedure-picker-option:hover {
