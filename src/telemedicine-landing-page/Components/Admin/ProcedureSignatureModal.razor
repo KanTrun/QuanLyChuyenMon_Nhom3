@@ -93,9 +93,17 @@
 
             await SignatureConfirmed.InvokeAsync(image);
         }
+        catch (TaskCanceledException)
+        {
+            _error = "Không thể hoàn tất do kết nối bị gián đoạn. Vui lòng mở lại và ký lại.";
+        }
         catch (JSDisconnectedException)
         {
             _error = "Kết nối trình duyệt đã bị gián đoạn.";
+        }
+        catch (OperationCanceledException)
+        {
+            _error = "Không thể hoàn tất do kết nối bị gián đoạn. Vui lòng mở lại và ký lại.";
         }
         catch (Exception exception)
         {
@@ -104,6 +112,7 @@
         finally
         {
             _busy = false;
+            StateHasChanged();
         }
     }
 

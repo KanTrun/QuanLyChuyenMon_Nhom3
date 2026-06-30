@@ -10,11 +10,32 @@
 @inject IToastService Toasts
 @implements IAsyncDisposable
 
+@if (_showSessionEndOverlay)
+{
+    <div class="session-ended-overlay" role="alertdialog" aria-modal="true" aria-labelledby="session-ended-title">
+        <div class="session-ended-dialog">
+            <span class="session-ended-dialog__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.6 1.8 18.2A2 2 0 0 0 3.5 21h17a2 2 0 0 0 1.7-2.8L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg>
+            </span>
+            <h2 id="session-ended-title">@_sessionEndTitle</h2>
+            <p>@_sessionEndMessage</p>
+            <button type="button" class="session-ended-dialog__action" @onclick="FinalizeSessionEndAsync">
+                Đăng nhập lại
+            </button>
+        </div>
+    </div>
+}
+
 @code {
     private HubConnection? _hub;
     private string? _sessionToken;
     private long _lastAppliedRevision = -1;
     private bool _disposed;
+    private bool _showSessionEndOverlay;
+    private bool _sessionEndFinalizing;
+    private string _sessionEndReason = "replaced";
+    private string _sessionEndTitle = "Phiên đăng nhập đã kết thúc";
+    private string _sessionEndMessage = "Phiên đăng nhập đã hết hạn hoặc tài khoản này vừa đăng nhập trên một thiết bị khác.";
 
     protected override void OnInitialized()
     {
@@ -53,7 +74,7 @@
         try
         {
             await _hub.StartAsync();
-            await JoinDataSyncGroupAsync();
+            await JoinHubGroupsAsync();
         }
         catch
         {
@@ -75,14 +96,14 @@
     private async Task OnHubReconnectedAsync(string? _)
     {
         _sessionToken = null;
-        await JoinDataSyncGroupAsync();
+        await JoinHubGroupsAsync();
     }
 
     private Task OnSessionInvalidatedAsync(string activeSessionIdText)
     {
         _ = InvokeAsync(async () =>
         {
-            if (_disposed)
+            if (_disposed || _showSessionEndOverlay)
             {
                 return;
             }
@@ -92,17 +113,12 @@
                 return;
             }
 
-            if (!await BrowserSession.IsSupersededByActiveSessionAsync(activeSessionId))
+            if (!BrowserSession.IsSupersededByActiveSession(activeSessionId))
             {
                 return;
             }
 
-            await BrowserSession.SignOutLocalAsync();
-            Toasts.Show(
-                "Phiên đăng nhập đã kết thúc",
-                "Tài khoản này vừa đăng nhập trên thiết bị khác hoặc phiên hiện tại không còn hợp lệ.",
-                ToastVariant.Warning);
-            Navigation.NavigateTo("/login?reason=replaced", forceLoad: false, replace: true);
+            await ShowSessionEndedOverlayAsync("replaced");
         });
 
         return Task.CompletedTask;
@@ -117,22 +133,27 @@
                 return;
             }
 
-            await JoinDataSyncGroupAsync();
+            await JoinHubGroupsAsync();
             ApplyRevision(ChangeBus.Revision);
             StateHasChanged();
         });
     }
 
-    private async Task JoinDataSyncGroupAsync()
+    private async Task JoinHubGroupsAsync()
     {
-        if (_hub is null || _hub.State != HubConnectionState.Connected)
+        if (_hub is null || _hub.State != HubConnectionState.Connected || _showSessionEndOverlay)
         {
             return;
         }
 
-        var token = await BrowserSession.GetCurrentSessionTokenAsync();
+        var token = await BrowserSession.GetCircuitSessionTokenAsync();
         if (string.IsNullOrWhiteSpace(token))
         {
+            if (UserContext.CurrentUser is not null && await BrowserSession.IsCircuitSessionRevokedAsync())
+            {
+                await ShowSessionEndedOverlayAsync("replaced");
+            }
+
             _sessionToken = null;
             return;
         }
@@ -145,6 +166,51 @@
         await _hub.InvokeAsync("JoinDataSyncGroup", token);
         await _hub.InvokeAsync("JoinUserGroup", token);
         _sessionToken = token;
+    }
+
+    private async Task ShowSessionEndedOverlayAsync(string reason)
+    {
+        if (_showSessionEndOverlay)
+        {
+            return;
+        }
+
+        _sessionEndReason = reason;
+        (_sessionEndTitle, _sessionEndMessage) = reason switch
+        {
+            "expired" => (
+                "Phiên đăng nhập đã hết hạn",
+                "Phiên làm việc của bạn đã hết hạn. Vui lòng đăng nhập lại để tiếp tục."),
+            "disabled" => (
+                "Không thể tiếp tục phiên hiện tại",
+                "Tài khoản hiện không còn hợp lệ hoặc đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên."),
+            _ => (
+                "Phiên đăng nhập đã kết thúc",
+                "Phiên đăng nhập đã hết hạn hoặc tài khoản này vừa đăng nhập trên một thiết bị khác.")
+        };
+
+        _showSessionEndOverlay = true;
+        Toasts.Show(_sessionEndTitle, _sessionEndMessage, ToastVariant.Warning);
+        StateHasChanged();
+
+        await Task.Delay(4500);
+        if (!_disposed && _showSessionEndOverlay && !_sessionEndFinalizing)
+        {
+            await FinalizeSessionEndAsync();
+        }
+    }
+
+    private async Task FinalizeSessionEndAsync()
+    {
+        if (_sessionEndFinalizing || _disposed)
+        {
+            return;
+        }
+
+        _sessionEndFinalizing = true;
+        await BrowserSession.MarkSessionEndedNoticeAsync(_sessionEndReason);
+        await BrowserSession.SignOutLocalAsync();
+        Navigation.NavigateTo($"/login?reason={Uri.EscapeDataString(_sessionEndReason)}", forceLoad: true, replace: true);
     }
 
     private void ApplyRevision(long revision)
