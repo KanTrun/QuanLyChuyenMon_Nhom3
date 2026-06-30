@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Hubs;
+using TelemedicineLandingPage.Models.Admin.Sql;
 using TelemedicineLandingPage.Services.Auth;
 
 namespace TelemedicineLandingPage.Services.Admin.Sql;
@@ -51,10 +52,11 @@ public sealed class BrowserSessionService
         });
         _db.SaveChanges();
 
-        await _hub.Clients.Group(NotificationHub.UserGroup(userId.Value))
-            .SendAsync("SessionInvalidated", "replaced");
+        var token = _tokens.IssueToken(userId.Value, sessionId);
+        await _js.InvokeVoidAsync("sessionStorage.setItem", SessionTokenKey, token);
 
-        await _js.InvokeVoidAsync("sessionStorage.setItem", SessionTokenKey, _tokens.IssueToken(userId.Value, sessionId));
+        await _hub.Clients.Group(NotificationHub.UserGroup(userId.Value))
+            .SendAsync("SessionInvalidated", sessionId.ToString("D"));
         await ClearLegacyCurrentUserAsync();
     }
 
@@ -87,11 +89,13 @@ public sealed class BrowserSessionService
                 return new BrowserSessionRestoreResult(BrowserSessionRestoreStatus.UserUnavailable);
             }
 
-            if (user.ActiveSessionId != identity.SessionId)
+            if (!IsSessionCompatible(user, identity.SessionId))
             {
                 await ClearAsync();
                 return new BrowserSessionRestoreResult(BrowserSessionRestoreStatus.ReplacedByNewLogin);
             }
+
+            await EnsureActiveSessionBoundAsync(user.UserId, identity.SessionId);
 
             _userContext.SetCurrentUser(identity.UserId);
             return new BrowserSessionRestoreResult(BrowserSessionRestoreStatus.Restored);
@@ -108,18 +112,38 @@ public sealed class BrowserSessionService
         await ClearLegacyCurrentUserAsync();
 
         var token = await _js.InvokeAsync<string?>("sessionStorage.getItem", SessionTokenKey);
-        if (_tokens.TryReadToken(token, out var identity) == BrowserSessionTokenService.BrowserSessionTokenStatus.Valid)
+        if (_tokens.TryReadToken(token, out var identity) != BrowserSessionTokenService.BrowserSessionTokenStatus.Valid)
         {
-            _db.ChangeTracker.Clear();
-            var user = _db.Users.AsNoTracking().FirstOrDefault(item => item.UserId == identity.UserId && item.DeletedAt == null);
-            if (user?.ActiveSessionId == identity.SessionId)
-            {
-                return token;
-            }
+            await ClearAsync();
+            return null;
         }
 
-        await ClearAsync();
-        return null;
+        _db.ChangeTracker.Clear();
+        var user = _db.Users.AsNoTracking().FirstOrDefault(item => item.UserId == identity.UserId && item.DeletedAt == null);
+        if (user is null)
+        {
+            await ClearAsync();
+            return null;
+        }
+
+        if (!IsSessionCompatible(user, identity.SessionId))
+        {
+            await ClearAsync();
+            return null;
+        }
+
+        return await EnsureActiveSessionBoundAsync(user.UserId, identity.SessionId) ?? token;
+    }
+
+    public async Task<bool> IsSupersededByActiveSessionAsync(Guid activeSessionId)
+    {
+        var token = await _js.InvokeAsync<string?>("sessionStorage.getItem", SessionTokenKey);
+        if (_tokens.TryReadToken(token, out var identity) != BrowserSessionTokenService.BrowserSessionTokenStatus.Valid)
+        {
+            return true;
+        }
+
+        return identity.SessionId != activeSessionId;
     }
 
     public async Task SignOutAsync()
@@ -156,6 +180,49 @@ public sealed class BrowserSessionService
 
     private async Task ClearLegacyCurrentUserAsync()
         => await _js.InvokeVoidAsync("sessionStorage.removeItem", LegacyCurrentUserKey);
+
+    private static bool IsSessionCompatible(AppUser user, Guid tokenSessionId)
+    {
+        if (user.ActiveSessionId is null)
+        {
+            return true;
+        }
+
+        return user.ActiveSessionId == tokenSessionId;
+    }
+
+    private async Task<string?> EnsureActiveSessionBoundAsync(Guid userId, Guid tokenSessionId)
+    {
+        _db.ChangeTracker.Clear();
+        var user = _db.Users.AsNoTracking().FirstOrDefault(item => item.UserId == userId && item.DeletedAt == null);
+        if (user is null)
+        {
+            return null;
+        }
+
+        if (user.ActiveSessionId is not null)
+        {
+            return null;
+        }
+
+        var sessionId = tokenSessionId == Guid.Empty ? Guid.NewGuid() : tokenSessionId;
+        var tracked = _db.Users.First(item => item.UserId == userId);
+        _db.Users.Entry(tracked).CurrentValues.SetValues(tracked with
+        {
+            ActiveSessionId = sessionId,
+            UpdatedAt = DateTime.UtcNow
+        });
+        _db.SaveChanges();
+
+        if (tokenSessionId == sessionId)
+        {
+            return null;
+        }
+
+        var token = _tokens.IssueToken(userId, sessionId);
+        await _js.InvokeVoidAsync("sessionStorage.setItem", SessionTokenKey, token);
+        return token;
+    }
 }
 
 public sealed record BrowserSessionRestoreResult(BrowserSessionRestoreStatus Status)

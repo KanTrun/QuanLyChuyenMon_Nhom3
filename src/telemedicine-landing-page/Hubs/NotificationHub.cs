@@ -109,7 +109,7 @@ public sealed class NotificationHub : Hub
                            user.Status == "active" &&
                            user.OnboardingStatus == "active" &&
                            user.DeletedAt == null &&
-                           user.ActiveSessionId == identity.SessionId)
+                           (user.ActiveSessionId == null || user.ActiveSessionId == identity.SessionId))
             .Select(user => new { user.UserId, user.FullName, user.Username, user.ActiveSessionId })
             .FirstOrDefaultAsync(Context.ConnectionAborted);
         if (user is null)

@@ -29,7 +29,7 @@ public static class ProcedureAttachmentEndpoints
                         user.Status == "active" &&
                         user.OnboardingStatus == "active" &&
                         user.DeletedAt == null &&
-                        user.ActiveSessionId == sessionIdentity.SessionId,
+                        (user.ActiveSessionId == null || user.ActiveSessionId == sessionIdentity.SessionId),
                         cancellationToken);
                 }
                 if (!authorizedByToken && !authorizedBySession) return Results.Unauthorized();

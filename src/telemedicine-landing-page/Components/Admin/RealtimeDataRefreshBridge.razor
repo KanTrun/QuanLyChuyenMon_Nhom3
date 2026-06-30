@@ -29,6 +29,18 @@
             return;
         }
 
+        if (UserContext.CurrentUser is null)
+        {
+            try
+            {
+                await BrowserSession.RestoreCurrentUserAsync();
+            }
+            catch
+            {
+                // Layout also restores; ignore transient JS failures here.
+            }
+        }
+
         _hub = new HubConnectionBuilder()
             .WithUrl(Navigation.ToAbsoluteUri("/hubs/notification"))
             .WithAutomaticReconnect()
@@ -66,11 +78,21 @@
         await JoinDataSyncGroupAsync();
     }
 
-    private Task OnSessionInvalidatedAsync(string reason)
+    private Task OnSessionInvalidatedAsync(string activeSessionIdText)
     {
         _ = InvokeAsync(async () =>
         {
             if (_disposed)
+            {
+                return;
+            }
+
+            if (!Guid.TryParse(activeSessionIdText, out var activeSessionId))
+            {
+                return;
+            }
+
+            if (!await BrowserSession.IsSupersededByActiveSessionAsync(activeSessionId))
             {
                 return;
             }
@@ -80,7 +102,7 @@
                 "Phiên đăng nhập đã kết thúc",
                 "Tài khoản này vừa đăng nhập trên thiết bị khác hoặc phiên hiện tại không còn hợp lệ.",
                 ToastVariant.Warning);
-            Navigation.NavigateTo($"/login?reason={Uri.EscapeDataString(reason)}", forceLoad: false, replace: true);
+            Navigation.NavigateTo("/login?reason=replaced", forceLoad: false, replace: true);
         });
 
         return Task.CompletedTask;
@@ -121,6 +143,7 @@
         }
 
         await _hub.InvokeAsync("JoinDataSyncGroup", token);
+        await _hub.InvokeAsync("JoinUserGroup", token);
         _sessionToken = token;
     }
 
