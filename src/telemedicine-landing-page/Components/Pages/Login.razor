@@ -1,4 +1,5 @@
 @page "/login"
+@using Microsoft.AspNetCore.WebUtilities
 @using TelemedicineLandingPage.Data
 @using TelemedicineLandingPage.Models.Admin.Sql
 @using TelemedicineLandingPage.Services.Admin
@@ -165,7 +166,10 @@
         if (UserContext.CurrentUser is not null)
         {
             Navigation.NavigateTo(GetPostLoginRoute(), forceLoad: false, replace: true);
+            return;
         }
+
+        LoadSessionReason();
     }
 
     private async Task HandleLogin()
@@ -248,6 +252,20 @@
 
     private void TogglePasswordVisibility()
         => _showPassword = !_showPassword;
+
+    private void LoadSessionReason()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        var reason = query.TryGetValue("reason", out var values) ? values.ToString() : null;
+        _errorMessage = reason switch
+        {
+            "replaced" => "Phiên đăng nhập đã hết hạn vì tài khoản này vừa đăng nhập trên một thiết bị hoặc trình duyệt khác.",
+            "expired" => "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.",
+            "disabled" => "Tài khoản hiện không còn hợp lệ hoặc đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
+            _ => _errorMessage
+        };
+    }
 
     private string GetPostLoginRoute()
         => Gate.GetFirstAccessibleRoute(NavState.NavItems, "/AccessDenied");

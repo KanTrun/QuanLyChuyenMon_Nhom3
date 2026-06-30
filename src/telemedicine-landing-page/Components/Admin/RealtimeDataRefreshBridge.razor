@@ -1,11 +1,13 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using TelemedicineLandingPage.Hubs
+@using TelemedicineLandingPage.Services.Admin
 @using TelemedicineLandingPage.Services.Admin.Sql
 @inject IMedDataStore Store
 @inject IMedDataChangeBus ChangeBus
 @inject ICurrentUserContext UserContext
 @inject BrowserSessionService BrowserSession
 @inject NavigationManager Navigation
+@inject IToastService Toasts
 @implements IAsyncDisposable
 
 @code {
@@ -17,6 +19,7 @@
     protected override void OnInitialized()
     {
         ChangeBus.Changed += OnLocalDataChanged;
+        UserContext.StateChanged += OnUserChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -32,6 +35,7 @@
             .Build();
 
         _hub.On<long>("DataRevisionChanged", OnRemoteRevisionAsync);
+        _hub.On<string>("SessionInvalidated", OnSessionInvalidatedAsync);
         _hub.Reconnected += OnHubReconnectedAsync;
 
         try
@@ -60,6 +64,41 @@
     {
         _sessionToken = null;
         await JoinDataSyncGroupAsync();
+    }
+
+    private Task OnSessionInvalidatedAsync(string reason)
+    {
+        _ = InvokeAsync(async () =>
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            await BrowserSession.SignOutLocalAsync();
+            Toasts.Show(
+                "Phiên đăng nhập đã kết thúc",
+                "Tài khoản này vừa đăng nhập trên thiết bị khác hoặc phiên hiện tại không còn hợp lệ.",
+                ToastVariant.Warning);
+            Navigation.NavigateTo($"/login?reason={Uri.EscapeDataString(reason)}", forceLoad: false, replace: true);
+        });
+
+        return Task.CompletedTask;
+    }
+
+    private void OnUserChanged()
+    {
+        _ = InvokeAsync(async () =>
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            await JoinDataSyncGroupAsync();
+            ApplyRevision(ChangeBus.Revision);
+            StateHasChanged();
+        });
     }
 
     private async Task JoinDataSyncGroupAsync()
@@ -110,6 +149,7 @@
     {
         _disposed = true;
         ChangeBus.Changed -= OnLocalDataChanged;
+        UserContext.StateChanged -= OnUserChanged;
 
         if (_hub is not null)
         {

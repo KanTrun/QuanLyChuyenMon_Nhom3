@@ -98,18 +98,19 @@ public sealed class NotificationHub : Hub
 
     private async Task<(Guid UserId, string DisplayName)> ResolveActiveUserAsync(string sessionToken)
     {
-        if (!_tokens.TryValidateToken(sessionToken, out var userId))
+        if (!_tokens.TryValidateToken(sessionToken, out BrowserSessionTokenService.BrowserSessionIdentity identity))
         {
             throw new HubException("Invalid or expired browser session.");
         }
 
         await using var db = await _dbFactory.CreateDbContextAsync(Context.ConnectionAborted);
         var user = await db.Users
-            .Where(user => user.UserId == userId &&
+            .Where(user => user.UserId == identity.UserId &&
                            user.Status == "active" &&
                            user.OnboardingStatus == "active" &&
-                           user.DeletedAt == null)
-            .Select(user => new { user.UserId, user.FullName, user.Username })
+                           user.DeletedAt == null &&
+                           user.ActiveSessionId == identity.SessionId)
+            .Select(user => new { user.UserId, user.FullName, user.Username, user.ActiveSessionId })
             .FirstOrDefaultAsync(Context.ConnectionAborted);
         if (user is null)
         {

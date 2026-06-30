@@ -32,7 +32,9 @@ public sealed class CurrentUserContext : ICurrentUserContext
 
     public void SetCurrentUser(Guid userId)
     {
-        var user = _db.Users.FirstOrDefault(u => u.UserId == userId && u.Status == "active" && u.OnboardingStatus == "active")
+        _db.ChangeTracker.Clear();
+        var user = _db.Users.AsNoTracking()
+            .FirstOrDefault(u => u.UserId == userId && u.Status == "active" && u.OnboardingStatus == "active")
             ?? throw new InvalidOperationException("Người dùng không tồn tại hoặc đã bị vô hiệu hóa.");
         CurrentUser = user;
         ClearPermissionCache();

@@ -21,7 +21,17 @@ public static class ProcedureAttachmentEndpoints
                 var accessToken = request.Query["accessToken"].FirstOrDefault();
                 var sessionToken = request.Headers["X-QLCM-Session"].FirstOrDefault();
                 var authorizedByToken = accessTokens.TryValidateToken(attachmentId, accessToken, DateTime.UtcNow);
-                var authorizedBySession = sessionTokens.TryValidateToken(sessionToken, out _);
+                var authorizedBySession = false;
+                if (sessionTokens.TryValidateToken(sessionToken, out BrowserSessionTokenService.BrowserSessionIdentity sessionIdentity))
+                {
+                    authorizedBySession = await db.Users.AsNoTracking().AnyAsync(user =>
+                        user.UserId == sessionIdentity.UserId &&
+                        user.Status == "active" &&
+                        user.OnboardingStatus == "active" &&
+                        user.DeletedAt == null &&
+                        user.ActiveSessionId == sessionIdentity.SessionId,
+                        cancellationToken);
+                }
                 if (!authorizedByToken && !authorizedBySession) return Results.Unauthorized();
 
                 var attachment = await db.ProcedureAttachments

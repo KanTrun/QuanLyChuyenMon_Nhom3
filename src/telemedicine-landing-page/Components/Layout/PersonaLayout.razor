@@ -131,9 +131,9 @@ else
         try
         {
             var restored = await BrowserSession.RestoreCurrentUserAsync();
-            if (!restored && UserContext.CurrentUser is null)
+            if (!restored.IsAuthenticated && UserContext.CurrentUser is null)
             {
-                Navigation.NavigateTo("/login", forceLoad: false);
+                Navigation.NavigateTo(GetLoginRoute(restored.Status), forceLoad: false);
                 return;
             }
 
@@ -143,7 +143,7 @@ else
         catch (JSDisconnectedException) { }
         catch (Exception)
         {
-            Navigation.NavigateTo("/login", forceLoad: false);
+            Navigation.NavigateTo(GetLoginRoute(BrowserSessionRestoreStatus.MissingOrInvalid), forceLoad: false);
         }
     }
 
@@ -180,6 +180,14 @@ else
         await BrowserSession.SignOutAsync();
         Navigation.NavigateTo("/login", forceLoad: false);
     }
+
+    private static string GetLoginRoute(BrowserSessionRestoreStatus status) => status switch
+    {
+        BrowserSessionRestoreStatus.Expired => "/login?reason=expired",
+        BrowserSessionRestoreStatus.ReplacedByNewLogin => "/login?reason=replaced",
+        BrowserSessionRestoreStatus.UserUnavailable => "/login?reason=disabled",
+        _ => "/login"
+    };
 
     public void Dispose()
     {

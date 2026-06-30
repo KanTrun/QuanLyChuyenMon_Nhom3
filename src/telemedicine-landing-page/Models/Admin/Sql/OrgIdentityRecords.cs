@@ -84,6 +84,9 @@ public sealed record AppUser
 
     [Column("password_hash")]
     public string? PasswordHash { get; init; }
+
+    [Column("active_session_id")]
+    public Guid? ActiveSessionId { get; init; }
 }
 
 /// <summary>Vai trò trong hệ thống.</summary>

@@ -99,9 +99,9 @@ else
             {
                 var restored = await BrowserSession.RestoreCurrentUserAsync();
                 EvaluateRouteAccess();
-                if (!restored && UserContext.CurrentUser is null)
+                if (!restored.IsAuthenticated && UserContext.CurrentUser is null)
                 {
-                    Navigation.NavigateTo("/login", forceLoad: false);
+                    Navigation.NavigateTo(GetLoginRoute(restored.Status), forceLoad: false);
                     return;
                 }
 
@@ -110,7 +110,7 @@ else
             catch (JSDisconnectedException) { return; }
             catch (Exception)
             {
-                Navigation.NavigateTo("/login", forceLoad: false);
+                Navigation.NavigateTo(GetLoginRoute(BrowserSessionRestoreStatus.MissingOrInvalid), forceLoad: false);
                 return;
             }
         }
@@ -204,6 +204,14 @@ else
             }
         }
     }
+
+    private static string GetLoginRoute(BrowserSessionRestoreStatus status) => status switch
+    {
+        BrowserSessionRestoreStatus.Expired => "/login?reason=expired",
+        BrowserSessionRestoreStatus.ReplacedByNewLogin => "/login?reason=replaced",
+        BrowserSessionRestoreStatus.UserUnavailable => "/login?reason=disabled",
+        _ => "/login"
+    };
 
     private void OnSidebarOverlayClick()
     {

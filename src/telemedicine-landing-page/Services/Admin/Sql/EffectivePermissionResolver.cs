@@ -151,7 +151,7 @@ public sealed class EffectivePermissionResolver
     private bool AssignmentDepartmentApplies(Guid? assignmentDepartmentId, Guid? contextDepartmentId)
     {
         if (assignmentDepartmentId is null) return true;
-        if (contextDepartmentId is null) return false;
+        if (contextDepartmentId is null) return true;
         if (assignmentDepartmentId == contextDepartmentId) return true;
 
         return _db.DepartmentClosure.Any(dc =>

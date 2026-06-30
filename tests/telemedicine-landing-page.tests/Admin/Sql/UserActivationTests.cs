@@ -195,4 +195,37 @@ public sealed class UserActivationTests
         Assert.Null(result.User);
         Assert.Null(context.CurrentUser);
     }
+
+    [Fact]
+    public void SetCurrentUser_LoadsLatestApprovedStateFromDatabase()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var userId = Guid.NewGuid();
+        db.Users.Add(new AppUser
+        {
+            UserId = userId,
+            Username = "approved_reload_user",
+            FullName = "Approved Reload User",
+            PasswordHash = CurrentUserContext.HashPassword("secret123"),
+            Status = "inactive",
+            OnboardingStatus = "submitted"
+        });
+        db.SaveChanges();
+
+        var staleTrackedUser = db.Users.First(user => user.UserId == userId);
+        db.Users.Entry(staleTrackedUser).CurrentValues.SetValues(staleTrackedUser with
+        {
+            Status = "active",
+            OnboardingStatus = "active",
+            UpdatedAt = DateTime.UtcNow
+        });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+        context.SetCurrentUser(userId);
+
+        Assert.NotNull(context.CurrentUser);
+        Assert.Equal("active", context.CurrentUser!.Status);
+        Assert.Equal("active", context.CurrentUser.OnboardingStatus);
+    }
 }

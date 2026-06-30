@@ -25,21 +25,38 @@ public sealed class BrowserSessionTokenService
     }
 
     public string IssueToken(Guid userId)
+        => IssueToken(userId, Guid.Empty);
+
+    public string IssueToken(Guid userId, Guid sessionId)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
 
         var payload = new BrowserSessionPayload(
             userId,
+            sessionId,
             _timeProvider.GetUtcNow().Add(SessionLifetime));
         return _protector.Protect(JsonSerializer.Serialize(payload));
     }
 
     public bool TryValidateToken(string? token, out Guid userId)
     {
-        userId = Guid.Empty;
+        var isValid = TryReadToken(token, out var identity) == BrowserSessionTokenStatus.Valid;
+        userId = identity.UserId;
+        return isValid;
+    }
+
+    public bool TryValidateToken(string? token, out BrowserSessionIdentity identity)
+    {
+        var status = TryReadToken(token, out identity);
+        return status == BrowserSessionTokenStatus.Valid;
+    }
+
+    public BrowserSessionTokenStatus TryReadToken(string? token, out BrowserSessionIdentity identity)
+    {
+        identity = BrowserSessionIdentity.Empty;
         if (string.IsNullOrWhiteSpace(token))
         {
-            return false;
+            return BrowserSessionTokenStatus.Missing;
         }
 
         try
@@ -50,21 +67,36 @@ public sealed class BrowserSessionTokenService
                 payload.UserId == Guid.Empty ||
                 payload.ExpiresAtUtc <= _timeProvider.GetUtcNow())
             {
-                return false;
+                return payload is not null && payload.ExpiresAtUtc <= _timeProvider.GetUtcNow()
+                    ? BrowserSessionTokenStatus.Expired
+                    : BrowserSessionTokenStatus.Invalid;
             }
 
-            userId = payload.UserId;
-            return true;
+            identity = new BrowserSessionIdentity(payload.UserId, payload.SessionId, payload.ExpiresAtUtc);
+            return BrowserSessionTokenStatus.Valid;
         }
         catch (CryptographicException)
         {
-            return false;
+            return BrowserSessionTokenStatus.Invalid;
         }
         catch (JsonException)
         {
-            return false;
+            return BrowserSessionTokenStatus.Invalid;
         }
     }
 
-    private sealed record BrowserSessionPayload(Guid UserId, DateTimeOffset ExpiresAtUtc);
+    public sealed record BrowserSessionIdentity(Guid UserId, Guid SessionId, DateTimeOffset ExpiresAtUtc)
+    {
+        public static BrowserSessionIdentity Empty { get; } = new(Guid.Empty, Guid.Empty, DateTimeOffset.MinValue);
+    }
+
+    public enum BrowserSessionTokenStatus
+    {
+        Missing,
+        Valid,
+        Expired,
+        Invalid
+    }
+
+    private sealed record BrowserSessionPayload(Guid UserId, Guid SessionId, DateTimeOffset ExpiresAtUtc);
 }
