@@ -1,0 +1,246 @@
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@inject ProcedureLifecycleService Lifecycle
+@inject ProcedureSignoffService Signoffs
+@inject ICurrentUserContext UserContext
+@inject AdminActionGuard Guard
+
+@if (ShowHeader)
+{
+    <div class="procedure-history-panel-header">
+        <div>
+            <h3 class="admin-panel-title">@Title</h3>
+            @if (!string.IsNullOrWhiteSpace(Hint))
+            {
+                <p class="admin-panel-hint">@Hint</p>
+            }
+        </div>
+        @if (ShowFullPageLink && ProcedureId != Guid.Empty)
+        {
+            <a class="admin-btn admin-btn-sm admin-btn-ghost" href="@FullHistoryUrl">Mở trang lịch sử đầy đủ</a>
+        }
+    </div>
+}
+
+@if (Versions.Count == 0)
+{
+    <div class="admin-empty">
+        <div class="admin-empty-title">Chưa có phiên bản được lưu</div>
+        <div class="admin-empty-body">Hãy tạo hoặc cập nhật quy trình để sinh phiên bản đầu tiên.</div>
+    </div>
+}
+else
+{
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Phiên bản</th>
+                    <th>Tiêu đề</th>
+                    <th>Trạng thái</th>
+                    @if (EnableSigning)
+                    {
+                        <th>Chữ ký người viết</th>
+                    }
+                    @if (ShowEffectiveColumns)
+                    {
+                        <th>Ban hành</th>
+                        <th>Hiệu lực</th>
+                    }
+                    else
+                    {
+                        <th>Ban hành</th>
+                    }
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var version in Versions)
+                {
+                    var outstandingWriters = version.StatusCode == "draft"
+                        ? Signoffs.GetOutstandingWriterSignatures(version.ProcedureVersionId)
+                        : 0;
+                    var isSelected = SelectedVersionId == version.ProcedureVersionId;
+                    var canRollback = CanRollback(version);
+                    <tr class="@(isSelected ? "procedure-version-row is-selected" : "procedure-version-row")">
+                        <td>@(version.VersionLabel ?? $"v{version.VersionNo}")</td>
+                        <td>@version.Title</td>
+                        <td><AdminBadge Tone="@VersionTone(version.StatusCode)">@StatusLabel(version.StatusCode)</AdminBadge></td>
+                        @if (EnableSigning)
+                        {
+                            <td>
+                                @if (version.StatusCode == "draft")
+                                {
+                                    @if (outstandingWriters == 0)
+                                    {
+                                        <AdminBadge Tone="tone-success">Đủ chữ ký</AdminBadge>
+                                    }
+                                    else
+                                    {
+                                        <span class="admin-table-cell-muted">Còn @outstandingWriters chữ ký</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="admin-table-cell-muted">—</span>
+                                }
+                            </td>
+                        }
+                        @if (ShowEffectiveColumns)
+                        {
+                            <td>@AdminDateTimeDisplay.ShortDateTime(version.PublishedAt)</td>
+                            <td class="admin-table-cell-muted">
+                                @if (version.StatusCode == "active")
+                                {
+                                    <span>từ @AdminDateTimeDisplay.ShortDateTime(version.EffectiveFrom)</span>
+                                }
+                                else if (version.EffectiveTo.HasValue)
+                                {
+                                    <span>đến @AdminDateTimeDisplay.ShortDateTime(version.EffectiveTo)</span>
+                                }
+                                else
+                                {
+                                    <span>—</span>
+                                }
+                            </td>
+                        }
+                        else
+                        {
+                            <td>@AdminDateTimeDisplay.ShortDateTime(version.PublishedAt)</td>
+                        }
+                        <td style="text-align:right;">
+                            <div class="procedure-version-actions">
+                                <button type="button"
+                                        class="admin-btn admin-btn-sm @(isSelected ? "admin-btn-primary" : "admin-btn-ghost")"
+                                        @onclick="() => SelectVersion(version)">
+                                    Xem chi tiết
+                                </button>
+                                <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OnExport.InvokeAsync(version)">
+                                    In/PDF
+                                </button>
+                                @if (canRollback)
+                                {
+                                    <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OnRollbackRequested.InvokeAsync(version)">
+                                        Khôi phục hiệu lực
+                                    </button>
+                                }
+                                @if (EnableSigning)
+                                {
+                                    @if (CanSign(version, "writer"))
+                                    {
+                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => OnSignRequested.InvokeAsync((version, "writer"))'>Ký người viết</button>
+                                    }
+                                    @if (CanSign(version, "checker"))
+                                    {
+                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => OnSignRequested.InvokeAsync((version, "checker"))'>Ký kiểm tra</button>
+                                    }
+                                    @if (CanSign(version, "approver"))
+                                    {
+                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => OnSignRequested.InvokeAsync((version, "approver"))'>Phê duyệt &amp; ban hành</button>
+                                    }
+                                }
+                                @if (EnableSigning && (version.StatusCode == "draft" && outstandingWriters == 0 || version.StatusCode == "active"))
+                                {
+                                    <AdminRowActionMenu MenuTitle="Hành động phiên bản">
+                                        <PrimaryContent>
+                                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OnExport.InvokeAsync(version)">In/PDF</button>
+                                        </PrimaryContent>
+                                        <ChildContent>
+                                            <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OnExport.InvokeAsync(version)">In/PDF</button>
+                                            @if (CanSign(version, "writer"))
+                                            {
+                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick='() => OnSignRequested.InvokeAsync((version, "writer"))'>Ký người viết</button>
+                                            }
+                                            @if (CanSign(version, "checker"))
+                                            {
+                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick='() => OnSignRequested.InvokeAsync((version, "checker"))'>Ký kiểm tra</button>
+                                            }
+                                            @if (CanSign(version, "approver"))
+                                            {
+                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick='() => OnSignRequested.InvokeAsync((version, "approver"))'>Phê duyệt &amp; ban hành</button>
+                                            }
+                                            @if (version.StatusCode == "draft" && outstandingWriters == 0)
+                                            {
+                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OnSubmitRequested.InvokeAsync(version)">Gửi duyệt</button>
+                                            }
+                                            @if (version.StatusCode == "active")
+                                            {
+                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OnWithdrawRequested.InvokeAsync(version)">Thu hồi</button>
+                                            }
+                                            @if (canRollback)
+                                            {
+                                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OnRollbackRequested.InvokeAsync(version)">Khôi phục hiệu lực</button>
+                                            }
+                                        </ChildContent>
+                                    </AdminRowActionMenu>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid ProcedureId { get; set; }
+    [Parameter] public Guid? SelectedVersionId { get; set; }
+    [Parameter] public EventCallback<Guid?> SelectedVersionIdChanged { get; set; }
+    [Parameter] public EventCallback<Sql.ProcedureVersion> OnExport { get; set; }
+    [Parameter] public EventCallback<Sql.ProcedureVersion> OnRollbackRequested { get; set; }
+    [Parameter] public EventCallback<Sql.ProcedureVersion> OnSubmitRequested { get; set; }
+    [Parameter] public EventCallback<Sql.ProcedureVersion> OnWithdrawRequested { get; set; }
+    [Parameter] public EventCallback<(Sql.ProcedureVersion Version, string Role)> OnSignRequested { get; set; }
+    [Parameter] public bool ShowHeader { get; set; } = true;
+    [Parameter] public string Title { get; set; } = "Lịch sử phiên bản (đã lưu)";
+    [Parameter] public string? Hint { get; set; } = "Mỗi lần cập nhật tạo phiên bản mới; phiên bản cũ vẫn được giữ nguyên trong danh sách.";
+    [Parameter] public bool ShowFullPageLink { get; set; }
+    [Parameter] public bool ShowEffectiveColumns { get; set; }
+    [Parameter] public bool EnableSigning { get; set; }
+    [Parameter] public bool EnableApproverSigning { get; set; }
+
+    private IReadOnlyList<Sql.ProcedureVersion> Versions => Store.ProcedureVersions
+        .Where(v => v.ProcedureId == ProcedureId)
+        .OrderByDescending(v => v.VersionNo)
+        .ToList();
+
+    private string FullHistoryUrl => $"/qlcm/quy-trinh/{ProcedureId}/lich-su";
+
+    private async Task SelectVersion(Sql.ProcedureVersion version)
+    {
+        await SelectedVersionIdChanged.InvokeAsync(version.ProcedureVersionId);
+    }
+
+    private bool CanRollback(Sql.ProcedureVersion version)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "khôi phục phiên bản"))
+            return false;
+
+        return Lifecycle.CanRollbackToVersion(version.ProcedureVersionId, out _);
+    }
+
+    private bool CanSign(Sql.ProcedureVersion version, string role)
+    {
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (role == "writer" && version.StatusCode == "draft")
+            return Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out _);
+        if (role == "checker" && version.StatusCode == "pending_approval")
+            return Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out _);
+        if (role == "approver" && EnableApproverSigning && version.StatusCode == "pending_approval")
+            return Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out _);
+        return false;
+    }
+
+    private static string StatusLabel(string status) => Sql.MedLookups.VersionStatuses.FirstOrDefault(s => s.Code == status)?.Name ?? status;
+
+    private static string VersionTone(string? status) => status switch
+    {
+        "active" => "tone-success",
+        "pending_approval" => "tone-warning",
+        "superseded" => "tone-muted",
+        "rejected" or "archived" => "tone-danger",
+        "draft" => "tone-muted",
+        _ => "tone-muted"
+    };
+}

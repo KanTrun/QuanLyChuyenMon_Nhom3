@@ -95,12 +95,7 @@ public sealed class ProcedureSignoffService
             var snapshot = _snapshots.GetSnapshot(versionId);
             var normalizedRole = role.ToLowerInvariant();
             EnsureSigningStage(snapshot, normalizedRole);
-            if (HasUserCurrentSignoff(snapshot, normalizedRole, userId))
-            {
-                reason = $"Chữ ký {RoleLabel(normalizedRole)} đã được xác nhận trên nội dung hiện tại.";
-                return false;
-            }
-
+            EnsureNotAlreadySigned(snapshot, normalizedRole, userId);
             EnsureSeparationOfDuties(snapshot, normalizedRole, userId);
             return true;
         }

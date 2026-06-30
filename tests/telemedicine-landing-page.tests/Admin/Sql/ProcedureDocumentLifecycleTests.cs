@@ -73,6 +73,23 @@ public sealed class ProcedureDocumentLifecycleTests : IDisposable
         Assert.Contains("khác người kiểm tra", checkerConflict.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void CanUserSign_HidesCheckerAndExposesApproverAfterCheckerCompleted()
+    {
+        var (versionId, lifecycle, signoffs) = CreateCompleteDocument();
+        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Người soạn", ValidSignature);
+        lifecycle.Submit(versionId, MedDataStoreSeed.AdminUserId);
+        signoffs.Sign(versionId, "checker", MedDataStoreSeed.TruongKhoaNoiId, "truongkhoa.noi", "Trưởng khoa Nội", ValidSignature);
+
+        var canFourthUserSignChecker = signoffs.CanUserSign(versionId, "checker", MedDataStoreSeed.BacSiNoiId, out var checkerReason);
+        var canFourthUserSignApprover = signoffs.CanUserSign(versionId, "approver", MedDataStoreSeed.BacSiNoiId, out var approverReason);
+
+        Assert.False(canFourthUserSignChecker);
+        Assert.Contains("đã được xác nhận", checkerReason, StringComparison.Ordinal);
+        Assert.True(canFourthUserSignApprover);
+        Assert.Null(approverReason);
+    }
+
     public void Dispose() => _db.Dispose();
 
     private (Guid VersionId, ProcedureLifecycleService Lifecycle, ProcedureSignoffService Signoffs) CreateCompleteDocument()

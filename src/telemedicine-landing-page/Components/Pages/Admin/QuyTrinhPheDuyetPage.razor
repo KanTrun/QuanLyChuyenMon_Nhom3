@@ -2,6 +2,7 @@
 @page "/qlcm/quy-trinh/phe-duyet"
 @layout AdminLayout
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin
 @inject IMedDataStore Store
 @inject ProcedureLifecycleService Lifecycle
 @inject ICurrentUserContext UserContext
@@ -78,6 +79,14 @@
                 <td>
                     <div class="admin-table-cell-strong">@row.Procedure.Name</div>
                     <div class="admin-table-cell-muted">@ProcedureVersionSummaryFormatter.Display(row.Version.Summary)</div>
+                    @if (ActiveVersionFor(row.Procedure.ProcedureId) is { } activeVersion && activeVersion.ProcedureVersionId != row.Version.ProcedureVersionId)
+                    {
+                        <div class="procedure-active-version-hint">
+                            Bản đang hiệu lực:
+                            <strong>@(activeVersion.VersionLabel ?? $"v{activeVersion.VersionNo}")</strong>
+                            — vẫn lưu đầy đủ trong lịch sử
+                        </div>
+                    }
                 </td>
                 <td>@VersionLabel(row.Version)</td>
                 <td>@GetDeptName(row.Version.DepartmentId ?? row.Procedure.OwnerDepartmentId)</td>
@@ -133,7 +142,30 @@
     <ChildContent>
         @if (_selected is not null)
         {
-            <ProcedureVersionDetailPanel ProcedureVersionId="_selected.Version.ProcedureVersionId" />
+            @if (ActiveVersionFor(_selected.Procedure.ProcedureId) is { } activeVersion && activeVersion.ProcedureVersionId != _selected.Version.ProcedureVersionId)
+            {
+                <aside class="admin-callout procedure-signoff-callout">
+                    <strong>Bản cũ vẫn được lưu trữ</strong>
+                    Phiên bản <strong>@(activeVersion.VersionLabel ?? $"v{activeVersion.VersionNo}")</strong>
+                    đang hiệu lực và giữ nguyên toàn bộ nội dung (bước, tệp, chữ ký).
+                    Chỉ chuyển sang <em>Đã được thay thế</em> sau khi bạn phê duyệt bản mới.
+                </aside>
+            }
+
+            <ProcedureVersionHistoryPanel ProcedureId="_selected.Procedure.ProcedureId"
+                                          SelectedVersionId="@(_detailVersionId ?? _selected.Version.ProcedureVersionId)"
+                                          SelectedVersionIdChanged="SelectDetailVersionId"
+                                          OnExport="ExportVersionAsync"
+                                          OnRollbackRequested="OpenRollbackModal"
+                                          OnSignRequested="HandleHistorySignAsync"
+                                          ShowFullPageLink="true"
+                                          EnableSigning="true"
+                                          EnableApproverSigning="true"
+                                          Title="Lịch sử phiên bản của quy trình" />
+
+            <ProcedureVersionDetailPanel ProcedureVersionId="@(_detailVersionId ?? _selected.Version.ProcedureVersionId)"
+                                         EnableApproverSigning="true"
+                                         OnSignRequested="HandleDetailSignAsync" />
 
             @if (_selected.Version.StatusCode == "pending_approval")
             {
@@ -220,6 +252,32 @@
                          ConfirmText="@(_publishAfterSign ? "Ký và ban hành" : "Ký kiểm tra")"
                          SignatureConfirmed="ConfirmSignAsync" />
 
+<AdminModal IsOpen="_rollbackOpen" IsOpenChanged="v => _rollbackOpen = v" Title="Khôi phục hiệu lực phiên bản cũ">
+    <ChildContent>
+        @if (_rollbackTarget is not null)
+        {
+            var currentActive = ActiveVersionFor(_rollbackTarget.ProcedureId);
+            <p style="margin:0 0 1rem;">
+                Bản <strong>@(_rollbackTarget.VersionLabel ?? $"v{_rollbackTarget.VersionNo}")</strong>
+                sẽ trở lại <strong>đang hiệu lực</strong>.
+                @if (currentActive is not null && currentActive.ProcedureVersionId != _rollbackTarget.ProcedureVersionId)
+                {
+                    <span>
+                        Bản hiện tại <strong>@(currentActive.VersionLabel ?? $"v{currentActive.VersionNo}")</strong>
+                        sẽ được <strong>lưu trữ</strong>.
+                    </span>
+                }
+            </p>
+            <label class="admin-form-field-label" for="rollback-reason-pd">Lý do khôi phục (bắt buộc)</label>
+            <textarea id="rollback-reason-pd" class="admin-textarea" rows="3" @bind="_rollbackReason"></textarea>
+        }
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _rollbackOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="ConfirmRollbackAsync" disabled="@string.IsNullOrWhiteSpace(_rollbackReason)">Khôi phục hiệu lực</button>
+    </FooterContent>
+</AdminModal>
+
 @code {
     private const int _pageSize = 10;
     private int _page = 1;
@@ -229,6 +287,7 @@
     private IReadOnlyList<ApprovalRow> _rows = Array.Empty<ApprovalRow>();
     private IReadOnlyList<ApprovalRow> _paged = Array.Empty<ApprovalRow>();
     private ApprovalRow? _selected;
+    private Guid? _detailVersionId;
     private bool _drawerOpen;
     private bool _rejectOpen;
     private ApprovalRow? _rejectTarget;
@@ -243,6 +302,9 @@
     private Sql.ProcedureVersion? _signTarget;
     private string _signRole = "checker";
     private bool _publishAfterSign;
+    private bool _rollbackOpen;
+    private Sql.ProcedureVersion? _rollbackTarget;
+    private string _rollbackReason = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -294,8 +356,60 @@
     private void OpenDetail(ApprovalRow row)
     {
         _selected = row;
+        _detailVersionId = row.Version.ProcedureVersionId;
         _drawerOpen = true;
     }
+
+    private Task SelectDetailVersionId(Guid? versionId)
+    {
+        _detailVersionId = versionId;
+        return Task.CompletedTask;
+    }
+
+    private void OpenRollbackModal(Sql.ProcedureVersion version)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "khôi phục phiên bản")) return;
+        _rollbackTarget = version;
+        _rollbackReason = string.Empty;
+        _rollbackOpen = true;
+    }
+
+    private void ConfirmRollbackAsync()
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "khôi phục phiên bản")) return;
+        if (_rollbackTarget is null || string.IsNullOrWhiteSpace(_rollbackReason)) return;
+        try
+        {
+            Lifecycle.RollbackToVersion(
+                _rollbackTarget.ProcedureVersionId,
+                UserContext.CurrentUser?.UserId ?? Guid.Empty,
+                _rollbackReason.Trim());
+            Recompute();
+            RefreshSelected(_rollbackTarget.ProcedureVersionId);
+            _detailVersionId = _rollbackTarget.ProcedureVersionId;
+            Toasts.Show(
+                "Đã khôi phục hiệu lực",
+                $"{_rollbackTarget.VersionLabel ?? $"v{_rollbackTarget.VersionNo}"} đang hiệu lực trở lại.",
+                ToastVariant.Success);
+            _rollbackOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể khôi phục phiên bản", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private Sql.ProcedureVersion? ActiveVersionFor(Guid procedureId)
+        => Store.ProcedureVersions
+            .Where(item => item.ProcedureId == procedureId && item.StatusCode == "active")
+            .OrderByDescending(item => item.VersionNo)
+            .FirstOrDefault();
+
+    private IReadOnlyList<Sql.ProcedureVersion> VersionsFor(Guid procedureId)
+        => Store.ProcedureVersions
+            .Where(item => item.ProcedureId == procedureId)
+            .OrderByDescending(item => item.VersionNo)
+            .ToList();
 
     private void OpenEdit(ApprovalRow row)
     {
@@ -353,6 +467,21 @@
             return;
         }
         OpenSignModal(row.Version, "approver", publishAfterSign: true);
+    }
+
+    private Task HandleDetailSignAsync(string role)
+    {
+        if (_selected is null)
+            return Task.CompletedTask;
+
+        OpenSignModal(_selected.Version, role, publishAfterSign: string.Equals(role, "approver", StringComparison.OrdinalIgnoreCase));
+        return Task.CompletedTask;
+    }
+
+    private Task HandleHistorySignAsync((Sql.ProcedureVersion Version, string Role) request)
+    {
+        OpenSignModal(request.Version, request.Role, publishAfterSign: string.Equals(request.Role, "approver", StringComparison.OrdinalIgnoreCase));
+        return Task.CompletedTask;
     }
 
     private void OpenSignModal(Sql.ProcedureVersion version, string role, bool publishAfterSign = false)
