@@ -13,7 +13,13 @@ var medDbConnectionString = QlcmServiceCollectionExtensions.BuildResilientSqlCon
 
 builder.Host.UseQlcmSerilog();
 
-builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+builder.Services
+    .AddRazorComponents()
+    .AddInteractiveServerComponents()
+    .AddHubOptions(options =>
+    {
+        options.MaximumReceiveMessageSize = 512 * 1024;
+    });
 builder.Services.AddSignalR();
 builder.Services.AddQlcmDatabase(medDbConnectionString);
 builder.Services.AddQlcmIdentityAndAuthorization();
