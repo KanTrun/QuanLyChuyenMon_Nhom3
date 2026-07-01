@@ -232,7 +232,8 @@ public sealed class ProcedureDocumentServicesTests
         Assert.Contains("height:297mm", html);
         Assert.Contains("<small>VIII · Đối chiếu hồ sơ và điều kiện thực hiện</small>", visibleText);
         Assert.Contains("grid-template-columns:repeat(2,minmax(0,1fr))", html);
-        Assert.Contains("shape-decision{width:31mm;height:31mm", html);
+        Assert.Contains("shape-decision::before", html);
+        Assert.Contains("flow-arrow", html);
     }
 
     [Fact]
