@@ -200,9 +200,19 @@
             var draftVersion = LatestDraftVersion(_selected.Procedure.ProcedureId);
             if (draftVersion is not null)
             {
-                <a class="admin-btn admin-btn-ghost" href="@ReviewDraftUrl(_selected.Procedure.ProcedureId, draftVersion.ProcedureVersionId)">
-                    Xem &amp; ký trên trang soạn thảo
-                </a>
+                var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+                if (Signoffs.CanUserEditDraft(draftVersion.ProcedureVersionId, userId, out _))
+                {
+                    <a class="admin-btn admin-btn-primary" href="@EditDraftUrl(_selected.Procedure.ProcedureId, draftVersion.ProcedureVersionId)">
+                        Soạn thảo &amp; ký
+                    </a>
+                }
+                else
+                {
+                    <a class="admin-btn admin-btn-ghost" href="@ReviewDraftUrl(_selected.Procedure.ProcedureId, draftVersion.ProcedureVersionId)">
+                        Xem &amp; ký trên trang soạn thảo
+                    </a>
+                }
                 @if (CanSubmitDraft(draftVersion))
                 {
                     <button type="button" class="admin-btn admin-btn-primary" @onclick="() => SubmitAsync(draftVersion)">Gửi duyệt</button>

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Models.Admin.Sql;
 
@@ -36,56 +37,58 @@ public sealed class MedDbDataStore : IMedDataStore
         }
     }
 
-    // === Đọc dữ liệu — truy vấn trực tiếp từ SQL Server ===
-    public IReadOnlyList<Department> Departments => _db.Departments.ToList();
-    public IReadOnlyList<DepartmentClosureEdge> DepartmentClosure => _db.DepartmentClosure.ToList();
-    public IReadOnlyList<AppUser> Users => _db.Users.ToList();
-    public IReadOnlyList<Role> Roles => _db.Roles.ToList();
-    public IReadOnlyList<Group> Groups => _db.Groups.ToList();
-    public IReadOnlyList<UserRole> UserRoles => _db.UserRoles.ToList();
-    public IReadOnlyList<UserGroupMember> UserGroupMembers => _db.UserGroupMembers.ToList();
-    public IReadOnlyList<ScreenCatalog> Screens => _db.Screens.ToList();
-    public IReadOnlyList<FeatureCatalog> Features => _db.Features.ToList();
-    public IReadOnlyList<MedPermission> Permissions => _db.Permissions.ToList();
-    public IReadOnlyList<RolePermission> RolePermissions => _db.RolePermissions.ToList();
-    public IReadOnlyList<GroupPermission> GroupPermissions => _db.GroupPermissions.ToList();
-    public IReadOnlyList<UserPermissionOverride> UserPermissionOverrides => _db.UserPermissionOverrides.ToList();
-    public IReadOnlyList<AuditLog> AuditLogs => _db.AuditLogs.OrderByDescending(a => a.OccurredAt).ToList();
-    public IReadOnlyList<PermissionChangeRequest> PermissionChangeRequests => _db.PermissionChangeRequests.ToList();
-    public IReadOnlyList<PermissionChangeItem> PermissionChangeItems => _db.PermissionChangeItems.ToList();
-    public IReadOnlyList<ProfessionalProcedure> Procedures => _db.Procedures.ToList();
-    public IReadOnlyList<ProcedureVersion> ProcedureVersions => _db.ProcedureVersions.ToList();
-    public IReadOnlyList<ProcedureStep> ProcedureSteps => _db.ProcedureSteps.ToList();
-    public IReadOnlyList<ProcedureAttachment> ProcedureAttachments => _db.ProcedureAttachments.ToList();
-    public IReadOnlyList<ProcedureScreenMapping> ProcedureScreenMappings => _db.ProcedureScreenMappings.ToList();
-    public IReadOnlyList<ProcedureDocumentSection> ProcedureDocumentSections => _db.ProcedureDocumentSections.ToList();
-    public IReadOnlyList<ProcedureDistributionRecipient> ProcedureDistributionRecipients => _db.ProcedureDistributionRecipients.ToList();
-    public IReadOnlyList<ProcedureRevisionEntry> ProcedureRevisionEntries => _db.ProcedureRevisionEntries.ToList();
-    public IReadOnlyList<ProcedureSignoffRecord> ProcedureSignoffRecords => _db.ProcedureSignoffRecords.ToList();
-    public IReadOnlyList<ProcedureVersionAuthorAssignment> ProcedureVersionAuthorAssignments => _db.ProcedureVersionAuthorAssignments.ToList();
-    public IReadOnlyList<ProcedureStepRoleAssignment> ProcedureStepRoleAssignments => _db.ProcedureStepRoleAssignments.ToList();
-    public IReadOnlyList<ProcedureStepLocationAssignment> ProcedureStepLocationAssignments => _db.ProcedureStepLocationAssignments.ToList();
-    public IReadOnlyList<ProcedureStepAttachmentAssignment> ProcedureStepAttachmentAssignments => _db.ProcedureStepAttachmentAssignments.ToList();
-    public IReadOnlyList<ProcedureVersionSnapshotRecord> ProcedureVersionSnapshots => _db.ProcedureVersionSnapshots.ToList();
-    public IReadOnlyList<ProcedureVersionDiffRecord> ProcedureVersionDiffRecords => _db.ProcedureVersionDiffRecords.ToList();
-    public IReadOnlyList<PatientRef> PatientRefs => _db.PatientRefs.ToList();
-    public IReadOnlyList<EncounterRef> EncounterRefs => _db.EncounterRefs.ToList();
-    public IReadOnlyList<TechnicalService> TechnicalServices => _db.TechnicalServices.ToList();
-    public IReadOnlyList<ResourceCatalogItem> ResourceCatalog => _db.ResourceCatalog.ToList();
-    public IReadOnlyList<TechnicalResourceNorm> TechnicalResourceNorms => _db.TechnicalResourceNorms.ToList();
-    public IReadOnlyList<ProcedureVersionResourceNorm> ProcedureVersionResourceNorms => _db.ProcedureVersionResourceNorms.ToList();
-    public IReadOnlyList<TechnicalOrder> TechnicalOrders => _db.TechnicalOrders.ToList();
-    public IReadOnlyList<ResourceAvailabilitySnapshot> ResourceAvailabilitySnapshots => _db.ResourceAvailabilitySnapshots.ToList();
-    public IReadOnlyList<ActualResourceUsage> ActualResourceUsages => _db.ActualResourceUsages.ToList();
-    public IReadOnlyList<ClinicalProtocol> ClinicalProtocols => _db.ClinicalProtocols.ToList();
-    public IReadOnlyList<ClinicalProtocolVersion> ClinicalProtocolVersions => _db.ClinicalProtocolVersions.ToList();
-    public IReadOnlyList<ClinicalProtocolProcedure> ClinicalProtocolProcedures => _db.ClinicalProtocolProcedures.ToList();
-    public IReadOnlyList<ProtocolApplicabilityRule> ProtocolApplicabilityRules => _db.ProtocolApplicabilityRules.ToList();
-    public IReadOnlyList<PatientProtocolApplication> PatientProtocolApplications => _db.PatientProtocolApplications.ToList();
-    public IReadOnlyList<SignatureRecord> SignatureRecords => _db.SignatureRecords.ToList();
-    public IReadOnlyList<NotificationPreference> NotificationPreferences => _db.NotificationPreferences.ToList();
-    public IReadOnlyList<MedNotification> Notifications => _db.Notifications.ToList();
-    public IReadOnlyList<NotificationDeliveryAttempt> NotificationDeliveryAttempts => _db.NotificationDeliveryAttempts.ToList();
+    private static List<T> ReadAll<T>(IQueryable<T> query) where T : class => query.AsNoTracking().ToList();
+
+    // === Đọc dữ liệu — truy vấn trực tiếp từ SQL Server (AsNoTracking tránh xung đột ChangeTracker khi ghi) ===
+    public IReadOnlyList<Department> Departments => ReadAll(_db.Departments);
+    public IReadOnlyList<DepartmentClosureEdge> DepartmentClosure => ReadAll(_db.DepartmentClosure);
+    public IReadOnlyList<AppUser> Users => ReadAll(_db.Users);
+    public IReadOnlyList<Role> Roles => ReadAll(_db.Roles);
+    public IReadOnlyList<Group> Groups => ReadAll(_db.Groups);
+    public IReadOnlyList<UserRole> UserRoles => ReadAll(_db.UserRoles);
+    public IReadOnlyList<UserGroupMember> UserGroupMembers => ReadAll(_db.UserGroupMembers);
+    public IReadOnlyList<ScreenCatalog> Screens => ReadAll(_db.Screens);
+    public IReadOnlyList<FeatureCatalog> Features => ReadAll(_db.Features);
+    public IReadOnlyList<MedPermission> Permissions => ReadAll(_db.Permissions);
+    public IReadOnlyList<RolePermission> RolePermissions => ReadAll(_db.RolePermissions);
+    public IReadOnlyList<GroupPermission> GroupPermissions => ReadAll(_db.GroupPermissions);
+    public IReadOnlyList<UserPermissionOverride> UserPermissionOverrides => ReadAll(_db.UserPermissionOverrides);
+    public IReadOnlyList<AuditLog> AuditLogs => ReadAll(_db.AuditLogs.OrderByDescending(a => a.OccurredAt));
+    public IReadOnlyList<PermissionChangeRequest> PermissionChangeRequests => ReadAll(_db.PermissionChangeRequests);
+    public IReadOnlyList<PermissionChangeItem> PermissionChangeItems => ReadAll(_db.PermissionChangeItems);
+    public IReadOnlyList<ProfessionalProcedure> Procedures => ReadAll(_db.Procedures);
+    public IReadOnlyList<ProcedureVersion> ProcedureVersions => ReadAll(_db.ProcedureVersions);
+    public IReadOnlyList<ProcedureStep> ProcedureSteps => ReadAll(_db.ProcedureSteps);
+    public IReadOnlyList<ProcedureAttachment> ProcedureAttachments => ReadAll(_db.ProcedureAttachments);
+    public IReadOnlyList<ProcedureScreenMapping> ProcedureScreenMappings => ReadAll(_db.ProcedureScreenMappings);
+    public IReadOnlyList<ProcedureDocumentSection> ProcedureDocumentSections => ReadAll(_db.ProcedureDocumentSections);
+    public IReadOnlyList<ProcedureDistributionRecipient> ProcedureDistributionRecipients => ReadAll(_db.ProcedureDistributionRecipients);
+    public IReadOnlyList<ProcedureRevisionEntry> ProcedureRevisionEntries => ReadAll(_db.ProcedureRevisionEntries);
+    public IReadOnlyList<ProcedureSignoffRecord> ProcedureSignoffRecords => ReadAll(_db.ProcedureSignoffRecords);
+    public IReadOnlyList<ProcedureVersionAuthorAssignment> ProcedureVersionAuthorAssignments => ReadAll(_db.ProcedureVersionAuthorAssignments);
+    public IReadOnlyList<ProcedureStepRoleAssignment> ProcedureStepRoleAssignments => ReadAll(_db.ProcedureStepRoleAssignments);
+    public IReadOnlyList<ProcedureStepLocationAssignment> ProcedureStepLocationAssignments => ReadAll(_db.ProcedureStepLocationAssignments);
+    public IReadOnlyList<ProcedureStepAttachmentAssignment> ProcedureStepAttachmentAssignments => ReadAll(_db.ProcedureStepAttachmentAssignments);
+    public IReadOnlyList<ProcedureVersionSnapshotRecord> ProcedureVersionSnapshots => ReadAll(_db.ProcedureVersionSnapshots);
+    public IReadOnlyList<ProcedureVersionDiffRecord> ProcedureVersionDiffRecords => ReadAll(_db.ProcedureVersionDiffRecords);
+    public IReadOnlyList<PatientRef> PatientRefs => ReadAll(_db.PatientRefs);
+    public IReadOnlyList<EncounterRef> EncounterRefs => ReadAll(_db.EncounterRefs);
+    public IReadOnlyList<TechnicalService> TechnicalServices => ReadAll(_db.TechnicalServices);
+    public IReadOnlyList<ResourceCatalogItem> ResourceCatalog => ReadAll(_db.ResourceCatalog);
+    public IReadOnlyList<TechnicalResourceNorm> TechnicalResourceNorms => ReadAll(_db.TechnicalResourceNorms);
+    public IReadOnlyList<ProcedureVersionResourceNorm> ProcedureVersionResourceNorms => ReadAll(_db.ProcedureVersionResourceNorms);
+    public IReadOnlyList<TechnicalOrder> TechnicalOrders => ReadAll(_db.TechnicalOrders);
+    public IReadOnlyList<ResourceAvailabilitySnapshot> ResourceAvailabilitySnapshots => ReadAll(_db.ResourceAvailabilitySnapshots);
+    public IReadOnlyList<ActualResourceUsage> ActualResourceUsages => ReadAll(_db.ActualResourceUsages);
+    public IReadOnlyList<ClinicalProtocol> ClinicalProtocols => ReadAll(_db.ClinicalProtocols);
+    public IReadOnlyList<ClinicalProtocolVersion> ClinicalProtocolVersions => ReadAll(_db.ClinicalProtocolVersions);
+    public IReadOnlyList<ClinicalProtocolProcedure> ClinicalProtocolProcedures => ReadAll(_db.ClinicalProtocolProcedures);
+    public IReadOnlyList<ProtocolApplicabilityRule> ProtocolApplicabilityRules => ReadAll(_db.ProtocolApplicabilityRules);
+    public IReadOnlyList<PatientProtocolApplication> PatientProtocolApplications => ReadAll(_db.PatientProtocolApplications);
+    public IReadOnlyList<SignatureRecord> SignatureRecords => ReadAll(_db.SignatureRecords);
+    public IReadOnlyList<NotificationPreference> NotificationPreferences => ReadAll(_db.NotificationPreferences);
+    public IReadOnlyList<MedNotification> Notifications => ReadAll(_db.Notifications);
+    public IReadOnlyList<NotificationDeliveryAttempt> NotificationDeliveryAttempts => ReadAll(_db.NotificationDeliveryAttempts);
 
     // === Ghi dữ liệu — ghi trực tiếp vào SQL Server ===
     public void AddDepartment(Department dept)
@@ -316,6 +319,7 @@ public sealed class MedDbDataStore : IMedDataStore
     public void AddProcedure(ProfessionalProcedure proc) { _db.Procedures.Add(proc); _db.SaveChanges(); RaiseStateChanged(); }
     public void UpdateProcedure(ProfessionalProcedure proc)
     {
+        _db.ChangeTracker.Clear();
         var existing = _db.Procedures.FirstOrDefault(p => p.ProcedureId == proc.ProcedureId)
             ?? throw new InvalidOperationException("Quy trình không tồn tại.");
         _db.Procedures.Entry(existing).CurrentValues.SetValues(proc with
@@ -331,6 +335,7 @@ public sealed class MedDbDataStore : IMedDataStore
     public void AddProcedureVersion(ProcedureVersion ver) { _db.ProcedureVersions.Add(ver); _db.SaveChanges(); RaiseStateChanged(); }
     public void UpdateProcedureVersion(ProcedureVersion updated)
     {
+        _db.ChangeTracker.Clear();
         var existing = _db.ProcedureVersions.FirstOrDefault(v => v.ProcedureVersionId == updated.ProcedureVersionId);
         if (existing is not null) _db.ProcedureVersions.Entry(existing).CurrentValues.SetValues(updated);
         _db.SaveChanges();
@@ -354,6 +359,7 @@ public sealed class MedDbDataStore : IMedDataStore
     public void AddProcedureVersionAuthorAssignment(ProcedureVersionAuthorAssignment assignment) { _db.ProcedureVersionAuthorAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }
     public void ClearProcedureVersionDocument(Guid versionId)
     {
+        _db.ChangeTracker.Clear();
         var stepIds = _db.ProcedureSteps
             .Where(item => item.ProcedureVersionId == versionId)
             .Select(item => item.ProcedureStepId)

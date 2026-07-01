@@ -102,7 +102,7 @@
         <header class="admin-panel-head">
             <div>
                 <h2 class="admin-panel-title">Người viết quy trình</h2>
-                <p class="admin-form-field-hint">Có thể gán nhiều người viết. Mỗi người được phân công phải tự ký bằng tài khoản của mình trước khi bản nháp được gửi kiểm tra.</p>
+                <p class="admin-form-field-hint">Có thể gán nhiều người viết. Người viết 1 luôn là người đang soạn/cập nhật. Mỗi người được phân công phải tự ký bằng tài khoản của mình trước khi bản nháp được gửi kiểm tra.</p>
             </div>
             <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddWriterAssignment">Thêm người viết</button>
         </header>
@@ -115,13 +115,20 @@
                     <div class="procedure-flow-step-fields">
                         <label class="admin-form-field">
                             <span class="admin-form-field-label is-required">Người viết @(writerIndex + 1)</span>
-                            <select class="admin-select" @bind="writer.UserId">
-                                <option value="">Chọn người viết</option>
-                                @foreach (var user in ActiveUsers)
-                                {
-                                    <option value="@user.UserId">@user.FullName (@user.Username)</option>
-                                }
-                            </select>
+                            @if (IsPrimaryWriterSlotLocked(writerIndex))
+                            {
+                                <input class="admin-input" value="@WriterDisplayName(writer.UserId)" readonly />
+                            }
+                            else
+                            {
+                                <select class="admin-select" @bind="writer.UserId">
+                                    <option value="">Chọn người viết</option>
+                                    @foreach (var user in ActiveUsers)
+                                    {
+                                        <option value="@user.UserId">@user.FullName (@user.Username)</option>
+                                    }
+                                </select>
+                            }
                         </label>
                     </div>
                     <button type="button" class="admin-icon-btn is-danger" title="Xóa người viết" @onclick="() => RemoveWriterAssignment(writer)" disabled="@(_writerAssignments.Count <= 1)">×</button>
@@ -199,7 +206,7 @@
                             Người viết đầu tiên ký tại đây khi lưu.
                             @if (RequiredWriterCount > 1)
                             {
-                                <span class="admin-table-cell-muted"> Người viết còn lại ký tại <strong>Quy trình kỹ thuật → Chi tiết → Ký người viết</strong> trên phiên bản nháp.</span>
+                                <span class="admin-table-cell-muted"> Người viết còn lại mở <strong>Quy trình kỹ thuật → Chi tiết → Soạn thảo &amp; ký</strong> để chỉnh sửa và ký trên bản nháp.</span>
                             }
                         </td>
                         <td>
@@ -358,6 +365,32 @@
         if (ProcedureId.HasValue) LoadSourceVersion();
     }
 
+    private bool IsPrimaryWriterSlotLocked(int writerIndex) => writerIndex == 0;
+
+    private string WriterDisplayName(string? userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+            return UserContext.CurrentUser is { } current
+                ? $"{current.FullName} ({current.Username})"
+                : "—";
+
+        var user = ActiveUsers.FirstOrDefault(item => item.UserId.ToString() == userId);
+        return user is null ? userId : $"{user.FullName} ({user.Username})";
+    }
+
+    private void EnsurePrimaryWriterIsCurrentUser()
+    {
+        if (IsEditDraftMode)
+            return;
+
+        if (_writerAssignments.Count == 0)
+            _writerAssignments.Add(new ProcedureWriterAssignmentDraft());
+
+        var currentUserId = UserContext.CurrentUser?.UserId.ToString();
+        if (!string.IsNullOrWhiteSpace(currentUserId))
+            _writerAssignments[0].UserId = currentUserId;
+    }
+
     private async Task OnFilesSelectedAsync(InputFileChangeEventArgs args)
     {
         foreach (var file in args.GetMultipleFiles(10))
@@ -423,7 +456,69 @@
     }
 
     private Task SaveSignedVersionAsync(string signatureImageDataUrl)
-        => IsReviewMode ? SignReviewDraftAsync(signatureImageDataUrl) : SaveAsync(submit: true, signatureImageDataUrl);
+        => IsReviewMode || IsEditDraftMode
+            ? SignDraftAfterSaveAsync(signatureImageDataUrl)
+            : SaveAsync(submit: true, signatureImageDataUrl);
+
+    private async Task SignDraftAfterSaveAsync(string signatureImageDataUrl)
+    {
+        if (IsEditDraftMode)
+        {
+            var saved = await SaveAsync(submit: false, navigateOnSuccess: false);
+            if (!saved)
+                return;
+
+            await SignEditDraftAsync(signatureImageDataUrl);
+            return;
+        }
+
+        if (IsReviewMode)
+            await SignReviewDraftAsync(signatureImageDataUrl);
+    }
+
+    private Task SignEditDraftAsync(string signatureImageDataUrl)
+    {
+        if (_editDraftVersion is null || UserContext.CurrentUser is not { UserId: var userId })
+            return Task.CompletedTask;
+
+        _isSaving = true;
+        try
+        {
+            Store.Refresh();
+            Signoffs.Sign(
+                _editDraftVersion.ProcedureVersionId,
+                "writer",
+                userId,
+                UserContext.CurrentUser.Username,
+                UserContext.CurrentUser.FullName ?? UserContext.CurrentUser.Username,
+                signatureImageDataUrl,
+                "Chữ ký tay trực tiếp sau khi hoàn thiện bản nháp");
+            Snapshots.PersistSnapshot(_editDraftVersion.ProcedureVersionId, "draft_signed", userId);
+
+            var outstandingWriters = Signoffs.GetOutstandingWriterSignatures(_editDraftVersion.ProcedureVersionId);
+            if (outstandingWriters == 0)
+            {
+                Lifecycle.Submit(_editDraftVersion.ProcedureVersionId, userId);
+                Toasts.Show("Đã ký và gửi kiểm tra", _editDraftVersion.Title, ToastVariant.Success);
+                Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
+            }
+            else
+            {
+                Toasts.Show("Đã lưu bản nháp và ghi nhận chữ ký người viết", $"Còn thiếu {outstandingWriters} chữ ký người viết.", ToastVariant.Info);
+                Navigation.NavigateTo("/qlcm/quy-trinh");
+            }
+        }
+        catch (Exception exception)
+        {
+            Toasts.Show("Không thể cập nhật bản nháp", exception.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+
+        return Task.CompletedTask;
+    }
 
     private Task SignReviewDraftAsync(string signatureImageDataUrl)
     {
@@ -433,6 +528,7 @@
         _isSaving = true;
         try
         {
+            Store.Refresh();
             Signoffs.Sign(
                 _reviewVersion.ProcedureVersionId,
                 "writer",
@@ -494,24 +590,25 @@
         return Task.CompletedTask;
     }
 
-    private async Task SaveAsync(bool submit, string? signatureImageDataUrl = null)
+    private async Task<bool> SaveAsync(bool submit, string? signatureImageDataUrl = null, bool navigateOnSuccess = true)
     {
         var permission = IsEditDraftMode || IsUpdateMode ? "SCR_PROCEDURES:UPDATE" : "SCR_PROCEDURES:CREATE";
-        if (_isSaving || !Guard.CanDo(permission, IsEditDraftMode ? "chỉnh sửa bản nháp" : IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình")) return;
+        if (_isSaving || !Guard.CanDo(permission, IsEditDraftMode ? "chỉnh sửa bản nháp" : IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình")) return false;
         var validationMessage = Validate(submit);
         if (validationMessage is not null)
         {
             Toasts.Show($"Chưa thể {ActionVerb}", validationMessage, ToastVariant.Warning);
-            return;
+            return false;
         }
 
         var user = UserContext.CurrentUser;
         if (user is null)
         {
             Toasts.Show("Phiên đăng nhập không hợp lệ", $"Vui lòng đăng nhập lại trước khi {ActionVerb}.", ToastVariant.Error);
-            return;
+            return false;
         }
 
+        EnsurePrimaryWriterIsCurrentUser();
         _isSaving = true;
         try
         {
@@ -610,11 +707,14 @@
                     : title,
                 result.Procedure.Name,
                 ToastVariant.Success);
-            Navigation.NavigateTo("/qlcm/quy-trinh");
+            if (navigateOnSuccess)
+                Navigation.NavigateTo("/qlcm/quy-trinh");
+            return true;
         }
         catch (Exception exception)
         {
             Toasts.Show($"Không thể {ActionVerb}", exception.Message, ToastVariant.Error);
+            return false;
         }
         finally
         {
@@ -722,6 +822,7 @@
             RevisionDate = DateTime.Today,
             Summary = $"Cập nhật từ {SourceVersionLabel} lên {_versionLabel}"
         });
+        EnsurePrimaryWriterIsCurrentUser();
     }
 
     private void LoadVersionContent(Sql.ProfessionalProcedure procedure, Sql.ProcedureVersion version)
@@ -846,19 +947,7 @@
         }
     }
 
-    private void EnsureCurrentUserWriterAssignment()
-    {
-        if (_writerAssignments.Count == 0)
-        {
-            _writerAssignments.Add(new ProcedureWriterAssignmentDraft());
-        }
-
-        var currentUserId = UserContext.CurrentUser?.UserId.ToString();
-        if (!string.IsNullOrWhiteSpace(currentUserId) && string.IsNullOrWhiteSpace(_writerAssignments[0].UserId))
-        {
-            _writerAssignments[0].UserId = currentUserId;
-        }
-    }
+    private void EnsureCurrentUserWriterAssignment() => EnsurePrimaryWriterIsCurrentUser();
 
     private static List<ProcedureSectionDraft> CreateSections() =>
     [
