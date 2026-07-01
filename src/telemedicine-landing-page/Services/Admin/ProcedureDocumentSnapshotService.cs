@@ -198,14 +198,103 @@ public sealed class ProcedureDocumentSnapshotService
     public IReadOnlyList<ProcedureSignoffRecord> GetCurrentSignoffs(ProcedureDocumentSnapshot snapshot, string role)
     {
         var hash = ComputeContentHash(snapshot.Version.ProcedureVersionId);
+        return GetSignoffsForHash(snapshot, role, hash);
+    }
+
+    /// <summary>
+    /// Chữ ký hiển thị trên lịch sử/chi tiết: với bản đã gửi duyệt hoặc ban hành dùng hash snapshot vòng đời;
+    /// với bản nháp vẫn dùng hash nội dung hiện tại.
+    /// </summary>
+    public IReadOnlyList<ProcedureSignoffRecord> GetDisplaySignoffs(ProcedureDocumentSnapshot snapshot, string role)
+    {
+        var hash = GetAuthoritativeContentHash(snapshot);
+        var matched = GetSignoffsForHash(snapshot, role, hash);
+        if (matched.Count > 0)
+            return matched;
+
+        if (string.Equals(role, "writer", StringComparison.OrdinalIgnoreCase))
+        {
+            return snapshot.Signoffs
+                .Where(s => string.Equals(s.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) && s.SignerUserId.HasValue)
+                .GroupBy(s => s.SignerUserId!.Value)
+                .Select(group => group.OrderByDescending(item => item.SignedAt).First())
+                .OrderBy(s => s.DisplayOrder)
+                .ThenBy(s => s.SignedAt)
+                .ToList();
+        }
+
         return snapshot.Signoffs
+            .Where(s => string.Equals(s.SignoffRole, role, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(s => s.SignedAt)
+            .Take(1)
+            .ToList();
+    }
+
+    public ProcedureSignoffRecord? GetWriterSignoffForDisplay(ProcedureDocumentSnapshot snapshot, Guid assignedUserId)
+    {
+        var display = GetDisplaySignoffs(snapshot, "writer")
+            .FirstOrDefault(item => item.SignerUserId == assignedUserId);
+        if (display is not null)
+            return display;
+
+        return snapshot.Signoffs
+            .Where(item =>
+                string.Equals(item.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
+                item.SignerUserId == assignedUserId)
+            .OrderByDescending(item => item.SignedAt)
+            .FirstOrDefault();
+    }
+
+    public bool IsSignoffStale(ProcedureDocumentSnapshot snapshot, ProcedureSignoffRecord signoff)
+    {
+        if (!string.Equals(snapshot.Version.StatusCode, "draft", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var currentHash = ComputeContentHash(snapshot.Version.ProcedureVersionId);
+        return !string.Equals(signoff.ContentHashSha256, currentHash, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public string GetAuthoritativeContentHash(ProcedureDocumentSnapshot snapshot)
+    {
+        if (string.Equals(snapshot.Version.StatusCode, "draft", StringComparison.OrdinalIgnoreCase))
+            return ComputeContentHash(snapshot.Version.ProcedureVersionId);
+
+        var lifecycleSnapshot = snapshot.VersionSnapshots
+            .OrderByDescending(item => item.SnapshotKind switch
+            {
+                "published" => 4,
+                "submitted" => 3,
+                "draft_signed" => 2,
+                _ => 1
+            })
+            .ThenByDescending(item => item.CreatedAt)
+            .FirstOrDefault();
+
+        if (!string.IsNullOrWhiteSpace(lifecycleSnapshot?.ContentHashSha256))
+            return lifecycleSnapshot.ContentHashSha256;
+
+        var latestWriterHash = snapshot.Signoffs
+            .Where(item => string.Equals(item.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(item => item.SignedAt)
+            .Select(item => item.ContentHashSha256)
+            .FirstOrDefault(hash => !string.IsNullOrWhiteSpace(hash));
+
+        return !string.IsNullOrWhiteSpace(latestWriterHash)
+            ? latestWriterHash
+            : ComputeContentHash(snapshot.Version.ProcedureVersionId);
+    }
+
+    private static IReadOnlyList<ProcedureSignoffRecord> GetSignoffsForHash(
+        ProcedureDocumentSnapshot snapshot,
+        string role,
+        string hash)
+        => snapshot.Signoffs
             .Where(s =>
                 string.Equals(s.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(s.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
             .OrderBy(s => s.DisplayOrder)
             .ThenBy(s => s.SignedAt)
             .ToList();
-    }
 
     public ProcedureVersionSnapshotRecord PersistSnapshot(Guid versionId, string snapshotKind, Guid? createdBy = null)
     {

@@ -2842,3 +2842,413 @@
         display: none;
     }
 }
+
+/* ── Procedure history & signature showcase ───────── */
+
+.procedure-detail-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 14px;
+}
+
+.procedure-detail-hero-rich {
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)) 0%, var(--color-surface) 55%),
+        var(--color-surface);
+    border-color: color-mix(in srgb, var(--color-primary) 22%, var(--color-border-subtle));
+}
+
+.procedure-detail-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.procedure-detail-hero-meta-item {
+    font-size: 0.84rem;
+    color: var(--color-ink-muted);
+}
+
+.procedure-section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.procedure-section-kicker {
+    display: block;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.procedure-signature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+}
+
+.procedure-signature-card {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 14px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.procedure-signature-card.is-signed {
+    border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border-subtle));
+}
+
+.procedure-signature-card.is-pending {
+    border-style: dashed;
+    background: color-mix(in srgb, var(--color-surface-muted) 55%, var(--color-surface));
+}
+
+.procedure-signature-card.is-stale {
+    border-color: color-mix(in srgb, var(--color-warning) 45%, var(--color-border-subtle));
+}
+
+.procedure-signature-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    background: color-mix(in srgb, var(--color-surface-muted) 40%, transparent);
+}
+
+.procedure-signature-role {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+}
+
+.procedure-signature-card-body {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.procedure-signature-image-frame {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 10px;
+    background: #fff;
+    min-height: 88px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+}
+
+.procedure-signature-image-frame.is-compact {
+    min-height: 64px;
+}
+
+.procedure-signature-image-frame img {
+    width: 100%;
+    max-height: 120px;
+    object-fit: contain;
+    display: block;
+}
+
+.procedure-signature-image-placeholder {
+    min-height: 88px;
+    border: 1px dashed var(--color-border-subtle);
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: var(--color-ink-muted);
+    font-size: 0.84rem;
+    background: color-mix(in srgb, var(--color-surface-muted) 50%, transparent);
+}
+
+.procedure-signature-meta {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+}
+
+.procedure-signature-meta div {
+    display: grid;
+    grid-template-columns: 92px 1fr;
+    gap: 8px;
+    align-items: baseline;
+}
+
+.procedure-signature-meta dt {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--color-ink-muted);
+}
+
+.procedure-signature-meta dd {
+    margin: 0;
+    font-size: 0.86rem;
+}
+
+.procedure-signature-hash,
+.procedure-snapshot-timeline code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    color: var(--color-ink-muted);
+    word-break: break-all;
+}
+
+.procedure-writer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.procedure-writer-card {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 12px;
+    padding: 12px;
+    background: var(--color-surface);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.procedure-writer-card.is-signed {
+    box-shadow: inset 3px 0 0 var(--color-success);
+}
+
+.procedure-writer-card.is-pending {
+    box-shadow: inset 3px 0 0 var(--color-warning);
+}
+
+.procedure-writer-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.procedure-writer-order {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    background: var(--color-primary-soft);
+    flex-shrink: 0;
+}
+
+.procedure-writer-name {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.procedure-writer-card-meta {
+    font-size: 0.82rem;
+    color: var(--color-ink-muted);
+}
+
+.procedure-writer-card-actions {
+    margin-top: auto;
+}
+
+.procedure-snapshot-timeline {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.procedure-snapshot-timeline-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border-subtle);
+    background: color-mix(in srgb, var(--color-surface-muted) 35%, var(--color-surface));
+}
+
+.procedure-snapshot-kind {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.procedure-diff-section {
+    border: 1px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-border-subtle));
+    border-radius: 16px;
+    padding: 14px;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 5%, var(--color-surface)) 0%, var(--color-surface) 120px);
+}
+
+.procedure-version-timeline {
+    display: grid;
+    gap: 12px;
+}
+
+.procedure-version-timeline-card {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 12px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 14px;
+    padding: 12px 14px 12px 10px;
+    background: var(--color-surface);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.procedure-version-timeline-card.is-selected {
+    border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border-subtle));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.procedure-version-timeline-card.is-active {
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--color-success) 8%, var(--color-surface)) 0%, var(--color-surface) 40%);
+}
+
+.procedure-version-timeline-rail {
+    display: flex;
+    justify-content: center;
+    padding-top: 6px;
+}
+
+.procedure-version-timeline-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--color-primary);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.procedure-version-timeline-card.is-active .procedure-version-timeline-dot {
+    background: var(--color-success);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-success) 20%, transparent);
+}
+
+.procedure-version-timeline-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.procedure-version-timeline-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.procedure-version-label {
+    font-size: 1.05rem;
+}
+
+.procedure-version-active-pill {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 12%, transparent);
+    border-radius: 999px;
+    padding: 2px 8px;
+}
+
+.procedure-version-timeline-subtitle {
+    margin: 6px 0 10px;
+    color: var(--color-ink-muted);
+    font-size: 0.9rem;
+}
+
+.procedure-version-timeline-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.procedure-version-stat {
+    min-width: 120px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border-subtle);
+    background: color-mix(in srgb, var(--color-surface-muted) 35%, var(--color-surface));
+}
+
+.procedure-version-stat-label {
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ink-muted);
+    margin-bottom: 2px;
+}
+
+.procedure-version-stat strong {
+    font-size: 0.88rem;
+}
+
+.procedure-version-signoff-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.procedure-version-signoff-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px 6px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border-subtle);
+    background: var(--color-surface);
+    font-size: 0.82rem;
+}
+
+.procedure-version-signoff-chip.is-signed {
+    border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border-subtle));
+}
+
+.procedure-version-signoff-chip.is-pending {
+    border-style: dashed;
+}
+
+.procedure-version-signoff-chip small {
+    color: var(--color-ink-muted);
+}
+
+.procedure-version-signoff-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    object-fit: contain;
+    background: #fff;
+    border: 1px solid var(--color-border-subtle);
+}
+
+@media (max-width: 768px) {
+    .procedure-signature-meta div {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+
+    .procedure-version-timeline-head {
+        flex-direction: column;
+    }
+}

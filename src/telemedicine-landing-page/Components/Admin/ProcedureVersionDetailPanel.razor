@@ -9,13 +9,19 @@
 
 @if (_snapshot is not null)
 {
+    <div class="procedure-detail-shell">
     <ProcedureWorkflowStatusBar VersionId="_snapshot.Version.ProcedureVersionId" StatusCode="_snapshot.Version.StatusCode" />
 
-    <article class="procedure-detail-hero">
+    <article class="procedure-detail-hero procedure-detail-hero-rich">
         <div class="procedure-detail-hero-copy">
             <span class="procedure-detail-hero-kicker">Mã quy trình</span>
             <strong class="procedure-detail-hero-code">@_snapshot.Procedure.ProcedureCode</strong>
             <p class="procedure-detail-hero-subtitle">@VersionLabel(_snapshot.Version) • @_snapshot.Version.Title</p>
+            <div class="procedure-detail-hero-meta">
+                <AdminBadge Tone="@VersionTone(_snapshot.Version.StatusCode)">@StatusLabel(_snapshot.Version.StatusCode)</AdminBadge>
+                <span class="procedure-detail-hero-meta-item">Ban hành: @AdminDateTimeDisplay.Date(_snapshot.Version.IssueDate)</span>
+                <span class="procedure-detail-hero-meta-item">@WriterSignoffSummary</span>
+            </div>
         </div>
         @if (CanCurrentUserSignWriter)
         {
@@ -38,61 +44,113 @@
     </article>
 
     <nav class="procedure-detail-quicknav" aria-label="Mục nội dung chi tiết">
-        <a href="#procedure-writers">Người viết &amp; ký</a>
+        <a href="#procedure-signatures">Chữ ký nội bộ</a>
+        <a href="#procedure-writers">Người viết</a>
+        <a href="#procedure-diff">So sánh phiên bản</a>
         <a href="#procedure-steps">Lưu đồ bước</a>
         <a href="#procedure-metadata">Metadata</a>
-        <a href="#procedure-diff">So sánh phiên bản</a>
     </nav>
+
+    <section class="procedure-detail-section procedure-signature-gallery" id="procedure-signatures">
+        <header class="procedure-section-head">
+            <div>
+                <span class="procedure-section-kicker">Xác nhận nội bộ</span>
+                <h3 class="admin-panel-title">Chữ ký và đối chiếu vai trò</h3>
+                <p class="admin-panel-hint">Ảnh chữ ký tay, thời điểm ký và hash nội dung tại thời điểm xác nhận.</p>
+            </div>
+        </header>
+        <div class="procedure-signature-grid">
+            @foreach (var card in SignatureCards)
+            {
+                <article class="procedure-signature-card @(card.Signed ? "is-signed" : "is-pending") @(card.Stale ? "is-stale" : null)">
+                    <header class="procedure-signature-card-head">
+                        <span class="procedure-signature-role">@card.RoleLabel</span>
+                        <AdminBadge Tone="@card.Tone">@card.StatusLabel</AdminBadge>
+                    </header>
+                    <div class="procedure-signature-card-body">
+                        @if (!string.IsNullOrWhiteSpace(card.SignatureImageDataUrl))
+                        {
+                            <div class="procedure-signature-image-frame">
+                                <img src="@card.SignatureImageDataUrl" alt="Chữ ký @card.RoleLabel" loading="lazy" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="procedure-signature-image-placeholder">
+                                <span>@(card.Signed ? "Không có ảnh" : "Chưa ký")</span>
+                            </div>
+                        }
+                        <dl class="procedure-signature-meta">
+                            <div><dt>Người ký</dt><dd>@card.SignerLabel</dd></div>
+                            <div><dt>Thời điểm</dt><dd>@card.SignedAtLabel</dd></div>
+                            @if (!string.IsNullOrWhiteSpace(card.HashLabel))
+                            {
+                                <div><dt>Hash nội dung</dt><dd class="procedure-signature-hash">@card.HashLabel</dd></div>
+                            }
+                        </dl>
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
 
     @if (_snapshot.WriterAssignments.Count > 0)
     {
         <section class="procedure-detail-section" id="procedure-writers">
-            <h3 class="admin-panel-title">Phân công và trạng thái ký người viết</h3>
+            <header class="procedure-section-head">
+                <div>
+                    <span class="procedure-section-kicker">Phân công</span>
+                    <h3 class="admin-panel-title">Người viết và trạng thái ký</h3>
+                </div>
+            </header>
             @if (_snapshot.Version.StatusCode == "draft" && OutstandingWriterCount == 0)
             {
                 <aside class="admin-callout procedure-signoff-callout">
                     <strong>Đủ chữ ký người viết</strong>
                     Phiên bản sẽ tự chuyển sang chờ phê duyệt khi người viết cuối cùng ký.
-                    Nếu vẫn ở trạng thái nháp, hãy nhấn <strong>Gửi duyệt</strong> ở bảng phiên bản phía trên
-                    hoặc mở <strong>Soạn thảo &amp; ký</strong> (người viết còn lại) hoặc <strong>Xem &amp; ký trên trang soạn thảo</strong>.
                 </aside>
             }
             else if (_snapshot.Version.StatusCode == "draft" && OutstandingWriterCount > 0)
             {
                 <aside class="admin-callout procedure-signoff-callout">
                     <strong>Còn @OutstandingWriterCount chữ ký người viết</strong>
-                    Mỗi người được phân công đăng nhập bằng tài khoản riêng và nhấn
-                    <strong>Ký người viết</strong> trong bảng bên dưới (hoặc nút xanh ở đầu trang).
-                    Chỉ khi đủ chữ ký mới gửi kiểm tra được.
+                    Mỗi người được phân công đăng nhập bằng tài khoản riêng và ký trên nội dung hiện tại.
                 </aside>
             }
-            <div class="admin-table-wrapper">
-                <table class="admin-table procedure-signoff-table">
-                    <thead><tr><th>Người viết</th><th>Thứ tự</th><th>Trạng thái ký</th><th>Thời điểm</th><th></th></tr></thead>
-                    <tbody>
-                        @foreach (var writerRow in WriterSignoffRows)
+            <div class="procedure-writer-grid">
+                @foreach (var writerRow in WriterSignoffRows)
+                {
+                    <article class="procedure-writer-card @(writerRow.Signed ? "is-signed" : "is-pending")">
+                        <div class="procedure-writer-card-top">
+                            <span class="procedure-writer-order">@writerRow.DisplayOrder</span>
+                            <div>
+                                <strong class="procedure-writer-name">@writerRow.WriterName</strong>
+                                <AdminBadge Tone="@writerRow.Tone">@writerRow.StatusLabel</AdminBadge>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(writerRow.SignatureImageDataUrl))
                         {
-                            <tr>
-                                <td><strong>@writerRow.WriterName</strong></td>
-                                <td>@writerRow.DisplayOrder</td>
-                                <td><AdminBadge Tone="@writerRow.Tone">@writerRow.StatusLabel</AdminBadge></td>
-                                <td>@writerRow.SignedAtLabel</td>
-                                <td>
-                                    @if (writerRow.CanSign)
-                                    {
-                                        <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => OnSignRequested.InvokeAsync("writer")'>
-                                            Ký người viết
-                                        </button>
-                                    }
-                                    else if (writerRow.CanEdit)
-                                    {
-                                        <a class="admin-btn admin-btn-sm admin-btn-ghost" href="@EditDraftHref">Soạn tiếp</a>
-                                    }
-                                </td>
-                            </tr>
+                            <div class="procedure-signature-image-frame is-compact">
+                                <img src="@writerRow.SignatureImageDataUrl" alt="Chữ ký @writerRow.WriterName" loading="lazy" />
+                            </div>
                         }
-                    </tbody>
-                </table>
+                        <div class="procedure-writer-card-meta">
+                            <span>@writerRow.SignedAtLabel</span>
+                        </div>
+                        <div class="procedure-writer-card-actions">
+                            @if (writerRow.CanSign)
+                            {
+                                <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => OnSignRequested.InvokeAsync("writer")'>
+                                    Ký người viết
+                                </button>
+                            }
+                            else if (writerRow.CanEdit)
+                            {
+                                <a class="admin-btn admin-btn-sm admin-btn-ghost" href="@EditDraftHref">Soạn tiếp</a>
+                            }
+                        </div>
+                    </article>
+                }
             </div>
         </section>
     }
@@ -228,48 +286,15 @@
         </section>
     }
 
-    <section class="procedure-detail-section">
-        <h3 class="admin-panel-title">Chữ ký nội bộ</h3>
-        <div class="admin-table-wrapper">
-            <table class="admin-table procedure-signoff-table">
-                <thead><tr><th>Vai trò</th><th>Trạng thái</th><th>Người ký</th><th>Thời điểm</th></tr></thead>
-                <tbody>
-                    @foreach (var signoff in SignoffRows)
-                    {
-                        <tr>
-                            <td><strong>@signoff.RoleLabel</strong></td>
-                            <td><AdminBadge Tone="@signoff.Tone">@signoff.StatusLabel</AdminBadge></td>
-                            <td>@signoff.SignerLabel</td>
-                            <td>@signoff.SignedAtLabel</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    @if (_snapshot.VersionSnapshots.Count > 0 || CurrentDiff is not null)
+    @if (CurrentDiff is not null || _snapshot.VersionSnapshots.Count > 0)
     {
-        <section class="procedure-detail-section" id="procedure-diff">
-            <h3 class="admin-panel-title">Lịch sử phiên bản và so sánh</h3>
-            @if (_snapshot.VersionSnapshots.Count > 0)
-            {
-                <div class="admin-table-wrapper">
-                    <table class="admin-table">
-                        <thead><tr><th>Loại snapshot</th><th>Hash</th><th>Thời điểm</th></tr></thead>
-                        <tbody>
-                            @foreach (var snapshotRecord in _snapshot.VersionSnapshots)
-                            {
-                                <tr>
-                                    <td>@snapshotRecord.SnapshotKind</td>
-                                    <td>@snapshotRecord.ContentHashSha256[..Math.Min(12, snapshotRecord.ContentHashSha256.Length)]</td>
-                                    <td>@AdminDateTimeDisplay.ShortDateTime(snapshotRecord.CreatedAt)</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+        <section class="procedure-detail-section procedure-diff-section" id="procedure-diff">
+            <header class="procedure-section-head">
+                <div>
+                    <span class="procedure-section-kicker">Đối chiếu</span>
+                    <h3 class="admin-panel-title">So sánh với phiên bản trước</h3>
                 </div>
-            }
+            </header>
             @if (CurrentDiff is not null)
             {
                 var diffView = BuildDiffView(CurrentDiff);
@@ -375,6 +400,23 @@
                     </div>
                 }
             }
+            else if (_snapshot.VersionSnapshots.Count > 0)
+            {
+                <div class="procedure-snapshot-timeline">
+                    @foreach (var snapshotRecord in _snapshot.VersionSnapshots.OrderByDescending(item => item.CreatedAt))
+                    {
+                        <div class="procedure-snapshot-timeline-item">
+                            <span class="procedure-snapshot-kind">@SnapshotKindLabel(snapshotRecord.SnapshotKind)</span>
+                            <code class="procedure-signature-hash">@snapshotRecord.ContentHashSha256[..Math.Min(16, snapshotRecord.ContentHashSha256.Length)]…</code>
+                            <span class="admin-table-cell-muted">@AdminDateTimeDisplay.ShortDateTime(snapshotRecord.CreatedAt)</span>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="admin-panel-hint">Phiên bản này chưa có bản ghi so sánh với phiên bản trước.</p>
+            }
         </section>
     }
 
@@ -460,6 +502,7 @@
             </div>
         </section>
     }
+    </div>
 }
 
 @code {
@@ -468,11 +511,14 @@
     [Parameter] public bool EnableApproverSigning { get; set; }
 
     private ProcedureDocumentSnapshot? _snapshot;
-    private IReadOnlyList<SignoffRow> SignoffRows { get; set; } = [];
+    private IReadOnlyList<SignatureCard> SignatureCards { get; set; } = [];
     private IReadOnlyList<WriterSignoffRow> WriterSignoffRows { get; set; } = [];
     private IReadOnlyList<Sql.ProcedureVersion> OlderVersions { get; set; } = [];
     private int OutstandingWriterCount { get; set; }
     private Sql.ProcedureVersionDiffRecord? CurrentDiff { get; set; }
+    private string WriterSignoffSummary => _snapshot is null
+        ? string.Empty
+        : $"{WriterSignoffRows.Count(item => item.Signed)}/{Math.Max(1, _snapshot.WriterAssignments.Count)} người viết đã ký";
 
     private bool CanCurrentUserSignWriter
     {
@@ -515,9 +561,7 @@
     protected override void OnParametersSet()
     {
         _snapshot = Snapshots.GetSnapshot(ProcedureVersionId);
-        SignoffRows = new[] { "writer", "checker", "approver" }
-            .Select(BuildSignoffRow)
-            .ToList();
+        SignatureCards = BuildSignatureCards();
         WriterSignoffRows = BuildWriterSignoffRows();
         OlderVersions = _snapshot is null
             ? []
@@ -530,19 +574,99 @@
             .FirstOrDefault(item => item.ToVersionId == ProcedureVersionId);
     }
 
+    private IReadOnlyList<SignatureCard> BuildSignatureCards()
+    {
+        if (_snapshot is null)
+            return [];
+
+        return new[] { "writer", "checker", "approver" }
+            .SelectMany(BuildRoleSignatureCards)
+            .ToList();
+    }
+
+    private IEnumerable<SignatureCard> BuildRoleSignatureCards(string role)
+    {
+        if (_snapshot is null)
+            yield break;
+
+        if (role == "writer")
+        {
+            foreach (var writer in _snapshot.WriterAssignments.OrderBy(item => item.DisplayOrder))
+            {
+                var signoff = Snapshots.GetWriterSignoffForDisplay(_snapshot, writer.AssignedUserId);
+                yield return BuildSignatureCard(role, WriterName(writer), signoff);
+            }
+
+            if (!_snapshot.WriterAssignments.Any())
+            {
+                foreach (var signoff in Snapshots.GetDisplaySignoffs(_snapshot, "writer"))
+                    yield return BuildSignatureCard(role, signoff.SignerFullName ?? signoff.SignerUsername ?? "—", signoff);
+            }
+
+            yield break;
+        }
+
+        var roleSignoff = Snapshots.GetDisplaySignoffs(_snapshot, role).OrderByDescending(item => item.SignedAt).FirstOrDefault();
+        yield return BuildSignatureCard(role, roleSignoff?.SignerFullName ?? roleSignoff?.SignerUsername ?? "—", roleSignoff);
+    }
+
+    private SignatureCard BuildSignatureCard(string role, string signerLabel, Sql.ProcedureSignoffRecord? signoff)
+    {
+        var signed = signoff is not null;
+        var stale = signed && Snapshots.IsSignoffStale(_snapshot!, signoff!);
+        var workflowValid = signed && !stale && (
+            string.Equals(role, "writer", StringComparison.OrdinalIgnoreCase)
+                ? Snapshots.GetCurrentSignoffs(_snapshot!, "writer").Any(item => item.ProcedureSignoffRecordId == signoff!.ProcedureSignoffRecordId)
+                : Signoffs.HasCurrentSignoff(ProcedureVersionId, role));
+
+        string statusLabel;
+        string tone;
+        if (!signed)
+        {
+            statusLabel = "Chưa ký";
+            tone = "tone-muted";
+        }
+        else if (stale)
+        {
+            statusLabel = "Chữ ký đã cũ";
+            tone = "tone-warning";
+        }
+        else if (workflowValid || !string.Equals(_snapshot!.Version.StatusCode, "draft", StringComparison.OrdinalIgnoreCase))
+        {
+            statusLabel = "Đã ký hợp lệ";
+            tone = "tone-success";
+        }
+        else
+        {
+            statusLabel = "Đã ký";
+            tone = "tone-success";
+        }
+
+        return new SignatureCard(
+            RoleLabel(role),
+            statusLabel,
+            tone,
+            signerLabel,
+            signed ? AdminDateTimeDisplay.ShortDateTime(signoff!.SignedAt) : "—",
+            signoff?.SignatureImageDataUrl,
+            signed ? ShortHash(signoff!.ContentHashSha256) : null,
+            signed,
+            stale);
+    }
+
     private IReadOnlyList<WriterSignoffRow> BuildWriterSignoffRows()
     {
         if (_snapshot is null)
             return [];
 
-        var currentSignoffs = Snapshots.GetCurrentSignoffs(_snapshot, "writer");
         var currentUserId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
         return _snapshot.WriterAssignments
             .OrderBy(item => item.DisplayOrder)
             .Select(writer =>
             {
-                var signoff = currentSignoffs.FirstOrDefault(item => item.SignerUserId == writer.AssignedUserId);
+                var signoff = Snapshots.GetWriterSignoffForDisplay(_snapshot, writer.AssignedUserId);
                 var signed = signoff is not null;
+                var stale = signed && Snapshots.IsSignoffStale(_snapshot, signoff!);
                 var canSign = !signed
                     && writer.AssignedUserId == currentUserId
                     && Signoffs.CanUserSign(ProcedureVersionId, "writer", currentUserId, out _);
@@ -552,9 +676,11 @@
                 return new WriterSignoffRow(
                     WriterName(writer),
                     writer.DisplayOrder,
-                    signed ? "Đã ký" : "Chưa ký",
-                    signed ? "tone-success" : "tone-warning",
+                    !signed ? "Chưa ký" : stale ? "Chữ ký đã cũ" : "Đã ký",
+                    !signed ? "tone-warning" : stale ? "tone-warning" : "tone-success",
                     signed ? AdminDateTimeDisplay.ShortDateTime(signoff!.SignedAt) : "—",
+                    signoff?.SignatureImageDataUrl,
+                    signed,
                     canSign,
                     canEdit);
             })
@@ -564,27 +690,20 @@
     private static string StepCodeLabel(Sql.ProcedureStep step)
         => !string.IsNullOrWhiteSpace(step.StepCode) ? step.StepCode! : $"B{step.StepNo:00}";
 
-    private SignoffRow BuildSignoffRow(string role)
-    {
-        var latest = _snapshot!.Signoffs
-            .Where(item => string.Equals(item.SignoffRole, role, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(item => item.SignedAt)
-            .FirstOrDefault();
-        var isCurrent = latest is not null && Signoffs.HasCurrentSignoff(ProcedureVersionId, role);
-        var signerLabel = role == "writer"
-            ? string.Join(", ", Snapshots.GetCurrentSignoffs(_snapshot!, "writer")
-                .Select(item => item.SignerFullName ?? item.SignerUsername ?? "—"))
-            : latest?.SignerFullName ?? latest?.SignerUsername ?? "—";
-        return new SignoffRow(
-            RoleLabel(role),
-            latest is null ? "Chưa ký" : isCurrent ? $"Đã ký hợp lệ ({CurrentSignoffCount(role)}/{RequiredSignoffCount(role)})" : "Chữ ký đã cũ",
-            latest is null ? "tone-muted" : isCurrent ? "tone-success" : "tone-warning",
-            signerLabel,
-            latest is null ? "—" : AdminDateTimeDisplay.ShortDateTime(latest.SignedAt));
-    }
+    private static string ShortHash(string hash)
+        => hash.Length <= 16 ? hash : $"{hash[..16]}…";
 
-    private int RequiredSignoffCount(string role) => _snapshot is null ? 1 : Snapshots.RequiredSignoffCount(_snapshot, role);
-    private int CurrentSignoffCount(string role) => _snapshot is null ? 0 : Snapshots.GetCurrentSignoffs(_snapshot, role).Count;
+    private static string SnapshotKindLabel(string kind) => kind switch
+    {
+        "published" => "Ban hành",
+        "submitted" => "Gửi duyệt",
+        "draft_signed" => "Ký nháp",
+        "draft" => "Bản nháp",
+        "rejected" => "Từ chối",
+        "archived" => "Lưu trữ",
+        "restored" => "Khôi phục",
+        _ => kind
+    };
 
     private IReadOnlyList<Sql.ProcedureAttachment> ResolveStepAttachments(Sql.ProcedureStep step)
     {
@@ -738,8 +857,26 @@
 
     private static string FormatBytes(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
 
-    private sealed record SignoffRow(string RoleLabel, string StatusLabel, string Tone, string SignerLabel, string SignedAtLabel);
-    private sealed record WriterSignoffRow(string WriterName, int DisplayOrder, string StatusLabel, string Tone, string SignedAtLabel, bool CanSign, bool CanEdit);
+    private sealed record SignatureCard(
+        string RoleLabel,
+        string StatusLabel,
+        string Tone,
+        string SignerLabel,
+        string SignedAtLabel,
+        string? SignatureImageDataUrl,
+        string? HashLabel,
+        bool Signed,
+        bool Stale);
+    private sealed record WriterSignoffRow(
+        string WriterName,
+        int DisplayOrder,
+        string StatusLabel,
+        string Tone,
+        string SignedAtLabel,
+        string? SignatureImageDataUrl,
+        bool Signed,
+        bool CanSign,
+        bool CanEdit);
     private sealed record ProcedureDiffMetadataChange(string Label, string Before, string After);
     private sealed record ProcedureDiffListGroup(string Title, string Kicker, IReadOnlyList<string> Added, IReadOnlyList<string> Removed, string Summary);
     private sealed record ProcedureDiffView(
