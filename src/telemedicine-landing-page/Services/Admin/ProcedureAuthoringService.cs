@@ -83,10 +83,6 @@ public sealed class ProcedureAuthoringService
             if (command.ProcedureId is null)
                 _store.AddProcedure(procedure);
             _store.AddProcedureVersion(version);
-            PersistDocument(command, version);
-            PersistWriterAssignments(command, version);
-            CloneTechnicalMappings(source, version);
-            ArchiveSourceDraft(source, versionLabel);
             if (command.ProcedureId.HasValue)
             {
                 _store.UpdateProcedure(procedure with
@@ -97,6 +93,12 @@ public sealed class ProcedureAuthoringService
                     Description = command.Description
                 });
             }
+            ArchiveSourceDraft(source, versionLabel);
+            _store.FlushProcedureWriteBatchPendingChanges();
+            PersistDocument(command, version);
+            PersistWriterAssignments(command, version);
+            CloneTechnicalMappings(source, version);
+            _store.FlushProcedureWriteBatchPendingChanges();
         });
         _snapshots?.PersistSnapshot(version.ProcedureVersionId, "draft", command.UserId);
         _snapshots?.PersistVersionDiff(source?.ProcedureVersionId, version.ProcedureVersionId, command.UserId);
@@ -147,8 +149,10 @@ public sealed class ProcedureAuthoringService
             _store.UpdateProcedure(updatedProcedure);
             _store.UpdateProcedureVersion(updatedVersion);
             _store.ClearProcedureVersionDocument(version.ProcedureVersionId);
+            _store.FlushProcedureWriteBatchPendingChanges();
             PersistDocument(command, updatedVersion);
             PersistWriterAssignments(command, updatedVersion);
+            _store.FlushProcedureWriteBatchPendingChanges();
         });
         if (persistSnapshot)
             _snapshots?.PersistSnapshot(updatedVersion.ProcedureVersionId, "draft", command.UserId);
