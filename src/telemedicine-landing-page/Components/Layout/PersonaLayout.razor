@@ -6,6 +6,7 @@
 @inject LoadingService Loading
 @inject BrowserSessionService BrowserSession
 @inject NavGate Gate
+@inject IJSRuntime JS
 @implements IDisposable
 
 <RealtimeDataRefreshBridge />
@@ -134,6 +135,16 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("qlcmShell.initResponsiveTables");
+            }
+            catch (JSDisconnectedException) { }
+            catch (Exception) { }
+        }
+
         if (!firstRender || _sessionRestoreAttempted)
         {
             return;

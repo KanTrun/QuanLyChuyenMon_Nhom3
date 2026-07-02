@@ -611,6 +611,90 @@
         }
     }
 
+    function normalizeHeaderLabel(text) {
+        return (text || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function shouldUseScrollTable(table) {
+        return table.classList.contains('admin-table--scroll')
+            || table.classList.contains('admin-permission-table')
+            || table.classList.contains('procedure-signoff-table');
+    }
+
+    function enhanceResponsiveTables(root) {
+        var scope = root || document;
+        scope.querySelectorAll('.admin-table').forEach(function (table) {
+            if (shouldUseScrollTable(table)) {
+                table.classList.add('admin-table--layout-scroll');
+                return;
+            }
+
+            var headers = [];
+            table.querySelectorAll('thead th').forEach(function (th) {
+                headers.push(normalizeHeaderLabel(th.textContent));
+            });
+            if (!headers.length) {
+                return;
+            }
+
+            table.classList.add('admin-table--layout-cards');
+            table.querySelectorAll('tbody tr').forEach(function (row) {
+                if (row.classList.contains('admin-table-empty-row')) {
+                    return;
+                }
+
+                row.querySelectorAll('td').forEach(function (cell, index) {
+                    var label = headers[index];
+                    if (label) {
+                        cell.setAttribute('data-label', label);
+                    }
+                });
+            });
+        });
+    }
+
+    var responsiveTablesObserver = null;
+
+    function initResponsiveTables() {
+        enhanceResponsiveTables();
+
+        if (responsiveTablesObserver) {
+            return;
+        }
+
+        var target = document.querySelector('.admin-shell') || document.getElementById('main-content') || document.body;
+        if (!target || typeof MutationObserver === 'undefined') {
+            return;
+        }
+
+        var timer = null;
+        responsiveTablesObserver = new MutationObserver(function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                enhanceResponsiveTables(target);
+            }, 60);
+        });
+        responsiveTablesObserver.observe(target, { childList: true, subtree: true });
+    }
+
+    function bootResponsiveTables() {
+        initResponsiveTables();
+        var attempts = 0;
+        var retry = window.setInterval(function () {
+            enhanceResponsiveTables();
+            attempts += 1;
+            if (attempts >= 24) {
+                window.clearInterval(retry);
+            }
+        }, 250);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootResponsiveTables);
+    } else {
+        bootResponsiveTables();
+    }
+
     // Apply the saved/preferred theme as early as possible so the first paint matches.
     try {
         var initial = getThemePreference();
@@ -649,5 +733,7 @@
         hasSignaturePadInk: hasSignaturePadInk,
         clearSignaturePad: clearSignaturePad,
         disposeSignaturePad: disposeSignaturePad,
+        enhanceResponsiveTables: enhanceResponsiveTables,
+        initResponsiveTables: initResponsiveTables,
     };
 })(window);

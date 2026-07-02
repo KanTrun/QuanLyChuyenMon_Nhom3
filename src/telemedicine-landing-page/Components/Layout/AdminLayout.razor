@@ -115,6 +115,16 @@ else
             }
         }
 
+        if (firstRender && UserContext.CurrentUser is not null)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("qlcmShell.initResponsiveTables");
+            }
+            catch (JSDisconnectedException) { }
+            catch (Exception) { }
+        }
+
         if (_hotkeysRegistered || UserContext.CurrentUser is null)
         {
             return;
@@ -184,10 +194,6 @@ else
         if (UserContext.CurrentUser is null)
         {
             _isAuthorized = false;
-            if (_sessionRestoreAttempted)
-            {
-                Navigation.NavigateTo("/login", forceLoad: false);
-            }
             return;
         }
 

@@ -2,8 +2,9 @@
 @* Generic data table with header/body slots, empty state and a pagination footer.
    The page is responsible for slicing items - this control just renders. *@
 
-<div class="admin-table-wrapper @ExtraClass">
-    <table class="admin-table">
+<div class="admin-table-wrapper is-mobile-cards @ExtraClass">
+    <p class="admin-table-mobile-hint" aria-hidden="true">Vuốt ngang nếu bảng quá rộng.</p>
+    <table class="admin-table admin-table--cards-mobile">
         <thead>
             <tr>
                 @HeaderTemplate

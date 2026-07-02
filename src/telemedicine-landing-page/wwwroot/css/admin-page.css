@@ -153,6 +153,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
+    table-layout: auto;
 }
 
 .admin-table thead th {

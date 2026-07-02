@@ -29,36 +29,247 @@ svg {
     width: min(100% - clamp(1rem, 4vw, 2.5rem), var(--site-width, 1180px));
 }
 
-/* ── Admin tables: horizontal scroll on narrow screens ── */
+/* ── Admin shell: không bị tràn ngang ─────────────── */
 
-.admin-table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
+.admin-shell,
+.admin-main-column,
+.admin-content,
+.admin-page,
+.admin-panel {
+    max-width: 100%;
+    min-width: 0;
 }
 
-.admin-table {
-    min-width: min(100%, 560px);
-}
+/* ── Admin tables: card layout trên điện thoại ───── */
 
-.procedure-signoff-table {
-    min-width: 640px;
-}
-
+.admin-table-mobile-hint,
 .admin-table-scroll-hint {
     display: none;
-    margin: 0 0 8px;
-    padding: 6px 10px;
-    border-radius: 8px;
-    background: var(--color-primary-soft);
-    color: var(--color-primary-deep);
-    font-size: 0.78rem;
-    font-weight: 600;
+}
+
+.admin-table-wrapper.is-mobile-cards .admin-table-mobile-hint {
+    display: none !important;
+}
+
+.admin-table--layout-scroll,
+.admin-table.admin-table--scroll,
+.admin-table.admin-permission-table,
+.admin-table.procedure-signoff-table {
+    min-width: 640px;
+    width: max-content;
 }
 
 @media (max-width: 768px) {
-    .admin-table-scroll-hint {
+    .admin-table-wrapper.is-mobile-cards,
+    .admin-table-wrapper:has(.admin-table--layout-cards),
+    .admin-table-wrapper:has(.admin-table--cards-mobile) {
+        overflow: visible;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+    }
+
+    .admin-table-wrapper:has(.admin-table--layout-scroll),
+    .admin-table-wrapper:has(.admin-table--scroll),
+    .admin-table-wrapper:has(.admin-permission-table),
+    .admin-table-wrapper:has(.procedure-signoff-table) {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .admin-table-wrapper:has(.admin-table--layout-scroll) .admin-table-mobile-hint,
+    .admin-table-wrapper:has(.admin-table--scroll) .admin-table-mobile-hint,
+    .admin-table-wrapper:has(.admin-permission-table) .admin-table-mobile-hint,
+    .admin-table-wrapper:has(.procedure-signoff-table) .admin-table-mobile-hint {
         display: block;
+        margin: 0 0 8px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: var(--color-primary-soft);
+        color: var(--color-primary-deep);
+        font-size: 0.76rem;
+        font-weight: 600;
+    }
+
+    .admin-table--layout-cards,
+    .admin-table.admin-table--cards-mobile {
+        width: 100%;
+        min-width: 0;
+        display: block;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .admin-table--layout-cards thead,
+    .admin-table.admin-table--cards-mobile thead {
+        display: none;
+    }
+
+    .admin-table--layout-cards tbody,
+    .admin-table.admin-table--cards-mobile tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .admin-table--layout-cards tbody tr,
+    .admin-table.admin-table--cards-mobile tbody tr {
+        display: block;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+    }
+
+    .admin-table--layout-cards tbody tr:hover,
+    .admin-table.admin-table--cards-mobile tbody tr:hover {
+        background: var(--color-surface);
+        border-color: var(--color-primary-light);
+    }
+
+    .admin-table--layout-cards tbody tr.admin-table-empty-row,
+    .admin-table.admin-table--cards-mobile tbody tr.admin-table-empty-row {
+        padding: 0;
+    }
+
+    .admin-table--layout-cards tbody td,
+    .admin-table.admin-table--cards-mobile tbody td {
+        display: grid;
+        grid-template-columns: minmax(88px, 34%) 1fr;
+        gap: 4px 12px;
+        align-items: start;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--color-border-subtle);
+        text-align: left !important;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        vertical-align: top;
+    }
+
+    .admin-table--layout-cards tbody td::before,
+    .admin-table.admin-table--cards-mobile tbody td::before {
+        content: attr(data-label);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-muted);
+        line-height: 1.35;
+        padding-top: 2px;
+    }
+
+    .admin-table--layout-cards tbody td:last-child,
+    .admin-table.admin-table--cards-mobile tbody td:last-child {
+        border-bottom: 0;
+    }
+
+    .admin-table--layout-cards tbody td:not([data-label]),
+    .admin-table.admin-table--cards-mobile tbody td:not([data-label]) {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-table--layout-cards tbody td:not([data-label])::before,
+    .admin-table.admin-table--cards-mobile tbody td:not([data-label])::before {
+        display: none;
+    }
+
+    .admin-table--layout-cards tbody tr.admin-table-empty-row td,
+    .admin-table.admin-table--cards-mobile tbody tr.admin-table-empty-row td {
+        display: block;
+        padding: 28px 16px;
+        border: 0;
+    }
+
+    .admin-table--layout-cards tbody tr.admin-table-empty-row td::before,
+    .admin-table.admin-table--cards-mobile tbody tr.admin-table-empty-row td::before {
+        display: none;
+    }
+
+    .admin-table-wrapper .admin-pagination {
+        margin-top: 8px;
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-card);
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        text-align: center;
+        padding: 12px;
+    }
+
+    .admin-pagination-controls {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* Bảng trong panel/drawer cũng dùng card */
+    .admin-panel .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table),
+    .admin-drawer .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) {
+        width: 100%;
+        min-width: 0;
+        display: block;
+    }
+
+    .admin-panel .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) thead,
+    .admin-drawer .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) thead {
+        display: none;
+    }
+
+    .admin-panel .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody,
+    .admin-drawer .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .admin-panel .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody tr,
+    .admin-drawer .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody tr {
+        display: block;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+    }
+
+    .admin-panel .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td,
+    .admin-drawer .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td {
+        display: grid;
+        grid-template-columns: minmax(88px, 34%) 1fr;
+        gap: 4px 12px;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--color-border-subtle);
+        text-align: left !important;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    .admin-panel .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td::before,
+    .admin-drawer .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td::before {
+        content: attr(data-label);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-muted);
+    }
+
+    .admin-filter-bar {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-filter-field[style*="justify-self"] {
+        justify-self: stretch !important;
+    }
+
+    .admin-filter-field .admin-btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 
@@ -127,22 +338,22 @@ svg {
         gap: 8px;
         padding: 0 12px;
         min-height: var(--admin-topbar-height);
-        height: auto;
-        flex-wrap: wrap;
-        padding-top: 8px;
-        padding-bottom: 8px;
+        height: var(--admin-topbar-height);
+        flex-wrap: nowrap;
+        padding-top: 0;
+        padding-bottom: 0;
     }
 
     .admin-topbar-left {
-        flex: 1 1 100%;
+        flex: 1 1 auto;
         min-width: 0;
     }
 
     .admin-topbar-right {
-        flex: 1 1 100%;
+        flex: 0 0 auto;
         justify-content: flex-end;
-        flex-wrap: wrap;
-        gap: 6px;
+        flex-wrap: nowrap;
+        gap: 4px;
     }
 
     .admin-breadcrumb {
@@ -515,6 +726,16 @@ svg {
 /* ── Utility: stack action rows on phones ────────── */
 
 @media (max-width: 640px) {
+    .admin-page-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .admin-page-actions .admin-btn,
+    .admin-page-actions a.admin-btn {
+        width: 100%;
+    }
+
     .admin-table-actions,
     .procedure-version-actions,
     .admin-row-actions {
