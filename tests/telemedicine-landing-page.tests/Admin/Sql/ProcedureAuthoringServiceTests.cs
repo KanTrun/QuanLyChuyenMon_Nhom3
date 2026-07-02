@@ -130,6 +130,50 @@ public sealed class ProcedureAuthoringServiceTests
         Assert.Equal("Nội dung v02 do người viết thứ hai",
             store.ProcedureDocumentSections.Single(item => item.ProcedureVersionId == updated.Version.ProcedureVersionId).ContentText);
         Assert.False(signoffs.HasCurrentSignoff(updated.Version.ProcedureVersionId, "writer"));
+        Assert.False(snapshots.IsWriterEffectivelySigned(snapshots.GetSnapshot(updated.Version.ProcedureVersionId), MedDataStoreSeed.AdminUserId));
+    }
+
+    [Fact]
+    public void WriterChain_SecondWriterSignAfterEdit_ValidatesEarlierWriterWithoutStaleStatus()
+    {
+        var store = new MedDataStore();
+        var snapshots = new ProcedureDocumentSnapshotService(store);
+        var service = new ProcedureAuthoringService(store, snapshots);
+        var signoffs = new ProcedureSignoffService(store, snapshots);
+        var created = service.CreateVersion(CreateCommand());
+        signoffs.Sign(
+            created.Version.ProcedureVersionId,
+            "writer",
+            MedDataStoreSeed.AdminUserId,
+            "admin",
+            "Quản trị viên",
+            ValidSignature);
+
+        var updated = service.UpdateDraft(CreateCommand(
+            created.Procedure.ProcedureId,
+            versionId: created.Version.ProcedureVersionId,
+            content: "Nội dung do người viết thứ hai chỉnh sửa"));
+
+        var snapshotAfterEdit = snapshots.GetSnapshot(updated.Version.ProcedureVersionId);
+        Assert.False(snapshots.IsWriterEffectivelySigned(snapshotAfterEdit, MedDataStoreSeed.AdminUserId));
+        Assert.False(snapshots.IsWriterEffectivelySigned(snapshotAfterEdit, MedDataStoreSeed.TruongKhoaNoiId));
+
+        signoffs.Sign(
+            updated.Version.ProcedureVersionId,
+            "writer",
+            MedDataStoreSeed.TruongKhoaNoiId,
+            "truongkhoa.noi",
+            "Trưởng khoa Nội",
+            ValidSignature);
+
+        var snapshotAfterSecondSign = snapshots.GetSnapshot(updated.Version.ProcedureVersionId);
+        var writerOneSignoff = snapshots.GetWriterSignoffForDisplay(snapshotAfterSecondSign, MedDataStoreSeed.AdminUserId);
+        Assert.NotNull(writerOneSignoff);
+        Assert.True(snapshots.IsWriterEffectivelySigned(snapshotAfterSecondSign, MedDataStoreSeed.AdminUserId));
+        Assert.True(snapshots.IsWriterEffectivelySigned(snapshotAfterSecondSign, MedDataStoreSeed.TruongKhoaNoiId));
+        Assert.False(snapshots.IsSignoffStale(snapshotAfterSecondSign, writerOneSignoff!));
+        Assert.Equal(0, signoffs.GetOutstandingWriterSignatures(updated.Version.ProcedureVersionId));
+        Assert.True(signoffs.HasCurrentSignoff(updated.Version.ProcedureVersionId, "writer"));
     }
 
     [Fact]
@@ -172,11 +216,14 @@ public sealed class ProcedureAuthoringServiceTests
         if (secondSignoff is not null)
             signoffs.RecordSignoffAudit(updated.Version.ProcedureVersionId, secondSignoff);
 
-        Assert.Equal(1, signoffs.GetOutstandingWriterSignatures(updated.Version.ProcedureVersionId));
+        Assert.Equal(0, signoffs.GetOutstandingWriterSignatures(updated.Version.ProcedureVersionId));
         Assert.Contains(
             store.ProcedureSignoffRecords,
             item => item.ProcedureVersionId == updated.Version.ProcedureVersionId
                 && item.SignerUserId == MedDataStoreSeed.TruongKhoaNoiId);
+        Assert.True(signoffs.HasCurrentSignoff(updated.Version.ProcedureVersionId, "writer"));
+        Assert.True(snapshots.IsWriterEffectivelySigned(snapshots.GetSnapshot(updated.Version.ProcedureVersionId), MedDataStoreSeed.AdminUserId));
+        Assert.True(snapshots.IsWriterEffectivelySigned(snapshots.GetSnapshot(updated.Version.ProcedureVersionId), MedDataStoreSeed.TruongKhoaNoiId));
     }
 
     [Fact]

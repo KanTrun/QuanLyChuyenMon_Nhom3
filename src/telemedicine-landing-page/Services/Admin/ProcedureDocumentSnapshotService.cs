@@ -183,6 +183,9 @@ public sealed class ProcedureDocumentSnapshotService
 
     public bool HasCurrentSignoff(ProcedureDocumentSnapshot snapshot, string role)
     {
+        if (string.Equals(role, "writer", StringComparison.OrdinalIgnoreCase))
+            return GetEffectiveWriterSignatureCount(snapshot) >= RequiredSignoffCount(snapshot, role);
+
         var hash = ComputeContentHash(snapshot.Version.ProcedureVersionId);
         var currentCount = snapshot.Signoffs.Count(s =>
             string.Equals(s.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
@@ -195,8 +198,68 @@ public sealed class ProcedureDocumentSnapshotService
             ? Math.Max(1, snapshot.Version.RequiredWriterSignatures)
             : 1;
 
+    public IReadOnlyList<ProcedureVersionAuthorAssignment> GetOrderedWriterAssignments(ProcedureDocumentSnapshot snapshot)
+        => snapshot.WriterAssignments
+            .Where(item => string.Equals(item.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(item => item.DisplayOrder)
+            .ToList();
+
+    public int GetMaxWriterDisplayOrderOnCurrentHash(ProcedureDocumentSnapshot snapshot)
+    {
+        var currentHash = ComputeContentHash(snapshot.Version.ProcedureVersionId);
+        var assignments = GetOrderedWriterAssignments(snapshot);
+        return snapshot.Signoffs
+            .Where(signoff =>
+                string.Equals(signoff.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(signoff.ContentHashSha256, currentHash, StringComparison.OrdinalIgnoreCase) &&
+                signoff.SignerUserId.HasValue)
+            .Select(signoff => assignments.FirstOrDefault(item => item.AssignedUserId == signoff.SignerUserId!.Value)?.DisplayOrder ?? 0)
+            .DefaultIfEmpty(0)
+            .Max();
+    }
+
+    public bool IsWriterEffectivelySigned(ProcedureDocumentSnapshot snapshot, Guid assignedUserId)
+    {
+        var assignment = GetOrderedWriterAssignments(snapshot)
+            .FirstOrDefault(item => item.AssignedUserId == assignedUserId);
+        if (assignment is null)
+            return false;
+
+        var hasAnySignoff = snapshot.Signoffs.Any(signoff =>
+            string.Equals(signoff.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
+            signoff.SignerUserId == assignedUserId);
+        if (!hasAnySignoff)
+            return false;
+
+        var currentHash = ComputeContentHash(snapshot.Version.ProcedureVersionId);
+        if (snapshot.Signoffs.Any(signoff =>
+                string.Equals(signoff.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
+                signoff.SignerUserId == assignedUserId &&
+                string.Equals(signoff.ContentHashSha256, currentHash, StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        var maxOrderOnCurrentHash = GetMaxWriterDisplayOrderOnCurrentHash(snapshot);
+        return maxOrderOnCurrentHash > 0 && assignment.DisplayOrder < maxOrderOnCurrentHash;
+    }
+
+    public int GetEffectiveWriterSignatureCount(ProcedureDocumentSnapshot snapshot)
+        => GetOrderedWriterAssignments(snapshot)
+            .Select(assignment => assignment.AssignedUserId)
+            .Distinct()
+            .Count(assignedUserId => IsWriterEffectivelySigned(snapshot, assignedUserId));
+
     public IReadOnlyList<ProcedureSignoffRecord> GetCurrentSignoffs(ProcedureDocumentSnapshot snapshot, string role)
     {
+        if (string.Equals(role, "writer", StringComparison.OrdinalIgnoreCase))
+        {
+            return GetOrderedWriterAssignments(snapshot)
+                .Where(assignment => IsWriterEffectivelySigned(snapshot, assignment.AssignedUserId))
+                .Select(assignment => GetWriterSignoffForDisplay(snapshot, assignment.AssignedUserId))
+                .Where(signoff => signoff is not null)
+                .Cast<ProcedureSignoffRecord>()
+                .ToList();
+        }
+
         var hash = ComputeContentHash(snapshot.Version.ProcedureVersionId);
         return GetSignoffsForHash(snapshot, role, hash);
     }
@@ -248,6 +311,11 @@ public sealed class ProcedureDocumentSnapshotService
     public bool IsSignoffStale(ProcedureDocumentSnapshot snapshot, ProcedureSignoffRecord signoff)
     {
         if (!string.Equals(snapshot.Version.StatusCode, "draft", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (string.Equals(signoff.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
+            signoff.SignerUserId is { } signerUserId &&
+            IsWriterEffectivelySigned(snapshot, signerUserId))
             return false;
 
         var currentHash = ComputeContentHash(snapshot.Version.ProcedureVersionId);

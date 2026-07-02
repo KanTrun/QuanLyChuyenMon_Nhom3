@@ -73,13 +73,9 @@ public sealed class ProcedureSignoffService
     public int GetOutstandingWriterSignatures(Guid versionId)
     {
         var snapshot = _snapshots.GetSnapshot(versionId);
-        var current = _snapshots.GetCurrentSignoffs(snapshot, "writer")
-            .Select(item => item.SignerUserId)
-            .Where(item => item.HasValue)
-            .Select(item => item!.Value)
-            .Distinct()
-            .Count();
-        return Math.Max(0, _snapshots.RequiredSignoffCount(snapshot, "writer") - current);
+        var required = _snapshots.RequiredSignoffCount(snapshot, "writer");
+        var effective = _snapshots.GetEffectiveWriterSignatureCount(snapshot);
+        return Math.Max(0, required - effective);
     }
 
     public Guid? GetCurrentSignerUserId(Guid versionId, string role)
@@ -123,9 +119,22 @@ public sealed class ProcedureSignoffService
                 return false;
             }
 
-            if (HasUserCurrentSignoff(snapshot, "writer", userId))
+            if (_snapshots.IsWriterEffectivelySigned(snapshot, userId))
             {
                 reason = "Bạn đã ký trên nội dung hiện tại. Mở chế độ xem & ký nếu cần rà soát lại.";
+                return false;
+            }
+
+            var writerAssignment = snapshot.WriterAssignments
+                .FirstOrDefault(item =>
+                    string.Equals(item.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
+                    item.AssignedUserId == userId);
+            var maxOrderOnCurrentHash = _snapshots.GetMaxWriterDisplayOrderOnCurrentHash(snapshot);
+            if (writerAssignment is not null &&
+                maxOrderOnCurrentHash > 0 &&
+                writerAssignment.DisplayOrder < maxOrderOnCurrentHash)
+            {
+                reason = "Người viết phía sau đã ký trên nội dung hiện tại. Mở chế độ xem & ký nếu cần rà soát lại.";
                 return false;
             }
 
@@ -194,9 +203,16 @@ public sealed class ProcedureSignoffService
 
     private void EnsureNotAlreadySigned(ProcedureDocumentSnapshot snapshot, string role, Guid userId)
     {
+        if (string.Equals(role, "writer", StringComparison.OrdinalIgnoreCase))
+        {
+            if (_snapshots.IsWriterEffectivelySigned(snapshot, userId))
+                throw new InvalidOperationException($"Chữ ký {RoleLabel(role)} đã được xác nhận trên nội dung hiện tại.");
+            return;
+        }
+
         if (HasUserCurrentSignoff(snapshot, role, userId))
             throw new InvalidOperationException($"Chữ ký {RoleLabel(role)} đã được xác nhận trên nội dung hiện tại.");
-        if (role != "writer" && _snapshots.HasCurrentSignoff(snapshot, role))
+        if (_snapshots.HasCurrentSignoff(snapshot, role))
             throw new InvalidOperationException($"Chữ ký {RoleLabel(role)} đã được xác nhận trên nội dung hiện tại.");
     }
 
@@ -241,6 +257,14 @@ public sealed class ProcedureSignoffService
 
     private IReadOnlySet<Guid> GetCurrentSignerUserIds(ProcedureDocumentSnapshot snapshot, string role)
     {
+        if (string.Equals(role, "writer", StringComparison.OrdinalIgnoreCase))
+        {
+            return _snapshots.GetOrderedWriterAssignments(snapshot)
+                .Where(assignment => _snapshots.IsWriterEffectivelySigned(snapshot, assignment.AssignedUserId))
+                .Select(assignment => assignment.AssignedUserId)
+                .ToHashSet();
+        }
+
         var hash = _snapshots.ComputeContentHash(snapshot.Version.ProcedureVersionId);
         return snapshot.Signoffs
             .Where(signoff =>
