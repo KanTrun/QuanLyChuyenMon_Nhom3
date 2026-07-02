@@ -83,6 +83,11 @@ public sealed class ProcedureAuthoringService
             if (command.ProcedureId is null)
                 _store.AddProcedure(procedure);
             _store.AddProcedureVersion(version);
+            // Flush immediately: UpdateProcedure and ArchiveSourceDraft both call
+            // db.ChangeTracker.Clear() internally, which would erase the queued
+            // version INSERT if we wait. Flushing here ensures the parent
+            // procedure_versions row exists in the DB before children are inserted.
+            _store.FlushProcedureWriteBatchPendingChanges();
             if (command.ProcedureId.HasValue)
             {
                 _store.UpdateProcedure(procedure with
@@ -94,11 +99,9 @@ public sealed class ProcedureAuthoringService
                 });
             }
             ArchiveSourceDraft(source, versionLabel);
-            _store.FlushProcedureWriteBatchPendingChanges();
             PersistDocument(command, version);
             PersistWriterAssignments(command, version);
             CloneTechnicalMappings(source, version);
-            _store.FlushProcedureWriteBatchPendingChanges();
         });
         _snapshots?.PersistSnapshot(version.ProcedureVersionId, "draft", command.UserId);
         _snapshots?.PersistVersionDiff(source?.ProcedureVersionId, version.ProcedureVersionId, command.UserId);

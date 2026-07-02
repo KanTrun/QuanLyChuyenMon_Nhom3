@@ -121,9 +121,13 @@
                             }
                             else
                             {
+                                var takenIds = _writerAssignments
+                                    .Where(w => w != writer && !string.IsNullOrEmpty(w.UserId))
+                                    .Select(w => w.UserId)
+                                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
                                 <select class="admin-select" @bind="writer.UserId">
                                     <option value="">Chọn người viết</option>
-                                    @foreach (var user in ActiveUsers)
+                                    @foreach (var user in ActiveUsers.Where(u => !takenIds.Contains(u.UserId.ToString())))
                                     {
                                         <option value="@user.UserId">@user.FullName (@user.Username)</option>
                                     }
