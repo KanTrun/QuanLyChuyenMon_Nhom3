@@ -18,7 +18,11 @@
 }
 else
 {
-<div class="admin-shell persona-shell">
+<div class="admin-shell persona-shell" data-mobile-menu="@(_mobileMenuOpen ? "open" : "closed")">
+    @if (_mobileMenuOpen)
+    {
+        <div class="persona-sidebar-overlay" @onclick="CloseMobileMenu" aria-hidden="true"></div>
+    }
     <aside class="admin-sidebar persona-sidebar" aria-label="Điều hướng persona">
         <div class="admin-sidebar-brand">
             <div class="admin-sidebar-brand-mark" aria-hidden="true"><img src="/brand/logo-hos.jpg" alt="" /></div>
@@ -31,7 +35,7 @@ else
         <nav class="admin-sidebar-nav" aria-label="Cổng nghiệp vụ">
             @foreach (var link in AuthorizedNavLinks)
             {
-                <NavLink class="admin-nav-link" ActiveClass="is-active" Match="NavLinkMatch.Prefix" href="@link.Url">
+                <NavLink class="admin-nav-link" ActiveClass="is-active" Match="NavLinkMatch.Prefix" href="@link.Url" @onclick="CloseMobileMenu">
                     <span class="admin-nav-icon" aria-hidden="true">●</span>
                     <span class="admin-nav-label">@link.Label</span>
                 </NavLink>
@@ -54,12 +58,19 @@ else
     <div class="admin-main-column">
         <header class="admin-topbar" role="banner">
             <div class="admin-topbar-left">
+                <button type="button"
+                        class="admin-topbar-icon-button persona-menu-toggle"
+                        aria-label="Mở menu điều hướng"
+                        title="Menu"
+                        @onclick="ToggleMobileMenu">
+                    <span aria-hidden="true">☰</span>
+                </button>
                 <nav class="admin-breadcrumb" aria-label="Đường dẫn">
                     <span class="admin-breadcrumb-current">@_currentUserName</span>
                 </nav>
             </div>
             <div class="admin-topbar-right">
-                <span style="font-size:0.85rem;color:var(--text-muted,#888);">@_currentUserName</span>
+                <span class="persona-topbar-user">@_currentUserName</span>
             </div>
         </header>
 
@@ -93,6 +104,7 @@ else
     private string _currentUserName = "";
     private bool _sessionRestoreAttempted;
     private bool _isAuthorized = true;
+    private bool _mobileMenuOpen;
 
     private record NavLink(string Label, string Url);
 
@@ -152,7 +164,17 @@ else
     private void OnLoadingChanged() => InvokeAsync(StateHasChanged);
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
-        => InvokeAsync(() => { EvaluateRouteAccess(); StateHasChanged(); });
+        => InvokeAsync(() => { _mobileMenuOpen = false; EvaluateRouteAccess(); StateHasChanged(); });
+
+    private void ToggleMobileMenu() => _mobileMenuOpen = !_mobileMenuOpen;
+
+    private void CloseMobileMenu()
+    {
+        if (_mobileMenuOpen)
+        {
+            _mobileMenuOpen = false;
+        }
+    }
 
     private void RefreshUser()
     {

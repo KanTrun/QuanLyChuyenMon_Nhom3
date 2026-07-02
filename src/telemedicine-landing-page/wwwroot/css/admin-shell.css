@@ -1697,6 +1697,10 @@
         grid-template-columns: 1fr;
     }
 
+    .admin-shell .admin-sidebar {
+        transform: translateX(-105%);
+    }
+
     .admin-shell[data-collapsed="true"] {
         --admin-sidebar-width: 0px;
     }
@@ -1759,8 +1763,9 @@
     .admin-quick-grid { grid-template-columns: 1fr; }
     .admin-operations-summary,
     .admin-operations-grid { grid-template-columns: 1fr; }
-    .admin-content { padding: 16px; }
+    .admin-content { padding: 16px 14px 32px; }
     .admin-greeting-actions { width: 100%; }
+    .admin-topbar-icon-button.persona-menu-toggle { display: inline-grid; }
 }
 
 /* ── Dark theme accents ─────────────────────────── */

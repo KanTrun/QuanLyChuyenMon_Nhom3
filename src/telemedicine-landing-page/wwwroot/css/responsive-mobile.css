@@ -1,0 +1,552 @@
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE MOBILE — cross-cutting layout fixes
+   Desktop-first app; this layer polishes phone/tablet.
+   Load after all other stylesheets.
+   ═══════════════════════════════════════════════════ */
+
+/* ── Foundations ─────────────────────────────────── */
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    overflow-x: clip;
+}
+
+img,
+video,
+svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.site-shell,
+.qlcm-intro-nav,
+.qlcm-intro-hero,
+.qlcm-intro-modules {
+    width: min(100% - clamp(1rem, 4vw, 2.5rem), var(--site-width, 1180px));
+}
+
+/* ── Admin tables: horizontal scroll on narrow screens ── */
+
+.admin-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+}
+
+.admin-table {
+    min-width: min(100%, 560px);
+}
+
+.procedure-signoff-table {
+    min-width: 640px;
+}
+
+.admin-table-scroll-hint {
+    display: none;
+    margin: 0 0 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--color-primary-soft);
+    color: var(--color-primary-deep);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .admin-table-scroll-hint {
+        display: block;
+    }
+}
+
+/* ── Page chrome ─────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .admin-page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-page-actions {
+        width: 100%;
+    }
+
+    .admin-page-actions .admin-btn,
+    .admin-page-actions .admin-btn-primary,
+    .admin-page-actions .admin-btn-ghost {
+        flex: 1 1 auto;
+        justify-content: center;
+        min-height: 44px;
+    }
+
+    .admin-page-title {
+        font-size: clamp(1.25rem, 5vw, 1.6rem);
+        line-height: 1.2;
+    }
+
+    .admin-page-subtitle {
+        max-width: none;
+    }
+
+    .admin-greeting {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-greeting-actions {
+        width: 100%;
+    }
+
+    .admin-greeting-actions .admin-btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+
+    .admin-panel-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .procedure-detail-hero {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .procedure-detail-quicknav {
+        width: 100%;
+    }
+}
+
+/* ── Top bar ─────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .admin-topbar {
+        gap: 8px;
+        padding: 0 12px;
+        min-height: var(--admin-topbar-height);
+        height: auto;
+        flex-wrap: wrap;
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .admin-topbar-left {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .admin-topbar-right {
+        flex: 1 1 100%;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .admin-breadcrumb {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .admin-breadcrumb-parent,
+    .admin-breadcrumb-separator {
+        display: none;
+    }
+
+    .admin-breadcrumb-current {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+        min-width: 0;
+    }
+
+    .admin-topbar-icon-button {
+        width: 44px;
+        height: 44px;
+    }
+
+    .admin-user-trigger {
+        min-height: 44px;
+    }
+
+    .admin-flyout-notifications {
+        position: fixed;
+        top: calc(var(--admin-topbar-height) + 8px);
+        left: 12px;
+        right: 12px;
+        width: auto;
+        min-width: 0;
+        max-height: min(70vh, 480px);
+        overflow: auto;
+    }
+
+    .admin-flyout-user {
+        position: fixed;
+        top: calc(var(--admin-topbar-height) + 8px);
+        right: 12px;
+        left: auto;
+        width: min(280px, calc(100vw - 24px));
+    }
+}
+
+@media (max-width: 520px) {
+    .admin-topbar-right .admin-topbar-icon-button[aria-label*="toàn màn hình"],
+    .admin-topbar-right .admin-topbar-icon-button[aria-label*="Thoát toàn màn hình"] {
+        display: none;
+    }
+
+    .admin-user-caret {
+        display: none;
+    }
+}
+
+/* ── Tabs & stepper ──────────────────────────────── */
+
+@media (max-width: 768px) {
+    .admin-tabs {
+        display: flex;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .admin-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .admin-tab {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        min-height: 40px;
+    }
+
+    .admin-stepper {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+    }
+
+    .admin-stepper::-webkit-scrollbar {
+        display: none;
+    }
+
+    .admin-stepper-item {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+}
+
+/* ── Charts & data viz ───────────────────────────── */
+
+@media (max-width: 768px) {
+    .admin-bar-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .admin-bar-value {
+        text-align: left;
+    }
+
+    .admin-trend-bars {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        min-height: 120px;
+    }
+
+    .admin-trend-bar-item {
+        height: 120px;
+    }
+
+    .kpi-value {
+        font-size: 1.65rem;
+    }
+
+    .admin-operations-summary strong {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-trend-bars {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ── Modals & palette ────────────────────────────── */
+
+@media (max-width: 640px) {
+    .admin-modal,
+    .admin-modal.admin-modal-form,
+    .admin-modal.admin-confirm {
+        width: calc(100vw - 20px) !important;
+        max-height: calc(100dvh - 24px);
+    }
+
+    .admin-modal-head,
+    .admin-modal-body,
+    .admin-modal-foot {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .palette-dialog {
+        top: 8vh;
+        width: calc(100vw - 16px);
+        max-height: calc(100dvh - 16vh);
+    }
+
+    .admin-loading-content {
+        padding: 1.75rem 1.25rem;
+        margin: 0 12px;
+        width: calc(100% - 24px);
+        max-width: 360px;
+    }
+}
+
+/* ── Persona shell (clinical / resource portals) ─── */
+
+.persona-topbar-user {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.persona-shell {
+    grid-template-columns: var(--admin-sidebar-width) 1fr;
+}
+
+@media (max-width: 520px) {
+    .persona-topbar-user {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .persona-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .persona-shell .persona-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: min(280px, 86vw);
+        z-index: 50;
+        transform: translateX(-105%);
+        transition: transform var(--motion-subtle);
+        box-shadow: var(--shadow-strong);
+    }
+
+    .persona-shell[data-mobile-menu="open"] .persona-sidebar {
+        transform: translateX(0);
+    }
+
+    .persona-shell .persona-sidebar-overlay {
+        display: none;
+    }
+
+    .persona-shell[data-mobile-menu="open"] .persona-sidebar-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 45;
+        background: rgba(15, 23, 42, 0.36);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+
+    .persona-shell .admin-topbar-left .admin-topbar-icon-button {
+        display: inline-grid;
+    }
+
+    .persona-shell .admin-content {
+        padding: 16px 14px 32px;
+    }
+}
+
+@media (min-width: 901px) {
+    .persona-shell .admin-topbar-left .admin-topbar-icon-button.persona-menu-toggle {
+        display: none;
+    }
+
+    .persona-shell .persona-sidebar-overlay {
+        display: none !important;
+    }
+}
+
+/* ── Landing intro ───────────────────────────────── */
+
+@media (max-width: 980px) {
+    .qlcm-intro-nav,
+    .qlcm-intro-hero,
+    .qlcm-intro-modules {
+        width: min(100% - 24px, 1180px);
+    }
+
+    .qlcm-intro-modules {
+        padding-bottom: 2rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .qlcm-intro-nav-actions {
+        flex-wrap: wrap;
+    }
+
+    .qlcm-intro-link {
+        flex: 1 1 auto;
+        text-align: center;
+        padding: 10px 0;
+    }
+
+    .qlcm-intro-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .qlcm-intro-btn {
+        width: 100%;
+    }
+
+    .qlcm-intro-modules {
+        gap: 12px;
+    }
+
+    .qlcm-intro-module {
+        padding: 16px;
+    }
+}
+
+/* ── Login / register ────────────────────────────── */
+
+@media (max-width: 860px) {
+    .login-features {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 680px) {
+    .login-page {
+        min-height: 100dvh;
+    }
+
+    .login-form-panel {
+        min-height: auto;
+        align-items: stretch;
+    }
+
+    .login-form-wrapper {
+        width: 100%;
+        max-width: none;
+    }
+
+    .login-submit {
+        width: 100%;
+        min-height: 48px;
+    }
+
+    .auth-command-strip {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+}
+
+/* ── Touch & safe areas (notched phones) ─────────── */
+
+@supports (padding: max(0px)) {
+    .admin-content {
+        padding-bottom: max(48px, env(safe-area-inset-bottom));
+    }
+
+    .chatbot-launcher,
+    .admin-shell .chatbot-launcher {
+        right: max(14px, env(safe-area-inset-right)) !important;
+        bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    }
+
+    .chatbot-panel,
+    .admin-shell .chatbot-panel {
+        right: max(12px, env(safe-area-inset-right)) !important;
+        bottom: max(88px, calc(72px + env(safe-area-inset-bottom))) !important;
+    }
+
+    .qlcm-intro-nav {
+        padding-top: max(20px, env(safe-area-inset-top));
+    }
+
+    .admin-topbar {
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .button,
+    .admin-btn,
+    .admin-nav-link,
+    .admin-tab,
+    .admin-quick-tile,
+    .kpi-card {
+        min-height: 44px;
+    }
+
+    .button:hover,
+    .admin-quick-tile:hover,
+    .kpi-card:hover {
+        transform: none;
+    }
+}
+
+/* ── Utility: stack action rows on phones ────────── */
+
+@media (max-width: 640px) {
+    .admin-table-actions,
+    .procedure-version-actions,
+    .admin-row-actions {
+        flex-direction: column;
+        align-items: stretch !important;
+        width: 100%;
+    }
+
+    .admin-table-actions .admin-btn,
+    .admin-table-actions .admin-icon-btn,
+    .procedure-version-actions .admin-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .admin-pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .admin-detail-grid,
+    .admin-settings-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-form-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-stub-card {
+        flex-direction: column;
+        max-width: none;
+    }
+}

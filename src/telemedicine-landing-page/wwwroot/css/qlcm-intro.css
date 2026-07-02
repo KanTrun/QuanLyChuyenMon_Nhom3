@@ -486,6 +486,12 @@
 }
 
 @media (max-width: 640px) {
+    .qlcm-intro-nav,
+    .qlcm-intro-hero,
+    .qlcm-intro-modules {
+        width: min(100% - 20px, 1180px);
+    }
+
     .qlcm-intro-nav {
         align-items: flex-start;
         flex-direction: column;
