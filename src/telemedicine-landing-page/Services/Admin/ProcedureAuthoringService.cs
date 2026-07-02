@@ -33,7 +33,24 @@ public sealed class ProcedureAuthoringService
     public ProcedureAuthoringResult CreateVersion(ProcedureAuthoringCommand command)
     {
         var source = GetSourceVersion(command);
-        var procedure = GetOrCreateProcedure(command);
+        ProfessionalProcedure procedure;
+        if (command.ProcedureId is { } procedureId)
+        {
+            procedure = _store.Procedures.First(item => item.ProcedureId == procedureId);
+        }
+        else
+        {
+            procedure = new ProfessionalProcedure
+            {
+                ProcedureCode = command.Code.Trim(),
+                Name = command.Name.Trim(),
+                ProcedureType = command.ProcedureType,
+                OwnerDepartmentId = command.DepartmentId,
+                Description = command.Description,
+                CreatedBy = command.UserId
+            };
+        }
+
         var versionNo = command.ProcedureId.HasValue ? GetNextVersionNo(procedure.ProcedureId) : 1;
         var versionLabel = FormatVersionLabel(versionNo);
         var sourcePdf = command.Attachments.LastOrDefault(item => item.AttachmentType == "source_pdf");
@@ -61,12 +78,26 @@ public sealed class ProcedureAuthoringService
                 .Count())
         };
 
-        _store.AddProcedureVersion(version);
-        PersistDocument(command, version);
-        PersistWriterAssignments(command, version);
-        CloneTechnicalMappings(source, version);
-        ArchiveSourceDraft(source, versionLabel);
-        if (command.ProcedureId.HasValue) _store.UpdateProcedure(procedure);
+        _store.RunProcedureWriteBatch(() =>
+        {
+            if (command.ProcedureId is null)
+                _store.AddProcedure(procedure);
+            _store.AddProcedureVersion(version);
+            PersistDocument(command, version);
+            PersistWriterAssignments(command, version);
+            CloneTechnicalMappings(source, version);
+            ArchiveSourceDraft(source, versionLabel);
+            if (command.ProcedureId.HasValue)
+            {
+                _store.UpdateProcedure(procedure with
+                {
+                    Name = command.Name.Trim(),
+                    ProcedureType = command.ProcedureType,
+                    OwnerDepartmentId = command.DepartmentId,
+                    Description = command.Description
+                });
+            }
+        });
         _snapshots?.PersistSnapshot(version.ProcedureVersionId, "draft", command.UserId);
         _snapshots?.PersistVersionDiff(source?.ProcedureVersionId, version.ProcedureVersionId, command.UserId);
         return new ProcedureAuthoringResult(procedure, version);
@@ -207,6 +238,7 @@ public sealed class ProcedureAuthoringService
             attachmentIdByClient[attachment.ClientId] = persisted.ProcedureAttachmentId;
         }
 
+        var persistedSteps = new List<(Models.Admin.Sql.ProcedureStep Step, ProcedureFlowStepDraft Draft, List<Guid> LinkedAttachmentIds)>();
         foreach (var item in command.Steps.Where(item => !string.IsNullOrWhiteSpace(item.Name)).Select((value, index) => (value, index)))
         {
             Guid? formAttachmentId = null;
@@ -237,9 +269,16 @@ public sealed class ProcedureAuthoringService
                 StandardDurationMinutes = item.value.Minutes
             };
             _store.AddProcedureStep(step);
+            persistedSteps.Add((step, item.value, linkedAttachmentIds));
+        }
 
-            var roleIds = item.value.RoleIds
-                .Append(item.value.RoleId)
+        // SQL batch writes defer SaveChanges; persist steps before child assignments to satisfy FK order.
+        _store.FlushProcedureWriteBatchPendingChanges();
+
+        foreach (var (step, draft, linkedAttachmentIds) in persistedSteps)
+        {
+            var roleIds = draft.RoleIds
+                .Append(draft.RoleId)
                 .Select(ParseGuid)
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
@@ -255,7 +294,7 @@ public sealed class ProcedureAuthoringService
                 });
             }
 
-            var locationIds = item.value.LocationDepartmentIds
+            var locationIds = draft.LocationDepartmentIds
                 .Select(ParseGuid)
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)

@@ -464,11 +464,12 @@
     {
         if (IsEditDraftMode)
         {
-            var saved = await SaveAsync(submit: false, navigateOnSuccess: false, persistDraftSnapshot: false);
-            if (!saved)
-                return;
-
-            await SignEditDraftAsync(signatureImageDataUrl);
+            await SaveAsync(
+                submit: false,
+                navigateOnSuccess: false,
+                persistDraftSnapshot: false,
+                signWriterAfterSave: true,
+                signatureImageDataUrl: signatureImageDataUrl);
             return;
         }
 
@@ -476,9 +477,9 @@
             await SignReviewDraftAsync(signatureImageDataUrl);
     }
 
-    private Task SignEditDraftAsync(string signatureImageDataUrl)
+    private Task SignReviewDraftAsync(string signatureImageDataUrl)
     {
-        if (_editDraftVersion is null || UserContext.CurrentUser is not { UserId: var userId })
+        if (_reviewVersion is null || UserContext.CurrentUser is not { UserId: var userId })
             return Task.CompletedTask;
 
         _isSaving = true;
@@ -489,61 +490,17 @@
             Store.RunProcedureWriteBatch(() =>
             {
                 signoff = Signoffs.Sign(
-                    _editDraftVersion.ProcedureVersionId,
+                    _reviewVersion.ProcedureVersionId,
                     "writer",
                     userId,
                     UserContext.CurrentUser.Username,
                     UserContext.CurrentUser.FullName ?? UserContext.CurrentUser.Username,
                     signatureImageDataUrl,
-                    "Chữ ký tay trực tiếp sau khi hoàn thiện bản nháp");
-                Snapshots.PersistSnapshot(_editDraftVersion.ProcedureVersionId, "draft_signed", userId);
+                    "Chữ ký tay trực tiếp sau khi rà soát toàn bộ quy trình");
+                Snapshots.PersistSnapshot(_reviewVersion.ProcedureVersionId, "draft_signed", userId);
             });
             if (signoff is not null)
-                Signoffs.RecordSignoffAudit(_editDraftVersion.ProcedureVersionId, signoff);
-
-            var outstandingWriters = Signoffs.GetOutstandingWriterSignatures(_editDraftVersion.ProcedureVersionId);
-            if (outstandingWriters == 0)
-            {
-                Lifecycle.Submit(_editDraftVersion.ProcedureVersionId, userId);
-                Toasts.Show("Đã ký và gửi kiểm tra", _editDraftVersion.Title, ToastVariant.Success);
-                Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
-            }
-            else
-            {
-                Toasts.Show("Đã lưu bản nháp và ghi nhận chữ ký người viết", $"Còn thiếu {outstandingWriters} chữ ký người viết.", ToastVariant.Info);
-                Navigation.NavigateTo("/qlcm/quy-trinh");
-            }
-        }
-        catch (Exception exception)
-        {
-            Toasts.Show("Không thể cập nhật bản nháp", exception.Message, ToastVariant.Error);
-        }
-        finally
-        {
-            _isSaving = false;
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private Task SignReviewDraftAsync(string signatureImageDataUrl)
-    {
-        if (_reviewVersion is null || UserContext.CurrentUser is not { UserId: var userId })
-            return Task.CompletedTask;
-
-        _isSaving = true;
-        try
-        {
-            Store.Refresh();
-            Signoffs.Sign(
-                _reviewVersion.ProcedureVersionId,
-                "writer",
-                userId,
-                UserContext.CurrentUser.Username,
-                UserContext.CurrentUser.FullName ?? UserContext.CurrentUser.Username,
-                signatureImageDataUrl,
-                "Chữ ký tay trực tiếp sau khi rà soát toàn bộ quy trình");
-            Snapshots.PersistSnapshot(_reviewVersion.ProcedureVersionId, "draft_signed", userId);
+                Signoffs.RecordSignoffAudit(_reviewVersion.ProcedureVersionId, signoff);
 
             var outstandingWriters = Signoffs.GetOutstandingWriterSignatures(_reviewVersion.ProcedureVersionId);
             if (outstandingWriters == 0)
@@ -596,11 +553,16 @@
         return Task.CompletedTask;
     }
 
-    private async Task<bool> SaveAsync(bool submit, string? signatureImageDataUrl = null, bool navigateOnSuccess = true, bool persistDraftSnapshot = true)
+    private async Task<bool> SaveAsync(
+        bool submit,
+        string? signatureImageDataUrl = null,
+        bool navigateOnSuccess = true,
+        bool persistDraftSnapshot = true,
+        bool signWriterAfterSave = false)
     {
         var permission = IsEditDraftMode || IsUpdateMode ? "SCR_PROCEDURES:UPDATE" : "SCR_PROCEDURES:CREATE";
         if (_isSaving || !Guard.CanDo(permission, IsEditDraftMode ? "chỉnh sửa bản nháp" : IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình")) return false;
-        var validationMessage = Validate(submit);
+        var validationMessage = Validate(submit || signWriterAfterSave);
         if (validationMessage is not null)
         {
             Toasts.Show($"Chưa thể {ActionVerb}", validationMessage, ToastVariant.Warning);
@@ -672,21 +634,79 @@
                 _steps,
                 attachments);
 
-            var result = IsEditDraftMode
-                ? Authoring.UpdateDraft(command, persistDraftSnapshot)
-                : Authoring.CreateVersion(command);
-
-            if (submit)
+            ProcedureAuthoringResult result;
+            var signedWriter = submit || signWriterAfterSave;
+            if (IsEditDraftMode && signWriterAfterSave)
             {
-                Signoffs.Sign(
-                    result.Version.ProcedureVersionId,
-                    "writer",
-                    user.UserId,
-                    user.Username,
-                    user.FullName,
-                    signatureImageDataUrl,
-                    IsEditDraftMode ? "Chữ ký tay trực tiếp sau khi hoàn thiện bản nháp" : "Chữ ký tay trực tiếp của người soạn");
-                Snapshots.PersistSnapshot(result.Version.ProcedureVersionId, "draft_signed", user.UserId);
+                ProcedureAuthoringResult? updated = null;
+                Sql.ProcedureSignoffRecord? signoff = null;
+                Store.RunProcedureWriteBatch(() =>
+                {
+                    updated = Authoring.UpdateDraft(command, persistSnapshot: false);
+                    Store.FlushProcedureWriteBatchPendingChanges();
+                    signoff = Signoffs.Sign(
+                        updated.Version.ProcedureVersionId,
+                        "writer",
+                        user.UserId,
+                        user.Username,
+                        user.FullName,
+                        signatureImageDataUrl,
+                        "Chữ ký tay trực tiếp sau khi hoàn thiện bản nháp");
+                    Snapshots.PersistSnapshot(updated.Version.ProcedureVersionId, "draft_signed", user.UserId);
+                });
+                result = updated ?? throw new InvalidOperationException("Không thể cập nhật bản nháp quy trình.");
+                if (signoff is not null)
+                    Signoffs.RecordSignoffAudit(result.Version.ProcedureVersionId, signoff);
+            }
+            else if (!IsEditDraftMode && submit)
+            {
+                ProcedureAuthoringResult? created = null;
+                Sql.ProcedureSignoffRecord? signoff = null;
+                Store.RunProcedureWriteBatch(() =>
+                {
+                    created = Authoring.CreateVersion(command);
+                    signoff = Signoffs.Sign(
+                        created.Version.ProcedureVersionId,
+                        "writer",
+                        user.UserId,
+                        user.Username,
+                        user.FullName,
+                        signatureImageDataUrl,
+                        "Chữ ký tay trực tiếp của người soạn");
+                    Snapshots.PersistSnapshot(created.Version.ProcedureVersionId, "draft_signed", user.UserId);
+                });
+                result = created ?? throw new InvalidOperationException("Không thể tạo phiên bản quy trình.");
+                if (signoff is not null)
+                    Signoffs.RecordSignoffAudit(result.Version.ProcedureVersionId, signoff);
+            }
+            else
+            {
+                result = IsEditDraftMode
+                    ? Authoring.UpdateDraft(command, persistDraftSnapshot)
+                    : Authoring.CreateVersion(command);
+
+                if (submit)
+                {
+                    Sql.ProcedureSignoffRecord? signoff = null;
+                    Store.RunProcedureWriteBatch(() =>
+                    {
+                        signoff = Signoffs.Sign(
+                            result.Version.ProcedureVersionId,
+                            "writer",
+                            user.UserId,
+                            user.Username,
+                            user.FullName,
+                            signatureImageDataUrl,
+                            "Chữ ký tay trực tiếp sau khi hoàn thiện bản nháp");
+                        Snapshots.PersistSnapshot(result.Version.ProcedureVersionId, "draft_signed", user.UserId);
+                    });
+                    if (signoff is not null)
+                        Signoffs.RecordSignoffAudit(result.Version.ProcedureVersionId, signoff);
+                }
+            }
+
+            if (signedWriter && !signWriterAfterSave)
+            {
                 var outstandingWriters = Signoffs.GetOutstandingWriterSignatures(result.Version.ProcedureVersionId);
                 if (outstandingWriters == 0)
                 {
@@ -695,10 +715,29 @@
                 else
                 {
                     Toasts.Show(
-                        IsEditDraftMode ? "Đã lưu bản nháp và ghi nhận chữ ký người viết" : "Đã lưu bản nháp và ghi nhận chữ ký người viết",
+                        "Đã lưu bản nháp và ghi nhận chữ ký người viết",
                         $"Còn thiếu {outstandingWriters} chữ ký người viết trước khi gửi kiểm tra.",
                         ToastVariant.Info);
                 }
+            }
+
+            if (signWriterAfterSave)
+            {
+                var outstandingWriters = Signoffs.GetOutstandingWriterSignatures(result.Version.ProcedureVersionId);
+                if (outstandingWriters == 0)
+                {
+                    Lifecycle.Submit(result.Version.ProcedureVersionId, user.UserId);
+                    Toasts.Show("Đã ký và gửi kiểm tra", result.Version.Title, ToastVariant.Success);
+                    Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
+                }
+                else
+                {
+                    Toasts.Show("Đã lưu bản nháp và ghi nhận chữ ký người viết", $"Còn thiếu {outstandingWriters} chữ ký người viết.", ToastVariant.Info);
+                    Navigation.NavigateTo("/qlcm/quy-trinh");
+                }
+
+                _editDraftVersion = result.Version;
+                return true;
             }
 
             var title = IsEditDraftMode
@@ -706,11 +745,11 @@
                 : IsUpdateMode
                     ? $"Đã cập nhật thành {result.Version.VersionLabel}"
                     : "Đã tạo bản v01";
-            var finalOutstandingWriters = submit ? Signoffs.GetOutstandingWriterSignatures(result.Version.ProcedureVersionId) : 0;
-            if (!IsEditDraftMode || persistDraftSnapshot || submit)
+            var finalOutstandingWriters = signedWriter ? Signoffs.GetOutstandingWriterSignatures(result.Version.ProcedureVersionId) : 0;
+            if (!IsEditDraftMode || persistDraftSnapshot || signedWriter)
             {
                 Toasts.Show(
-                    submit
+                    signedWriter
                         ? (finalOutstandingWriters == 0 ? $"{title}, đã ký và gửi kiểm tra" : $"{title}, đã ký người viết")
                         : title,
                     result.Procedure.Name,

@@ -51,6 +51,14 @@ public sealed class MedDbDataStore : IMedDataStore
         _db.ChangeTracker.Clear();
         if (!EfWriteHelper.SupportsExecuteUpdate(_db))
         {
+            RunInMemoryProcedureWriteBatch(action);
+            return;
+        }
+
+        var strategy = _db.Database.CreateExecutionStrategy();
+        strategy.Execute(() =>
+        {
+            using var transaction = _db.Database.BeginTransaction();
             try
             {
                 _procedureWriteBatchDepth++;
@@ -59,18 +67,39 @@ public sealed class MedDbDataStore : IMedDataStore
                     action();
                     _db.SaveChanges();
                 }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
             }
             finally
             {
                 _procedureWriteBatchDepth--;
                 _db.ChangeTracker.Clear();
-                RaiseStateChanged();
             }
+        });
 
+        RaiseStateChanged();
+    }
+
+    public void FlushProcedureWriteBatchPendingChanges()
+    {
+        if (_procedureWriteBatchDepth == 0)
             return;
+
+        using (_db.SuppressAutomaticAudit())
+        {
+            _db.SaveChanges();
         }
 
-        using var transaction = _db.Database.BeginTransaction();
+        _db.ChangeTracker.Clear();
+    }
+
+    private void RunInMemoryProcedureWriteBatch(Action action)
+    {
         try
         {
             _procedureWriteBatchDepth++;
@@ -79,13 +108,6 @@ public sealed class MedDbDataStore : IMedDataStore
                 action();
                 _db.SaveChanges();
             }
-
-            transaction.Commit();
-        }
-        catch
-        {
-            transaction.Rollback();
-            throw;
         }
         finally
         {
@@ -384,14 +406,24 @@ public sealed class MedDbDataStore : IMedDataStore
     }
     public void AddPermissionChangeItem(PermissionChangeItem item) { _db.PermissionChangeItems.Add(item); _db.SaveChanges(); RaiseStateChanged(); }
 
-    public void AddProcedure(ProfessionalProcedure proc) { _db.Procedures.Add(proc); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedure(ProfessionalProcedure proc)
+    {
+        _db.Procedures.Add(proc);
+        CommitProcedureChange();
+    }
     public void UpdateProcedure(ProfessionalProcedure proc)
     {
         EfWriteHelper.UpdateProcedure(_db, proc);
         RaiseStateChanged();
     }
 
-    public void AddProcedureVersion(ProcedureVersion ver) { _db.ChangeTracker.Clear(); _db.ProcedureVersions.Add(ver); _db.SaveChanges(); _db.ChangeTracker.Clear(); RaiseStateChanged(); }
+    public void AddProcedureVersion(ProcedureVersion ver)
+    {
+        if (_procedureWriteBatchDepth == 0)
+            _db.ChangeTracker.Clear();
+        _db.ProcedureVersions.Add(ver);
+        CommitProcedureChange();
+    }
     public void UpdateProcedureVersion(ProcedureVersion updated)
     {
         EfWriteHelper.UpdateProcedureVersion(_db, updated);
@@ -399,7 +431,11 @@ public sealed class MedDbDataStore : IMedDataStore
     }
     public void AddProcedureStep(ProcedureStep step) { _db.ProcedureSteps.Add(step); CommitProcedureChange(); }
     public void AddProcedureAttachment(ProcedureAttachment att) { _db.ProcedureAttachments.Add(att); CommitProcedureChange(); }
-    public void AddProcedureScreenMapping(ProcedureScreenMapping mapping) { _db.ProcedureScreenMappings.Add(mapping); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureScreenMapping(ProcedureScreenMapping mapping)
+    {
+        _db.ProcedureScreenMappings.Add(mapping);
+        CommitProcedureChange();
+    }
     public void AddProcedureDocumentSection(ProcedureDocumentSection section) { _db.ProcedureDocumentSections.Add(section); CommitProcedureChange(); }
     public void UpdateProcedureDocumentSection(ProcedureDocumentSection section)
     {
@@ -437,7 +473,8 @@ public sealed class MedDbDataStore : IMedDataStore
     }
     public void AddOrUpdateProcedureVersionDiff(ProcedureVersionDiffRecord diff)
     {
-        _db.ChangeTracker.Clear();
+        if (_procedureWriteBatchDepth == 0)
+            _db.ChangeTracker.Clear();
         var existing = _db.ProcedureVersionDiffRecords.FirstOrDefault(item => item.FromVersionId == diff.FromVersionId && item.ToVersionId == diff.ToVersionId);
         if (existing is null)
         {
@@ -447,9 +484,8 @@ public sealed class MedDbDataStore : IMedDataStore
         {
             _db.ProcedureVersionDiffRecords.Entry(existing).CurrentValues.SetValues(diff);
         }
-        _db.SaveChanges();
-        _db.ChangeTracker.Clear();
-        RaiseStateChanged();
+
+        CommitProcedureChange();
     }
     public void RemoveProcedureAttachment(Guid attachmentId)
     {
@@ -490,7 +526,11 @@ public sealed class MedDbDataStore : IMedDataStore
     public void AddTechnicalService(TechnicalService svc) { _db.TechnicalServices.Add(svc); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddResourceCatalogItem(ResourceCatalogItem item) { _db.ResourceCatalog.Add(item); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddTechnicalResourceNorm(TechnicalResourceNorm norm) { _db.TechnicalResourceNorms.Add(norm); _db.SaveChanges(); RaiseStateChanged(); }
-    public void AddProcedureVersionResourceNorm(ProcedureVersionResourceNorm norm) { _db.ProcedureVersionResourceNorms.Add(norm); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureVersionResourceNorm(ProcedureVersionResourceNorm norm)
+    {
+        _db.ProcedureVersionResourceNorms.Add(norm);
+        CommitProcedureChange();
+    }
     public void AddTechnicalOrder(TechnicalOrder order) { _db.TechnicalOrders.Add(order); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddResourceAvailabilitySnapshot(ResourceAvailabilitySnapshot snap) { _db.ResourceAvailabilitySnapshots.Add(snap); _db.SaveChanges(); RaiseStateChanged(); }
     public void AddActualResourceUsage(ActualResourceUsage usage) { _db.ActualResourceUsages.Add(usage); _db.SaveChanges(); RaiseStateChanged(); }

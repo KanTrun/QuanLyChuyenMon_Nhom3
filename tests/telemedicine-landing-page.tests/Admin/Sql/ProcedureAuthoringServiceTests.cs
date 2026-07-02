@@ -179,6 +179,77 @@ public sealed class ProcedureAuthoringServiceTests
                 && item.SignerUserId == MedDataStoreSeed.TruongKhoaNoiId);
     }
 
+    [Fact]
+    public void UpdateDraft_InWriteBatch_PersistsStepRoleAndLocationAssignments()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var store = new MedDbDataStore(db);
+        var snapshots = new ProcedureDocumentSnapshotService(store);
+        var service = new ProcedureAuthoringService(store, snapshots);
+        var created = service.CreateVersion(CreateCommand(steps:
+        [
+            new ProcedureFlowStepDraft
+            {
+                Code = "BUOC-01",
+                Name = "Bắt đầu",
+                Responsibility = "KAN2",
+                Description = "KAN2",
+                RoleIds = [MedDataStoreSeed.RoleSysAdminId.ToString(), MedDataStoreSeed.RoleClinicalId.ToString()],
+                LocationDepartmentIds = [MedDataStoreSeed.DeptNoiId.ToString(), MedDataStoreSeed.DeptNgoaiId.ToString()]
+            },
+            new ProcedureFlowStepDraft
+            {
+                Code = "BUOC-02",
+                Name = "Kết thúc",
+                Responsibility = "KAN2",
+                Description = "KAN2",
+                RoleIds = [MedDataStoreSeed.RoleNurseId.ToString()],
+                LocationDepartmentIds = [MedDataStoreSeed.DeptXetNghiemId.ToString()]
+            }
+        ]));
+
+        ProcedureAuthoringResult? updated = null;
+        store.RunProcedureWriteBatch(() =>
+        {
+            updated = service.UpdateDraft(
+                CreateCommand(
+                    created.Procedure.ProcedureId,
+                    versionId: created.Version.ProcedureVersionId,
+                    content: "Nội dung chỉnh sửa người viết thứ hai",
+                    steps:
+                    [
+                        new ProcedureFlowStepDraft
+                        {
+                            Code = "BUOC-01",
+                            Name = "Bắt đầu",
+                            Responsibility = "KAN2",
+                            Description = "KAN2 chỉnh sửa",
+                            RoleIds = [MedDataStoreSeed.RoleSysAdminId.ToString(), MedDataStoreSeed.RoleClinicalId.ToString()],
+                            LocationDepartmentIds = [MedDataStoreSeed.DeptNoiId.ToString(), MedDataStoreSeed.DeptNgoaiId.ToString()]
+                        },
+                        new ProcedureFlowStepDraft
+                        {
+                            Code = "BUOC-02",
+                            Name = "Kết thúc",
+                            Responsibility = "KAN2",
+                            Description = "KAN2 chỉnh sửa",
+                            RoleIds = [MedDataStoreSeed.RoleNurseId.ToString()],
+                            LocationDepartmentIds = [MedDataStoreSeed.DeptXetNghiemId.ToString()]
+                        }
+                    ]),
+                persistSnapshot: false);
+        });
+
+        Assert.NotNull(updated);
+        var stepIds = store.ProcedureSteps
+            .Where(item => item.ProcedureVersionId == updated!.Version.ProcedureVersionId)
+            .Select(item => item.ProcedureStepId)
+            .ToHashSet();
+        Assert.Equal(2, stepIds.Count);
+        Assert.Equal(3, store.ProcedureStepRoleAssignments.Count(item => stepIds.Contains(item.ProcedureStepId)));
+        Assert.Equal(3, store.ProcedureStepLocationAssignments.Count(item => stepIds.Contains(item.ProcedureStepId)));
+    }
+
     private const string ValidSignature = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
     [Fact]
