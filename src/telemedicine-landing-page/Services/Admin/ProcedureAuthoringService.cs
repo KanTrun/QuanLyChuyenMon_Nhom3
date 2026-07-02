@@ -111,11 +111,14 @@ public sealed class ProcedureAuthoringService
             RequiredWriterSignatures = requiredWriters
         };
 
-        _store.UpdateProcedure(updatedProcedure);
-        _store.UpdateProcedureVersion(updatedVersion);
-        _store.ClearProcedureVersionDocument(version.ProcedureVersionId);
-        PersistDocument(command, updatedVersion);
-        PersistWriterAssignments(command, updatedVersion);
+        _store.RunProcedureWriteBatch(() =>
+        {
+            _store.UpdateProcedure(updatedProcedure);
+            _store.UpdateProcedureVersion(updatedVersion);
+            _store.ClearProcedureVersionDocument(version.ProcedureVersionId);
+            PersistDocument(command, updatedVersion);
+            PersistWriterAssignments(command, updatedVersion);
+        });
         if (persistSnapshot)
             _snapshots?.PersistSnapshot(updatedVersion.ProcedureVersionId, "draft", command.UserId);
         return new ProcedureAuthoringResult(updatedProcedure, updatedVersion);

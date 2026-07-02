@@ -482,18 +482,24 @@
             return Task.CompletedTask;
 
         _isSaving = true;
+        Sql.ProcedureSignoffRecord? signoff = null;
         try
         {
             Store.Refresh();
-            Signoffs.Sign(
-                _editDraftVersion.ProcedureVersionId,
-                "writer",
-                userId,
-                UserContext.CurrentUser.Username,
-                UserContext.CurrentUser.FullName ?? UserContext.CurrentUser.Username,
-                signatureImageDataUrl,
-                "Chữ ký tay trực tiếp sau khi hoàn thiện bản nháp");
-            Snapshots.PersistSnapshot(_editDraftVersion.ProcedureVersionId, "draft_signed", userId);
+            Store.RunProcedureWriteBatch(() =>
+            {
+                signoff = Signoffs.Sign(
+                    _editDraftVersion.ProcedureVersionId,
+                    "writer",
+                    userId,
+                    UserContext.CurrentUser.Username,
+                    UserContext.CurrentUser.FullName ?? UserContext.CurrentUser.Username,
+                    signatureImageDataUrl,
+                    "Chữ ký tay trực tiếp sau khi hoàn thiện bản nháp");
+                Snapshots.PersistSnapshot(_editDraftVersion.ProcedureVersionId, "draft_signed", userId);
+            });
+            if (signoff is not null)
+                Signoffs.RecordSignoffAudit(_editDraftVersion.ProcedureVersionId, signoff);
 
             var outstandingWriters = Signoffs.GetOutstandingWriterSignatures(_editDraftVersion.ProcedureVersionId);
             if (outstandingWriters == 0)

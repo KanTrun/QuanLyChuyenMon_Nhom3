@@ -124,6 +124,8 @@ public sealed partial class MedDataStore : IMedDataStore
 
     private void RaiseStateChanged() => StateChanged?.Invoke();
     public void Refresh(bool publish = false) => RaiseStateChanged();
+    public void RunProcedureWriteBatch(Action action) => action();
+    public bool IsProcedureWriteBatchActive => false;
 
     /// <summary>Kiểm tra JSON hợp lệ (tương đương ISJSON = 1).</summary>
     internal static void ValidateJson(string? json, string fieldName)

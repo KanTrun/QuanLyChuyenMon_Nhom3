@@ -12,6 +12,9 @@ public sealed class MedDbDataStore : IMedDataStore
 {
     private readonly MedDbContext _db;
     private readonly IMedDataChangeBus _changeBus;
+    private int _procedureWriteBatchDepth;
+
+    public bool IsProcedureWriteBatchActive => _procedureWriteBatchDepth > 0;
 
     public MedDbDataStore(MedDbContext db, IMedDataChangeBus? changeBus = null)
     {
@@ -35,6 +38,71 @@ public sealed class MedDbDataStore : IMedDataStore
         {
             _changeBus.Publish();
         }
+    }
+
+    public void RunProcedureWriteBatch(Action action)
+    {
+        if (_procedureWriteBatchDepth > 0)
+        {
+            action();
+            return;
+        }
+
+        _db.ChangeTracker.Clear();
+        if (!EfWriteHelper.SupportsExecuteUpdate(_db))
+        {
+            try
+            {
+                _procedureWriteBatchDepth++;
+                using (_db.SuppressAutomaticAudit())
+                {
+                    action();
+                    _db.SaveChanges();
+                }
+            }
+            finally
+            {
+                _procedureWriteBatchDepth--;
+                _db.ChangeTracker.Clear();
+                RaiseStateChanged();
+            }
+
+            return;
+        }
+
+        using var transaction = _db.Database.BeginTransaction();
+        try
+        {
+            _procedureWriteBatchDepth++;
+            using (_db.SuppressAutomaticAudit())
+            {
+                action();
+                _db.SaveChanges();
+            }
+
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+        finally
+        {
+            _procedureWriteBatchDepth--;
+            _db.ChangeTracker.Clear();
+            RaiseStateChanged();
+        }
+    }
+
+    private void CommitProcedureChange()
+    {
+        if (_procedureWriteBatchDepth > 0)
+            return;
+
+        _db.SaveChanges();
+        _db.ChangeTracker.Clear();
+        RaiseStateChanged();
     }
 
     private static List<T> ReadAll<T>(IQueryable<T> query) where T : class => query.AsNoTracking().ToList();
@@ -329,10 +397,10 @@ public sealed class MedDbDataStore : IMedDataStore
         EfWriteHelper.UpdateProcedureVersion(_db, updated);
         RaiseStateChanged();
     }
-    public void AddProcedureStep(ProcedureStep step) { _db.ProcedureSteps.Add(step); _db.SaveChanges(); RaiseStateChanged(); }
-    public void AddProcedureAttachment(ProcedureAttachment att) { _db.ProcedureAttachments.Add(att); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureStep(ProcedureStep step) { _db.ProcedureSteps.Add(step); CommitProcedureChange(); }
+    public void AddProcedureAttachment(ProcedureAttachment att) { _db.ProcedureAttachments.Add(att); CommitProcedureChange(); }
     public void AddProcedureScreenMapping(ProcedureScreenMapping mapping) { _db.ProcedureScreenMappings.Add(mapping); _db.SaveChanges(); RaiseStateChanged(); }
-    public void AddProcedureDocumentSection(ProcedureDocumentSection section) { _db.ProcedureDocumentSections.Add(section); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureDocumentSection(ProcedureDocumentSection section) { _db.ProcedureDocumentSections.Add(section); CommitProcedureChange(); }
     public void UpdateProcedureDocumentSection(ProcedureDocumentSection section)
     {
         var existing = _db.ProcedureDocumentSections.FirstOrDefault(s => s.ProcedureDocumentSectionId == section.ProcedureDocumentSectionId)
@@ -341,54 +409,31 @@ public sealed class MedDbDataStore : IMedDataStore
         _db.SaveChanges();
         RaiseStateChanged();
     }
-    public void AddProcedureDistributionRecipient(ProcedureDistributionRecipient recipient) { _db.ProcedureDistributionRecipients.Add(recipient); _db.SaveChanges(); RaiseStateChanged(); }
-    public void AddProcedureRevisionEntry(ProcedureRevisionEntry revision) { _db.ProcedureRevisionEntries.Add(revision); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureDistributionRecipient(ProcedureDistributionRecipient recipient) { _db.ProcedureDistributionRecipients.Add(recipient); CommitProcedureChange(); }
+    public void AddProcedureRevisionEntry(ProcedureRevisionEntry revision) { _db.ProcedureRevisionEntries.Add(revision); CommitProcedureChange(); }
     public void AddProcedureSignoffRecord(ProcedureSignoffRecord signoff)
     {
-        _db.ChangeTracker.Clear();
+        if (_procedureWriteBatchDepth == 0)
+            _db.ChangeTracker.Clear();
         _db.ProcedureSignoffRecords.Add(signoff);
-        _db.SaveChanges();
-        _db.ChangeTracker.Clear();
-        RaiseStateChanged();
+        CommitProcedureChange();
     }
-    public void AddProcedureVersionAuthorAssignment(ProcedureVersionAuthorAssignment assignment) { _db.ProcedureVersionAuthorAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureVersionAuthorAssignment(ProcedureVersionAuthorAssignment assignment) { _db.ProcedureVersionAuthorAssignments.Add(assignment); CommitProcedureChange(); }
     public void ClearProcedureVersionDocument(Guid versionId)
     {
-        _db.ChangeTracker.Clear();
-        var stepIds = _db.ProcedureSteps
-            .Where(item => item.ProcedureVersionId == versionId)
-            .Select(item => item.ProcedureStepId)
-            .ToList();
-        if (stepIds.Count > 0)
-        {
-            _db.ProcedureStepAttachmentAssignments.RemoveRange(
-                _db.ProcedureStepAttachmentAssignments.Where(item => stepIds.Contains(item.ProcedureStepId)));
-            _db.ProcedureStepRoleAssignments.RemoveRange(
-                _db.ProcedureStepRoleAssignments.Where(item => stepIds.Contains(item.ProcedureStepId)));
-            _db.ProcedureStepLocationAssignments.RemoveRange(
-                _db.ProcedureStepLocationAssignments.Where(item => stepIds.Contains(item.ProcedureStepId)));
-            _db.ProcedureSteps.RemoveRange(_db.ProcedureSteps.Where(item => item.ProcedureVersionId == versionId));
-        }
-
-        _db.ProcedureDocumentSections.RemoveRange(_db.ProcedureDocumentSections.Where(item => item.ProcedureVersionId == versionId));
-        _db.ProcedureDistributionRecipients.RemoveRange(_db.ProcedureDistributionRecipients.Where(item => item.ProcedureVersionId == versionId));
-        _db.ProcedureRevisionEntries.RemoveRange(_db.ProcedureRevisionEntries.Where(item => item.ProcedureVersionId == versionId));
-        _db.ProcedureVersionAuthorAssignments.RemoveRange(_db.ProcedureVersionAuthorAssignments.Where(item => item.ProcedureVersionId == versionId));
-        _db.ProcedureAttachments.RemoveRange(_db.ProcedureAttachments.Where(item => item.ProcedureVersionId == versionId));
-        _db.SaveChanges();
-        _db.ChangeTracker.Clear();
-        RaiseStateChanged();
+        EfWriteHelper.ClearProcedureVersionDocument(_db, versionId, _procedureWriteBatchDepth > 0);
+        if (_procedureWriteBatchDepth == 0)
+            RaiseStateChanged();
     }
-    public void AddProcedureStepRoleAssignment(ProcedureStepRoleAssignment assignment) { _db.ProcedureStepRoleAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }
-    public void AddProcedureStepLocationAssignment(ProcedureStepLocationAssignment assignment) { _db.ProcedureStepLocationAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }
-    public void AddProcedureStepAttachmentAssignment(ProcedureStepAttachmentAssignment assignment) { _db.ProcedureStepAttachmentAssignments.Add(assignment); _db.SaveChanges(); RaiseStateChanged(); }
+    public void AddProcedureStepRoleAssignment(ProcedureStepRoleAssignment assignment) { _db.ProcedureStepRoleAssignments.Add(assignment); CommitProcedureChange(); }
+    public void AddProcedureStepLocationAssignment(ProcedureStepLocationAssignment assignment) { _db.ProcedureStepLocationAssignments.Add(assignment); CommitProcedureChange(); }
+    public void AddProcedureStepAttachmentAssignment(ProcedureStepAttachmentAssignment assignment) { _db.ProcedureStepAttachmentAssignments.Add(assignment); CommitProcedureChange(); }
     public void AddProcedureVersionSnapshot(ProcedureVersionSnapshotRecord snapshot)
     {
-        _db.ChangeTracker.Clear();
+        if (_procedureWriteBatchDepth == 0)
+            _db.ChangeTracker.Clear();
         _db.ProcedureVersionSnapshots.Add(snapshot);
-        _db.SaveChanges();
-        _db.ChangeTracker.Clear();
-        RaiseStateChanged();
+        CommitProcedureChange();
     }
     public void AddOrUpdateProcedureVersionDiff(ProcedureVersionDiffRecord diff)
     {

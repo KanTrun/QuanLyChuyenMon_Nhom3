@@ -34,7 +34,8 @@ public sealed class ProcedureSignoffService
             throw new InvalidOperationException("Chữ ký nội bộ phải gắn với một tài khoản người dùng hợp lệ.");
         var validatedSignatureImage = ValidateSignatureImage(signatureImageDataUrl);
 
-        _store.Refresh();
+        if (!_store.IsProcedureWriteBatchActive)
+            _store.Refresh();
         var normalizedRole = role.ToLowerInvariant();
         var snapshot = _snapshots.GetSnapshot(versionId);
         EnsureSigningStage(snapshot, normalizedRole);
@@ -55,8 +56,15 @@ public sealed class ProcedureSignoffService
             Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim()
         };
         _store.AddProcedureSignoffRecord(signoff);
-        AppendProcedureSignoffAudit(snapshot, signoff);
+        if (!_store.IsProcedureWriteBatchActive)
+            AppendProcedureSignoffAudit(snapshot, signoff);
         return signoff;
+    }
+
+    public void RecordSignoffAudit(Guid versionId, ProcedureSignoffRecord signoff)
+    {
+        var snapshot = _snapshots.GetSnapshot(versionId);
+        AppendProcedureSignoffAudit(snapshot, signoff);
     }
 
     public bool HasCurrentSignoff(Guid versionId, string role)

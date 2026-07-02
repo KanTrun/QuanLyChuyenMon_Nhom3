@@ -11,6 +11,59 @@ internal static class EfWriteHelper
            && db.Database.ProviderName is { } provider
            && !provider.Contains("InMemory", StringComparison.OrdinalIgnoreCase);
 
+    internal static void ClearProcedureVersionDocument(MedDbContext db, Guid versionId, bool deferSave = false)
+    {
+        db.ChangeTracker.Clear();
+        if (SupportsExecuteUpdate(db))
+        {
+            var stepIds = db.ProcedureSteps.AsNoTracking()
+                .Where(item => item.ProcedureVersionId == versionId)
+                .Select(item => item.ProcedureStepId)
+                .ToList();
+            if (stepIds.Count > 0)
+            {
+                db.ProcedureStepAttachmentAssignments.Where(item => stepIds.Contains(item.ProcedureStepId)).ExecuteDelete();
+                db.ProcedureStepRoleAssignments.Where(item => stepIds.Contains(item.ProcedureStepId)).ExecuteDelete();
+                db.ProcedureStepLocationAssignments.Where(item => stepIds.Contains(item.ProcedureStepId)).ExecuteDelete();
+                db.ProcedureSteps.Where(item => item.ProcedureVersionId == versionId).ExecuteDelete();
+            }
+
+            db.ProcedureDocumentSections.Where(item => item.ProcedureVersionId == versionId).ExecuteDelete();
+            db.ProcedureDistributionRecipients.Where(item => item.ProcedureVersionId == versionId).ExecuteDelete();
+            db.ProcedureRevisionEntries.Where(item => item.ProcedureVersionId == versionId).ExecuteDelete();
+            db.ProcedureVersionAuthorAssignments.Where(item => item.ProcedureVersionId == versionId).ExecuteDelete();
+            db.ProcedureAttachments.Where(item => item.ProcedureVersionId == versionId).ExecuteDelete();
+            db.ChangeTracker.Clear();
+            return;
+        }
+
+        var trackedStepIds = db.ProcedureSteps
+            .Where(item => item.ProcedureVersionId == versionId)
+            .Select(item => item.ProcedureStepId)
+            .ToList();
+        if (trackedStepIds.Count > 0)
+        {
+            db.ProcedureStepAttachmentAssignments.RemoveRange(
+                db.ProcedureStepAttachmentAssignments.Where(item => trackedStepIds.Contains(item.ProcedureStepId)));
+            db.ProcedureStepRoleAssignments.RemoveRange(
+                db.ProcedureStepRoleAssignments.Where(item => trackedStepIds.Contains(item.ProcedureStepId)));
+            db.ProcedureStepLocationAssignments.RemoveRange(
+                db.ProcedureStepLocationAssignments.Where(item => trackedStepIds.Contains(item.ProcedureStepId)));
+            db.ProcedureSteps.RemoveRange(db.ProcedureSteps.Where(item => item.ProcedureVersionId == versionId));
+        }
+
+        db.ProcedureDocumentSections.RemoveRange(db.ProcedureDocumentSections.Where(item => item.ProcedureVersionId == versionId));
+        db.ProcedureDistributionRecipients.RemoveRange(db.ProcedureDistributionRecipients.Where(item => item.ProcedureVersionId == versionId));
+        db.ProcedureRevisionEntries.RemoveRange(db.ProcedureRevisionEntries.Where(item => item.ProcedureVersionId == versionId));
+        db.ProcedureVersionAuthorAssignments.RemoveRange(db.ProcedureVersionAuthorAssignments.Where(item => item.ProcedureVersionId == versionId));
+        db.ProcedureAttachments.RemoveRange(db.ProcedureAttachments.Where(item => item.ProcedureVersionId == versionId));
+        if (!deferSave)
+        {
+            db.SaveChanges();
+            db.ChangeTracker.Clear();
+        }
+    }
+
     internal static void UpdateProcedure(MedDbContext db, ProfessionalProcedure proc)
     {
         db.ChangeTracker.Clear();

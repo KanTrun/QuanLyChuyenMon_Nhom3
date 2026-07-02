@@ -87,6 +87,23 @@ public class MedDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<MedNotification> Notifications => Set<MedNotification>();
     public DbSet<NotificationDeliveryAttempt> NotificationDeliveryAttempts => Set<NotificationDeliveryAttempt>();
 
+    private int _automaticAuditSuppressionDepth;
+
+    public IDisposable SuppressAutomaticAudit()
+    {
+        _automaticAuditSuppressionDepth++;
+        return new SuppressAutomaticAuditScope(this);
+    }
+
+    private sealed class SuppressAutomaticAuditScope(MedDbContext context) : IDisposable
+    {
+        public void Dispose()
+        {
+            if (context._automaticAuditSuppressionDepth > 0)
+                context._automaticAuditSuppressionDepth--;
+        }
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -160,6 +177,9 @@ public class MedDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
 
     private void AddAutomaticAuditLogs()
     {
+        if (_automaticAuditSuppressionDepth > 0)
+            return;
+
         var entries = ChangeTracker.Entries()
             .Where(e => e.Entity is not AuditLog &&
                         e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)

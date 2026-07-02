@@ -11,6 +11,8 @@ public interface IMedDataStore
     // Sự kiện thay đổi trạng thái
     event Action? StateChanged;
     void Refresh(bool publish = false);
+    void RunProcedureWriteBatch(Action action);
+    bool IsProcedureWriteBatchActive { get; }
 
     // === Đọc dữ liệu ===
     IReadOnlyList<Department> Departments { get; }

@@ -157,15 +157,20 @@ public sealed class ProcedureAuthoringServiceTests
                 content: "Nội dung do người viết thứ hai chỉnh sửa"),
             persistSnapshot: false);
 
-        store.Refresh();
-        signoffs.Sign(
-            updated.Version.ProcedureVersionId,
-            "writer",
-            MedDataStoreSeed.TruongKhoaNoiId,
-            "truongkhoa.noi",
-            "Trưởng khoa Nội",
-            ValidSignature);
-        snapshots.PersistSnapshot(updated.Version.ProcedureVersionId, "draft_signed", MedDataStoreSeed.TruongKhoaNoiId);
+        ProcedureSignoffRecord? secondSignoff = null;
+        store.RunProcedureWriteBatch(() =>
+        {
+            secondSignoff = signoffs.Sign(
+                updated.Version.ProcedureVersionId,
+                "writer",
+                MedDataStoreSeed.TruongKhoaNoiId,
+                "truongkhoa.noi",
+                "Trưởng khoa Nội",
+                ValidSignature);
+            snapshots.PersistSnapshot(updated.Version.ProcedureVersionId, "draft_signed", MedDataStoreSeed.TruongKhoaNoiId);
+        });
+        if (secondSignoff is not null)
+            signoffs.RecordSignoffAudit(updated.Version.ProcedureVersionId, secondSignoff);
 
         Assert.Equal(1, signoffs.GetOutstandingWriterSignatures(updated.Version.ProcedureVersionId));
         Assert.Contains(
