@@ -517,32 +517,13 @@ public sealed class ProcedureLifecycleService
 
     private void PersistVersionUpdate(ProcedureVersion updated)
     {
-        _db.ChangeTracker.Clear();
-        var affected = _db.ProcedureVersions
-            .Where(v => v.ProcedureVersionId == updated.ProcedureVersionId)
-            .ExecuteUpdate(setters => setters
-                .SetProperty(v => v.DepartmentId, updated.DepartmentId)
-                .SetProperty(v => v.Title, updated.Title)
-                .SetProperty(v => v.Summary, updated.Summary)
-                .SetProperty(v => v.ChangeReason, updated.ChangeReason)
-                .SetProperty(v => v.EffectiveFrom, updated.EffectiveFrom)
-                .SetProperty(v => v.EffectiveTo, updated.EffectiveTo)
-                .SetProperty(v => v.IssueDate, updated.IssueDate)
-                .SetProperty(v => v.IssueNumber, updated.IssueNumber)
-                .SetProperty(v => v.SourcePdfFileName, updated.SourcePdfFileName)
-                .SetProperty(v => v.SourcePdfChecksumSha256, updated.SourcePdfChecksumSha256)
-                .SetProperty(v => v.StatusCode, updated.StatusCode)
-                .SetProperty(v => v.SubmittedBy, updated.SubmittedBy)
-                .SetProperty(v => v.SubmittedAt, updated.SubmittedAt)
-                .SetProperty(v => v.ApprovedBy, updated.ApprovedBy)
-                .SetProperty(v => v.ApprovedAt, updated.ApprovedAt)
-                .SetProperty(v => v.PublishedBy, updated.PublishedBy)
-                .SetProperty(v => v.PublishedAt, updated.PublishedAt)
-                .SetProperty(v => v.RequiredWriterSignatures, updated.RequiredWriterSignatures));
-        if (affected == 0)
+        try
         {
-            throw MedDomainException.Constraint("FK_procedure_version", 547,
-                "Phiên bản quy trình không tồn tại hoặc đã bị thay đổi.");
+            EfWriteHelper.UpdateProcedureVersion(_db, updated);
+        }
+        catch (InvalidOperationException exception)
+        {
+            throw MedDomainException.Constraint("FK_procedure_version", 547, exception.Message);
         }
     }
 

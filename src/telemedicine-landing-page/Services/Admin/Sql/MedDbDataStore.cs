@@ -319,47 +319,14 @@ public sealed class MedDbDataStore : IMedDataStore
     public void AddProcedure(ProfessionalProcedure proc) { _db.Procedures.Add(proc); _db.SaveChanges(); RaiseStateChanged(); }
     public void UpdateProcedure(ProfessionalProcedure proc)
     {
-        _db.ChangeTracker.Clear();
-        var affected = _db.Procedures
-            .Where(p => p.ProcedureId == proc.ProcedureId)
-            .ExecuteUpdate(setters => setters
-                .SetProperty(p => p.Name, proc.Name)
-                .SetProperty(p => p.ProcedureType, proc.ProcedureType)
-                .SetProperty(p => p.OwnerDepartmentId, proc.OwnerDepartmentId)
-                .SetProperty(p => p.Description, proc.Description)
-                .SetProperty(p => p.UpdatedAt, DateTime.UtcNow));
-        if (affected == 0)
-            throw new InvalidOperationException("Quy trình không tồn tại.");
+        EfWriteHelper.UpdateProcedure(_db, proc);
         RaiseStateChanged();
     }
 
     public void AddProcedureVersion(ProcedureVersion ver) { _db.ChangeTracker.Clear(); _db.ProcedureVersions.Add(ver); _db.SaveChanges(); _db.ChangeTracker.Clear(); RaiseStateChanged(); }
     public void UpdateProcedureVersion(ProcedureVersion updated)
     {
-        _db.ChangeTracker.Clear();
-        var affected = _db.ProcedureVersions
-            .Where(v => v.ProcedureVersionId == updated.ProcedureVersionId)
-            .ExecuteUpdate(setters => setters
-                .SetProperty(v => v.DepartmentId, updated.DepartmentId)
-                .SetProperty(v => v.Title, updated.Title)
-                .SetProperty(v => v.Summary, updated.Summary)
-                .SetProperty(v => v.ChangeReason, updated.ChangeReason)
-                .SetProperty(v => v.EffectiveFrom, updated.EffectiveFrom)
-                .SetProperty(v => v.EffectiveTo, updated.EffectiveTo)
-                .SetProperty(v => v.IssueDate, updated.IssueDate)
-                .SetProperty(v => v.IssueNumber, updated.IssueNumber)
-                .SetProperty(v => v.SourcePdfFileName, updated.SourcePdfFileName)
-                .SetProperty(v => v.SourcePdfChecksumSha256, updated.SourcePdfChecksumSha256)
-                .SetProperty(v => v.StatusCode, updated.StatusCode)
-                .SetProperty(v => v.SubmittedBy, updated.SubmittedBy)
-                .SetProperty(v => v.SubmittedAt, updated.SubmittedAt)
-                .SetProperty(v => v.ApprovedBy, updated.ApprovedBy)
-                .SetProperty(v => v.ApprovedAt, updated.ApprovedAt)
-                .SetProperty(v => v.PublishedBy, updated.PublishedBy)
-                .SetProperty(v => v.PublishedAt, updated.PublishedAt)
-                .SetProperty(v => v.RequiredWriterSignatures, updated.RequiredWriterSignatures));
-        if (affected == 0)
-            throw new InvalidOperationException("Phiên bản quy trình không tồn tại.");
+        EfWriteHelper.UpdateProcedureVersion(_db, updated);
         RaiseStateChanged();
     }
     public void AddProcedureStep(ProcedureStep step) { _db.ProcedureSteps.Add(step); _db.SaveChanges(); RaiseStateChanged(); }
