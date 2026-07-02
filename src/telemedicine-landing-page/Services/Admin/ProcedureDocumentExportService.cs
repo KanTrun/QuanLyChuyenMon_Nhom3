@@ -99,7 +99,7 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
         return [cover, SignatureApprovalPage(snapshot, hash)];
     }
 
-    private static IReadOnlyList<string> BuildControlPages(ProcedureDocumentSnapshot snapshot, string currentHash)
+    private IReadOnlyList<string> BuildControlPages(ProcedureDocumentSnapshot snapshot, string currentHash)
     {
         var recipients = snapshot.Recipients.ToList();
         var revisions = snapshot.Revisions.ToList();
@@ -165,6 +165,7 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
         var pages = new List<string>
         {
             TraceabilityPage(
+                snapshot,
                 snapshot.Attachments.Take(firstAttachmentRows),
                 snapshot.Signoffs.Take(firstSignoffRows),
                 currentHash,
@@ -177,7 +178,7 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 
         var signoffGroups = snapshot.Signoffs.Skip(firstSignoffRows).Chunk(7).ToList();
         for (var index = 0; index < signoffGroups.Count; index++)
-            pages.Add(SignoffContinuationPage(signoffGroups[index], currentHash, index + 1, signoffGroups.Count));
+            pages.Add(SignoffContinuationPage(snapshot, signoffGroups[index], currentHash, index + 1, signoffGroups.Count));
 
         return pages;
     }
@@ -280,7 +281,7 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 """;
     }
 
-    private static string SignatureBlock(ProcedureDocumentSnapshot s, string hash, bool standalone)
+    private string SignatureBlock(ProcedureDocumentSnapshot s, string hash, bool standalone)
         => standalone
             ? SignatureGrid(s, hash)
             : $$"""
@@ -290,7 +291,7 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 </div>
 """;
 
-    private static string SignatureApprovalPage(ProcedureDocumentSnapshot s, string hash)
+    private string SignatureApprovalPage(ProcedureDocumentSnapshot s, string hash)
         => $$"""
 <div class="signature-page signature-page-standalone">
   <h1 class="section-title signature-page-title">XÁC NHẬN VÀ PHÊ DUYỆT NỘI BỘ</h1>
@@ -299,7 +300,7 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 </div>
 """;
 
-    private static string SignatureGrid(ProcedureDocumentSnapshot s, string hash)
+    private string SignatureGrid(ProcedureDocumentSnapshot s, string hash)
         => $$"""
 <div class="signature-grid">
 {{WriterSignCards(s, hash)}}
@@ -308,7 +309,7 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 </div>
 """;
 
-    private static string ControlPage(
+    private string ControlPage(
         ProcedureDocumentSnapshot s,
         string currentHash,
         IEnumerable<ProcedureDistributionRecipient> recipients,
@@ -387,28 +388,84 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 
     private string FlowPage(IReadOnlyList<ProcedureStep> steps, int page, int total)
     {
-        var rows = string.Join("", steps.Select((step, index) => $$"""
-<tr class="flow-table-row">
-  <td class="flow-responsibility">{{FlowResponsibility(steps, step)}}</td>
-  <td class="flow-step-cell">
-    <div class="flow-symbol shape-{{Shape(step.FlowShapeCode)}}"><span><strong>{{H(PrintableText(step.Name, "Chưa đặt tên bước"))}}</strong>{{FlowNodeDetail(step)}}</span></div>
-    {{(index < steps.Count - 1 || page < total ? "<div class=\"flow-arrow\" aria-hidden=\"true\"></div>" : "")}}
-  </td>
-  <td class="flow-note">{{StepNote(step)}}</td>
-</tr>
-"""));
+        var rowParts = new List<string>();
+        for (var index = 0; index < steps.Count; index++)
+        {
+            rowParts.Add(FlowStepRow(steps[index], index, steps.Count));
+        }
+
         return $$"""
 <h1 class="section-title flow-page-title">LƯU ĐỒ QUY TRÌNH <span class="continuation">({{page}}/{{total}})</span></h1>
 {{(page > 1 ? "<div class=\"flow-page-link\">Tiếp từ trang lưu đồ trước</div>" : "")}}
 <table class="flow-table">
 <thead><tr><th>Trách nhiệm</th><th>Các bước thực hiện</th><th>Mô tả / Các biểu mẫu</th></tr></thead>
-<tbody>{{rows}}</tbody>
+<tbody>{{string.Join("", rowParts)}}</tbody>
 </table>
 {{(page < total ? "<div class=\"flow-page-link flow-page-next\">Tiếp tục ở trang lưu đồ sau</div>" : "")}}
 """;
     }
 
+    private string FlowStepRow(ProcedureStep step, int index, int count)
+    {
+        var stepName = H(PrintableText(step.Name, "Chưa đặt tên bước"));
+        var subtitle = FlowShapeSubtitle(step);
+        var shape = Shape(step.FlowShapeCode);
+        var isFirst = index == 0;
+        var isLast = index == count - 1;
+        
+        var lineClass = isFirst && isLast ? "" 
+                      : isFirst ? "flow-line-bottom-half" 
+                      : isLast ? "flow-line-top-half" 
+                      : "flow-line-full";
+                      
+        var arrowMarkup = isFirst ? "" : "<div class=\"flow-arrow-head\"></div>";
+
+        return $$"""
+<tr class="flow-table-row">
+  <td class="flow-responsibility">{{FlowResponsibility(step)}}</td>
+  <td class="flow-step-cell">
+    <div class="flow-line-behind {{lineClass}}"></div>
+    <div class="flow-symbol shape-{{shape}}">
+      {{arrowMarkup}}
+      <span><strong>{{stepName}}</strong>{{subtitle}}</span>
+    </div>
+  </td>
+  <td class="flow-note">{{StepNote(step)}}</td>
+</tr>
+""";
+    }
+
+    private static string FlowLinkRow()
+        => """
+<tr class="flow-link-row">
+  <td class="flow-link-pad"></td>
+  <td class="flow-link-cell"><div class="flow-link-arrow" aria-hidden="true"></div></td>
+  <td class="flow-link-pad"></td>
+</tr>
+""";
+
+    private static string FlowShapeSubtitle(ProcedureStep step)
+    {
+        var details = new List<string>();
+        if (!string.IsNullOrWhiteSpace(step.DetailSectionNumber))
+            details.Add(step.DetailSectionNumber.Trim());
+
+        var description = step.Description?.Trim();
+        var name = step.Name?.Trim();
+        if (!string.IsNullOrWhiteSpace(description) &&
+            !string.Equals(description, name, StringComparison.OrdinalIgnoreCase))
+            details.Add(Truncate(description, 120));
+
+        return details.Count == 0
+            ? ""
+            : $"<small>{H(string.Join(" · ", details))}</small>";
+    }
+
+    private static string Truncate(string value, int maxLength)
+        => value.Length <= maxLength ? value : value[..(maxLength - 1)].TrimEnd() + "…";
+
     private string TraceabilityPage(
+        ProcedureDocumentSnapshot snapshot,
         IEnumerable<ProcedureAttachment> attachments,
         IEnumerable<ProcedureSignoffRecord> signoffs,
         string hash,
@@ -419,7 +476,7 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 <h2 class="block-title">Tệp gắn kèm</h2>
 <table><thead><tr><th>STT</th><th>Tên tệp</th><th>Loại</th><th>Dung lượng</th><th>Ghi chú</th></tr></thead><tbody>{{AttachmentRows(attachments)}}</tbody></table>
 <h2 class="block-title">Nhật ký chữ ký nội bộ</h2>
-<table class="signoff-log"><thead><tr><th>STT</th><th>Vai trò</th><th>Người xác nhận</th><th>Thời điểm</th><th>Hiệu lực</th></tr></thead><tbody>{{SignoffRows(signoffs, hash)}}</tbody></table>
+<table class="signoff-log"><thead><tr><th>STT</th><th>Vai trò</th><th>Người xác nhận</th><th>Thời điểm</th><th>Hiệu lực</th></tr></thead><tbody>{{SignoffRows(snapshot, signoffs, hash)}}</tbody></table>
 <div class="trace-box"><strong>Thông tin bản in</strong><div>Bản in phục vụ kiểm soát và ban hành nội bộ.</div><div>Thời điểm tạo bản in: {{D(generatedAt)}}</div></div>
 """;
     }
@@ -433,14 +490,15 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 <table><thead><tr><th>STT</th><th>Tên tệp</th><th>Loại</th><th>Dung lượng</th><th>Ghi chú</th></tr></thead><tbody>{{AttachmentRows(attachments)}}</tbody></table>
 """;
 
-    private static string SignoffContinuationPage(
+    private string SignoffContinuationPage(
+        ProcedureDocumentSnapshot snapshot,
         IEnumerable<ProcedureSignoffRecord> signoffs,
         string hash,
         int page,
         int total)
         => $$"""
 <h1 class="section-title">NHẬT KÝ CHỮ KÝ NỘI BỘ <span class="continuation">({{page}}/{{total}})</span></h1>
-<table class="signoff-log"><thead><tr><th>STT</th><th>Vai trò</th><th>Người xác nhận</th><th>Thời điểm</th><th>Hiệu lực</th></tr></thead><tbody>{{SignoffRows(signoffs, hash)}}</tbody></table>
+<table class="signoff-log"><thead><tr><th>STT</th><th>Vai trò</th><th>Người xác nhận</th><th>Thời điểm</th><th>Hiệu lực</th></tr></thead><tbody>{{SignoffRows(snapshot, signoffs, hash)}}</tbody></table>
 """;
 
     private string AttachmentRows(IEnumerable<ProcedureAttachment> attachments)
@@ -462,11 +520,11 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
         return $"<a class=\"file-download-link\" href=\"{H(url)}\" title=\"Tải {H(attachment.FileName)}\">{H(attachment.FileName)}<span class=\"file-download-mark\" aria-hidden=\"true\">↓</span></a>";
     }
 
-    private static string SignoffRows(IEnumerable<ProcedureSignoffRecord> signoffs, string hash)
+    private string SignoffRows(ProcedureDocumentSnapshot snapshot, IEnumerable<ProcedureSignoffRecord> signoffs, string hash)
     {
         var rows = signoffs.Select((sign, index) =>
         {
-            var isCurrent = sign.ContentHashSha256.Equals(hash, StringComparison.OrdinalIgnoreCase);
+            var isCurrent = !_snapshots.IsSignoffStale(snapshot, sign);
             return $"<tr><td>{index + 1}</td><td>{H(RoleLabel(sign.SignoffRole))}</td><td>{H(sign.SignerFullName ?? sign.SignerUsername)}</td><td>{D(sign.SignedAt)}</td><td><span class=\"sign-state {(isCurrent ? "is-current" : "is-stale")}\">{(isCurrent ? "Còn hiệu lực" : "Hết hiệu lực")}</span></td></tr>";
         }).ToList();
         return rows.Count == 0
@@ -512,23 +570,26 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
         return SignedSignCard(label, sign.SignerFullName ?? sign.SignerUsername, sign.SignerUsername, D(sign.SignedAt), image);
     }
 
-    private static string WriterSignCards(ProcedureDocumentSnapshot snapshot, string currentHash)
+    private string WriterSignCards(ProcedureDocumentSnapshot snapshot, string currentHash)
     {
-        var currentSigns = snapshot.Signoffs
-            .Where(item => item.SignoffRole == "writer" && item.ContentHashSha256.Equals(currentHash, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(item => item.DisplayOrder)
-            .ThenBy(item => item.SignedAt)
-            .ToList();
         var cards = new List<string>();
         var requiredCount = Math.Max(1, snapshot.Version.RequiredWriterSignatures);
+        var writers = _snapshots.GetOrderedWriterAssignments(snapshot).Take(requiredCount).ToList();
         for (var index = 0; index < requiredCount; index++)
         {
-            var assigned = snapshot.WriterAssignments.ElementAtOrDefault(index);
-            var sign = currentSigns.ElementAtOrDefault(index);
+            var assigned = writers.ElementAtOrDefault(index)
+                ?? snapshot.WriterAssignments.OrderBy(item => item.DisplayOrder).ElementAtOrDefault(index);
             var label = requiredCount == 1 ? "Người viết" : $"Người viết {index + 1}";
-            if (sign is null)
+            if (assigned is null)
             {
-                var expected = assigned is null ? "Chưa ký" : $"Chờ {H(assigned.AssignedFullName ?? assigned.AssignedUsername)} ký";
+                cards.Add(EmptySignCard(label, "Chưa ký"));
+                continue;
+            }
+
+            var sign = _snapshots.GetWriterSignoffForDisplay(snapshot, assigned.AssignedUserId);
+            if (!_snapshots.IsWriterEffectivelySigned(snapshot, assigned.AssignedUserId) || sign is null)
+            {
+                var expected = $"Chờ {H(assigned.AssignedFullName ?? assigned.AssignedUsername)} ký";
                 cards.Add(EmptySignCard(label, expected));
                 continue;
             }
@@ -579,26 +640,44 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
 </div>
 """;
 
-    private static string AuthorityRow(ProcedureDocumentSnapshot s, string role, string label, string responsibility, string currentHash)
+    private string AuthorityRow(ProcedureDocumentSnapshot s, string role, string label, string responsibility, string currentHash)
     {
+        if (role == "writer")
+        {
+            var requiredCount = Math.Max(1, s.Version.RequiredWriterSignatures);
+            var assignments = _snapshots.GetOrderedWriterAssignments(s).Take(requiredCount).ToList();
+            var signedCount = _snapshots.GetEffectiveWriterSignatureCount(s);
+            var signer = signedCount == 0
+                ? string.Join("; ", assignments.Select(item => item.AssignedFullName ?? item.AssignedUsername ?? item.AssignedUserId.ToString()))
+                : string.Join("; ", assignments.Select(item =>
+                {
+                    if (_snapshots.IsWriterEffectivelySigned(s, item.AssignedUserId))
+                    {
+                        var sign = _snapshots.GetWriterSignoffForDisplay(s, item.AssignedUserId);
+                        if (sign is not null)
+                            return sign.SignerFullName ?? sign.SignerUsername ?? "Tài khoản nội bộ";
+                    }
+
+                    return item.AssignedFullName ?? item.AssignedUsername ?? item.AssignedUserId.ToString();
+                }));
+            var status = signedCount == 0
+                ? "Chưa ký"
+                : $"Đã ký {signedCount}/{requiredCount}";
+            return $"<tr><td><strong>{H(label)}</strong></td><td>{H(responsibility)}</td><td>{H(signer)}</td><td>{H(status)}</td></tr>";
+        }
+
         var currentSigns = s.Signoffs
             .Where(item => item.SignoffRole == role && item.ContentHashSha256.Equals(currentHash, StringComparison.OrdinalIgnoreCase))
             .OrderBy(item => item.DisplayOrder)
             .ThenBy(item => item.SignedAt)
             .ToList();
-        var signer = role == "writer"
-            ? (currentSigns.Count == 0
-                ? string.Join("; ", s.WriterAssignments.Select(item => item.AssignedFullName ?? item.AssignedUsername ?? item.AssignedUserId.ToString()))
-                : string.Join("; ", currentSigns.Select(item => item.SignerFullName ?? item.SignerUsername ?? "Tài khoản nội bộ")))
-            : currentSigns.FirstOrDefault() is { } firstSign
-                ? firstSign.SignerFullName ?? firstSign.SignerUsername ?? "Tài khoản nội bộ"
-                : "Chưa xác định";
-        var status = currentSigns.Count == 0
+        var roleSigner = currentSigns.FirstOrDefault() is { } firstSign
+            ? firstSign.SignerFullName ?? firstSign.SignerUsername ?? "Tài khoản nội bộ"
+            : "Chưa xác định";
+        var roleStatus = currentSigns.Count == 0
             ? "Chưa ký"
-            : role == "writer"
-                ? $"Đã ký {currentSigns.Count}/{Math.Max(1, s.Version.RequiredWriterSignatures)}"
-                : $"Đã ký {D(currentSigns[0].SignedAt)}";
-        return $"<tr><td><strong>{H(label)}</strong></td><td>{H(responsibility)}</td><td>{H(signer)}</td><td>{H(status)}</td></tr>";
+            : $"Đã ký {D(currentSigns[0].SignedAt)}";
+        return $"<tr><td><strong>{H(label)}</strong></td><td>{H(responsibility)}</td><td>{H(roleSigner)}</td><td>{H(roleStatus)}</td></tr>";
     }
 
     private static bool IsSupportedSignatureImage(string? value)
@@ -633,7 +712,7 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
         var responsibilityLines = WrappedLines(step.ResponsibilityText, 32);
         var formLines = WrappedLines(step.FormReferenceText, 34);
         var contentLines = WrappedLines($"{step.Name}\n{step.Description}", 40);
-        return 2 + Math.Max(contentLines, Math.Max(responsibilityLines, formLines));
+        return 3 + Math.Max(contentLines, Math.Max(responsibilityLines, formLines));
     }
 
     private static int WrappedLines(string? value, int charactersPerLine)
@@ -658,22 +737,15 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
         }).ToList();
     }
 
-    private static string FlowNodeDetail(ProcedureStep step)
-    {
-        var details = new List<string>();
-        if (!string.IsNullOrWhiteSpace(step.DetailSectionNumber)) details.Add(step.DetailSectionNumber.Trim());
-        if (!string.IsNullOrWhiteSpace(step.Description)) details.Add(Truncate(step.Description.Trim(), 150));
-        return details.Count == 0 ? "" : $"<small>{H(string.Join(" · ", details))}</small>";
-    }
 
-    private static string Truncate(string value, int maxLength)
-        => value.Length <= maxLength ? value : value[..(maxLength - 1)].TrimEnd() + "…";
 
     private string StepNote(ProcedureStep step)
     {
         var parts = new List<string>();
         if (!string.IsNullOrWhiteSpace(step.DetailSectionNumber))
-            parts.Add($"<strong>{H(step.DetailSectionNumber)}</strong>");
+            parts.Add($"<strong>{H(step.DetailSectionNumber.Trim())}</strong>");
+        if (!string.IsNullOrWhiteSpace(step.FormReferenceText))
+            parts.Add(Lines(step.FormReferenceText, ""));
         if (!string.IsNullOrWhiteSpace(step.Description))
             parts.Add(Lines(step.Description, ""));
         var linkedAssignments = _snapshots.GetSnapshot(step.ProcedureVersionId).StepAttachmentAssignments
@@ -690,41 +762,54 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
         }
         else if (step.FormAttachmentId is { } attachmentId && _attachmentIndex.TryGetValue(attachmentId, out var linked))
             parts.Add($"<div class=\"flow-form-lines\">{AttachmentLinkHtml(linked)}</div>");
-        else if (!string.IsNullOrWhiteSpace(step.FormReferenceText))
-            parts.Add($"<div class=\"flow-form-lines\">{Lines(step.FormReferenceText, "")}</div>");
         return parts.Count == 0 ? "<span class=\"empty\">Chưa khai báo mô tả/biểu mẫu</span>" : string.Join("<br>", parts);
     }
 
-    private string FlowResponsibility(IReadOnlyList<ProcedureStep> steps, ProcedureStep step)
+    private string FlowResponsibility(ProcedureStep step)
     {
         var snapshot = _snapshots.GetSnapshot(step.ProcedureVersionId);
-        var parts = new List<string>();
+        var lines = new List<string>();
         if (!string.IsNullOrWhiteSpace(step.ResponsibilityText))
         {
-            parts.Add(Lines(step.ResponsibilityText, ""));
+            foreach (var line in step.ResponsibilityText.Replace("\r\n", "\n").Split('\n'))
+            {
+                var trimmed = line.Trim();
+                if (trimmed.Length > 0)
+                    lines.Add(trimmed.StartsWith('-') ? trimmed : $"- {trimmed}");
+            }
         }
 
-        var roleCount = snapshot.StepRoleAssignments
+        var roleNames = snapshot.StepRoleAssignments
             .Where(item => item.ProcedureStepId == step.ProcedureStepId)
-            .Select(item => item.RoleId)
-            .Distinct()
-            .Count();
-        if (roleCount > 0)
+            .OrderBy(item => item.DisplayOrder)
+            .Select(item => _snapshots.GetRoleName(item.RoleId))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        foreach (var roleName in roleNames)
         {
-            parts.Add($"<div class=\"flow-meta\">Vai trò phối hợp: {roleCount}</div>");
+            var formatted = $"- {roleName}";
+            if (!lines.Contains(formatted, StringComparer.OrdinalIgnoreCase))
+                lines.Add(formatted);
         }
 
-        var locationCount = snapshot.StepLocationAssignments
+        var locationNames = snapshot.StepLocationAssignments
             .Where(item => item.ProcedureStepId == step.ProcedureStepId)
-            .Select(item => item.DepartmentId)
-            .Distinct()
-            .Count();
-        if (locationCount > 0)
+            .OrderBy(item => item.DisplayOrder)
+            .Select(item => _snapshots.GetDepartmentName(item.DepartmentId))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        foreach (var locationName in locationNames)
         {
-            parts.Add($"<div class=\"flow-meta\">Nơi thực hiện: {locationCount}</div>");
+            var formatted = $"- {locationName}";
+            if (!lines.Contains(formatted, StringComparer.OrdinalIgnoreCase))
+                lines.Add(formatted);
         }
 
-        return parts.Count == 0 ? "Chưa phân công" : string.Join("", parts);
+        return lines.Count == 0
+            ? "—"
+            : string.Join("<br>", lines.Select(H));
     }
 
     private static string Lines(string? value, string fallback)
@@ -777,6 +862,6 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
     private static string FileSize(long? bytes) => bytes.HasValue ? $"{bytes.Value / 1024d / 1024d:0.##} MB" : "";
 
     private const string PrintCss = """
-@page{size:A4;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:"Times New Roman",serif;color:#111;background:#d7dce2;font-size:12.5pt;line-height:1.42}.print-toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:center;gap:16px;padding:10px;background:#10263d;color:#fff;font-family:Arial,sans-serif}.print-toolbar button{border:0;border-radius:4px;background:#69be45;color:#10263d;font-weight:700;padding:9px 18px;cursor:pointer}.page{width:210mm;height:297mm;margin:12px auto;background:#fff;padding:10mm 14mm 12mm;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 5px 22px #0002;break-after:page;page-break-after:always}.page:last-child{break-after:auto;page-break-after:auto}.page-header{height:19mm;flex:0 0 19mm;border-bottom:1.5px solid #1f5ea8;display:flex;align-items:center;justify-content:space-between;padding-bottom:3mm}.mini-brand{display:flex;align-items:center;gap:3mm}.mini-brand div{display:flex;flex-direction:column}.mini-brand strong{font-size:10pt;color:#1f5ea8}.mini-brand span{font:7.5pt Arial,sans-serif;color:#555}.mini-logo{width:13mm;height:13mm;object-fit:contain}.page-document{text-align:right;display:flex;flex-direction:column}.page-document strong{color:#1f5ea8}.page-document span{font-size:10pt}.page-main{flex:1;min-height:0;max-height:100%;overflow:hidden;padding-top:5mm;display:block}.page-footer{flex:0 0 auto;border-top:1px solid #777;padding-top:2.5mm;margin-top:4mm;display:flex;justify-content:space-between;font-size:9pt;color:#555}.cover-brand{display:flex;align-items:center;justify-content:center;gap:6mm;margin-top:4mm;text-align:left}.cover-logo{width:28mm;height:28mm;object-fit:contain}.hospital-name{font-weight:700;color:#1f5ea8;font-size:17pt}.hospital-unit{font:8.5pt Arial,sans-serif;letter-spacing:.08em;color:#555}.document-category{text-align:center;margin-top:6mm;color:#1f5ea8;font-weight:700;letter-spacing:.14em;font-size:11pt}.cover-title{text-align:center;text-transform:uppercase;font-size:20pt;line-height:1.22;margin:4mm 8mm 3mm}.document-code{text-align:center;margin-bottom:4mm;font-size:11pt}.cover-meta{margin-bottom:2mm}.section-stack{display:flex;flex-direction:column}.procedure-section+.procedure-section{margin-top:7mm}.procedure-section .section-title{margin-bottom:4mm}.section-title{font-size:17pt;color:#1f5ea8;border-bottom:2px solid #69be45;padding-bottom:3mm;margin:0 0 8mm}.flow-page-title{padding-bottom:2mm;margin-bottom:2mm}.continuation{font-size:10pt;color:#555;font-weight:400}.block-title{font-size:13pt;color:#1f5ea8;margin:5mm 0 2mm}.section-body{white-space:pre-wrap;text-align:justify;font-size:12.5pt;line-height:1.55}.meta-table,table{width:100%;border-collapse:collapse;margin:2mm 0}th,td{border:1px solid #555;padding:2mm 2.4mm;vertical-align:top}th{background:#eaf1f8;text-align:left;color:#163f6d}.meta-table th{width:20%}.authority-table{font-size:10pt}.authority-table th:nth-child(1){width:17%}.authority-table th:nth-child(2){width:37%}.authority-table th:nth-child(3){width:24%}.print-avoid-break,.signature-page,.block-title+table{break-inside:avoid;page-break-inside:avoid}.warning-banner{background:#fff4e5;border-color:#b45309}.ready-banner{background:#edf8e8;border-color:#4b9b2f}.warning-banner,.ready-banner{padding:2.5mm 3.5mm;margin:3mm 0;border-left:4px solid;font-size:10.5pt;line-height:1.35}.signature-page{display:block}.signature-page-inline{margin-top:1mm}.signature-page-standalone{display:flex;flex-direction:column;gap:2mm}.signature-block-title{margin-top:2mm;margin-bottom:1mm}.signature-page-title{margin-bottom:1mm;padding-bottom:2mm}.signature-page-note{margin:0 0 2mm;color:#555;font-size:10pt;line-height:1.4}.signature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3mm;margin-top:1mm;break-inside:avoid;page-break-inside:avoid}.signature-card{border:1px solid #8da4bf;min-height:46mm;display:flex;flex-direction:column;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);break-inside:avoid;page-break-inside:avoid}.signature-card-head{display:flex;align-items:center;justify-content:space-between;gap:2mm;padding:2.4mm 3mm;border-bottom:1px solid #cad6e3;background:#eef4fb}.signature-role{font-weight:700;color:#163f6d;font-size:10.5pt}.signature-badge{display:inline-flex;align-items:center;justify-content:center;padding:1mm 2.2mm;border-radius:999px;font:700 7.6pt Arial,sans-serif;letter-spacing:.02em;border:1px solid}.signature-badge.is-signed{color:#2f7f22;border-color:#69be45;background:#edf8e8}.signature-badge.is-pending{color:#9a3412;border-color:#d6a45d;background:#fff4e5}.signature-card-body{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5mm 2.5mm 1mm}.signature-space{height:17mm;width:100%;border-bottom:1px dashed #b8c4d1;display:flex;align-items:center;justify-content:center}.signature-placeholder{margin-top:1mm;color:#7a5a20;font-style:italic;text-align:center;font-size:8.5pt;line-height:1.3}.signed-mark{font:700 8.5pt Arial,sans-serif;color:#2f7f22;border:1px solid #69be45;background:#edf8e8;padding:1.5mm 3mm}.signature-image{width:100%;height:16mm;object-fit:contain;filter:brightness(0) contrast(10)}.signature-card-foot{padding:1.5mm 2.5mm 2mm;border-top:1px solid #d9e2ec;text-align:center;display:flex;flex-direction:column;gap:.4mm;min-height:13mm}.signature-card-foot strong{color:#163f6d;font-size:10pt;line-height:1.2}.signature-card-foot span{font-size:8.4pt}.sign-account{color:#555}.sign-time{color:#4a5568}.signature-card.is-empty .signature-card-foot strong{color:#6b7280}.empty{color:#777;font-style:italic;text-align:center}.sign-state{display:inline-block;font:700 8pt Arial,sans-serif;padding:1mm 1.5mm;border:1px solid}.sign-state.is-current{color:#2f7f22;border-color:#69be45;background:#edf8e8}.sign-state.is-stale{color:#9a3412;border-color:#c2410c;background:#fff4e5}.signoff-log{font-size:9pt}.flow-table{table-layout:fixed;margin-top:1mm;font-size:8.9pt;line-height:1.18}.flow-table-row{break-inside:avoid;page-break-inside:avoid}.flow-table th{text-align:center;padding:1.2mm 1.6mm;background:#eef4fb}.flow-table th:nth-child(1){width:29%}.flow-table th:nth-child(2){width:38%}.flow-table th:nth-child(3){width:33%}.flow-table td{padding:1.4mm 1.6mm;vertical-align:middle}.flow-responsibility,.flow-note{white-space:normal;font-size:8.8pt;line-height:1.2}.flow-step-cell{text-align:center;padding:1mm .8mm}.flow-symbol{width:auto;max-width:46mm;min-width:22mm;min-height:12mm;margin:0 auto;border:1px solid #2b5f9e;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#fff 0%,#f5f9fd 100%);color:#163f6d;text-align:center;line-height:1.16;padding:2mm 3.5mm;font-size:8.8pt;box-shadow:0 1px 0 #e4edf7}.flow-symbol strong{display:block;font-size:9.2pt;line-height:1.14}.flow-symbol small{display:block;margin-top:.6mm;color:#44566f;font-size:7.4pt;font-weight:400;line-height:1.18}.shape-terminator{border-radius:999px;padding:2mm 5.5mm;min-height:11mm;border-color:#2f6f3f;background:linear-gradient(180deg,#fff 0%,#f3faf4 100%)}.shape-process{border-radius:3px}.shape-decision{position:relative;width:fit-content;max-width:42mm;min-width:24mm;min-height:0;padding:5.5mm 4.5mm;margin:1.2mm auto;border:none;background:transparent;box-shadow:none}.shape-decision::before{content:"";position:absolute;inset:1mm;background:linear-gradient(180deg,#fff 0%,#f5f9fd 100%);border:1px solid #2b5f9e;border-radius:1.5px;transform:rotate(45deg);z-index:0}.shape-decision>span{position:relative;z-index:1;display:block;max-width:21mm;padding:0 .5mm}.shape-data{position:relative;border:none;background:transparent;box-shadow:none;padding:2mm 0;margin:0 auto;width:fit-content;max-width:46mm;min-width:22mm}.shape-data::before{content:"";position:absolute;inset:1.2mm 0;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);border:1px solid #2b5f9e;transform:skewX(-12deg);border-radius:2px;z-index:0}.shape-data>span{position:relative;z-index:1;display:block;padding:1.5mm 5mm 1.5mm 4mm;transform:none}.shape-document{border-radius:2px 2px 6mm 6mm;padding-bottom:2.8mm;border-color:#5b6f86;background:linear-gradient(180deg,#fff 0%,#f8fafc 100%)}.flow-arrow{display:flex;align-items:center;justify-content:center;margin:.2mm 0 -.4mm;color:#5b6f86;font-size:10pt;line-height:1}.flow-arrow::before{content:"";display:block;width:1px;height:3.2mm;background:#9db0c7;margin-bottom:.4mm}.flow-arrow::after{content:"";display:block;width:0;height:0;border-left:2.2mm solid transparent;border-right:2.2mm solid transparent;border-top:2.6mm solid #5b6f86}.flow-form-lines{margin-top:.5mm}.flow-meta{margin-top:.8mm;font-size:8pt;color:#555}.flow-page-link{text-align:center;color:#555;font-size:8.5pt;font-style:italic;margin-bottom:1mm}.flow-page-next{margin-top:1mm}.trace-box{border:1.5px solid #1f5ea8;background:#f5f9fd;padding:4mm;margin-top:6mm}.file-download-link{color:#1f5ea8;text-decoration:none;border-bottom:1px dotted #1f5ea8;font-size:inherit}.file-download-link:hover{color:#163f6d;border-bottom-style:solid}.file-download-mark{margin-left:1mm;font-size:.82em;opacity:.75}.logo-fallback{border:1px solid #1f5ea8;display:flex;align-items:center;justify-content:center;color:#1f5ea8;font-weight:700}@media print{body{background:#fff}.no-print{display:none!important}.page{margin:0;box-shadow:none}.file-download-link{color:#1f5ea8;text-decoration:underline}}
+@page{size:A4;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:"Times New Roman",serif;color:#111;background:#d7dce2;font-size:12.5pt;line-height:1.42}.print-toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:center;gap:16px;padding:10px;background:#10263d;color:#fff;font-family:Arial,sans-serif}.print-toolbar button{border:0;border-radius:4px;background:#69be45;color:#10263d;font-weight:700;padding:9px 18px;cursor:pointer}.page{width:210mm;height:297mm;margin:12px auto;background:#fff;padding:10mm 14mm 12mm;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 5px 22px #0002;break-after:page;page-break-after:always}.page:last-child{break-after:auto;page-break-after:auto}.page-header{height:19mm;flex:0 0 19mm;border-bottom:1.5px solid #1f5ea8;display:flex;align-items:center;justify-content:space-between;padding-bottom:3mm}.mini-brand{display:flex;align-items:center;gap:3mm}.mini-brand div{display:flex;flex-direction:column}.mini-brand strong{font-size:10pt;color:#1f5ea8}.mini-brand span{font:7.5pt Arial,sans-serif;color:#555}.mini-logo{width:13mm;height:13mm;object-fit:contain}.page-document{text-align:right;display:flex;flex-direction:column}.page-document strong{color:#1f5ea8}.page-document span{font-size:10pt}.page-main{flex:1;min-height:0;max-height:100%;overflow:hidden;padding-top:5mm;display:block}.page-footer{flex:0 0 auto;border-top:1px solid #777;padding-top:2.5mm;margin-top:4mm;display:flex;justify-content:space-between;font-size:9pt;color:#555}.cover-brand{display:flex;align-items:center;justify-content:center;gap:6mm;margin-top:4mm;text-align:left}.cover-logo{width:28mm;height:28mm;object-fit:contain}.hospital-name{font-weight:700;color:#1f5ea8;font-size:17pt}.hospital-unit{font:8.5pt Arial,sans-serif;letter-spacing:.08em;color:#555}.document-category{text-align:center;margin-top:6mm;color:#1f5ea8;font-weight:700;letter-spacing:.14em;font-size:11pt}.cover-title{text-align:center;text-transform:uppercase;font-size:20pt;line-height:1.22;margin:4mm 8mm 3mm}.document-code{text-align:center;margin-bottom:4mm;font-size:11pt}.cover-meta{margin-bottom:2mm}.section-stack{display:flex;flex-direction:column}.procedure-section+.procedure-section{margin-top:7mm}.procedure-section .section-title{margin-bottom:4mm}.section-title{font-size:17pt;color:#1f5ea8;border-bottom:2px solid #69be45;padding-bottom:3mm;margin:0 0 8mm}.flow-page-title{padding-bottom:2mm;margin-bottom:2mm}.continuation{font-size:10pt;color:#555;font-weight:400}.block-title{font-size:13pt;color:#1f5ea8;margin:5mm 0 2mm}.section-body{white-space:pre-wrap;text-align:justify;font-size:12.5pt;line-height:1.55}.meta-table,table{width:100%;border-collapse:collapse;margin:2mm 0}th,td{border:1px solid #555;padding:2mm 2.4mm;vertical-align:top}th{background:#eaf1f8;text-align:left;color:#163f6d}.meta-table th{width:20%}.authority-table{font-size:10pt}.authority-table th:nth-child(1){width:17%}.authority-table th:nth-child(2){width:37%}.authority-table th:nth-child(3){width:24%}.print-avoid-break,.signature-page,.block-title+table{break-inside:avoid;page-break-inside:avoid}.warning-banner{background:#fff4e5;border-color:#b45309}.ready-banner{background:#edf8e8;border-color:#4b9b2f}.warning-banner,.ready-banner{padding:2.5mm 3.5mm;margin:3mm 0;border-left:4px solid;font-size:10.5pt;line-height:1.35}.signature-page{display:block}.signature-page-inline{margin-top:1mm}.signature-page-standalone{display:flex;flex-direction:column;gap:2mm}.signature-block-title{margin-top:2mm;margin-bottom:1mm}.signature-page-title{margin-bottom:1mm;padding-bottom:2mm}.signature-page-note{margin:0 0 2mm;color:#555;font-size:10pt;line-height:1.4}.signature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3mm;margin-top:1mm;break-inside:avoid;page-break-inside:avoid}.signature-card{border:1px solid #8da4bf;min-height:46mm;display:flex;flex-direction:column;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);break-inside:avoid;page-break-inside:avoid}.signature-card-head{display:flex;align-items:center;justify-content:space-between;gap:2mm;padding:2.4mm 3mm;border-bottom:1px solid #cad6e3;background:#eef4fb}.signature-role{font-weight:700;color:#163f6d;font-size:10.5pt}.signature-badge{display:inline-flex;align-items:center;justify-content:center;padding:1mm 2.2mm;border-radius:999px;font:700 7.6pt Arial,sans-serif;letter-spacing:.02em;border:1px solid}.signature-badge.is-signed{color:#2f7f22;border-color:#69be45;background:#edf8e8}.signature-badge.is-pending{color:#9a3412;border-color:#d6a45d;background:#fff4e5}.signature-card-body{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5mm 2.5mm 1mm}.signature-space{height:17mm;width:100%;border-bottom:1px dashed #b8c4d1;display:flex;align-items:center;justify-content:center}.signature-placeholder{margin-top:1mm;color:#7a5a20;font-style:italic;text-align:center;font-size:8.5pt;line-height:1.3}.signed-mark{font:700 8.5pt Arial,sans-serif;color:#2f7f22;border:1px solid #69be45;background:#edf8e8;padding:1.5mm 3mm}.signature-image{width:100%;height:16mm;object-fit:contain;filter:brightness(0) contrast(10)}.signature-card-foot{padding:1.5mm 2.5mm 2mm;border-top:1px solid #d9e2ec;text-align:center;display:flex;flex-direction:column;gap:.4mm;min-height:13mm}.signature-card-foot strong{color:#163f6d;font-size:10pt;line-height:1.2}.signature-card-foot span{font-size:8.4pt}.sign-account{color:#555}.sign-time{color:#4a5568}.signature-card.is-empty .signature-card-foot strong{color:#6b7280}.empty{color:#777;font-style:italic;text-align:center}.sign-state{display:inline-block;font:700 8pt Arial,sans-serif;padding:1mm 1.5mm;border:1px solid}.sign-state.is-current{color:#2f7f22;border-color:#69be45;background:#edf8e8}.sign-state.is-stale{color:#9a3412;border-color:#c2410c;background:#fff4e5}.signoff-log{font-size:9pt}.flow-table{table-layout:fixed;width:100%;margin-top:2mm;font-size:10pt;line-height:1.32;border:1px solid #111;border-collapse:collapse}.flow-table th,.flow-table td{border:1px solid #111;padding:2.5mm 2.2mm;vertical-align:middle}.flow-table th{text-align:center;font-weight:700;background:#fff;color:#111;font-size:10pt}.flow-table th:nth-child(1){width:30%}.flow-table th:nth-child(2){width:32%}.flow-table th:nth-child(3){width:38%}.flow-table-row{break-inside:avoid;page-break-inside:avoid}.flow-responsibility,.flow-note{text-align:left;font-size:10pt;line-height:1.35;vertical-align:middle}.flow-step-cell{position:relative;text-align:center;vertical-align:middle;padding:4mm 2mm;z-index:1}.flow-line-behind{position:absolute;left:50%;width:1px;background:#111;z-index:-1}.flow-line-top-half{top:0;bottom:50%}.flow-line-bottom-half{top:50%;bottom:0}.flow-line-full{top:0;bottom:0}.flow-arrow-head{position:absolute;top:-2mm;left:50%;transform:translateX(-50%);border-left:1.5mm solid transparent;border-right:1.5mm solid transparent;border-top:2mm solid #111;z-index:3}.flow-symbol{position:relative;z-index:2;display:inline-block;max-width:44mm;min-width:20mm;padding:2.2mm 4mm;border:1px solid #111;background:#fff;color:#111;font-size:9.5pt;line-height:1.25;text-align:center;word-break:break-word}.flow-symbol>span{display:block}.flow-symbol strong{display:block;font-size:9.5pt;font-weight:700;line-height:1.2}.flow-symbol small{display:block;margin-top:.7mm;font-size:8pt;font-weight:400;line-height:1.2;color:#222}.shape-terminator{border-radius:999px;padding:2.4mm 5.5mm}.shape-process{border-radius:0}.shape-decision{border:none;background:transparent;padding:0;margin:0 auto;width:30mm;height:30mm;display:inline-flex;align-items:center;justify-content:center;position:relative}.shape-decision::before{content:"";position:absolute;left:50%;top:50%;width:21.2mm;height:21.2mm;background:#fff;border:1px solid #111;transform:translate(-50%,-50%) rotate(45deg);z-index:-1}.shape-decision>span{position:relative;z-index:1;display:block;max-width:15mm;font-size:8.5pt;line-height:1.15}.shape-data{position:relative;border:none;background:transparent;margin:0 auto;width:fit-content;max-width:44mm;min-width:20mm}.shape-data::before{content:"";position:absolute;inset:0;background:#fff;border:1px solid #111;transform:skewX(-12deg);z-index:-1}.shape-data>span{position:relative;z-index:1;display:block;padding:3mm 5mm}.shape-document{border-radius:0 0 4mm 4mm;padding-bottom:2.8mm}.flow-form-lines{margin-top:.5mm}.flow-page-link{text-align:center;color:#555;font-size:8.5pt;font-style:italic;margin-bottom:1mm}.flow-page-next{margin-top:1mm}.trace-box{border:1.5px solid #1f5ea8;background:#f5f9fd;padding:4mm;margin-top:6mm}.file-download-link{color:#1f5ea8;text-decoration:none;border-bottom:1px dotted #1f5ea8;font-size:inherit}.file-download-link:hover{color:#163f6d;border-bottom-style:solid}.file-download-mark{margin-left:1mm;font-size:.82em;opacity:.75}.logo-fallback{border:1px solid #1f5ea8;display:flex;align-items:center;justify-content:center;color:#1f5ea8;font-weight:700}@media print{body{background:#fff}.no-print{display:none!important}.page{margin:0;box-shadow:none}.file-download-link{color:#1f5ea8;text-decoration:underline}}
 """;
 }
