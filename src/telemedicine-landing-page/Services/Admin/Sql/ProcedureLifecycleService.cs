@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using TelemedicineLandingPage.Data;
 using TelemedicineLandingPage.Application.Workflow;
 using TelemedicineLandingPage.Models.Admin.Sql;
@@ -111,8 +112,7 @@ public sealed class ProcedureLifecycleService
             SubmittedBy = submittedBy,
             SubmittedAt = DateTime.UtcNow
         };
-        _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(updated);
-        _db.SaveChanges();
+        PersistVersionUpdate(updated);
         _documents?.PersistSnapshot(versionId, "submitted", submittedBy);
         _workflow.OnTransitioned(updated, ver.StatusCode, updated.StatusCode, submittedBy);
 
@@ -152,7 +152,7 @@ public sealed class ProcedureLifecycleService
         EnsureDocumentReady(versionId, requireAllSignoffs: true);
         EnsurePublishSeparation(versionId, approvedBy);
 
-        var currentPublished = _db.ProcedureVersions
+        var currentPublished = _db.ProcedureVersions.AsNoTracking()
             .Where(v => v.ProcedureId == ver.ProcedureId && v.StatusCode == "active")
             .ToList();
 
@@ -163,7 +163,7 @@ public sealed class ProcedureLifecycleService
                 StatusCode = "superseded",
                 EffectiveTo = DateTime.UtcNow
             };
-            _db.ProcedureVersions.Entry(old).CurrentValues.SetValues(superseded);
+            PersistVersionUpdate(superseded);
         }
 
         var published = ver with
@@ -175,8 +175,7 @@ public sealed class ProcedureLifecycleService
             PublishedAt = DateTime.UtcNow,
             EffectiveFrom = DateTime.UtcNow
         };
-        _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(published);
-        _db.SaveChanges();
+        PersistVersionUpdate(published);
         _documents?.PersistSnapshot(versionId, "published", approvedBy);
 
         foreach (var old in currentPublished)
@@ -222,8 +221,7 @@ public sealed class ProcedureLifecycleService
             StatusCode = "rejected",
             ChangeReason = reason
         };
-        _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(rejected);
-        _db.SaveChanges();
+        PersistVersionUpdate(rejected);
         _documents?.PersistSnapshot(versionId, "rejected", rejectedBy);
         _workflow.OnTransitioned(rejected, ver.StatusCode, rejected.StatusCode, rejectedBy, reason);
 
@@ -266,8 +264,7 @@ public sealed class ProcedureLifecycleService
             EffectiveTo = DateTime.UtcNow,
             ChangeReason = reason
         };
-        _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(withdrawn);
-        _db.SaveChanges();
+        PersistVersionUpdate(withdrawn);
         _documents?.PersistSnapshot(versionId, "withdrawn", withdrawnBy);
         _workflow.OnTransitioned(withdrawn, ver.StatusCode, withdrawn.StatusCode, withdrawnBy, reason);
 
@@ -307,8 +304,7 @@ public sealed class ProcedureLifecycleService
             EffectiveTo = DateTime.UtcNow,
             ChangeReason = reason ?? ver.ChangeReason
         };
-        _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(archived);
-        _db.SaveChanges();
+        PersistVersionUpdate(archived);
         _documents?.PersistSnapshot(versionId, "archived", archivedBy);
         _workflow.OnTransitioned(archived, ver.StatusCode, archived.StatusCode, archivedBy, reason);
 
@@ -347,8 +343,7 @@ public sealed class ProcedureLifecycleService
             EffectiveTo = null,
             ChangeReason = reason ?? ver.ChangeReason
         };
-        _db.ProcedureVersions.Entry(ver).CurrentValues.SetValues(restored);
-        _db.SaveChanges();
+        PersistVersionUpdate(restored);
         _documents?.PersistSnapshot(versionId, "restored", restoredBy);
         _workflow.OnTransitioned(restored, ver.StatusCode, restored.StatusCode, restoredBy, reason);
 
@@ -439,9 +434,8 @@ public sealed class ProcedureLifecycleService
             ChangeReason = $"Khôi phục hiệu lực thay cho {activeLabel}: {trimmedReason}"
         };
 
-        _db.ProcedureVersions.Entry(currentActive).CurrentValues.SetValues(archivedActive);
-        _db.ProcedureVersions.Entry(target).CurrentValues.SetValues(restored);
-        _db.SaveChanges();
+        PersistVersionUpdate(archivedActive);
+        PersistVersionUpdate(restored);
 
         _documents?.PersistSnapshot(currentActive.ProcedureVersionId, "superseded_by_rollback", actorUserId);
         _documents?.PersistSnapshot(targetVersionId, "rolled_back", actorUserId);
@@ -514,10 +508,42 @@ public sealed class ProcedureLifecycleService
 
     private ProcedureVersion GetVersionOrThrow(Guid versionId)
     {
-        return _db.ProcedureVersions
+        _db.ChangeTracker.Clear();
+        return _db.ProcedureVersions.AsNoTracking()
                    .FirstOrDefault(v => v.ProcedureVersionId == versionId)
                ?? throw MedDomainException.Constraint("FK_procedure_version", 547,
                    "Phiên bản quy trình không tồn tại.");
+    }
+
+    private void PersistVersionUpdate(ProcedureVersion updated)
+    {
+        _db.ChangeTracker.Clear();
+        var affected = _db.ProcedureVersions
+            .Where(v => v.ProcedureVersionId == updated.ProcedureVersionId)
+            .ExecuteUpdate(setters => setters
+                .SetProperty(v => v.DepartmentId, updated.DepartmentId)
+                .SetProperty(v => v.Title, updated.Title)
+                .SetProperty(v => v.Summary, updated.Summary)
+                .SetProperty(v => v.ChangeReason, updated.ChangeReason)
+                .SetProperty(v => v.EffectiveFrom, updated.EffectiveFrom)
+                .SetProperty(v => v.EffectiveTo, updated.EffectiveTo)
+                .SetProperty(v => v.IssueDate, updated.IssueDate)
+                .SetProperty(v => v.IssueNumber, updated.IssueNumber)
+                .SetProperty(v => v.SourcePdfFileName, updated.SourcePdfFileName)
+                .SetProperty(v => v.SourcePdfChecksumSha256, updated.SourcePdfChecksumSha256)
+                .SetProperty(v => v.StatusCode, updated.StatusCode)
+                .SetProperty(v => v.SubmittedBy, updated.SubmittedBy)
+                .SetProperty(v => v.SubmittedAt, updated.SubmittedAt)
+                .SetProperty(v => v.ApprovedBy, updated.ApprovedBy)
+                .SetProperty(v => v.ApprovedAt, updated.ApprovedAt)
+                .SetProperty(v => v.PublishedBy, updated.PublishedBy)
+                .SetProperty(v => v.PublishedAt, updated.PublishedAt)
+                .SetProperty(v => v.RequiredWriterSignatures, updated.RequiredWriterSignatures));
+        if (affected == 0)
+        {
+            throw MedDomainException.Constraint("FK_procedure_version", 547,
+                "Phiên bản quy trình không tồn tại hoặc đã bị thay đổi.");
+        }
     }
 
     private void EnsureTransition(

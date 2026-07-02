@@ -16,7 +16,7 @@ public sealed class AuditTrailService
     private static readonly HashSet<string> ValidActionCodes = new(StringComparer.OrdinalIgnoreCase)
     {
         "create", "update", "delete", "archive", "restore",
-        "approve", "reject", "submit", "publish", "sign", "revoke",
+        "approve", "reject", "submit", "publish", "sign", "revoke", "rollback",
         "assign_role", "remove_role", "assign_permission", "remove_permission",
         "login", "logout", "switch_user",
         "create_order", "complete_order", "cancel_order",
@@ -41,8 +41,10 @@ public sealed class AuditTrailService
                 $"Mã hành động '{log.ActionCode}' không hợp lệ. Các mã cho phép: {string.Join(", ", ValidActionCodes.Order())}.",
                 nameof(log));
 
+        _db.ChangeTracker.Clear();
         _db.AuditLogs.Add(log);
         _db.SaveChanges();
+        _db.ChangeTracker.Clear();
     }
 
     /// <summary>Lấy toàn bộ nhật ký kiểm toán (chỉ đọc).</summary>

@@ -464,7 +464,7 @@
     {
         if (IsEditDraftMode)
         {
-            var saved = await SaveAsync(submit: false, navigateOnSuccess: false);
+            var saved = await SaveAsync(submit: false, navigateOnSuccess: false, persistDraftSnapshot: false);
             if (!saved)
                 return;
 
@@ -590,7 +590,7 @@
         return Task.CompletedTask;
     }
 
-    private async Task<bool> SaveAsync(bool submit, string? signatureImageDataUrl = null, bool navigateOnSuccess = true)
+    private async Task<bool> SaveAsync(bool submit, string? signatureImageDataUrl = null, bool navigateOnSuccess = true, bool persistDraftSnapshot = true)
     {
         var permission = IsEditDraftMode || IsUpdateMode ? "SCR_PROCEDURES:UPDATE" : "SCR_PROCEDURES:CREATE";
         if (_isSaving || !Guard.CanDo(permission, IsEditDraftMode ? "chỉnh sửa bản nháp" : IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình")) return false;
@@ -667,7 +667,7 @@
                 attachments);
 
             var result = IsEditDraftMode
-                ? Authoring.UpdateDraft(command)
+                ? Authoring.UpdateDraft(command, persistDraftSnapshot)
                 : Authoring.CreateVersion(command);
 
             if (submit)
@@ -701,12 +701,18 @@
                     ? $"Đã cập nhật thành {result.Version.VersionLabel}"
                     : "Đã tạo bản v01";
             var finalOutstandingWriters = submit ? Signoffs.GetOutstandingWriterSignatures(result.Version.ProcedureVersionId) : 0;
-            Toasts.Show(
-                submit
-                    ? (finalOutstandingWriters == 0 ? $"{title}, đã ký và gửi kiểm tra" : $"{title}, đã ký người viết")
-                    : title,
-                result.Procedure.Name,
-                ToastVariant.Success);
+            if (!IsEditDraftMode || persistDraftSnapshot || submit)
+            {
+                Toasts.Show(
+                    submit
+                        ? (finalOutstandingWriters == 0 ? $"{title}, đã ký và gửi kiểm tra" : $"{title}, đã ký người viết")
+                        : title,
+                    result.Procedure.Name,
+                    ToastVariant.Success);
+            }
+
+            if (IsEditDraftMode)
+                _editDraftVersion = result.Version;
             if (navigateOnSuccess)
                 Navigation.NavigateTo("/qlcm/quy-trinh");
             return true;

@@ -34,6 +34,7 @@ public sealed class ProcedureSignoffService
             throw new InvalidOperationException("Chữ ký nội bộ phải gắn với một tài khoản người dùng hợp lệ.");
         var validatedSignatureImage = ValidateSignatureImage(signatureImageDataUrl);
 
+        _store.Refresh();
         var normalizedRole = role.ToLowerInvariant();
         var snapshot = _snapshots.GetSnapshot(versionId);
         EnsureSigningStage(snapshot, normalizedRole);

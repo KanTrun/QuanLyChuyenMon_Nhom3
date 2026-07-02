@@ -72,7 +72,7 @@ public sealed class ProcedureAuthoringService
         return new ProcedureAuthoringResult(procedure, version);
     }
 
-    public ProcedureAuthoringResult UpdateDraft(ProcedureAuthoringCommand command)
+    public ProcedureAuthoringResult UpdateDraft(ProcedureAuthoringCommand command, bool persistSnapshot = true)
     {
         if (command.ProcedureId is not { } procedureId)
             throw new InvalidOperationException("Cập nhật bản nháp phải gắn với một quy trình hiện có.");
@@ -116,7 +116,8 @@ public sealed class ProcedureAuthoringService
         _store.ClearProcedureVersionDocument(version.ProcedureVersionId);
         PersistDocument(command, updatedVersion);
         PersistWriterAssignments(command, updatedVersion);
-        _snapshots?.PersistSnapshot(updatedVersion.ProcedureVersionId, "draft", command.UserId);
+        if (persistSnapshot)
+            _snapshots?.PersistSnapshot(updatedVersion.ProcedureVersionId, "draft", command.UserId);
         return new ProcedureAuthoringResult(updatedProcedure, updatedVersion);
     }
 

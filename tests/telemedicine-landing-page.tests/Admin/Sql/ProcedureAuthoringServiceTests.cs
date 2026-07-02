@@ -132,6 +132,48 @@ public sealed class ProcedureAuthoringServiceTests
         Assert.False(signoffs.HasCurrentSignoff(updated.Version.ProcedureVersionId, "writer"));
     }
 
+    [Fact]
+    public void UpdateDraft_SecondWriterCanSaveAndSignAfterFirstWriter()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var store = new MedDbDataStore(db);
+        var snapshots = new ProcedureDocumentSnapshotService(store);
+        var audit = new AuditTrailService(db);
+        var service = new ProcedureAuthoringService(store, snapshots);
+        var signoffs = new ProcedureSignoffService(store, snapshots, audit);
+        var created = service.CreateVersion(CreateCommand());
+        signoffs.Sign(
+            created.Version.ProcedureVersionId,
+            "writer",
+            MedDataStoreSeed.AdminUserId,
+            "admin",
+            "Quản trị viên",
+            ValidSignature);
+
+        var updated = service.UpdateDraft(
+            CreateCommand(
+                created.Procedure.ProcedureId,
+                versionId: created.Version.ProcedureVersionId,
+                content: "Nội dung do người viết thứ hai chỉnh sửa"),
+            persistSnapshot: false);
+
+        store.Refresh();
+        signoffs.Sign(
+            updated.Version.ProcedureVersionId,
+            "writer",
+            MedDataStoreSeed.TruongKhoaNoiId,
+            "truongkhoa.noi",
+            "Trưởng khoa Nội",
+            ValidSignature);
+        snapshots.PersistSnapshot(updated.Version.ProcedureVersionId, "draft_signed", MedDataStoreSeed.TruongKhoaNoiId);
+
+        Assert.Equal(1, signoffs.GetOutstandingWriterSignatures(updated.Version.ProcedureVersionId));
+        Assert.Contains(
+            store.ProcedureSignoffRecords,
+            item => item.ProcedureVersionId == updated.Version.ProcedureVersionId
+                && item.SignerUserId == MedDataStoreSeed.TruongKhoaNoiId);
+    }
+
     private const string ValidSignature = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
     [Fact]
