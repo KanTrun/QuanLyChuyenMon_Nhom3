@@ -1,9 +1,9 @@
 @typeparam TItem
+@inject IJSRuntime JS
 @* Generic data table with header/body slots, empty state and a pagination footer.
    The page is responsible for slicing items - this control just renders. *@
 
 <div class="admin-table-wrapper is-mobile-cards @ExtraClass">
-    <p class="admin-table-mobile-hint" aria-hidden="true">Vuốt ngang nếu bảng quá rộng.</p>
     <table class="admin-table admin-table--cards-mobile">
         <thead>
             <tr>
@@ -55,5 +55,16 @@
     private async Task OnPageChanged(int page)
     {
         await CurrentPageChanged.InvokeAsync(page);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("qlcmShell.enhanceResponsiveTables");
+        }
+        catch (JSDisconnectedException) { }
+        catch (InvalidOperationException) { }
+        catch (Exception) { }
     }
 }

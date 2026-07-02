@@ -3255,3 +3255,150 @@
         flex-direction: column;
     }
 }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE DATA TABLES — final override (phones/tablets)
+   Converts admin tables into labeled cards. Loaded in
+   admin-page.css so it is always published with the app.
+   ═══════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+    .admin-shell .admin-table-wrapper {
+        overflow: visible !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+
+    .admin-shell .admin-table-wrapper:has(.admin-table--scroll),
+    .admin-shell .admin-table-wrapper:has(.admin-permission-table),
+    .admin-shell .admin-table-wrapper:has(.procedure-signoff-table) {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        background: var(--color-surface) !important;
+        border: 1px solid var(--color-border-subtle) !important;
+        border-radius: var(--radius-card) !important;
+        box-shadow: var(--shadow-soft) !important;
+        padding: 0 !important;
+    }
+
+    .admin-shell table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table),
+    .admin-shell .admin-panel table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table),
+    .admin-shell .admin-drawer table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        table-layout: auto !important;
+        border-collapse: separate !important;
+    }
+
+    .admin-shell table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) thead,
+    .admin-shell .admin-panel table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) thead,
+    .admin-shell .admin-drawer table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) thead {
+        display: none !important;
+    }
+
+    .admin-shell table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody,
+    .admin-shell .admin-panel table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody,
+    .admin-shell .admin-drawer table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    .admin-shell table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody tr,
+    .admin-shell .admin-panel table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody tr,
+    .admin-shell .admin-drawer table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody tr {
+        display: block !important;
+        width: 100% !important;
+        background: var(--color-surface) !important;
+        border: 1px solid var(--color-border-subtle) !important;
+        border-radius: var(--radius-card) !important;
+        box-shadow: var(--shadow-soft) !important;
+        overflow: hidden !important;
+    }
+
+    .admin-shell table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td,
+    .admin-shell .admin-panel table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td,
+    .admin-shell .admin-drawer table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td {
+        display: grid !important;
+        grid-template-columns: minmax(84px, 36%) 1fr !important;
+        gap: 4px 12px !important;
+        align-items: start !important;
+        width: 100% !important;
+        padding: 11px 14px !important;
+        border-bottom: 1px solid var(--color-border-subtle) !important;
+        text-align: left !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+        box-sizing: border-box !important;
+    }
+
+    .admin-shell table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td::before,
+    .admin-shell .admin-panel table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td::before,
+    .admin-shell .admin-drawer table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td::before {
+        content: attr(data-label) !important;
+        font-size: 0.68rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        color: var(--color-muted) !important;
+        line-height: 1.35 !important;
+    }
+
+    .admin-shell table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td:not([data-label]),
+    .admin-shell .admin-panel table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td:not([data-label]),
+    .admin-shell .admin-drawer table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td:not([data-label]) {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-shell table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td:not([data-label])::before,
+    .admin-shell .admin-panel table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td:not([data-label])::before,
+    .admin-shell .admin-drawer table.admin-table:not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td:not([data-label])::before {
+        display: none !important;
+    }
+
+    .admin-shell table.admin-table tbody tr.admin-table-empty-row td,
+    .admin-shell .admin-panel table.admin-table tbody tr.admin-table-empty-row td,
+    .admin-shell .admin-drawer table.admin-table tbody tr.admin-table-empty-row td {
+        display: block !important;
+        grid-template-columns: 1fr !important;
+        padding: 28px 16px !important;
+        border: 0 !important;
+    }
+
+    .admin-shell table.admin-table tbody tr.admin-table-empty-row td::before,
+    .admin-shell .admin-panel table.admin-table tbody tr.admin-table-empty-row td::before,
+    .admin-shell .admin-drawer table.admin-table tbody tr.admin-table-empty-row td::before {
+        display: none !important;
+    }
+
+    .admin-shell .admin-table-wrapper .admin-pagination {
+        margin-top: 8px;
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-card);
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        text-align: center;
+        padding: 12px;
+        background: var(--color-surface);
+    }
+
+    .admin-shell .admin-filter-bar {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-shell .admin-page-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .admin-shell .admin-page-actions .admin-btn,
+    .admin-shell .admin-page-actions a.admin-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

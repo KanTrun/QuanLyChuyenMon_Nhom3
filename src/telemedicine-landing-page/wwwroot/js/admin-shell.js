@@ -638,6 +638,7 @@
             }
 
             table.classList.add('admin-table--layout-cards');
+            table.setAttribute('data-mobile-enhanced', 'true');
             table.querySelectorAll('tbody tr').forEach(function (row) {
                 if (row.classList.contains('admin-table-empty-row')) {
                     return;
@@ -651,6 +652,10 @@
                 });
             });
         });
+
+        if (document.documentElement) {
+            document.documentElement.setAttribute('data-mobile-tables-ready', 'true');
+        }
     }
 
     var responsiveTablesObserver = null;
