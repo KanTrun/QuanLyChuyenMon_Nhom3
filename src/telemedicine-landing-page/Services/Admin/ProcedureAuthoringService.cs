@@ -81,12 +81,17 @@ public sealed class ProcedureAuthoringService
         _store.RunProcedureWriteBatch(() =>
         {
             if (command.ProcedureId is null)
+            {
                 _store.AddProcedure(procedure);
+                // Flush the new procedure row first so its PK exists in the DB
+                // before we insert procedure_versions (which has a FK to it).
+                // EF Core does not reliably order these two inserts on its own.
+                _store.FlushProcedureWriteBatchPendingChanges();
+            }
             _store.AddProcedureVersion(version);
-            // Flush immediately: UpdateProcedure and ArchiveSourceDraft both call
-            // db.ChangeTracker.Clear() internally, which would erase the queued
-            // version INSERT if we wait. Flushing here ensures the parent
-            // procedure_versions row exists in the DB before children are inserted.
+            // Flush the version row before calling UpdateProcedure / ArchiveSourceDraft,
+            // both of which call db.ChangeTracker.Clear() internally and would otherwise
+            // erase the queued INSERT before it reaches the database.
             _store.FlushProcedureWriteBatchPendingChanges();
             if (command.ProcedureId.HasValue)
             {
