@@ -3,6 +3,9 @@
 -- Chữ ký bị thu hồi vẫn được lưu trữ để duy trì audit trail đầy đủ;
 -- chỉ cột is_revoked = 1 đánh dấu chúng không còn hiệu lực nghiệp vụ.
 
+USE MedicalProcedureManagement;
+GO
+
 IF NOT EXISTS (
     SELECT 1
     FROM sys.columns
