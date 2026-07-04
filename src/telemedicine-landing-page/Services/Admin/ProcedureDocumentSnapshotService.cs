@@ -188,6 +188,7 @@ public sealed class ProcedureDocumentSnapshotService
 
         var hash = ComputeContentHash(snapshot.Version.ProcedureVersionId);
         var currentCount = snapshot.Signoffs.Count(s =>
+            !s.IsRevoked &&
             string.Equals(s.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
             string.Equals(s.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase));
         return currentCount >= RequiredSignoffCount(snapshot, role);
@@ -210,6 +211,7 @@ public sealed class ProcedureDocumentSnapshotService
         var assignments = GetOrderedWriterAssignments(snapshot);
         return snapshot.Signoffs
             .Where(signoff =>
+                !signoff.IsRevoked &&
                 string.Equals(signoff.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(signoff.ContentHashSha256, currentHash, StringComparison.OrdinalIgnoreCase) &&
                 signoff.SignerUserId.HasValue)
@@ -225,14 +227,16 @@ public sealed class ProcedureDocumentSnapshotService
         if (assignment is null)
             return false;
 
-        var hasAnySignoff = snapshot.Signoffs.Any(signoff =>
+        var hasAnyActiveSignoff = snapshot.Signoffs.Any(signoff =>
+            !signoff.IsRevoked &&
             string.Equals(signoff.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
             signoff.SignerUserId == assignedUserId);
-        if (!hasAnySignoff)
+        if (!hasAnyActiveSignoff)
             return false;
 
         var currentHash = ComputeContentHash(snapshot.Version.ProcedureVersionId);
         if (snapshot.Signoffs.Any(signoff =>
+                !signoff.IsRevoked &&
                 string.Equals(signoff.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
                 signoff.SignerUserId == assignedUserId &&
                 string.Equals(signoff.ContentHashSha256, currentHash, StringComparison.OrdinalIgnoreCase)))
@@ -247,6 +251,12 @@ public sealed class ProcedureDocumentSnapshotService
             .Select(assignment => assignment.AssignedUserId)
             .Distinct()
             .Count(assignedUserId => IsWriterEffectivelySigned(snapshot, assignedUserId));
+
+    public string? GetRoleName(Guid roleId)
+        => _store.Roles.FirstOrDefault(item => item.RoleId == roleId)?.Name;
+
+    public string? GetDepartmentName(Guid departmentId)
+        => _store.Departments.FirstOrDefault(item => item.DepartmentId == departmentId)?.Name;
 
     public IReadOnlyList<ProcedureSignoffRecord> GetCurrentSignoffs(ProcedureDocumentSnapshot snapshot, string role)
     {
@@ -278,7 +288,7 @@ public sealed class ProcedureDocumentSnapshotService
         if (string.Equals(role, "writer", StringComparison.OrdinalIgnoreCase))
         {
             return snapshot.Signoffs
-                .Where(s => string.Equals(s.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) && s.SignerUserId.HasValue)
+                .Where(s => !s.IsRevoked && string.Equals(s.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) && s.SignerUserId.HasValue)
                 .GroupBy(s => s.SignerUserId!.Value)
                 .Select(group => group.OrderByDescending(item => item.SignedAt).First())
                 .OrderBy(s => s.DisplayOrder)
@@ -287,7 +297,7 @@ public sealed class ProcedureDocumentSnapshotService
         }
 
         return snapshot.Signoffs
-            .Where(s => string.Equals(s.SignoffRole, role, StringComparison.OrdinalIgnoreCase))
+            .Where(s => !s.IsRevoked && string.Equals(s.SignoffRole, role, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(s => s.SignedAt)
             .Take(1)
             .ToList();
@@ -302,6 +312,7 @@ public sealed class ProcedureDocumentSnapshotService
 
         return snapshot.Signoffs
             .Where(item =>
+                !item.IsRevoked &&
                 string.Equals(item.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
                 item.SignerUserId == assignedUserId)
             .OrderByDescending(item => item.SignedAt)
@@ -358,6 +369,7 @@ public sealed class ProcedureDocumentSnapshotService
         string hash)
         => snapshot.Signoffs
             .Where(s =>
+                !s.IsRevoked &&
                 string.Equals(s.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(s.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
             .OrderBy(s => s.DisplayOrder)

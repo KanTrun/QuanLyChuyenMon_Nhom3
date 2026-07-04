@@ -252,6 +252,97 @@ public sealed class ProcedureLifecycleServiceTests : IDisposable
         Assert.Equal("procedure_version", log.TargetType);
     }
 
+    [Fact]
+    public void Rollback_SupersededBecomesActive_OldActiveArchived()
+    {
+        var ver1 = CreateDraftWithSteps();
+        _svc.Submit(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+
+        var ver2 = CreateDraftWithSteps();
+        _svc.Submit(ver2.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver2.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+
+        _svc.RollbackToVersion(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId, "Ban hanh sai noi dung");
+
+        var restored = _db.ProcedureVersions.First(v => v.ProcedureVersionId == ver1.ProcedureVersionId);
+        var archived = _db.ProcedureVersions.First(v => v.ProcedureVersionId == ver2.ProcedureVersionId);
+        Assert.Equal("active", restored.StatusCode);
+        Assert.Null(restored.EffectiveTo);
+        Assert.Equal("archived", archived.StatusCode);
+        Assert.NotNull(archived.EffectiveTo);
+        Assert.Contains(_db.AuditLogs, log =>
+            log.ActionCode == "rollback" &&
+            log.TargetId == ver1.ProcedureVersionId.ToString());
+    }
+
+    [Fact]
+    public void Rollback_OnlyOneActiveAfterRollback()
+    {
+        var ver1 = CreateDraftWithSteps();
+        _svc.Submit(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+
+        var ver2 = CreateDraftWithSteps();
+        _svc.Submit(ver2.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver2.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+
+        _svc.RollbackToVersion(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId, "Khoi phuc ban on dinh");
+
+        var activeCount = _db.ProcedureVersions.Count(v => v.ProcedureId == _testProcId && v.StatusCode == "active");
+        Assert.Equal(1, activeCount);
+        Assert.Equal(ver1.ProcedureVersionId, _svc.GetActiveVersion(_testProcId)!.ProcedureVersionId);
+    }
+
+    [Fact]
+    public void Rollback_TargetNotSuperseded_Throws()
+    {
+        var ver = CreateDraftWithSteps();
+        _svc.Submit(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+
+        var ex = Assert.Throws<MedDomainException>(() =>
+            _svc.RollbackToVersion(ver.ProcedureVersionId, MedDataStoreSeed.AdminUserId, "Ly do"));
+
+        Assert.Equal(50031, ex.SqlErrorNumber);
+    }
+
+    [Fact]
+    public void Rollback_NoCurrentActive_Throws()
+    {
+        var ver1 = CreateDraftWithSteps();
+        _svc.Submit(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+
+        var ver2 = CreateDraftWithSteps();
+        _svc.Submit(ver2.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver2.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+
+        _svc.Withdraw(ver2.ProcedureVersionId, MedDataStoreSeed.AdminUserId, "Thu hoi ban loi");
+
+        var ex = Assert.Throws<MedDomainException>(() =>
+            _svc.RollbackToVersion(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId, "Khong co ban active"));
+
+        Assert.Equal(50032, ex.SqlErrorNumber);
+    }
+
+    [Fact]
+    public void Rollback_EmptyReason_Throws()
+    {
+        var ver1 = CreateDraftWithSteps();
+        _svc.Submit(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+
+        var ver2 = CreateDraftWithSteps();
+        _svc.Submit(ver2.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+        _svc.Publish(ver2.ProcedureVersionId, MedDataStoreSeed.AdminUserId);
+
+        var ex = Assert.Throws<MedDomainException>(() =>
+            _svc.RollbackToVersion(ver1.ProcedureVersionId, MedDataStoreSeed.AdminUserId, "   "));
+
+        Assert.Equal(50030, ex.SqlErrorNumber);
+    }
+
     private ProcedureVersion CreateDraftWithSteps(Guid? procedureId = null)
     {
         var procId = procedureId ?? _testProcId;

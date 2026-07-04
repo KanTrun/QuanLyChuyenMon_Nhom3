@@ -331,6 +331,60 @@ public sealed class ProcedureLifecycleService
         NotifyDataChanged();
     }
 
+    /// <summary>
+    /// Hoàn trả phiên bản đang chờ phê duyệt về bản nháp (pending_approval → draft).
+    /// Dùng khi người kiểm tra hoặc người phê duyệt nhận thấy cần chỉnh sửa thêm
+    /// mà không muốn đi qua rejected → restore. Tất cả chữ ký hiện tại sẽ bị vô hiệu hóa
+    /// do hash nội dung (không đổi) nhưng trạng thái quay về draft cho phép người viết chỉnh sửa.
+    /// </summary>
+    public void ReturnToDraft(Guid versionId, Guid returnedBy, string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+            throw MedDomainException.Constraint("CK_procedure_version_return_reason", 50041,
+                "Phải nhập lý do hoàn trả về soạn thảo.");
+
+        var ver = GetVersionOrThrow(versionId);
+        if (!string.Equals(ver.StatusCode, "pending_approval", StringComparison.OrdinalIgnoreCase))
+            throw MedDomainException.Constraint("CK_procedure_version_return", 50042,
+                "Chỉ có thể hoàn trả phiên bản đang chờ phê duyệt về soạn thảo.");
+
+        EnsureTransition(ver, "draft", "CK_procedure_version_return", 50042,
+            "Không thể hoàn trả phiên bản về soạn thảo từ trạng thái hiện tại.");
+
+        var returned = ver with
+        {
+            StatusCode = "draft",
+            SubmittedBy = null,
+            SubmittedAt = null,
+            ChangeReason = reason.Trim()
+        };
+        PersistVersionUpdate(returned);
+        _documents?.PersistSnapshot(versionId, "returned_to_draft", returnedBy);
+        _workflow.OnTransitioned(returned, ver.StatusCode, returned.StatusCode, returnedBy, reason);
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = returnedBy,
+            ActionCode = "return_to_draft",
+            TargetType = "procedure_version",
+            TargetId = versionId.ToString(),
+            DepartmentId = returned.DepartmentId ?? procDepartmentId(ver.ProcedureId),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_return_to_draft",
+                ver.ProcedureId,
+                returned.ProcedureVersionId,
+                returned.VersionLabel,
+                VersionTitle = returned.Title,
+                FromState = ver.StatusCode,
+                ToState = returned.StatusCode,
+                Reason = reason.Trim()
+            })
+        });
+        NotifyDataChanged();
+    }
+
     public void RestoreDraft(Guid versionId, Guid restoredBy, string? reason = null)
     {
         var ver = GetVersionOrThrow(versionId);

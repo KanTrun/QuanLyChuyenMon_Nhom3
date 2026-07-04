@@ -254,10 +254,22 @@
                     Ký người viết sau khi rà soát
                 </button>
             }
+            else if (CanRevokeWriterSignature)
+            {
+                <button type="button" class="admin-btn admin-btn-ghost is-danger" disabled="@_isSaving" @onclick="OpenRevokeWriterSignature">
+                    Hủy chữ ký người viết
+                </button>
+            }
             else if (CanSubmitReviewDraft)
             {
                 <button type="button" class="admin-btn admin-btn-primary" disabled="@_isSaving" @onclick="SubmitReviewDraftAsync">
                     Gửi duyệt
+                </button>
+            }
+            else if (CanReturnToDraftFromPending)
+            {
+                <button type="button" class="admin-btn admin-btn-ghost is-danger" disabled="@_isSaving" @onclick="OpenReturnToDraftModal">
+                    Rút lại gửi duyệt
                 </button>
             }
             else if (ReviewDraftSubmitted)
@@ -289,6 +301,30 @@
                          ConfirmText="Ký người viết"
                          SignatureConfirmed="SaveSignedVersionAsync" />
 
+<AdminModal IsOpen="_revokeWriterOpen" IsOpenChanged="v => _revokeWriterOpen = v" Title="Hủy chữ ký người viết">
+    <ChildContent>
+        <p style="margin:0 0 0.75rem;">Chữ ký của bạn trên phiên bản <strong>@_versionLabel</strong> sẽ bị thu hồi. Bạn có thể ký lại sau khi rà soát.</p>
+        <label class="admin-form-field-label" for="revoke-writer-reason-tao">Lý do hủy (tùy chọn)</label>
+        <textarea id="revoke-writer-reason-tao" class="admin-textarea" rows="2" placeholder="VD: Cần chỉnh sửa lại phần bước quy trình." @bind="_revokeWriterReason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _revokeWriterOpen = false">Hủy bỏ</button>
+        <button type="button" class="admin-btn admin-btn-danger" disabled="@_isSaving" @onclick="ConfirmRevokeWriterSignatureAsync">Xác nhận hủy chữ ký</button>
+    </FooterContent>
+</AdminModal>
+
+<AdminModal IsOpen="_returnToDraftOpen" IsOpenChanged="v => _returnToDraftOpen = v" Title="Rút lại gửi duyệt — Hoàn về soạn thảo">
+    <ChildContent>
+        <p style="margin:0 0 0.75rem;">Phiên bản <strong>@_versionLabel</strong> sẽ được chuyển về <strong>bản nháp</strong>. Tất cả chữ ký hiện tại sẽ không còn hiệu lực; các người viết cần ký lại sau khi chỉnh sửa.</p>
+        <label class="admin-form-field-label" for="return-draft-reason-tao">Lý do rút lại (bắt buộc)</label>
+        <textarea id="return-draft-reason-tao" class="admin-textarea" rows="3" placeholder="VD: Cần bổ sung thêm bước kiểm soát nhiễm khuẩn." @bind="_returnToDraftReason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _returnToDraftOpen = false">Hủy bỏ</button>
+        <button type="button" class="admin-btn admin-btn-danger" disabled="@(_isSaving || string.IsNullOrWhiteSpace(_returnToDraftReason))" @onclick="ConfirmReturnToDraftAsync">Hoàn về soạn thảo</button>
+    </FooterContent>
+</AdminModal>
+
 @code {
     [Parameter] public Guid? ProcedureId { get; set; }
     [Parameter] public Guid? VersionId { get; set; }
@@ -304,6 +340,10 @@
     private string _summary = string.Empty;
     private bool _isSaving;
     private bool _writerSignOpen;
+    private bool _revokeWriterOpen;
+    private string _revokeWriterReason = string.Empty;
+    private bool _returnToDraftOpen;
+    private string _returnToDraftReason = string.Empty;
     private Sql.ProcedureVersion? _sourceVersion;
     private Sql.ProcedureVersion? _reviewVersion;
     private Sql.ProcedureVersion? _editDraftVersion;
@@ -344,6 +384,19 @@
         && _reviewVersion?.StatusCode == "draft"
         && Signoffs.GetOutstandingWriterSignatures(_reviewVersion.ProcedureVersionId) == 0;
     private bool ReviewDraftSubmitted => IsReviewMode && _reviewVersion?.StatusCode == "pending_approval";
+
+    // Người viết đã ký và có thể hủy chữ ký của mình (trên bản nháp)
+    private bool CanRevokeWriterSignature => IsReviewMode
+        && _reviewVersion?.StatusCode == "draft"
+        && UserContext.CurrentUser is { UserId: var revUid }
+        && Signoffs.GetActiveWriterSignoff(_reviewVersion.ProcedureVersionId, revUid) is not null;
+
+    // Người viết có thể rút lại gửi duyệt (pending_approval, checker chưa ký)
+    private bool CanReturnToDraftFromPending => IsReviewMode
+        && _reviewVersion?.StatusCode == "pending_approval"
+        && UserContext.CurrentUser is { UserId: var retUid }
+        && !Signoffs.HasCurrentSignoff(_reviewVersion.ProcedureVersionId, "checker")
+        && Signoffs.GetCurrentSignerUserId(_reviewVersion.ProcedureVersionId, "writer") == retUid;
     private int RequiredWriterCount => _writerAssignments
         .Select(item => ParseGuid(item.UserId))
         .Where(item => item.HasValue)
@@ -523,6 +576,85 @@
         catch (Exception exception)
         {
             Toasts.Show("Không thể ký", exception.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void OpenRevokeWriterSignature()
+    {
+        if (_reviewVersion is null) return;
+        _revokeWriterReason = string.Empty;
+        _revokeWriterOpen = true;
+    }
+
+    private Task ConfirmRevokeWriterSignatureAsync()
+    {
+        if (_reviewVersion is null || UserContext.CurrentUser is not { UserId: var userId })
+            return Task.CompletedTask;
+
+        var signoff = Signoffs.GetActiveWriterSignoff(_reviewVersion.ProcedureVersionId, userId);
+        if (signoff is null)
+        {
+            Toasts.Show("Không tìm thấy chữ ký", "Không có chữ ký hợp lệ của bạn để thu hồi.", ToastVariant.Warning);
+            _revokeWriterOpen = false;
+            return Task.CompletedTask;
+        }
+
+        _isSaving = true;
+        try
+        {
+            Signoffs.RevokeSignoff(_reviewVersion.ProcedureVersionId, signoff.ProcedureSignoffRecordId, userId, _revokeWriterReason);
+            Store.Refresh();
+            _reviewVersion = Store.ProcedureVersions.First(v => v.ProcedureVersionId == _reviewVersion.ProcedureVersionId);
+            Toasts.Show("Đã hủy chữ ký người viết", "Bạn có thể chỉnh sửa và ký lại khi cần.", ToastVariant.Info);
+            _revokeWriterOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể hủy chữ ký", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void OpenReturnToDraftModal()
+    {
+        if (_reviewVersion is null) return;
+        _returnToDraftReason = string.Empty;
+        _returnToDraftOpen = true;
+    }
+
+    private Task ConfirmReturnToDraftAsync()
+    {
+        if (_reviewVersion is null || UserContext.CurrentUser is not { UserId: var userId })
+            return Task.CompletedTask;
+        if (string.IsNullOrWhiteSpace(_returnToDraftReason))
+        {
+            Toasts.Show("Thiếu lý do", "Vui lòng nhập lý do rút lại.", ToastVariant.Warning);
+            return Task.CompletedTask;
+        }
+
+        _isSaving = true;
+        try
+        {
+            Lifecycle.ReturnToDraft(_reviewVersion.ProcedureVersionId, userId, _returnToDraftReason.Trim());
+            Store.Refresh();
+            _reviewVersion = Store.ProcedureVersions.First(v => v.ProcedureVersionId == _reviewVersion.ProcedureVersionId);
+            Toasts.Show("Đã hoàn về soạn thảo", "Phiên bản trở về bản nháp. Người viết có thể chỉnh sửa và ký lại.", ToastVariant.Info);
+            _returnToDraftOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể hoàn về soạn thảo", ex.Message, ToastVariant.Error);
         }
         finally
         {

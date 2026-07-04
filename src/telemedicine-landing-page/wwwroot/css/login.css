@@ -1,5 +1,156 @@
 /* Ocean auth experience - QLCM Pro */
 
+.login-session-banner {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 40;
+    padding: 0.85rem clamp(0.85rem, 2.5vw, 1.5rem);
+    pointer-events: none;
+}
+
+.login-session-banner__inner {
+    pointer-events: auto;
+    width: min(100%, 56rem);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.85rem;
+    padding: 0.95rem 1rem;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    box-shadow: 0 16px 40px rgba(8, 47, 73, 0.14);
+    backdrop-filter: blur(14px);
+    animation: loginSessionBannerIn 420ms ease;
+}
+
+.login-session-banner--warning {
+    border-color: #fbbf24;
+    background: linear-gradient(135deg, rgba(255, 251, 235, 0.97), rgba(254, 243, 199, 0.96));
+    color: #92400e;
+}
+
+.login-session-banner--info {
+    border-color: #7dd3fc;
+    background: linear-gradient(135deg, rgba(240, 249, 255, 0.97), rgba(224, 242, 254, 0.96));
+    color: #075985;
+}
+
+.login-session-banner--danger {
+    border-color: #fca5a5;
+    background: linear-gradient(135deg, rgba(255, 241, 242, 0.97), rgba(254, 226, 226, 0.96));
+    color: #991b1b;
+}
+
+.login-session-banner__icon,
+.login-session-notice__icon {
+    width: 2rem;
+    height: 2rem;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    flex: 0 0 auto;
+}
+
+.login-session-banner__icon svg,
+.login-session-notice__icon svg,
+.login-session-banner__dismiss svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
+
+.login-session-banner--warning .login-session-banner__icon,
+.login-session-notice--warning .login-session-notice__icon {
+    background: rgba(251, 191, 36, 0.22);
+    color: #b45309;
+}
+
+.login-session-banner--info .login-session-banner__icon,
+.login-session-notice--info .login-session-notice__icon {
+    background: rgba(56, 189, 248, 0.18);
+    color: #0369a1;
+}
+
+.login-session-banner--danger .login-session-banner__icon,
+.login-session-notice--danger .login-session-notice__icon {
+    background: rgba(248, 113, 113, 0.18);
+    color: #b91c1c;
+}
+
+.login-session-banner__copy strong,
+.login-session-notice__copy strong {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.95rem;
+    font-weight: 850;
+}
+
+.login-session-banner__copy p,
+.login-session-notice__copy span {
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    font-weight: 650;
+}
+
+.login-session-banner__dismiss {
+    width: 2rem;
+    height: 2rem;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    opacity: 0.72;
+    cursor: pointer;
+    transition: background var(--motion-fast), opacity var(--motion-fast);
+}
+
+.login-session-banner__dismiss:hover,
+.login-session-banner__dismiss:focus-visible {
+    opacity: 1;
+    background: rgba(8, 47, 73, 0.06);
+}
+
+.login-session-notice {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0.9rem 0.95rem;
+    border-radius: 10px;
+    border: 1px solid transparent;
+}
+
+.login-session-notice--warning {
+    border-color: #fcd34d;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.login-session-notice--info {
+    border-color: #bae6fd;
+    background: #f0f9ff;
+    color: #075985;
+}
+
+.login-session-notice--danger {
+    border-color: #fecaca;
+    background: #fff1f2;
+    color: #991b1b;
+}
+
+.login-page.has-session-banner {
+    padding-top: 5.25rem;
+}
+
 .login-page {
     min-height: 100dvh;
     display: grid;
@@ -769,6 +920,33 @@
     color: #bae6fd;
 }
 
+[data-theme="dark"] .login-session-banner--warning,
+[data-theme="dark"] .login-session-notice--warning {
+    border-color: rgba(251, 191, 36, 0.42);
+    background: rgba(120, 53, 15, 0.42);
+    color: #fde68a;
+}
+
+[data-theme="dark"] .login-session-banner--info,
+[data-theme="dark"] .login-session-notice--info {
+    border-color: rgba(125, 211, 252, 0.35);
+    background: rgba(8, 47, 73, 0.62);
+    color: #bae6fd;
+}
+
+[data-theme="dark"] .login-session-banner--danger,
+[data-theme="dark"] .login-session-notice--danger {
+    border-color: rgba(248, 113, 113, 0.38);
+    background: rgba(127, 29, 29, 0.34);
+    color: #fecaca;
+}
+
+@media (min-width: 700px) {
+    .login-form-wrapper .login-session-notice {
+        display: none;
+    }
+}
+
 @media (max-width: 980px) {
     .login-page {
         grid-template-columns: 1fr;
@@ -880,5 +1058,17 @@
 @keyframes login-spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+@keyframes loginSessionBannerIn {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

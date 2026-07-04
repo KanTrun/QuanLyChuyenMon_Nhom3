@@ -116,6 +116,7 @@ public interface IMedDataStore
     void AddProcedureDistributionRecipient(ProcedureDistributionRecipient recipient);
     void AddProcedureRevisionEntry(ProcedureRevisionEntry revision);
     void AddProcedureSignoffRecord(ProcedureSignoffRecord signoff);
+    void RevokeProcedureSignoffRecord(Guid signoffRecordId, Guid revokedByUserId, string? reason = null);
     void AddProcedureVersionAuthorAssignment(ProcedureVersionAuthorAssignment assignment);
     void ClearProcedureVersionDocument(Guid versionId);
     void AddProcedureStepRoleAssignment(ProcedureStepRoleAssignment assignment);

@@ -14,6 +14,7 @@ public sealed class ProcedureVersionWorkflowGuard : IWorkflowGuard<ProcedureVers
         ("pending_approval", "active"),
         ("pending_approval", "rejected"),
         ("pending_approval", "archived"),
+        ("pending_approval", "draft"),   // Hoàn trả về soạn thảo (thu hồi chữ ký)
         ("rejected", "draft"),
         ("rejected", "archived"),
         ("active", "superseded"),

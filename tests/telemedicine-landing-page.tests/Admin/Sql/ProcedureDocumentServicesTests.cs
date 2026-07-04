@@ -162,6 +162,7 @@ public sealed class ProcedureDocumentServicesTests
             ProcedureVersionId = versionId,
             SignoffRole = "writer",
             DisplayOrder = 1,
+            SignerUserId = MedDataStoreSeed.AdminUserId,
             SignerUsername = "nguyen.an",
             SignerFullName = "Điều dưỡng Nguyễn An",
             ContentHashSha256 = hash,
@@ -231,9 +232,49 @@ public sealed class ProcedureDocumentServicesTests
         Assert.Contains("Trang 1 /", html);
         Assert.Contains("height:297mm", html);
         Assert.Contains("<small>VIII · Đối chiếu hồ sơ và điều kiện thực hiện</small>", visibleText);
+        Assert.Contains("<strong>VIII</strong>", html);
         Assert.Contains("grid-template-columns:repeat(2,minmax(0,1fr))", html);
         Assert.Contains("shape-decision::before", html);
-        Assert.Contains("flow-arrow", html);
+        Assert.Contains("flow-link-arrow", html);
+        Assert.Contains("flow-link-row", html);
+    }
+
+    [Fact]
+    public void Export_MultiWriterChain_ShowsBothWritersAsSignedInPdf()
+    {
+        var (store, versionId) = CreateCompleteDocument();
+        var version = store.ProcedureVersions.First(item => item.ProcedureVersionId == versionId);
+        store.UpdateProcedureVersion(version with { RequiredWriterSignatures = 2 });
+        store.AddProcedureVersionAuthorAssignment(new ProcedureVersionAuthorAssignment
+        {
+            ProcedureVersionId = versionId,
+            DisplayOrder = 2,
+            AssignedUserId = MedDataStoreSeed.TruongKhoaNoiId,
+            AssignedUsername = "truongkhoa.noi",
+            AssignedFullName = "Trưởng khoa Nội"
+        });
+
+        var snapshots = new ProcedureDocumentSnapshotService(store);
+        var signoffs = new ProcedureSignoffService(store, snapshots);
+        signoffs.Sign(versionId, "writer", MedDataStoreSeed.AdminUserId, "admin", "Quản trị viên", ValidSignature);
+
+        var section = store.ProcedureDocumentSections.First(item => item.ProcedureVersionId == versionId && item.SectionNumber == "VIII");
+        store.UpdateProcedureDocumentSection(section with { ContentText = "Nội dung do người viết thứ hai chỉnh sửa" });
+
+        signoffs.Sign(versionId, "writer", MedDataStoreSeed.TruongKhoaNoiId, "truongkhoa.noi", "Trưởng khoa Nội", ValidSignature);
+
+        var html = CreateExportService(store)
+            .BuildProcedureDocumentHtml(versionId, new DateTime(2026, 7, 2, 10, 0, 0, DateTimeKind.Utc));
+        var visibleText = WebUtility.HtmlDecode(html);
+
+        Assert.Contains("Người viết 1", visibleText);
+        Assert.Contains("Người viết 2", visibleText);
+        Assert.Contains("Quản trị viên", visibleText);
+        Assert.Contains("Trưởng khoa Nội", visibleText);
+        Assert.Contains("Đã xác nhận", visibleText);
+        Assert.DoesNotContain("Chờ Quản trị viên ký", visibleText);
+        Assert.DoesNotContain("Chờ Trưởng khoa Nội ký", visibleText);
+        Assert.Contains("Đã ký 2/2", visibleText);
     }
 
     [Fact]

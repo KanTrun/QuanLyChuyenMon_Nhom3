@@ -84,10 +84,191 @@ public sealed class ProcedureSignoffService
         var hash = _snapshots.ComputeContentHash(versionId);
         return snapshot.Signoffs
             .Where(signoff =>
+                !signoff.IsRevoked &&
                 string.Equals(signoff.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(signoff => signoff.SignedAt)
             .FirstOrDefault()?.SignerUserId;
+    }
+
+    /// <summary>
+    /// Thu hồi chữ ký nội bộ của một vai trò trên phiên bản quy trình.
+    /// Logic:
+    /// - writer (status=draft): bản thân writer có thể hủy chữ ký của mình.
+    /// - checker (status=pending_approval): checker tự hủy, hoặc approver hủy chữ ký checker để yêu cầu ký lại.
+    /// - approver: không có chữ ký riêng biệt (ký xong là ban hành ngay), không cần thu hồi.
+    /// </summary>
+    public void RevokeSignoff(Guid versionId, Guid signoffRecordId, Guid revokedByUserId, string? reason = null)
+    {
+        if (revokedByUserId == Guid.Empty)
+            throw new InvalidOperationException("Người thu hồi chữ ký phải là tài khoản hợp lệ.");
+
+        if (!_store.IsProcedureWriteBatchActive)
+            _store.Refresh();
+
+        var snapshot = _snapshots.GetSnapshot(versionId);
+        var signoff = snapshot.Signoffs.FirstOrDefault(s => s.ProcedureSignoffRecordId == signoffRecordId)
+            ?? throw new InvalidOperationException("Bản ghi chữ ký không tồn tại trên phiên bản này.");
+
+        if (signoff.IsRevoked)
+            throw new InvalidOperationException("Chữ ký này đã được thu hồi trước đó.");
+
+        EnsureRevokePermission(snapshot, signoff, revokedByUserId);
+
+        _store.RevokeProcedureSignoffRecord(signoffRecordId, revokedByUserId, reason);
+
+        if (_audit is not null)
+        {
+            _audit.Append(new AuditLog
+            {
+                CorrelationId = Guid.NewGuid(),
+                ActorUserId = revokedByUserId,
+                ActorUsername = snapshot.Signoffs.FirstOrDefault()?.SignerUsername,
+                ActionCode = "revoke_signoff",
+                TargetType = "procedure_version",
+                TargetId = versionId.ToString(),
+                DepartmentId = snapshot.Version.DepartmentId ?? snapshot.Procedure.OwnerDepartmentId,
+                MetadataJson = JsonSerializer.Serialize(new
+                {
+                    Event = "procedure_signoff_revoked",
+                    signoff.SignoffRole,
+                    RoleLabel = RoleLabel(signoff.SignoffRole),
+                    snapshot.Procedure.ProcedureId,
+                    snapshot.Procedure.ProcedureCode,
+                    ProcedureName = snapshot.Procedure.Name,
+                    snapshot.Version.ProcedureVersionId,
+                    snapshot.Version.VersionLabel,
+                    VersionTitle = snapshot.Version.Title,
+                    OriginalSignerUserId = signoff.SignerUserId,
+                    OriginalSignerName = signoff.SignerFullName ?? signoff.SignerUsername,
+                    Reason = reason
+                })
+            });
+        }
+    }
+
+    public bool CanRevokeSignoff(Guid versionId, Guid signoffRecordId, Guid revokedByUserId, out string? reason)
+    {
+        reason = null;
+        if (revokedByUserId == Guid.Empty)
+        {
+            reason = "Phải đăng nhập để thu hồi chữ ký.";
+            return false;
+        }
+
+        try
+        {
+            var snapshot = _snapshots.GetSnapshot(versionId);
+            var signoff = snapshot.Signoffs.FirstOrDefault(s => s.ProcedureSignoffRecordId == signoffRecordId);
+            if (signoff is null)
+            {
+                reason = "Bản ghi chữ ký không tồn tại.";
+                return false;
+            }
+            if (signoff.IsRevoked)
+            {
+                reason = "Chữ ký này đã được thu hồi trước đó.";
+                return false;
+            }
+            EnsureRevokePermission(snapshot, signoff, revokedByUserId);
+            return true;
+        }
+        catch (InvalidOperationException ex)
+        {
+            reason = ex.Message;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Lấy chữ ký đang có hiệu lực (chưa bị thu hồi, khớp hash hiện tại) của một người viết cụ thể.
+    /// </summary>
+    public ProcedureSignoffRecord? GetActiveWriterSignoff(Guid versionId, Guid writerUserId)
+    {
+        var snapshot = _snapshots.GetSnapshot(versionId);
+        var hash = _snapshots.ComputeContentHash(versionId);
+        return snapshot.Signoffs
+            .Where(s =>
+                !s.IsRevoked &&
+                string.Equals(s.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
+                s.SignerUserId == writerUserId &&
+                string.Equals(s.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(s => s.SignedAt)
+            .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Lấy chữ ký đang có hiệu lực (chưa bị thu hồi, khớp hash hiện tại) của checker/approver.
+    /// </summary>
+    public ProcedureSignoffRecord? GetActiveSignoff(Guid versionId, string role)
+    {
+        var snapshot = _snapshots.GetSnapshot(versionId);
+        var hash = _snapshots.ComputeContentHash(versionId);
+        return snapshot.Signoffs
+            .Where(s =>
+                !s.IsRevoked &&
+                string.Equals(s.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(s.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(s => s.SignedAt)
+            .FirstOrDefault();
+    }
+
+    private void EnsureRevokePermission(ProcedureDocumentSnapshot snapshot, ProcedureSignoffRecord signoff, Guid revokedByUserId)
+    {
+        var role = signoff.SignoffRole.ToLowerInvariant();
+        var versionStatus = snapshot.Version.StatusCode;
+
+        switch (role)
+        {
+            case "writer":
+                if (!string.Equals(versionStatus, "draft", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(versionStatus, "pending_approval", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("Chỉ thu hồi chữ ký người viết khi phiên bản đang ở trạng thái bản nháp hoặc chờ phê duyệt.");
+                if (signoff.SignerUserId != revokedByUserId)
+                    throw new InvalidOperationException("Người viết chỉ được thu hồi chữ ký của chính mình.");
+                // Khi status=pending_approval: chỉ cho phép nếu checker chưa ký
+                if (string.Equals(versionStatus, "pending_approval", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (_snapshots.HasCurrentSignoff(snapshot, "checker"))
+                        throw new InvalidOperationException("Không thể thu hồi chữ ký người viết khi người kiểm tra đã ký. Hãy yêu cầu người kiểm tra hoặc người phê duyệt trả về soạn thảo.");
+                }
+                break;
+
+            case "checker":
+                if (!string.Equals(versionStatus, "pending_approval", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("Chỉ thu hồi chữ ký người kiểm tra khi phiên bản đang chờ phê duyệt.");
+                // Checker tự hủy HOẶC người khác (approver-level) hủy để yêu cầu ký lại
+                var isOwnRevoke = signoff.SignerUserId == revokedByUserId;
+                var writerIds = GetCurrentSignerUserIds(snapshot, "writer");
+                var isWriter = writerIds.Contains(revokedByUserId);
+                if (!isOwnRevoke && isWriter)
+                    throw new InvalidOperationException("Người viết không được thu hồi chữ ký của người kiểm tra.");
+                break;
+
+            default:
+                throw new InvalidOperationException($"Không hỗ trợ thu hồi chữ ký vai trò '{RoleLabel(role)}'.");
+        }
+    }
+
+    private IReadOnlySet<Guid> GetCurrentSignerUserIds(ProcedureDocumentSnapshot snapshot, string role)
+    {
+        if (string.Equals(role, "writer", StringComparison.OrdinalIgnoreCase))
+        {
+            return _snapshots.GetOrderedWriterAssignments(snapshot)
+                .Where(assignment => _snapshots.IsWriterEffectivelySigned(snapshot, assignment.AssignedUserId))
+                .Select(assignment => assignment.AssignedUserId)
+                .ToHashSet();
+        }
+
+        var hash = _snapshots.ComputeContentHash(snapshot.Version.ProcedureVersionId);
+        return snapshot.Signoffs
+            .Where(signoff =>
+                !signoff.IsRevoked &&
+                string.Equals(signoff.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase) &&
+                signoff.SignerUserId.HasValue)
+            .Select(signoff => signoff.SignerUserId!.Value)
+            .ToHashSet();
     }
 
     public bool CanUserEditDraft(Guid versionId, Guid userId, out string? reason)
@@ -249,36 +430,18 @@ public sealed class ProcedureSignoffService
         var hash = _snapshots.ComputeContentHash(snapshot.Version.ProcedureVersionId);
         return snapshot.Signoffs
             .Where(signoff =>
+                !signoff.IsRevoked &&
                 string.Equals(signoff.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(signoff => signoff.SignedAt)
             .FirstOrDefault()?.SignerUserId;
     }
 
-    private IReadOnlySet<Guid> GetCurrentSignerUserIds(ProcedureDocumentSnapshot snapshot, string role)
-    {
-        if (string.Equals(role, "writer", StringComparison.OrdinalIgnoreCase))
-        {
-            return _snapshots.GetOrderedWriterAssignments(snapshot)
-                .Where(assignment => _snapshots.IsWriterEffectivelySigned(snapshot, assignment.AssignedUserId))
-                .Select(assignment => assignment.AssignedUserId)
-                .ToHashSet();
-        }
-
-        var hash = _snapshots.ComputeContentHash(snapshot.Version.ProcedureVersionId);
-        return snapshot.Signoffs
-            .Where(signoff =>
-                string.Equals(signoff.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase) &&
-                signoff.SignerUserId.HasValue)
-            .Select(signoff => signoff.SignerUserId!.Value)
-            .ToHashSet();
-    }
-
     private bool HasUserCurrentSignoff(ProcedureDocumentSnapshot snapshot, string role, Guid userId)
     {
         var hash = _snapshots.ComputeContentHash(snapshot.Version.ProcedureVersionId);
         return snapshot.Signoffs.Any(signoff =>
+            !signoff.IsRevoked &&
             string.Equals(signoff.SignoffRole, role, StringComparison.OrdinalIgnoreCase) &&
             signoff.SignerUserId == userId &&
             string.Equals(signoff.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase));

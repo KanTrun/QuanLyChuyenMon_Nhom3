@@ -10,10 +10,40 @@
 @inject MedDbContext Db
 @inject NavGate Gate
 @inject IAdminNavigationState NavState
+@implements IDisposable
 
 <PageTitle>Đăng nhập | QLCM Pro</PageTitle>
 
-<div class="login-page" data-auth-page data-auth-variant="login">
+@if (_sessionNotice is not null)
+{
+    <div class="login-session-banner" role="alert" aria-live="assertive">
+        <div class="login-session-banner__inner login-session-banner--@_sessionNotice.Variant">
+            <span class="login-session-banner__icon" aria-hidden="true">
+                @if (_sessionNotice.Variant == "warning")
+                {
+                    <svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.6 1.8 18.2A2 2 0 0 0 3.5 21h17a2 2 0 0 0 1.7-2.8L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg>
+                }
+                else if (_sessionNotice.Variant == "danger")
+                {
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9 9 15"/><path d="m9 9 6 6"/></svg>
+                }
+                else
+                {
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                }
+            </span>
+            <div class="login-session-banner__copy">
+                <strong>@_sessionNotice.Title</strong>
+                <p>@_sessionNotice.Message</p>
+            </div>
+            <button type="button" class="login-session-banner__dismiss" @onclick="DismissSessionNotice" aria-label="Đóng thông báo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+        </div>
+    </div>
+}
+
+<div class="login-page @(_sessionNotice is not null ? "has-session-banner" : null)" data-auth-page data-auth-variant="login">
     <section class="login-brand" aria-label="QLCM Pro">
         <div class="auth-grid-lines" aria-hidden="true"></div>
         <div class="auth-depth-field" aria-hidden="true">
@@ -92,6 +122,30 @@
                 <p>Nhập tài khoản nội bộ để vào không gian quản trị chuyên môn.</p>
             </div>
 
+            @if (_sessionNotice is not null)
+            {
+                <div class="login-session-notice login-session-notice--@_sessionNotice.Variant" role="status">
+                    <span class="login-session-notice__icon" aria-hidden="true">
+                        @if (_sessionNotice.Variant == "warning")
+                        {
+                            <svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.6 1.8 18.2A2 2 0 0 0 3.5 21h17a2 2 0 0 0 1.7-2.8L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg>
+                        }
+                        else if (_sessionNotice.Variant == "danger")
+                        {
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9 9 15"/><path d="m9 9 6 6"/></svg>
+                        }
+                        else
+                        {
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                        }
+                    </span>
+                    <div class="login-session-notice__copy">
+                        <strong>@_sessionNotice.Title</strong>
+                        <span>@_sessionNotice.Message</span>
+                    </div>
+                </div>
+            }
+
             <form class="login-form" @onsubmit="HandleLogin" @onsubmit:preventDefault>
                 <div class="form-group">
                     <label for="login-username">Tên đăng nhập</label>
@@ -153,6 +207,7 @@
     private string _username = "";
     private string _password = "";
     private string? _errorMessage;
+    private SessionEndNotice? _sessionNotice;
     private bool _isLoading;
     private bool _showPassword;
     private int _failedAttempts;
@@ -163,6 +218,8 @@
 
     protected override void OnInitialized()
     {
+        Navigation.LocationChanged += OnLocationChanged;
+
         if (UserContext.CurrentUser is not null)
         {
             Navigation.NavigateTo(GetPostLoginRoute(), forceLoad: false, replace: true);
@@ -171,6 +228,37 @@
 
         LoadSessionReason();
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _sessionNotice is not null)
+        {
+            return;
+        }
+
+        try
+        {
+            var storedReason = await BrowserSession.ReadSessionEndNoticeAsync();
+            if (!string.IsNullOrWhiteSpace(storedReason))
+            {
+                ApplySessionNotice(storedReason);
+                StateHasChanged();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    public void Dispose()
+        => Navigation.LocationChanged -= OnLocationChanged;
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+        => InvokeAsync(() =>
+        {
+            LoadSessionReason();
+            StateHasChanged();
+        });
 
     private async Task HandleLogin()
     {
@@ -258,14 +346,39 @@
         var uri = new Uri(Navigation.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
         var reason = query.TryGetValue("reason", out var values) ? values.ToString() : null;
-        _errorMessage = reason switch
+        if (!string.IsNullOrWhiteSpace(reason))
         {
-            "replaced" => "Phiên đăng nhập đã hết hạn vì tài khoản này vừa đăng nhập trên một thiết bị hoặc trình duyệt khác.",
-            "expired" => "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.",
-            "disabled" => "Tài khoản hiện không còn hợp lệ hoặc đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
-            _ => _errorMessage
+            ApplySessionNotice(reason);
+        }
+    }
+
+    private void ApplySessionNotice(string? reason)
+    {
+        _sessionNotice = reason switch
+        {
+            "replaced" => new SessionEndNotice(
+                "warning",
+                "Phiên đăng nhập đã kết thúc",
+                "Phiên đăng nhập đã hết hạn hoặc tài khoản này vừa đăng nhập trên một thiết bị khác. Vui lòng đăng nhập lại để tiếp tục."),
+            "expired" => new SessionEndNotice(
+                "info",
+                "Phiên đăng nhập đã hết hạn",
+                "Phiên làm việc của bạn đã hết hạn vì không hoạt động. Vui lòng đăng nhập lại để tiếp tục."),
+            "disabled" => new SessionEndNotice(
+                "danger",
+                "Không thể tiếp tục phiên hiện tại",
+                "Tài khoản hiện không còn hợp lệ hoặc đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên."),
+            _ => null
         };
     }
+
+    private void DismissSessionNotice()
+    {
+        _sessionNotice = null;
+        Navigation.NavigateTo("/login", forceLoad: false, replace: true);
+    }
+
+    private sealed record SessionEndNotice(string Variant, string Title, string Message);
 
     private string GetPostLoginRoute()
         => Gate.GetFirstAccessibleRoute(NavState.NavItems, "/AccessDenied");

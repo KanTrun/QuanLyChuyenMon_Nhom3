@@ -27,8 +27,15 @@ New-NetFirewallRule `
     -Action Allow `
     -Protocol TCP `
     -LocalPort $Port `
-    -Profile Private, Domain `
+    -Profile Private, Public, Domain `
     | Out-Null
 
-Write-Host "Firewall rule '$RuleName' allows inbound TCP $Port (Private, Domain profiles)."
+$publicWifi = Get-NetConnectionProfile -ErrorAction SilentlyContinue |
+    Where-Object { $_.NetworkCategory -eq 'Public' -and $_.InterfaceAlias -match 'Wi-?Fi|WLAN|Ethernet' }
+foreach ($profile in $publicWifi) {
+    Set-NetConnectionProfile -InterfaceIndex $profile.InterfaceIndex -NetworkCategory Private -ErrorAction SilentlyContinue
+    Write-Host "Set network '$($profile.Name)' ($($profile.InterfaceAlias)) to Private (recommended for LAN)."
+}
+
+Write-Host "Firewall rule '$RuleName' allows inbound TCP $Port (Private, Public, Domain profiles)."
 Write-Host "Run .\scripts\show-lan-url.ps1 -Port $Port to print client URLs."

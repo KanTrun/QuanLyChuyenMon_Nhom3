@@ -454,6 +454,25 @@ public sealed class MedDbDataStore : IMedDataStore
         _db.ProcedureSignoffRecords.Add(signoff);
         CommitProcedureChange();
     }
+
+    public void RevokeProcedureSignoffRecord(Guid signoffRecordId, Guid revokedByUserId, string? reason = null)
+    {
+        if (_procedureWriteBatchDepth == 0)
+            _db.ChangeTracker.Clear();
+        var existing = _db.ProcedureSignoffRecords.FirstOrDefault(s => s.ProcedureSignoffRecordId == signoffRecordId)
+            ?? throw MedDomainException.Constraint("PK_procedure_signoff_records", 547, "Bản ghi chữ ký không tồn tại.");
+        if (existing.IsRevoked)
+            throw MedDomainException.Constraint("CK_signoff_revoke_once", 50040, "Chữ ký này đã được thu hồi trước đó.");
+
+        _db.ProcedureSignoffRecords.Entry(existing).CurrentValues.SetValues(existing with
+        {
+            IsRevoked = true,
+            RevokedAt = DateTime.UtcNow,
+            RevokedByUserId = revokedByUserId,
+            RevokeReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim()
+        });
+        CommitProcedureChange();
+    }
     public void AddProcedureVersionAuthorAssignment(ProcedureVersionAuthorAssignment assignment) { _db.ProcedureVersionAuthorAssignments.Add(assignment); CommitProcedureChange(); }
     public void ClearProcedureVersionDocument(Guid versionId)
     {

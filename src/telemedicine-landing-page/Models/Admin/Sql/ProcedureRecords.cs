@@ -289,6 +289,18 @@ public sealed record ProcedureSignoffRecord
 
     [Column("note")]
     public string? Note { get; init; }
+
+    [Column("is_revoked")]
+    public bool IsRevoked { get; init; } = false;
+
+    [Column("revoked_at")]
+    public DateTime? RevokedAt { get; init; }
+
+    [Column("revoked_by_user_id")]
+    public Guid? RevokedByUserId { get; init; }
+
+    [Column("revoke_reason")]
+    public string? RevokeReason { get; init; }
 }
 
 /// <summary>Danh sach nguoi viet duoc chi dinh cho phien ban quy trinh.</summary>

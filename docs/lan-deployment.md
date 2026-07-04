@@ -122,7 +122,7 @@ Máy client truy cập `http://<IP-máy-chủ>:5049`. Cần SQL Server reachable
 
 | Triệu chứng | Nguyên nhân thường gặp | Cách xử lý |
 |---|---|---|
-| Máy client không mở được trang | Firewall chặn port | Chạy `open-lan-firewall.ps1` trên máy chủ |
+| Máy client không mở được trang | Firewall chặn port hoặc Wi‑Fi ở profile **Public** | Chạy `open-lan-firewall.ps1` **với quyền Administrator**; script đặt mạng Wi‑Fi sang Private và mở port 8080 |
 | Trang load nhưng realtime không hoạt động | WebSocket bị chặn | Cho phép kết nối WebSocket tới cùng host:port; không dùng proxy HTTP cắt WS |
 | Đăng nhập bị đăng xuất sau restart Docker | Volume `app-data/dpkeys` thiếu | Đảm bảo bind mount trong `docker-compose.yml` tồn tại |
 | Hai máy thấy dữ liệu khác nhau | Mỗi máy chạy Docker riêng | Chỉ một máy chủ; client chỉ mở trình duyệt tới IP đó |

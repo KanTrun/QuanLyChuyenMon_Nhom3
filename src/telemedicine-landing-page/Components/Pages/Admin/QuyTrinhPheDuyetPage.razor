@@ -122,6 +122,14 @@
                             @if (row.Version.StatusCode == "pending_approval")
                             {
                                 <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => RejectAsync(row)">Từ chối</button>
+                                @if (CanRevokeCheckerSignoff(row))
+                                {
+                                    <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenRevokeCheckerModal(row)">Hủy chữ ký kiểm tra</button>
+                                }
+                                @if (CanReturnToDraftApproval(row))
+                                {
+                                    <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenReturnToDraftModal(row)">Hoàn trả về soạn thảo</button>
+                                }
                             }
                             @if (row.Version.StatusCode != "active" && row.Version.StatusCode != "archived")
                             {
@@ -183,6 +191,14 @@
                         else
                         {
                             <p class="admin-table-cell-muted">@ApprovalActionHint(_selected)</p>
+                        }
+                        @if (CanRevokeCheckerSignoff(_selected))
+                        {
+                            <button type="button" class="admin-btn admin-btn-ghost is-danger" @onclick="() => OpenRevokeCheckerModal(_selected)">Hủy chữ ký kiểm tra</button>
+                        }
+                        @if (CanReturnToDraftApproval(_selected))
+                        {
+                            <button type="button" class="admin-btn admin-btn-ghost is-danger" @onclick="() => OpenReturnToDraftModal(_selected)">Hoàn trả về soạn thảo</button>
                         }
                     </div>
                 </section>
@@ -252,6 +268,32 @@
                          ConfirmText="@(_publishAfterSign ? "Ký và ban hành" : "Ký kiểm tra")"
                          SignatureConfirmed="ConfirmSignAsync" />
 
+<AdminModal IsOpen="_revokeCheckerOpen" IsOpenChanged="v => _revokeCheckerOpen = v" Title="Hủy chữ ký người kiểm tra">
+    <ChildContent>
+        <p style="margin:0 0 0.75rem;">Chữ ký kiểm tra trên phiên bản <strong>@(_revokeCheckerTarget?.Version.Title ?? string.Empty)</strong> sẽ bị thu hồi. Người kiểm tra cần ký lại trước khi phê duyệt.</p>
+        <label class="admin-form-field-label" for="revoke-checker-reason-pd">Lý do hủy (tùy chọn)</label>
+        <textarea id="revoke-checker-reason-pd" class="admin-textarea" rows="2" placeholder="VD: Phát hiện sai sót trong nội dung kiểm tra." @bind="_revokeCheckerReason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _revokeCheckerOpen = false">Hủy bỏ</button>
+        <button type="button" class="admin-btn admin-btn-danger" @onclick="ConfirmRevokeCheckerAsync">Xác nhận hủy chữ ký kiểm tra</button>
+    </FooterContent>
+</AdminModal>
+
+<AdminModal IsOpen="_returnToDraftPdOpen" IsOpenChanged="v => _returnToDraftPdOpen = v" Title="Hoàn trả về soạn thảo">
+    <ChildContent>
+        <p style="margin:0 0 0.75rem;">
+            Phiên bản <strong>@(_returnToDraftPdTarget?.Version.Title ?? string.Empty)</strong> sẽ được chuyển trở lại <strong>bản nháp</strong>. Tất cả chữ ký hiện tại không còn hiệu lực; người viết cần chỉnh sửa và ký lại.
+        </p>
+        <label class="admin-form-field-label" for="return-draft-reason-pd">Lý do hoàn trả (bắt buộc)</label>
+        <textarea id="return-draft-reason-pd" class="admin-textarea" rows="3" placeholder="VD: Nội dung quy trình cần bổ sung bước kiểm soát nhiễm khuẩn." @bind="_returnToDraftPdReason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _returnToDraftPdOpen = false">Hủy bỏ</button>
+        <button type="button" class="admin-btn admin-btn-danger" @onclick="ConfirmReturnToDraftPdAsync" disabled="@string.IsNullOrWhiteSpace(_returnToDraftPdReason)">Hoàn về soạn thảo</button>
+    </FooterContent>
+</AdminModal>
+
 <AdminModal IsOpen="_rollbackOpen" IsOpenChanged="v => _rollbackOpen = v" Title="Khôi phục hiệu lực phiên bản cũ">
     <ChildContent>
         @if (_rollbackTarget is not null)
@@ -305,6 +347,12 @@
     private bool _rollbackOpen;
     private Sql.ProcedureVersion? _rollbackTarget;
     private string _rollbackReason = string.Empty;
+    private bool _revokeCheckerOpen;
+    private ApprovalRow? _revokeCheckerTarget;
+    private string _revokeCheckerReason = string.Empty;
+    private bool _returnToDraftPdOpen;
+    private ApprovalRow? _returnToDraftPdTarget;
+    private string _returnToDraftPdReason = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -685,6 +733,104 @@
         "draft" => "tone-muted",
         _ => "tone-muted"
     };
+
+    /// <summary>
+    /// Checker có thể tự hủy chữ ký của mình; approver (tài khoản khác writer) cũng có thể hủy chữ ký checker.
+    /// </summary>
+    private bool CanRevokeCheckerSignoff(ApprovalRow row)
+    {
+        if (row.Version.StatusCode != "pending_approval") return false;
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (userId == Guid.Empty) return false;
+        var checkerSignoff = Signoffs.GetActiveSignoff(row.Version.ProcedureVersionId, "checker");
+        if (checkerSignoff is null) return false;
+        return Signoffs.CanRevokeSignoff(row.Version.ProcedureVersionId, checkerSignoff.ProcedureSignoffRecordId, userId, out _);
+    }
+
+    /// <summary>
+    /// Checker hoặc approver có thể hoàn trả về soạn thảo (pending_approval → draft).
+    /// </summary>
+    private bool CanReturnToDraftApproval(ApprovalRow row)
+    {
+        if (row.Version.StatusCode != "pending_approval") return false;
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (userId == Guid.Empty) return false;
+        // Người có quyền phê duyệt hoặc checker vừa ký được phép hoàn trả
+        return Guard.HasPermission("SCR_PROCEDURES:APPROVE") ||
+               Signoffs.GetCurrentSignerUserId(row.Version.ProcedureVersionId, "checker") == userId;
+    }
+
+    private void OpenRevokeCheckerModal(ApprovalRow row)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "hủy chữ ký kiểm tra")) return;
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        var checkerSignoff = Signoffs.GetActiveSignoff(row.Version.ProcedureVersionId, "checker");
+        if (checkerSignoff is null)
+        {
+            Toasts.Show("Không có chữ ký kiểm tra", "Người kiểm tra chưa ký phiên bản này.", ToastVariant.Warning);
+            return;
+        }
+        if (!Signoffs.CanRevokeSignoff(row.Version.ProcedureVersionId, checkerSignoff.ProcedureSignoffRecordId, userId, out var reason))
+        {
+            Toasts.Show("Không thể hủy chữ ký", reason ?? "Tài khoản hiện tại không có quyền hủy chữ ký này.", ToastVariant.Warning);
+            return;
+        }
+        _revokeCheckerTarget = row;
+        _revokeCheckerReason = string.Empty;
+        _revokeCheckerOpen = true;
+    }
+
+    private void ConfirmRevokeCheckerAsync()
+    {
+        if (_revokeCheckerTarget is null) return;
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        var checkerSignoff = Signoffs.GetActiveSignoff(_revokeCheckerTarget.Version.ProcedureVersionId, "checker");
+        if (checkerSignoff is null)
+        {
+            Toasts.Show("Không tìm thấy chữ ký kiểm tra", "Chữ ký đã bị hủy trước đó.", ToastVariant.Warning);
+            _revokeCheckerOpen = false;
+            return;
+        }
+        try
+        {
+            Signoffs.RevokeSignoff(_revokeCheckerTarget.Version.ProcedureVersionId, checkerSignoff.ProcedureSignoffRecordId, userId, _revokeCheckerReason);
+            Recompute();
+            RefreshSelected(_revokeCheckerTarget.Version.ProcedureVersionId);
+            Toasts.Show("Đã hủy chữ ký kiểm tra", "Người kiểm tra cần ký lại trước khi phê duyệt.", ToastVariant.Info);
+            _revokeCheckerOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể hủy chữ ký kiểm tra", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void OpenReturnToDraftModal(ApprovalRow row)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "hoàn trả về soạn thảo")) return;
+        _returnToDraftPdTarget = row;
+        _returnToDraftPdReason = string.Empty;
+        _returnToDraftPdOpen = true;
+    }
+
+    private void ConfirmReturnToDraftPdAsync()
+    {
+        if (_returnToDraftPdTarget is null || string.IsNullOrWhiteSpace(_returnToDraftPdReason)) return;
+        try
+        {
+            Lifecycle.ReturnToDraft(_returnToDraftPdTarget.Version.ProcedureVersionId,
+                UserContext.CurrentUser?.UserId ?? Guid.Empty,
+                _returnToDraftPdReason.Trim());
+            Recompute();
+            RefreshSelected(_returnToDraftPdTarget.Version.ProcedureVersionId);
+            Toasts.Show("Đã hoàn về soạn thảo", $"{_returnToDraftPdTarget.Version.Title} — người viết cần chỉnh sửa và ký lại.", ToastVariant.Info);
+            _returnToDraftPdOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể hoàn về soạn thảo", ex.Message, ToastVariant.Error);
+        }
+    }
 
     public void Dispose() => Store.StateChanged -= OnChanged;
 

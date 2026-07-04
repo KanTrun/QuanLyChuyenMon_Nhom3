@@ -159,6 +159,7 @@ public sealed class AdminNavigationState : IAdminNavigationState, IDisposable
             {
                 new("Quy trình kỹ thuật", "/admin/quy-trinh", "list", null),
                 new("Tạo mới", "/admin/quy-trinh/tao", "plus", null),
+                new("Lịch sử phiên bản", "/admin/quy-trinh/lich-su", "history", null),
                 new("Phê duyệt quy trình", "/admin/quy-trinh/phe-duyet", "check", null),
             }),
             new("Phân quyền", "/admin/phan-quyen", "shield", null),

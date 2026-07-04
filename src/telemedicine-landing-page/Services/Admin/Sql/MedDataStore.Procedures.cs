@@ -158,6 +158,27 @@ public sealed partial class MedDataStore
         }
     }
 
+    public void RevokeProcedureSignoffRecord(Guid signoffRecordId, Guid revokedByUserId, string? reason = null)
+    {
+        lock (_lock)
+        {
+            var idx = _procedureSignoffRecords.FindIndex(s => s.ProcedureSignoffRecordId == signoffRecordId);
+            if (idx < 0)
+                throw MedDomainException.Constraint("PK_procedure_signoff_records", 547, "Bản ghi chữ ký không tồn tại.");
+            var existing = _procedureSignoffRecords[idx];
+            if (existing.IsRevoked)
+                throw MedDomainException.Constraint("CK_signoff_revoke_once", 50040, "Chữ ký này đã được thu hồi trước đó.");
+            _procedureSignoffRecords[idx] = existing with
+            {
+                IsRevoked = true,
+                RevokedAt = DateTime.UtcNow,
+                RevokedByUserId = revokedByUserId,
+                RevokeReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim()
+            };
+            RaiseStateChanged();
+        }
+    }
+
     public void AddProcedureVersionAuthorAssignment(ProcedureVersionAuthorAssignment assignment)
     {
         lock (_lock)
