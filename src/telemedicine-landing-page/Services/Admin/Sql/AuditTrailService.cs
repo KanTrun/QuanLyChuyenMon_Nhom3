@@ -20,7 +20,8 @@ public sealed class AuditTrailService
         "assign_role", "remove_role", "assign_permission", "remove_permission",
         "login", "logout", "switch_user",
         "create_order", "complete_order", "cancel_order",
-        "apply_protocol", "skip_protocol"
+        "apply_protocol", "skip_protocol",
+        "return_to_draft", "revoke_signoff"
     };
 
     public AuditTrailService(MedDbContext db)
