@@ -9,19 +9,32 @@ public sealed class ProcedureVersionWorkflowGuard : IWorkflowGuard<ProcedureVers
 {
     private static readonly WorkflowDefinition<string> Definition = new(new[]
     {
-        ("draft", "pending_approval"),
-        ("draft", "archived"),
-        ("pending_approval", "active"),
+        // Luồng chính: draft → pending_review → pending_approval → active
+        ("draft", "pending_review"),          // Tất cả người viết ký xong → chờ kiểm tra
+        ("pending_review", "pending_approval"), // Người kiểm tra ký → chờ phê duyệt
+        ("pending_approval", "active"),        // Người phê duyệt ký & ban hành
+
+        // Hoàn trả từ pending_review
+        ("pending_review", "draft"),           // Kiểm tra hoàn trả về soạn thảo (cấp 1 hoặc cấp 2)
+
+        // Hoàn trả từ pending_approval
+        ("pending_approval", "pending_review"), // Phê duyệt hoàn trả về kiểm tra
+        ("pending_approval", "draft"),          // Phê duyệt hoàn trả về soạn thảo (cấp 1 hoặc cấp 2)
+
+        // Từ chối / lưu trữ
         ("pending_approval", "rejected"),
         ("pending_approval", "archived"),
-        ("pending_approval", "draft"),   // Hoàn trả về soạn thảo (thu hồi chữ ký)
         ("rejected", "draft"),
         ("rejected", "archived"),
         ("active", "superseded"),
         ("active", "archived"),
         ("archived", "draft"),
         ("superseded", "active"),
-        ("archived", "active")
+        ("archived", "active"),
+        ("draft", "archived"),
+
+        // Tương thích ngược: draft → pending_approval (cho dữ liệu cũ)
+        ("draft", "pending_approval"),
     });
 
     private readonly AuditTrailService _audit;

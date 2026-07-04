@@ -383,20 +383,33 @@
     private bool CanSubmitReviewDraft => IsReviewMode
         && _reviewVersion?.StatusCode == "draft"
         && Signoffs.GetOutstandingWriterSignatures(_reviewVersion.ProcedureVersionId) == 0;
-    private bool ReviewDraftSubmitted => IsReviewMode && _reviewVersion?.StatusCode == "pending_approval";
 
-    // Người viết đã ký và có thể hủy chữ ký của mình (trên bản nháp)
+    // Bản nháp đã được gửi đi (pending_review = gửi kiểm tra; pending_approval = đã kiểm tra, chờ duyệt)
+    private bool ReviewDraftSubmitted => IsReviewMode &&
+        (_reviewVersion?.StatusCode is "pending_review" or "pending_approval");
+
+    // Người viết đã ký và có thể hủy chữ ký của mình (chỉ khi đang draft)
     private bool CanRevokeWriterSignature => IsReviewMode
         && _reviewVersion?.StatusCode == "draft"
         && UserContext.CurrentUser is { UserId: var revUid }
         && Signoffs.GetActiveWriterSignoff(_reviewVersion.ProcedureVersionId, revUid) is not null;
 
-    // Người viết có thể rút lại gửi duyệt (pending_approval, checker chưa ký)
-    private bool CanReturnToDraftFromPending => IsReviewMode
-        && _reviewVersion?.StatusCode == "pending_approval"
-        && UserContext.CurrentUser is { UserId: var retUid }
-        && !Signoffs.HasCurrentSignoff(_reviewVersion.ProcedureVersionId, "checker")
-        && Signoffs.GetCurrentSignerUserId(_reviewVersion.ProcedureVersionId, "writer") == retUid;
+    // Người viết có thể rút lại gửi duyệt (pending_review: checker chưa ký, người viết là người đã ký)
+    private bool CanReturnToDraftFromPending
+    {
+        get
+        {
+            if (!IsReviewMode || _reviewVersion is null) return false;
+            var status = _reviewVersion.StatusCode;
+            // Chỉ cho rút lại khi chờ kiểm tra (checker chưa ký)
+            if (status != "pending_review") return false;
+            if (UserContext.CurrentUser is not { UserId: var uid }) return false;
+            // Checker chưa ký = cho phép rút lại
+            if (Signoffs.HasCurrentSignoff(_reviewVersion.ProcedureVersionId, "checker")) return false;
+            // Người dùng hiện tại là một trong số người viết đã ký
+            return Signoffs.IsCurrentUserAWriter(_reviewVersion.ProcedureVersionId, uid);
+        }
+    }
     private int RequiredWriterCount => _writerAssignments
         .Select(item => ParseGuid(item.UserId))
         .Where(item => item.HasValue)
@@ -564,12 +577,14 @@
             {
                 Lifecycle.Submit(_reviewVersion.ProcedureVersionId, userId);
                 _reviewVersion = Store.ProcedureVersions.First(item => item.ProcedureVersionId == _reviewVersion.ProcedureVersionId);
-                Toasts.Show("Đã ký và gửi kiểm tra", _reviewVersion.Title, ToastVariant.Success);
+                Toasts.Show("Đã ký và gửi kiểm tra",
+                    $"{_reviewVersion.Title} — phiên bản đã chuyển sang chờ kiểm tra.",
+                    ToastVariant.Success);
                 Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
             }
             else
             {
-                Toasts.Show("Đã ký người viết", $"Còn thiếu {outstandingWriters} chữ ký người viết.", ToastVariant.Info);
+                Toasts.Show("Đã ký người viết", $"Còn thiếu {outstandingWriters} chữ ký người viết trước khi gửi kiểm tra.", ToastVariant.Info);
                 Navigation.NavigateTo("/qlcm/quy-trinh");
             }
         }
@@ -649,7 +664,9 @@
             Lifecycle.ReturnToDraft(_reviewVersion.ProcedureVersionId, userId, _returnToDraftReason.Trim());
             Store.Refresh();
             _reviewVersion = Store.ProcedureVersions.First(v => v.ProcedureVersionId == _reviewVersion.ProcedureVersionId);
-            Toasts.Show("Đã hoàn về soạn thảo", "Phiên bản trở về bản nháp. Người viết có thể chỉnh sửa và ký lại.", ToastVariant.Info);
+            Toasts.Show("Đã rút lại về soạn thảo",
+                "Phiên bản trở về bản nháp. Tất cả chữ ký đã bị vô hiệu; người viết có thể chỉnh sửa và ký lại.",
+                ToastVariant.Info);
             _returnToDraftOpen = false;
         }
         catch (Exception ex)
@@ -952,9 +969,11 @@
             return;
         }
 
-        if (version.StatusCode != "draft")
+        // Cho phép xem/hành động trên draft (ký), pending_review (rút lại gửi), pending_approval (xem trạng thái)
+        var allowedStatuses = new[] { "draft", "pending_review", "pending_approval" };
+        if (!allowedStatuses.Contains(version.StatusCode, StringComparer.OrdinalIgnoreCase))
         {
-            Toasts.Show("Không thể xem/ký", "Chỉ phiên bản nháp mới mở được trên trang soạn thảo.", ToastVariant.Warning);
+            Toasts.Show("Không thể xem/ký", "Trang này chỉ hỗ trợ phiên bản đang soạn thảo hoặc chờ kiểm tra.", ToastVariant.Warning);
             Navigation.NavigateTo("/qlcm/quy-trinh");
             return;
         }
@@ -969,7 +988,8 @@
     {
         var procedure = Store.Procedures.FirstOrDefault(item => item.ProcedureId == ProcedureId);
         var existingDraft = Store.ProcedureVersions
-            .Where(item => item.ProcedureId == ProcedureId && item.StatusCode == "draft")
+            .Where(item => item.ProcedureId == ProcedureId &&
+                           (item.StatusCode == "draft" || item.StatusCode == "pending_review"))
             .OrderByDescending(item => item.VersionNo)
             .FirstOrDefault();
         if (existingDraft is not null)
@@ -1107,8 +1127,8 @@
             return "Nhập mã, tên và phiên bản quy trình.";
         if (!IsUpdateMode && !IsEditDraftMode && Store.Procedures.Any(item => string.Equals(item.ProcedureCode, _code.Trim(), StringComparison.OrdinalIgnoreCase)))
             return "Mã quy trình đã tồn tại. Vui lòng dùng mã khác.";
-        if (IsUpdateMode && _sourceVersion?.StatusCode == "pending_approval")
-            return "Phiên bản mới nhất đang chờ phê duyệt. Hãy hoàn tất hoặc từ chối trước khi tạo bản kế tiếp.";
+        if (IsUpdateMode && _sourceVersion?.StatusCode is "pending_review" or "pending_approval")
+            return "Phiên bản mới nhất đang chờ kiểm tra/phê duyệt. Hãy hoàn tất hoặc hoàn trả trước khi tạo bản kế tiếp.";
         if (!Guid.TryParse(_departmentId, out _)) return "Chọn khoa/phòng chủ trì.";
         if (_issueDate is null || _issueNumber < 1) return "Nhập ngày và lần ban hành hợp lệ.";
         if (RequiredWriterCount == 0) return "Chọn ít nhất một người viết.";

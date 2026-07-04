@@ -74,6 +74,7 @@ public static class MedLookups
     public static IReadOnlyList<LookupEntry> VersionStatuses { get; } = new[]
     {
         new LookupEntry("draft", "Bản nháp"),
+        new LookupEntry("pending_review", "Chờ kiểm tra"),
         new LookupEntry("pending_approval", "Chờ phê duyệt"),
         new LookupEntry("active", "Đang hiệu lực"),
         new LookupEntry("superseded", "Đã được thay thế"),

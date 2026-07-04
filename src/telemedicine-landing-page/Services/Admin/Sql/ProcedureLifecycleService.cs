@@ -4,6 +4,7 @@ using TelemedicineLandingPage.Application.Workflow;
 using TelemedicineLandingPage.Models.Admin.Sql;
 using TelemedicineLandingPage.Services.Admin;
 using System.Text.Json;
+using System.Linq;
 
 namespace TelemedicineLandingPage.Services.Admin.Sql;
 
@@ -87,12 +88,13 @@ public sealed class ProcedureLifecycleService
         return version;
     }
 
-    /// <summary>Gửi phiên bản để phê duyệt (draft → pending_approval).</summary>
+    /// <summary>
+    /// Gửi phiên bản để kiểm tra (draft → pending_review).
+    /// Yêu cầu đã có đủ chữ ký người viết; người kiểm tra sẽ xem xét và ký tiếp.
+    /// </summary>
     public void Submit(Guid versionId, Guid submittedBy)
     {
         var ver = GetVersionOrThrow(versionId);
-        EnsureTransition(ver, "pending_approval", "CK_procedure_version_submit", 50020,
-            "Chỉ có thể gửi phiên bản đang ở trạng thái draft.");
         if (ver.StatusCode != "draft")
             throw MedDomainException.Constraint("CK_procedure_version_submit", 50020,
                 "Chỉ có thể gửi phiên bản ở trạng thái bản nháp.");
@@ -106,9 +108,15 @@ public sealed class ProcedureLifecycleService
         EnsureDocumentReady(versionId, requireAllSignoffs: false);
         EnsureCurrentSignoff(versionId, "writer", "CK_procedure_writer_signoff_required", 50027);
 
+        // Ưu tiên pending_review; fallback pending_approval cho dữ liệu cũ
+        var targetStatus = _workflow.CanTransition(ver.StatusCode, "pending_review")
+            ? "pending_review" : "pending_approval";
+        EnsureTransition(ver, targetStatus, "CK_procedure_version_submit", 50020,
+            "Không thể gửi phiên bản từ trạng thái hiện tại.");
+
         var updated = ver with
         {
-            StatusCode = "pending_approval",
+            StatusCode = targetStatus,
             SubmittedBy = submittedBy,
             SubmittedAt = DateTime.UtcNow
         };
@@ -120,13 +128,58 @@ public sealed class ProcedureLifecycleService
         {
             CorrelationId = Guid.NewGuid(),
             ActorUserId = submittedBy,
-            ActionCode = "submit",
+            ActionCode = "submit_to_review",
             TargetType = "procedure_version",
             TargetId = versionId.ToString(),
             DepartmentId = updated.DepartmentId ?? procDepartmentId(ver.ProcedureId),
             MetadataJson = JsonSerializer.Serialize(new
             {
-                Event = "procedure_submit",
+                Event = "procedure_submit_to_review",
+                ver.ProcedureId,
+                updated.ProcedureVersionId,
+                updated.VersionLabel,
+                VersionTitle = updated.Title,
+                FromState = ver.StatusCode,
+                ToState = updated.StatusCode
+            })
+        });
+        NotifyDataChanged();
+    }
+
+    /// <summary>
+    /// Chuyển phiên bản từ chờ kiểm tra sang chờ phê duyệt (pending_review → pending_approval).
+    /// Gọi sau khi người kiểm tra đã ký xác nhận.
+    /// </summary>
+    public void SubmitToApproval(Guid versionId, Guid checkerUserId)
+    {
+        var ver = GetVersionOrThrow(versionId);
+        // Cho phép cả pending_review và pending_approval (compat dữ liệu cũ)
+        if (ver.StatusCode != "pending_review" && ver.StatusCode != "pending_approval")
+            throw MedDomainException.Constraint("CK_procedure_version_submit_to_approval", 50043,
+                "Chỉ có thể chuyển sang chờ phê duyệt khi phiên bản đang chờ kiểm tra.");
+
+        if (ver.StatusCode == "pending_approval") return; // đã ở đúng trạng thái
+
+        EnsureCurrentSignoff(versionId, "checker", "CK_procedure_checker_signoff_required", 50044);
+        EnsureTransition(ver, "pending_approval", "CK_procedure_version_submit_to_approval", 50043,
+            "Không thể chuyển sang chờ phê duyệt từ trạng thái hiện tại.");
+
+        var updated = ver with { StatusCode = "pending_approval" };
+        PersistVersionUpdate(updated);
+        _documents?.PersistSnapshot(versionId, "submitted_to_approval", checkerUserId);
+        _workflow.OnTransitioned(updated, ver.StatusCode, updated.StatusCode, checkerUserId);
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = checkerUserId,
+            ActionCode = "submit_to_approval",
+            TargetType = "procedure_version",
+            TargetId = versionId.ToString(),
+            DepartmentId = updated.DepartmentId ?? procDepartmentId(ver.ProcedureId),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_submit_to_approval",
                 ver.ProcedureId,
                 updated.ProcedureVersionId,
                 updated.VersionLabel,
@@ -332,10 +385,9 @@ public sealed class ProcedureLifecycleService
     }
 
     /// <summary>
-    /// Hoàn trả phiên bản đang chờ phê duyệt về bản nháp (pending_approval → draft).
-    /// Dùng khi người kiểm tra hoặc người phê duyệt nhận thấy cần chỉnh sửa thêm
-    /// mà không muốn đi qua rejected → restore. Tất cả chữ ký hiện tại sẽ bị vô hiệu hóa
-    /// do hash nội dung (không đổi) nhưng trạng thái quay về draft cho phép người viết chỉnh sửa.
+    /// Hoàn trả toàn bộ về bản nháp — hủy TẤT CẢ chữ ký (người viết + kiểm tra).
+    /// Hoạt động từ pending_review hoặc pending_approval.
+    /// Dùng khi cần người viết 1 làm lại từ đầu.
     /// </summary>
     public void ReturnToDraft(Guid versionId, Guid returnedBy, string reason)
     {
@@ -344,12 +396,16 @@ public sealed class ProcedureLifecycleService
                 "Phải nhập lý do hoàn trả về soạn thảo.");
 
         var ver = GetVersionOrThrow(versionId);
-        if (!string.Equals(ver.StatusCode, "pending_approval", StringComparison.OrdinalIgnoreCase))
+        var allowedStatuses = new[] { "pending_review", "pending_approval" };
+        if (!allowedStatuses.Contains(ver.StatusCode, StringComparer.OrdinalIgnoreCase))
             throw MedDomainException.Constraint("CK_procedure_version_return", 50042,
-                "Chỉ có thể hoàn trả phiên bản đang chờ phê duyệt về soạn thảo.");
+                "Chỉ có thể hoàn trả về soạn thảo từ trạng thái chờ kiểm tra hoặc chờ phê duyệt.");
 
         EnsureTransition(ver, "draft", "CK_procedure_version_return", 50042,
             "Không thể hoàn trả phiên bản về soạn thảo từ trạng thái hiện tại.");
+
+        // Hủy TẤT CẢ chữ ký (writer + checker) để người viết phải ký lại từ đầu
+        RevokeCurrentSignoffs(versionId, returnedBy, reason.Trim());
 
         var returned = ver with
         {
@@ -373,6 +429,121 @@ public sealed class ProcedureLifecycleService
             MetadataJson = JsonSerializer.Serialize(new
             {
                 Event = "procedure_return_to_draft",
+                ver.ProcedureId,
+                returned.ProcedureVersionId,
+                returned.VersionLabel,
+                VersionTitle = returned.Title,
+                FromState = ver.StatusCode,
+                ToState = returned.StatusCode,
+                Reason = reason.Trim()
+            })
+        });
+        NotifyDataChanged();
+    }
+
+    /// <summary>
+    /// Hoàn trả về người viết cuối (người viết có display_order cao nhất đã ký):
+    /// hủy chữ ký checker (nếu có) + chữ ký người viết cuối, giữ chữ ký người viết 1 (nếu có).
+    /// Hoạt động từ pending_review hoặc pending_approval.
+    /// Dùng khi người kiểm tra/phê duyệt thấy lỗi ở phần người viết 2 nhưng phần người viết 1 vẫn ổn.
+    /// </summary>
+    public void ReturnToLastWriter(Guid versionId, Guid returnedBy, string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+            throw MedDomainException.Constraint("CK_procedure_version_return_reason", 50041,
+                "Phải nhập lý do hoàn trả.");
+
+        var ver = GetVersionOrThrow(versionId);
+        var allowedStatuses = new[] { "pending_review", "pending_approval" };
+        if (!allowedStatuses.Contains(ver.StatusCode, StringComparer.OrdinalIgnoreCase))
+            throw MedDomainException.Constraint("CK_procedure_version_return_to_writer", 50045,
+                "Chỉ có thể hoàn trả từ trạng thái chờ kiểm tra hoặc chờ phê duyệt.");
+
+        EnsureTransition(ver, "draft", "CK_procedure_version_return_to_writer", 50045,
+            "Không thể hoàn trả từ trạng thái hiện tại.");
+
+        // Hủy toàn bộ chữ ký checker
+        RevokeCurrentSignoffs(versionId, returnedBy, reason.Trim(), "checker");
+
+        // Hủy chỉ chữ ký người viết cuối (display_order cao nhất có chữ ký)
+        RevokeLastWriterSignoff(versionId, returnedBy, reason.Trim());
+
+        var returned = ver with
+        {
+            StatusCode = "draft",
+            SubmittedBy = null,
+            SubmittedAt = null,
+            ChangeReason = reason.Trim()
+        };
+        PersistVersionUpdate(returned);
+        _documents?.PersistSnapshot(versionId, "returned_to_last_writer", returnedBy);
+        _workflow.OnTransitioned(returned, ver.StatusCode, returned.StatusCode, returnedBy, reason);
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = returnedBy,
+            ActionCode = "return_to_last_writer",
+            TargetType = "procedure_version",
+            TargetId = versionId.ToString(),
+            DepartmentId = returned.DepartmentId ?? procDepartmentId(ver.ProcedureId),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_return_to_last_writer",
+                ver.ProcedureId,
+                returned.ProcedureVersionId,
+                returned.VersionLabel,
+                VersionTitle = returned.Title,
+                FromState = ver.StatusCode,
+                ToState = returned.StatusCode,
+                Reason = reason.Trim()
+            })
+        });
+        NotifyDataChanged();
+    }
+
+    /// <summary>
+    /// Hoàn trả về người kiểm tra (pending_approval → pending_review):
+    /// hủy chữ ký checker, giữ nguyên chữ ký tất cả người viết.
+    /// Dùng khi người phê duyệt thấy vấn đề cần kiểm tra lại mà nội dung người viết vẫn ổn.
+    /// </summary>
+    public void ReturnToChecker(Guid versionId, Guid returnedBy, string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+            throw MedDomainException.Constraint("CK_procedure_version_return_reason", 50041,
+                "Phải nhập lý do hoàn trả về kiểm tra.");
+
+        var ver = GetVersionOrThrow(versionId);
+        if (!string.Equals(ver.StatusCode, "pending_approval", StringComparison.OrdinalIgnoreCase))
+            throw MedDomainException.Constraint("CK_procedure_version_return_to_review", 50046,
+                "Chỉ có thể hoàn trả về kiểm tra từ trạng thái chờ phê duyệt.");
+
+        EnsureTransition(ver, "pending_review", "CK_procedure_version_return_to_review", 50046,
+            "Không thể hoàn trả về kiểm tra từ trạng thái hiện tại.");
+
+        // Hủy chữ ký checker (giữ nguyên chữ ký người viết)
+        RevokeCurrentSignoffs(versionId, returnedBy, reason.Trim(), "checker");
+
+        var returned = ver with
+        {
+            StatusCode = "pending_review",
+            ChangeReason = reason.Trim()
+        };
+        PersistVersionUpdate(returned);
+        _documents?.PersistSnapshot(versionId, "returned_to_review", returnedBy);
+        _workflow.OnTransitioned(returned, ver.StatusCode, returned.StatusCode, returnedBy, reason);
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = returnedBy,
+            ActionCode = "return_to_review",
+            TargetType = "procedure_version",
+            TargetId = versionId.ToString(),
+            DepartmentId = returned.DepartmentId ?? procDepartmentId(ver.ProcedureId),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_return_to_checker",
                 ver.ProcedureId,
                 returned.ProcedureVersionId,
                 returned.VersionLabel,
@@ -658,4 +829,52 @@ public sealed class ProcedureLifecycleService
         => _db.Procedures.FirstOrDefault(item => item.ProcedureId == procedureId)?.OwnerDepartmentId;
 
     private void NotifyDataChanged() => _changeBus?.Publish();
+
+    /// <summary>
+    /// Hủy (revoke) tất cả chữ ký chưa bị hủy của phiên bản.
+    /// Nếu truyền roles thì chỉ hủy chữ ký thuộc các vai trò đó.
+    /// </summary>
+    private void RevokeCurrentSignoffs(Guid versionId, Guid revokedBy, string reason, params string[] roles)
+    {
+        _db.ChangeTracker.Clear();
+        var now = DateTime.UtcNow;
+        var query = _db.ProcedureSignoffRecords
+            .Where(s => s.ProcedureVersionId == versionId && !s.IsRevoked);
+        if (roles.Length > 0)
+            query = query.Where(s => roles.Contains(s.SignoffRole));
+
+        query.ExecuteUpdate(setters => setters
+            .SetProperty(s => s.IsRevoked, true)
+            .SetProperty(s => s.RevokedAt, now)
+            .SetProperty(s => s.RevokedByUserId, (Guid?)revokedBy)
+            .SetProperty(s => s.RevokeReason, reason));
+        _db.ChangeTracker.Clear();
+    }
+
+    /// <summary>
+    /// Hủy chữ ký của người viết có display_order cao nhất (người viết cuối) hiện chưa bị hủy.
+    /// Dùng để giữ lại chữ ký người viết 1 khi hoàn trả về người viết 2.
+    /// </summary>
+    private void RevokeLastWriterSignoff(Guid versionId, Guid revokedBy, string reason)
+    {
+        _db.ChangeTracker.Clear();
+        var lastWriterSignoff = _db.ProcedureSignoffRecords
+            .Where(s => s.ProcedureVersionId == versionId && !s.IsRevoked &&
+                        s.SignoffRole == "writer")
+            .OrderByDescending(s => s.DisplayOrder)
+            .ThenByDescending(s => s.SignedAt)
+            .FirstOrDefault();
+
+        if (lastWriterSignoff is null) return;
+
+        var now = DateTime.UtcNow;
+        _db.ProcedureSignoffRecords
+            .Where(s => s.ProcedureSignoffRecordId == lastWriterSignoff.ProcedureSignoffRecordId)
+            .ExecuteUpdate(setters => setters
+                .SetProperty(s => s.IsRevoked, true)
+                .SetProperty(s => s.RevokedAt, now)
+                .SetProperty(s => s.RevokedByUserId, (Guid?)revokedBy)
+                .SetProperty(s => s.RevokeReason, reason));
+        _db.ChangeTracker.Clear();
+    }
 }

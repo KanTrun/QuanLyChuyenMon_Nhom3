@@ -198,6 +198,38 @@ public sealed class ProcedureSignoffService
     }
 
     /// <summary>
+    /// Kiểm tra xem phiên bản có từ 2 người viết khác nhau đã ký hợp lệ hay không.
+    /// Dùng để quyết định có hiển thị nút "Hoàn trả về người viết cuối" riêng biệt không.
+    /// </summary>
+    public bool HasMultipleWriterSignoffs(Guid versionId)
+    {
+        var snapshot = _snapshots.GetSnapshot(versionId);
+        var hash = _snapshots.ComputeContentHash(versionId);
+        return snapshot.Signoffs
+            .Where(s => !s.IsRevoked &&
+                        string.Equals(s.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(s.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase))
+            .Select(s => s.SignerUserId)
+            .Distinct()
+            .Count() > 1;
+    }
+
+    /// <summary>
+    /// Kiểm tra xem user hiện tại có phải là người viết đã ký (hợp lệ) trên phiên bản không.
+    /// </summary>
+    public bool IsCurrentUserAWriter(Guid versionId, Guid userId)
+    {
+        if (userId == Guid.Empty) return false;
+        var snapshot = _snapshots.GetSnapshot(versionId);
+        var hash = _snapshots.ComputeContentHash(versionId);
+        return snapshot.Signoffs.Any(s =>
+            !s.IsRevoked &&
+            string.Equals(s.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
+            s.SignerUserId == userId &&
+            string.Equals(s.ContentHashSha256, hash, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
     /// Lấy chữ ký đang có hiệu lực (chưa bị thu hồi, khớp hash hiện tại) của checker/approver.
     /// </summary>
     public ProcedureSignoffRecord? GetActiveSignoff(Guid versionId, string role)
@@ -221,27 +253,28 @@ public sealed class ProcedureSignoffService
         switch (role)
         {
             case "writer":
-                if (!string.Equals(versionStatus, "draft", StringComparison.OrdinalIgnoreCase) &&
-                    !string.Equals(versionStatus, "pending_approval", StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidOperationException("Chỉ thu hồi chữ ký người viết khi phiên bản đang ở trạng thái bản nháp hoặc chờ phê duyệt.");
+                // Writer có thể tự hủy chữ ký khi ở draft, pending_review, hoặc pending_approval (nếu checker chưa ký)
+                var writerAllowedStatuses = new[] { "draft", "pending_review", "pending_approval" };
+                if (!writerAllowedStatuses.Contains(versionStatus, StringComparer.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(
+                        "Chỉ thu hồi chữ ký người viết khi phiên bản đang ở trạng thái bản nháp, chờ kiểm tra hoặc chờ phê duyệt.");
                 if (signoff.SignerUserId != revokedByUserId)
                     throw new InvalidOperationException("Người viết chỉ được thu hồi chữ ký của chính mình.");
-                // Khi status=pending_approval: chỉ cho phép nếu checker chưa ký
-                if (string.Equals(versionStatus, "pending_approval", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (_snapshots.HasCurrentSignoff(snapshot, "checker"))
-                        throw new InvalidOperationException("Không thể thu hồi chữ ký người viết khi người kiểm tra đã ký. Hãy yêu cầu người kiểm tra hoặc người phê duyệt trả về soạn thảo.");
-                }
+                // Chỉ thu hồi khi checker chưa ký
+                if (_snapshots.HasCurrentSignoff(snapshot, "checker"))
+                    throw new InvalidOperationException(
+                        "Không thể thu hồi chữ ký người viết khi người kiểm tra đã ký. Hãy yêu cầu người kiểm tra hoặc người phê duyệt hoàn trả về soạn thảo.");
                 break;
 
             case "checker":
-                if (!string.Equals(versionStatus, "pending_approval", StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidOperationException("Chỉ thu hồi chữ ký người kiểm tra khi phiên bản đang chờ phê duyệt.");
-                // Checker tự hủy HOẶC người khác (approver-level) hủy để yêu cầu ký lại
-                var isOwnRevoke = signoff.SignerUserId == revokedByUserId;
+                // Checker tự hủy hoặc approver-level hủy; từ pending_review hoặc pending_approval
+                var checkerAllowedStatuses = new[] { "pending_review", "pending_approval" };
+                if (!checkerAllowedStatuses.Contains(versionStatus, StringComparer.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(
+                        "Chỉ thu hồi chữ ký người kiểm tra khi phiên bản đang chờ kiểm tra hoặc chờ phê duyệt.");
                 var writerIds = GetCurrentSignerUserIds(snapshot, "writer");
                 var isWriter = writerIds.Contains(revokedByUserId);
-                if (!isOwnRevoke && isWriter)
+                if (isWriter && signoff.SignerUserId != revokedByUserId)
                     throw new InvalidOperationException("Người viết không được thu hồi chữ ký của người kiểm tra.");
                 break;
 
@@ -368,11 +401,27 @@ public sealed class ProcedureSignoffService
 
     private void EnsureSigningStage(ProcedureDocumentSnapshot snapshot, string role)
     {
-        var expectedStatus = role == "writer" ? "draft" : "pending_approval";
-        if (!string.Equals(snapshot.Version.StatusCode, expectedStatus, StringComparison.OrdinalIgnoreCase))
+        var status = snapshot.Version.StatusCode;
+        switch (role.ToLowerInvariant())
         {
-            var stageLabel = role == "writer" ? "bản nháp" : "chờ phê duyệt";
-            throw new InvalidOperationException($"Chỉ được ký {RoleLabel(role)} khi phiên bản ở trạng thái {stageLabel}.");
+            case "writer":
+                if (!string.Equals(status, "draft", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("Chỉ được ký người viết khi phiên bản đang ở trạng thái bản nháp.");
+                break;
+
+            case "checker":
+                // Ký kiểm tra tại pending_review (luồng mới) hoặc pending_approval (tương thích dữ liệu cũ)
+                if (!string.Equals(status, "pending_review", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(status, "pending_approval", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(
+                        "Chỉ được ký kiểm tra khi phiên bản đang ở trạng thái chờ kiểm tra hoặc chờ phê duyệt.");
+                break;
+
+            case "approver":
+                if (!string.Equals(status, "pending_approval", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(
+                        "Chỉ được ký phê duyệt khi phiên bản đang ở trạng thái chờ phê duyệt.");
+                break;
         }
 
         if (role is "checker" or "approver" && !_snapshots.HasCurrentSignoff(snapshot, "writer"))

@@ -35,7 +35,9 @@
         <div class="admin-filter-field">
             <label class="admin-filter-label" for="approval-status">Trạng thái</label>
             <select id="approval-status" class="admin-select" @bind="_status" @bind:after="Recompute">
-                <option value="pending_approval">Chờ duyệt</option>
+                <option value="pending_any">Chờ xử lý (kiểm tra + duyệt)</option>
+                <option value="pending_review">Chờ kiểm tra</option>
+                <option value="pending_approval">Chờ phê duyệt</option>
                 <option value="draft">Bản nháp</option>
                 <option value="rejected">Đã trả lại</option>
                 <option value="active">Đang hiệu lực</option>
@@ -92,14 +94,14 @@
                 <td>@GetDeptName(row.Version.DepartmentId ?? row.Procedure.OwnerDepartmentId)</td>
                 <td><AdminBadge Tone="@VersionTone(row.Version.StatusCode)">@StatusLabel(row.Version.StatusCode)</AdminBadge></td>
                 <td class="admin-table-cell-muted">@AdminDateTimeDisplay.ShortDateTime(row.Version.SubmittedAt ?? row.Version.CreatedAt)</td>
-                <td style="text-align:right;" @onclick:stopPropagation="true">
+                        <td style="text-align:right;" @onclick:stopPropagation="true">
                     <AdminRowActionMenu MenuTitle="Hành động phiên bản">
                         <PrimaryContent>
-                            @if (row.Version.StatusCode == "pending_approval" && CanSignChecker(row))
+                            @if (CanSignChecker(row))
                             {
                                 <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => OpenSignModal(row.Version, "checker")'>Ký kiểm tra</button>
                             }
-                            else if (row.Version.StatusCode == "pending_approval" && CanApprove(row))
+                            else if (CanApprove(row))
                             {
                                 <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => PrepareApproveAsync(row)">Phê duyệt &amp; ban hành</button>
                             }
@@ -119,6 +121,17 @@
                             {
                                 <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenEdit(row)">Sửa metadata</button>
                             }
+                            @if (row.Version.StatusCode == "pending_review")
+                            {
+                                @if (CanReturnToDraftFromReview(row))
+                                {
+                                    @if (Signoffs.HasMultipleWriterSignoffs(row.Version.ProcedureVersionId))
+                                    {
+                                        <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenReturnToLastWriterModal(row)">Hoàn trả về người viết cuối (giữ chữ ký NV1)</button>
+                                    }
+                                    <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenReturnToDraftModal(row)">Hoàn trả toàn bộ về soạn thảo</button>
+                                }
+                            }
                             @if (row.Version.StatusCode == "pending_approval")
                             {
                                 <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => RejectAsync(row)">Từ chối</button>
@@ -128,7 +141,15 @@
                                 }
                                 @if (CanReturnToDraftApproval(row))
                                 {
-                                    <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenReturnToDraftModal(row)">Hoàn trả về soạn thảo</button>
+                                    @if (CanReturnToChecker(row))
+                                    {
+                                        <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenReturnToCheckerModal(row)">Hoàn trả về kiểm tra</button>
+                                    }
+                                    @if (Signoffs.HasMultipleWriterSignoffs(row.Version.ProcedureVersionId))
+                                    {
+                                        <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenReturnToLastWriterModal(row)">Hoàn trả về người viết cuối (giữ chữ ký NV1)</button>
+                                    }
+                                    <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenReturnToDraftModal(row)">Hoàn trả toàn bộ về soạn thảo</button>
                                 }
                             }
                             @if (row.Version.StatusCode != "active" && row.Version.StatusCode != "archived")
@@ -175,7 +196,7 @@
                                          EnableApproverSigning="true"
                                          OnSignRequested="HandleDetailSignAsync" />
 
-            @if (_selected.Version.StatusCode == "pending_approval")
+            @if (_selected.Version.StatusCode is "pending_review" or "pending_approval")
             {
                 <section class="procedure-detail-section">
                     <h3 class="admin-panel-title">Hành động ký trong phiên hiện tại</h3>
@@ -196,9 +217,18 @@
                         {
                             <button type="button" class="admin-btn admin-btn-ghost is-danger" @onclick="() => OpenRevokeCheckerModal(_selected)">Hủy chữ ký kiểm tra</button>
                         }
-                        @if (CanReturnToDraftApproval(_selected))
+                        @if (_selected.Version.StatusCode == "pending_approval" && CanReturnToChecker(_selected))
                         {
-                            <button type="button" class="admin-btn admin-btn-ghost is-danger" @onclick="() => OpenReturnToDraftModal(_selected)">Hoàn trả về soạn thảo</button>
+                            <button type="button" class="admin-btn admin-btn-ghost is-danger" @onclick="() => OpenReturnToCheckerModal(_selected)">Hoàn trả về kiểm tra</button>
+                        }
+                        @if (Signoffs.HasMultipleWriterSignoffs(_selected.Version.ProcedureVersionId) &&
+                             (CanReturnToDraftFromReview(_selected) || CanReturnToDraftApproval(_selected)))
+                        {
+                            <button type="button" class="admin-btn admin-btn-ghost is-danger" @onclick="() => OpenReturnToLastWriterModal(_selected)">Hoàn trả về người viết cuối (giữ chữ ký NV1)</button>
+                        }
+                        @if (CanReturnToDraftFromReview(_selected) || CanReturnToDraftApproval(_selected))
+                        {
+                            <button type="button" class="admin-btn admin-btn-ghost is-danger" @onclick="() => OpenReturnToDraftModal(_selected)">Hoàn trả toàn bộ về soạn thảo</button>
                         }
                     </div>
                 </section>
@@ -280,10 +310,11 @@
     </FooterContent>
 </AdminModal>
 
-<AdminModal IsOpen="_returnToDraftPdOpen" IsOpenChanged="v => _returnToDraftPdOpen = v" Title="Hoàn trả về soạn thảo">
+<AdminModal IsOpen="_returnToDraftPdOpen" IsOpenChanged="v => _returnToDraftPdOpen = v" Title="Hoàn trả toàn bộ về soạn thảo">
     <ChildContent>
         <p style="margin:0 0 0.75rem;">
-            Phiên bản <strong>@(_returnToDraftPdTarget?.Version.Title ?? string.Empty)</strong> sẽ được chuyển trở lại <strong>bản nháp</strong>. Tất cả chữ ký hiện tại không còn hiệu lực; người viết cần chỉnh sửa và ký lại.
+            Phiên bản <strong>@(_returnToDraftPdTarget?.Version.Title ?? string.Empty)</strong> sẽ trở về <strong>bản nháp</strong>.
+            <strong>Tất cả chữ ký</strong> (người viết, kiểm tra) sẽ bị vô hiệu hóa; các người viết cần chỉnh sửa và ký lại từ đầu.
         </p>
         <label class="admin-form-field-label" for="return-draft-reason-pd">Lý do hoàn trả (bắt buộc)</label>
         <textarea id="return-draft-reason-pd" class="admin-textarea" rows="3" placeholder="VD: Nội dung quy trình cần bổ sung bước kiểm soát nhiễm khuẩn." @bind="_returnToDraftPdReason"></textarea>
@@ -291,6 +322,39 @@
     <FooterContent>
         <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _returnToDraftPdOpen = false">Hủy bỏ</button>
         <button type="button" class="admin-btn admin-btn-danger" @onclick="ConfirmReturnToDraftPdAsync" disabled="@string.IsNullOrWhiteSpace(_returnToDraftPdReason)">Hoàn về soạn thảo</button>
+    </FooterContent>
+</AdminModal>
+
+<AdminModal IsOpen="_returnToCheckerOpen" IsOpenChanged="v => _returnToCheckerOpen = v" Title="Hoàn trả về người kiểm tra">
+    <ChildContent>
+        <p style="margin:0 0 0.75rem;">
+            Phiên bản <strong>@(_returnToCheckerTarget?.Version.Title ?? string.Empty)</strong> sẽ trở về trạng thái <strong>chờ kiểm tra</strong>.
+            Chữ ký người kiểm tra bị vô hiệu hóa; chữ ký người viết được <strong>giữ nguyên</strong>.
+            Người kiểm tra cần xem xét lại và ký lại.
+        </p>
+        <label class="admin-form-field-label" for="return-checker-reason-pd">Lý do hoàn trả (bắt buộc)</label>
+        <textarea id="return-checker-reason-pd" class="admin-textarea" rows="3" placeholder="VD: Cần xem xét lại tính hợp lệ của quy trình theo tiêu chuẩn mới." @bind="_returnToCheckerReason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _returnToCheckerOpen = false">Hủy bỏ</button>
+        <button type="button" class="admin-btn admin-btn-danger" @onclick="ConfirmReturnToCheckerAsync" disabled="@string.IsNullOrWhiteSpace(_returnToCheckerReason)">Hoàn về kiểm tra</button>
+    </FooterContent>
+</AdminModal>
+
+<AdminModal IsOpen="_returnToLastWriterOpen" IsOpenChanged="v => _returnToLastWriterOpen = v" Title="Hoàn trả về người viết cuối">
+    <ChildContent>
+        <p style="margin:0 0 0.75rem;">
+            Phiên bản <strong>@(_returnToLastWriterTarget?.Version.Title ?? string.Empty)</strong> sẽ trở về <strong>bản nháp</strong>.
+            Chữ ký kiểm tra (nếu có) và chữ ký người viết cuối bị vô hiệu hóa;
+            chữ ký người viết 1 được <strong>giữ nguyên</strong>.
+            Người viết cuối cần chỉnh sửa và ký lại.
+        </p>
+        <label class="admin-form-field-label" for="return-lastwriter-reason-pd">Lý do hoàn trả (bắt buộc)</label>
+        <textarea id="return-lastwriter-reason-pd" class="admin-textarea" rows="3" placeholder="VD: Phần bổ sung của người viết 2 cần điều chỉnh theo hướng dẫn mới." @bind="_returnToLastWriterReason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _returnToLastWriterOpen = false">Hủy bỏ</button>
+        <button type="button" class="admin-btn admin-btn-danger" @onclick="ConfirmReturnToLastWriterAsync" disabled="@string.IsNullOrWhiteSpace(_returnToLastWriterReason)">Hoàn trả về người viết cuối</button>
     </FooterContent>
 </AdminModal>
 
@@ -324,7 +388,7 @@
     private const int _pageSize = 10;
     private int _page = 1;
     private string _search = string.Empty;
-    private string _status = "pending_approval";
+    private string _status = "pending_any"; // mặc định: hiện cả chờ kiểm tra và chờ phê duyệt
     private string _departmentId = string.Empty;
     private IReadOnlyList<ApprovalRow> _rows = Array.Empty<ApprovalRow>();
     private IReadOnlyList<ApprovalRow> _paged = Array.Empty<ApprovalRow>();
@@ -353,6 +417,14 @@
     private bool _returnToDraftPdOpen;
     private ApprovalRow? _returnToDraftPdTarget;
     private string _returnToDraftPdReason = string.Empty;
+    // Hoàn trả về kiểm tra (pending_approval → pending_review)
+    private bool _returnToCheckerOpen;
+    private ApprovalRow? _returnToCheckerTarget;
+    private string _returnToCheckerReason = string.Empty;
+    // Hoàn trả về người viết cuối (giữ chữ ký NV1)
+    private bool _returnToLastWriterOpen;
+    private ApprovalRow? _returnToLastWriterTarget;
+    private string _returnToLastWriterReason = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -378,7 +450,13 @@
             .Select(v => BuildRow(v.ProcedureVersionId))
             .Where(r => r is not null)
             .Cast<ApprovalRow>()
-            .Where(r => string.IsNullOrEmpty(_status) || r.Version.StatusCode == _status)
+            .Where(r =>
+            {
+                if (string.IsNullOrEmpty(_status)) return true;
+                if (_status == "pending_any")
+                    return r.Version.StatusCode is "pending_review" or "pending_approval";
+                return r.Version.StatusCode == _status;
+            })
             .Where(r => !deptId.HasValue || (r.Version.DepartmentId ?? r.Procedure.OwnerDepartmentId) == deptId.Value)
             .Where(r => MatchesSearch(r, search))
             .OrderByDescending(r => r.Version.SubmittedAt ?? r.Version.CreatedAt)
@@ -550,6 +628,7 @@
     private Task ConfirmSignAsync(string signatureImageDataUrl)
     {
         if (_signTarget is null) return Task.CompletedTask;
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
         try
         {
             Signoffs.Sign(
@@ -561,9 +640,17 @@
                 signatureImageDataUrl,
                 "Chữ ký tay trực tiếp nội bộ");
 
-            if (_publishAfterSign)
+            if (_signRole == "checker")
             {
-                Lifecycle.Publish(_signTarget.ProcedureVersionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
+                // Sau khi checker ký, tự động chuyển sang chờ phê duyệt
+                Lifecycle.SubmitToApproval(_signTarget.ProcedureVersionId, userId);
+                Toasts.Show("Đã ký kiểm tra",
+                    $"{_signTarget.Title} — phiên bản đã chuyển sang chờ phê duyệt.",
+                    ToastVariant.Success);
+            }
+            else if (_publishAfterSign)
+            {
+                Lifecycle.Publish(_signTarget.ProcedureVersionId, userId);
                 var procedureName = Store.Procedures.FirstOrDefault(item => item.ProcedureId == _signTarget.ProcedureId)?.Name ?? _signTarget.Title;
                 Toasts.Show("Đã ký và ban hành quy trình", procedureName, ToastVariant.Success);
             }
@@ -602,7 +689,8 @@
     private bool CanSignChecker(ApprovalRow row)
     {
         var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
-        return row.Version.StatusCode == "pending_approval" &&
+        // Checker ký tại pending_review (luồng mới) hoặc pending_approval không có checker sig (compat cũ)
+        return (row.Version.StatusCode == "pending_review" || row.Version.StatusCode == "pending_approval") &&
                Signoffs.CanUserSign(row.Version.ProcedureVersionId, "checker", userId, out _);
     }
 
@@ -617,12 +705,29 @@
     private string ApprovalActionHint(ApprovalRow row)
     {
         var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (row.Version.StatusCode == "pending_review")
+        {
+            if (!Signoffs.CanUserSign(row.Version.ProcedureVersionId, "checker", userId, out var checkerReason))
+                return checkerReason ?? "Tài khoản hiện tại không thể ký kiểm tra phiên bản này.";
+            return "Phiên bản đang chờ ký kiểm tra.";
+        }
         if (!Signoffs.HasCurrentSignoff(row.Version.ProcedureVersionId, "checker"))
             return "Chờ người kiểm tra (tài khoản khác người viết) ký trước.";
         if (!Signoffs.CanUserSign(row.Version.ProcedureVersionId, "approver", userId, out var reason))
             return reason ?? "Tài khoản hiện tại không thể phê duyệt phiên bản này.";
         return "Không có hành động ký khả dụng cho tài khoản hiện tại.";
     }
+
+    /// <summary>Có thể hoàn trả từ pending_review về soạn thảo (người có quyền duyệt).</summary>
+    private bool CanReturnToDraftFromReview(ApprovalRow row) =>
+        row.Version.StatusCode == "pending_review" && Guard.HasPermission("SCR_PROCEDURES:APPROVE");
+
+    /// <summary>Có thể hoàn trả về kiểm tra (pending_approval → pending_review).</summary>
+    private bool CanReturnToChecker(ApprovalRow row) =>
+        row.Version.StatusCode == "pending_approval" &&
+        (Guard.HasPermission("SCR_PROCEDURES:APPROVE") ||
+         Signoffs.GetCurrentSignerUserId(row.Version.ProcedureVersionId, "checker") ==
+         (UserContext.CurrentUser?.UserId ?? Guid.Empty));
 
     private static string SignoffRoleLabel(string role) => role switch
     {
@@ -728,6 +833,7 @@
     private static string VersionTone(string status) => status switch
     {
         "active" => "tone-success",
+        "pending_review" => "tone-info",
         "pending_approval" => "tone-warning",
         "rejected" or "archived" => "tone-danger",
         "draft" => "tone-muted",
@@ -748,14 +854,13 @@
     }
 
     /// <summary>
-    /// Checker hoặc approver có thể hoàn trả về soạn thảo (pending_approval → draft).
+    /// Người có quyền phê duyệt có thể hoàn trả về soạn thảo từ pending_approval.
     /// </summary>
     private bool CanReturnToDraftApproval(ApprovalRow row)
     {
         if (row.Version.StatusCode != "pending_approval") return false;
         var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
         if (userId == Guid.Empty) return false;
-        // Người có quyền phê duyệt hoặc checker vừa ký được phép hoàn trả
         return Guard.HasPermission("SCR_PROCEDURES:APPROVE") ||
                Signoffs.GetCurrentSignerUserId(row.Version.ProcedureVersionId, "checker") == userId;
     }
@@ -823,12 +928,72 @@
                 _returnToDraftPdReason.Trim());
             Recompute();
             RefreshSelected(_returnToDraftPdTarget.Version.ProcedureVersionId);
-            Toasts.Show("Đã hoàn về soạn thảo", $"{_returnToDraftPdTarget.Version.Title} — người viết cần chỉnh sửa và ký lại.", ToastVariant.Info);
+            Toasts.Show("Đã hoàn toàn bộ về soạn thảo",
+                $"{_returnToDraftPdTarget.Version.Title} — tất cả chữ ký đã bị vô hiệu, người viết cần ký lại từ đầu.",
+                ToastVariant.Info);
             _returnToDraftPdOpen = false;
         }
         catch (Exception ex)
         {
             Toasts.Show("Không thể hoàn về soạn thảo", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void OpenReturnToCheckerModal(ApprovalRow row)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "hoàn trả về kiểm tra")) return;
+        _returnToCheckerTarget = row;
+        _returnToCheckerReason = string.Empty;
+        _returnToCheckerOpen = true;
+    }
+
+    private void ConfirmReturnToCheckerAsync()
+    {
+        if (_returnToCheckerTarget is null || string.IsNullOrWhiteSpace(_returnToCheckerReason)) return;
+        try
+        {
+            Lifecycle.ReturnToChecker(_returnToCheckerTarget.Version.ProcedureVersionId,
+                UserContext.CurrentUser?.UserId ?? Guid.Empty,
+                _returnToCheckerReason.Trim());
+            Recompute();
+            RefreshSelected(_returnToCheckerTarget.Version.ProcedureVersionId);
+            Toasts.Show("Đã hoàn về kiểm tra",
+                $"{_returnToCheckerTarget.Version.Title} — chữ ký kiểm tra bị vô hiệu, người kiểm tra cần ký lại.",
+                ToastVariant.Info);
+            _returnToCheckerOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể hoàn về kiểm tra", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void OpenReturnToLastWriterModal(ApprovalRow row)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "hoàn trả về người viết cuối")) return;
+        _returnToLastWriterTarget = row;
+        _returnToLastWriterReason = string.Empty;
+        _returnToLastWriterOpen = true;
+    }
+
+    private void ConfirmReturnToLastWriterAsync()
+    {
+        if (_returnToLastWriterTarget is null || string.IsNullOrWhiteSpace(_returnToLastWriterReason)) return;
+        try
+        {
+            Lifecycle.ReturnToLastWriter(_returnToLastWriterTarget.Version.ProcedureVersionId,
+                UserContext.CurrentUser?.UserId ?? Guid.Empty,
+                _returnToLastWriterReason.Trim());
+            Recompute();
+            RefreshSelected(_returnToLastWriterTarget.Version.ProcedureVersionId);
+            Toasts.Show("Đã hoàn về người viết cuối",
+                $"{_returnToLastWriterTarget.Version.Title} — chữ ký người viết cuối bị vô hiệu, người viết 1 giữ nguyên.",
+                ToastVariant.Info);
+            _returnToLastWriterOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể hoàn về người viết cuối", ex.Message, ToastVariant.Error);
         }
     }
 
