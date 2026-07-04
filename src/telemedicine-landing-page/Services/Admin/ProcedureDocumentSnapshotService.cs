@@ -86,7 +86,7 @@ public sealed class ProcedureDocumentSnapshotService
                 snapshot.Version.SourcePdfChecksumSha256,
                 snapshot.Version.RequiredWriterSignatures
             },
-            Writers = snapshot.WriterAssignments.Select(item => new { item.DisplayOrder, item.AssignedUserId, item.AssignedUsername, item.AssignedFullName, item.SignoffRole }),
+            Writers = snapshot.WriterAssignments.Select(item => new { item.DisplayOrder, item.AssignedUserId, item.SignoffRole }),
             Sections = snapshot.Sections.Select(s => new { s.SectionOrder, s.SectionNumber, s.Title, s.SectionKind, ContentText = NormalizeHashText(s.ContentText), s.IsRequired }),
             Recipients = snapshot.Recipients.Select(r => new { r.DisplayOrder, r.RecipientName, r.IsMarked }),
             Revisions = snapshot.Revisions.Select(r => new { r.DisplayOrder, RevisionDate = ToHashDate(r.RevisionDate), r.PageRef, r.SectionRef, r.Summary }),

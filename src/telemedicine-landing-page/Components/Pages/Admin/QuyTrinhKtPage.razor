@@ -146,7 +146,8 @@
         {
             var versions = VersionsFor(_selected.Procedure.ProcedureId);
             var pendingWriterVersion = versions.FirstOrDefault(v => CanSignFromList(v, "writer"));
-            var pendingCheckerVersion = versions.FirstOrDefault(v => CanSignFromList(v, "checker"));
+            var pendingCheckerVersion = versions.FirstOrDefault(v =>
+                (v.StatusCode == "pending_review" || v.StatusCode == "pending_approval") && CanSignFromList(v, "checker"));
             @if (pendingWriterVersion is not null)
             {
                 <aside class="admin-callout procedure-signoff-callout">
@@ -461,7 +462,8 @@
 
     private Sql.ProcedureVersion? LatestDraftVersion(Guid procedureId)
         => Store.ProcedureVersions
-            .Where(item => item.ProcedureId == procedureId && item.StatusCode == "draft")
+            .Where(item => item.ProcedureId == procedureId &&
+                           (item.StatusCode == "draft" || item.StatusCode == "pending_review"))
             .OrderByDescending(item => item.VersionNo)
             .FirstOrDefault();
 
@@ -676,7 +678,8 @@
         var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
         if (role == "writer" && version.StatusCode == "draft")
             return Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out _);
-        if (role == "checker" && version.StatusCode == "pending_approval")
+        // Checker ký tại pending_review (luồng mới) hoặc pending_approval (compat cũ)
+        if (role == "checker" && (version.StatusCode == "pending_review" || version.StatusCode == "pending_approval"))
             return Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out _);
         return false;
     }

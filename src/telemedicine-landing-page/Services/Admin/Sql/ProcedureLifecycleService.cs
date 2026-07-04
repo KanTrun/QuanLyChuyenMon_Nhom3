@@ -556,6 +556,44 @@ public sealed class ProcedureLifecycleService
         NotifyDataChanged();
     }
 
+    /// <summary>
+    /// Thu hồi TẤT CẢ chữ ký người viết trong bản nháp (draft → draft, không đổi trạng thái).
+    /// Dùng cho 2 trường hợp:
+    ///   1. Người viết 1 tự thu hồi (Recall) khi người viết 2 chưa ký.
+    ///   2. Người viết 2 yêu cầu trả về người viết 1 (Return to Writer 1) khi thấy lỗi từ người viết 1.
+    /// </summary>
+    public void RecallDraftWriterSignoffs(Guid versionId, Guid revokedBy, string? reason = null)
+    {
+        var ver = GetVersionOrThrow(versionId);
+        if (!string.Equals(ver.StatusCode, "draft", StringComparison.OrdinalIgnoreCase))
+            throw MedDomainException.Constraint("CK_procedure_recall_draft", 50047,
+                "Chỉ có thể thu hồi chữ ký người viết khi phiên bản đang ở bản nháp.");
+
+        var trimmedReason = string.IsNullOrWhiteSpace(reason) ? "Thu hồi chữ ký người viết" : reason.Trim();
+        RevokeCurrentSignoffs(versionId, revokedBy, trimmedReason, "writer");
+        _documents?.PersistSnapshot(versionId, "writer_recalled", revokedBy);
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = revokedBy,
+            ActionCode = "recall_writer",
+            TargetType = "procedure_version",
+            TargetId = versionId.ToString(),
+            DepartmentId = ver.DepartmentId ?? procDepartmentId(ver.ProcedureId),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Event = "procedure_writer_recalled",
+                ver.ProcedureId,
+                ver.ProcedureVersionId,
+                ver.VersionLabel,
+                VersionTitle = ver.Title,
+                Reason = trimmedReason
+            })
+        });
+        NotifyDataChanged();
+    }
+
     public void RestoreDraft(Guid versionId, Guid restoredBy, string? reason = null)
     {
         var ver = GetVersionOrThrow(versionId);

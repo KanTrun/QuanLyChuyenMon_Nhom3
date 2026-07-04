@@ -2,10 +2,13 @@
 @using Sql = TelemedicineLandingPage.Models.Admin.Sql
 @inject ProcedureDocumentSnapshotService Snapshots
 @inject ProcedureSignoffService Signoffs
+@inject ProcedureLifecycleService Lifecycle
 @inject IMedDataStore Store
 @using TelemedicineLandingPage.Services.Admin
+@using TelemedicineLandingPage.Services.Admin.Sql
 @inject IJSRuntime JS
 @inject ICurrentUserContext UserContext
+@inject IToastService Toasts
 
 @if (_snapshot is not null)
 {
@@ -101,20 +104,41 @@
                 <div>
                     <span class="procedure-section-kicker">Phân công</span>
                     <h3 class="admin-panel-title">Người viết và trạng thái ký</h3>
+                    @if (_snapshot.Version.StatusCode == "draft")
+                    {
+                        <p class="admin-panel-hint" style="margin-top:0.25rem;">
+                            <strong>@DraftSubStatusLabel</strong> — @DraftSubStatusHint
+                        </p>
+                    }
                 </div>
             </header>
             @if (_snapshot.Version.StatusCode == "draft" && OutstandingWriterCount == 0)
             {
                 <aside class="admin-callout procedure-signoff-callout">
                     <strong>Đủ chữ ký người viết</strong>
-                    Phiên bản sẽ tự chuyển sang chờ phê duyệt khi người viết cuối cùng ký.
+                    Phiên bản sẽ tự chuyển sang chờ kiểm tra khi người viết cuối cùng ký.
+                </aside>
+            }
+            else if (_snapshot.Version.StatusCode == "draft" && OutstandingWriterCount > 0 && WriterSignoffRows.Any(w => w.Signed))
+            {
+                <aside class="admin-callout procedure-signoff-callout" style="border-left-color:var(--color-warning,#f59e0b);">
+                    <strong>Draft_2 — Chờ người viết tiếp theo ký</strong>
+                    Người viết 1 đã ký. Người viết tiếp theo cần mở <strong>Soạn thảo &amp; ký</strong> để bổ sung nội dung và ký xác nhận.
+                    @if (CanCurrentUserRecallAsWriter1)
+                    {
+                        <br /><span class="admin-table-cell-muted">Nếu cần sửa lại phần của mình, bấm <strong>Thu hồi chữ ký</strong> bên dưới.</span>
+                    }
+                    @if (CanCurrentUserReturnToWriter1)
+                    {
+                        <br /><span class="admin-table-cell-muted">Nếu thấy nội dung người viết 1 sai, bấm <strong>Trả về Người viết 1</strong> bên dưới.</span>
+                    }
                 </aside>
             }
             else if (_snapshot.Version.StatusCode == "draft" && OutstandingWriterCount > 0)
             {
                 <aside class="admin-callout procedure-signoff-callout">
-                    <strong>Còn @OutstandingWriterCount chữ ký người viết</strong>
-                    Mỗi người được phân công đăng nhập bằng tài khoản riêng và ký trên nội dung hiện tại.
+                    <strong>Draft_1 — Đang soạn thảo</strong>
+                    Còn @OutstandingWriterCount chữ ký người viết. Mỗi người được phân công đăng nhập bằng tài khoản riêng và ký trên nội dung hiện tại.
                 </aside>
             }
             <div class="procedure-writer-grid">
@@ -148,10 +172,24 @@
                             {
                                 <a class="admin-btn admin-btn-sm admin-btn-ghost" href="@EditDraftHref">Soạn tiếp</a>
                             }
+                            @if (writerRow.CanRecall)
+                            {
+                                <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost is-danger" @onclick="OpenRecallModal">
+                                    Thu hồi chữ ký
+                                </button>
+                            }
                         </div>
                     </article>
                 }
             </div>
+            @if (CanCurrentUserReturnToWriter1)
+            {
+                <div style="margin-top:0.75rem;display:flex;gap:0.5rem;justify-content:flex-end;">
+                    <button type="button" class="admin-btn admin-btn-ghost is-danger" @onclick="OpenReturnToWriter1Modal">
+                        Trả về Người viết 1 (hủy chữ ký hiện tại)
+                    </button>
+                </div>
+            }
         </section>
     }
     else if (_snapshot.Version.StatusCode == "draft" && _snapshot.Version.RequiredWriterSignatures > 0)
@@ -505,6 +543,30 @@
     </div>
 }
 
+<AdminModal IsOpen="_recallOpen" IsOpenChanged="v => _recallOpen = v" Title="Thu hồi chữ ký người viết (Recall)">
+    <ChildContent>
+        <p style="margin:0 0 0.75rem;">Chữ ký của bạn sẽ bị hủy. Phiên bản trở về trạng thái <strong>Draft_1</strong> — tất cả người viết cần ký lại.</p>
+        <label class="admin-form-field-label" for="recall-reason-panel">Lý do thu hồi (tùy chọn)</label>
+        <textarea id="recall-reason-panel" class="admin-textarea" rows="2" placeholder="VD: Cần chỉnh sửa lại nội dung bước quy trình." @bind="_recallReason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _recallOpen = false">Hủy bỏ</button>
+        <button type="button" class="admin-btn admin-btn-danger" disabled="@_isActing" @onclick="ConfirmRecallAsync">Xác nhận Thu hồi</button>
+    </FooterContent>
+</AdminModal>
+
+<AdminModal IsOpen="_returnToWriter1Open" IsOpenChanged="v => _returnToWriter1Open = v" Title="Trả về Người viết 1">
+    <ChildContent>
+        <p style="margin:0 0 0.75rem;">Tất cả chữ ký người viết sẽ bị hủy. Phiên bản trở về <strong>Draft_1</strong> — người viết 1 cần chỉnh sửa và ký lại từ đầu.</p>
+        <label class="admin-form-field-label" for="return-writer1-reason-panel">Lý do hoàn trả (bắt buộc)</label>
+        <textarea id="return-writer1-reason-panel" class="admin-textarea" rows="3" placeholder="VD: Nội dung bước 3 của người viết 1 cần được làm lại hoàn toàn." @bind="_returnToWriter1Reason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _returnToWriter1Open = false">Hủy bỏ</button>
+        <button type="button" class="admin-btn admin-btn-danger" disabled="@(_isActing || string.IsNullOrWhiteSpace(_returnToWriter1Reason))" @onclick="ConfirmReturnToWriter1Async">Trả về Người viết 1</button>
+    </FooterContent>
+</AdminModal>
+
 @code {
     [Parameter, EditorRequired] public Guid ProcedureVersionId { get; set; }
     [Parameter] public EventCallback<string> OnSignRequested { get; set; }
@@ -516,9 +578,82 @@
     private IReadOnlyList<Sql.ProcedureVersion> OlderVersions { get; set; } = [];
     private int OutstandingWriterCount { get; set; }
     private Sql.ProcedureVersionDiffRecord? CurrentDiff { get; set; }
+
+    // Modal state for recall/return actions
+    private bool _recallOpen;
+    private string _recallReason = string.Empty;
+    private bool _returnToWriter1Open;
+    private string _returnToWriter1Reason = string.Empty;
+    private bool _isActing;
+
     private string WriterSignoffSummary => _snapshot is null
         ? string.Empty
         : $"{WriterSignoffRows.Count(item => item.Signed)}/{Math.Max(1, _snapshot.WriterAssignments.Count)} người viết đã ký";
+
+    // Draft_1/Draft_2 sub-status labels
+    private string DraftSubStatusLabel
+    {
+        get
+        {
+            if (_snapshot is null || _snapshot.Version.StatusCode != "draft") return string.Empty;
+            var signedCount = _snapshot.WriterAssignments.Count(w => Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+            if (signedCount == 0) return "Draft_1";
+            if (signedCount < _snapshot.WriterAssignments.Count) return "Draft_2";
+            return "Đủ chữ ký — Chờ gửi kiểm tra";
+        }
+    }
+    private string DraftSubStatusHint
+    {
+        get
+        {
+            if (_snapshot is null || _snapshot.Version.StatusCode != "draft") return string.Empty;
+            var total = _snapshot.WriterAssignments.Count;
+            var signedCount = _snapshot.WriterAssignments.Count(w => Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+            if (signedCount == 0) return $"Người viết 1 đang soạn thảo ({total} người viết được phân công)";
+            if (signedCount < total) return $"Người viết {signedCount}/{total} đã ký — chờ người viết tiếp theo";
+            return "Tất cả người viết đã ký, sẵn sàng gửi kiểm tra";
+        }
+    }
+
+    // Writer 1 can recall their own signature when writer 2 hasn't signed yet
+    private bool CanCurrentUserRecallAsWriter1
+    {
+        get
+        {
+            if (_snapshot?.Version.StatusCode != "draft") return false;
+            var currentUserId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            if (currentUserId == Guid.Empty) return false;
+            var orderedWriters = _snapshot.WriterAssignments.OrderBy(w => w.DisplayOrder).ToList();
+            if (orderedWriters.Count < 2) return false; // single writer uses regular revoke
+            var myAssignment = orderedWriters.FirstOrDefault(w => w.AssignedUserId == currentUserId);
+            if (myAssignment is null || myAssignment.DisplayOrder != orderedWriters.Min(w => w.DisplayOrder)) return false;
+            // I have signed
+            if (!Snapshots.IsWriterEffectivelySigned(_snapshot, currentUserId)) return false;
+            // No later writer has signed
+            return orderedWriters.Where(w => w.DisplayOrder > myAssignment.DisplayOrder)
+                .All(w => !Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+        }
+    }
+
+    // Writer 2+ can return to Writer 1 when writer 1 has signed but current user (writer 2) hasn't
+    private bool CanCurrentUserReturnToWriter1
+    {
+        get
+        {
+            if (_snapshot?.Version.StatusCode != "draft") return false;
+            var currentUserId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            if (currentUserId == Guid.Empty) return false;
+            var orderedWriters = _snapshot.WriterAssignments.OrderBy(w => w.DisplayOrder).ToList();
+            if (orderedWriters.Count < 2) return false;
+            var myAssignment = orderedWriters.FirstOrDefault(w => w.AssignedUserId == currentUserId);
+            if (myAssignment is null || myAssignment.DisplayOrder <= orderedWriters.Min(w => w.DisplayOrder)) return false;
+            // I haven't signed yet
+            if (Snapshots.IsWriterEffectivelySigned(_snapshot, currentUserId)) return false;
+            // Writer 1 (earliest) has signed
+            var writer1 = orderedWriters.OrderBy(w => w.DisplayOrder).First();
+            return Snapshots.IsWriterEffectivelySigned(_snapshot, writer1.AssignedUserId);
+        }
+    }
 
     private bool CanCurrentUserSignWriter
     {
@@ -660,8 +795,10 @@
             return [];
 
         var currentUserId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
-        return _snapshot.WriterAssignments
-            .OrderBy(item => item.DisplayOrder)
+        var orderedWriters = _snapshot.WriterAssignments.OrderBy(w => w.DisplayOrder).ToList();
+        var minOrder = orderedWriters.Count > 0 ? orderedWriters.Min(w => w.DisplayOrder) : 1;
+
+        return orderedWriters
             .Select(writer =>
             {
                 var signoff = Snapshots.GetWriterSignoffForDisplay(_snapshot, writer.AssignedUserId);
@@ -673,18 +810,90 @@
                 var canEdit = !signed
                     && writer.AssignedUserId == currentUserId
                     && Signoffs.CanUserEditDraft(ProcedureVersionId, currentUserId, out _);
+                // Writer 1 can recall when no later writer has signed
+                var canRecall = signed
+                    && writer.AssignedUserId == currentUserId
+                    && writer.DisplayOrder == minOrder
+                    && orderedWriters.Count > 1
+                    && _snapshot.Version.StatusCode == "draft"
+                    && orderedWriters.Where(w => w.DisplayOrder > minOrder)
+                        .All(w => !Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
                 return new WriterSignoffRow(
                     WriterName(writer),
                     writer.DisplayOrder,
-                    !signed ? "Chưa ký" : stale ? "Chữ ký đã cũ" : "Đã ký",
+                    !signed ? "Chưa ký" : stale ? "Chữ ký đã cũ" : "Đã ký hợp lệ",
                     !signed ? "tone-warning" : stale ? "tone-warning" : "tone-success",
                     signed ? AdminDateTimeDisplay.ShortDateTime(signoff!.SignedAt) : "—",
                     signoff?.SignatureImageDataUrl,
                     signed,
                     canSign,
-                    canEdit);
+                    canEdit,
+                    canRecall);
             })
             .ToList();
+    }
+
+    private void OpenRecallModal()
+    {
+        _recallReason = string.Empty;
+        _recallOpen = true;
+    }
+
+    private void OpenReturnToWriter1Modal()
+    {
+        _returnToWriter1Reason = string.Empty;
+        _returnToWriter1Open = true;
+    }
+
+    private async Task ConfirmRecallAsync()
+    {
+        if (_snapshot is null || UserContext.CurrentUser is not { UserId: var userId }) return;
+        _isActing = true;
+        try
+        {
+            Lifecycle.RecallDraftWriterSignoffs(_snapshot.Version.ProcedureVersionId, userId, _recallReason);
+            Store.Refresh();
+            _snapshot = Snapshots.GetSnapshot(ProcedureVersionId);
+            SignatureCards = BuildSignatureCards();
+            WriterSignoffRows = BuildWriterSignoffRows();
+            OutstandingWriterCount = Signoffs.GetOutstandingWriterSignatures(ProcedureVersionId);
+            _recallOpen = false;
+            Toasts.Show("Đã thu hồi chữ ký", "Phiên bản trở về Draft_1. Người viết có thể chỉnh sửa và ký lại.", ToastVariant.Info);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể thu hồi", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isActing = false;
+        }
+    }
+
+    private async Task ConfirmReturnToWriter1Async()
+    {
+        if (_snapshot is null || UserContext.CurrentUser is not { UserId: var userId }) return;
+        if (string.IsNullOrWhiteSpace(_returnToWriter1Reason)) return;
+        _isActing = true;
+        try
+        {
+            Lifecycle.RecallDraftWriterSignoffs(_snapshot.Version.ProcedureVersionId, userId, _returnToWriter1Reason.Trim());
+            Store.Refresh();
+            _snapshot = Snapshots.GetSnapshot(ProcedureVersionId);
+            SignatureCards = BuildSignatureCards();
+            WriterSignoffRows = BuildWriterSignoffRows();
+            OutstandingWriterCount = Signoffs.GetOutstandingWriterSignatures(ProcedureVersionId);
+            _returnToWriter1Open = false;
+            Toasts.Show("Đã trả về Người viết 1", "Tất cả chữ ký đã bị hủy. Người viết 1 cần chỉnh sửa và ký lại từ đầu.", ToastVariant.Info);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể hoàn trả", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isActing = false;
+        }
     }
 
     private static string StepCodeLabel(Sql.ProcedureStep step)
@@ -849,7 +1058,7 @@
     private static string VersionTone(string status) => status switch
     {
         "active" => "tone-success",
-        "pending_approval" => "tone-warning",
+        "pending_approval" or "pending_review" => "tone-warning",
         "rejected" or "archived" => "tone-danger",
         "draft" => "tone-muted",
         _ => "tone-muted"
@@ -876,7 +1085,8 @@
         string? SignatureImageDataUrl,
         bool Signed,
         bool CanSign,
-        bool CanEdit);
+        bool CanEdit,
+        bool CanRecall);
     private sealed record ProcedureDiffMetadataChange(string Label, string Before, string After);
     private sealed record ProcedureDiffListGroup(string Title, string Kicker, IReadOnlyList<string> Added, IReadOnlyList<string> Removed, string Summary);
     private sealed record ProcedureDiffView(

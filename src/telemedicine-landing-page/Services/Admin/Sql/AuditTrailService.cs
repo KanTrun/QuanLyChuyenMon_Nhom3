@@ -23,7 +23,8 @@ public sealed class AuditTrailService
         "apply_protocol", "skip_protocol",
         "return_to_draft", "revoke_signoff",
         "submit_to_review", "submit_to_approval",
-        "return_to_review", "return_to_last_writer"
+        "return_to_review", "return_to_last_writer",
+        "recall_writer"
     };
 
     public AuditTrailService(MedDbContext db)
