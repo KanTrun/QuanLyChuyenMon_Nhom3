@@ -226,7 +226,14 @@
                         {
                             <button type="button" class="admin-btn admin-btn-ghost is-danger" @onclick="() => OpenReturnToLastWriterModal(_selected)">Hoàn trả về người viết cuối (giữ chữ ký NV1)</button>
                         }
-                        @if (CanReturnToDraftFromReview(_selected) || CanReturnToDraftApproval(_selected))
+                        @{
+                            // Trường hợp đặc biệt: pending_approval nhưng checker chưa ký (dữ liệu cũ)
+                            // → chỉ cho phép người có quyền APPROVE trả về draft
+                            var canReturnLegacy = _selected.Version.StatusCode == "pending_approval"
+                                && Signoffs.GetActiveSignoff(_selected.Version.ProcedureVersionId, "checker") is null
+                                && Guard.HasPermission("SCR_PROCEDURES:APPROVE");
+                        }
+                        @if (CanReturnToDraftFromReview(_selected) || CanReturnToDraftApproval(_selected) || canReturnLegacy)
                         {
                             <button type="button" class="admin-btn admin-btn-ghost is-danger" @onclick="() => OpenReturnToDraftModal(_selected)">Hoàn trả toàn bộ về soạn thảo</button>
                         }
@@ -722,12 +729,19 @@
     private bool CanReturnToDraftFromReview(ApprovalRow row) =>
         row.Version.StatusCode == "pending_review" && Guard.HasPermission("SCR_PROCEDURES:APPROVE");
 
-    /// <summary>Có thể hoàn trả về kiểm tra (pending_approval → pending_review).</summary>
-    private bool CanReturnToChecker(ApprovalRow row) =>
-        row.Version.StatusCode == "pending_approval" &&
-        (Guard.HasPermission("SCR_PROCEDURES:APPROVE") ||
-         Signoffs.GetCurrentSignerUserId(row.Version.ProcedureVersionId, "checker") ==
-         (UserContext.CurrentUser?.UserId ?? Guid.Empty));
+    /// <summary>
+    /// Có thể hoàn trả về kiểm tra (pending_approval → pending_review).
+    /// Điều kiện: phải có chữ ký kiểm tra hợp lệ (checker đã ký) và có quyền phê duyệt.
+    /// </summary>
+    private bool CanReturnToChecker(ApprovalRow row)
+    {
+        if (row.Version.StatusCode != "pending_approval") return false;
+        // Chỉ hoàn trả về kiểm tra khi checker thực sự đã ký
+        var checkerSignoff = Signoffs.GetActiveSignoff(row.Version.ProcedureVersionId, "checker");
+        if (checkerSignoff is null) return false;
+        return Guard.HasPermission("SCR_PROCEDURES:APPROVE") ||
+               checkerSignoff.SignerUserId == (UserContext.CurrentUser?.UserId ?? Guid.Empty);
+    }
 
     private static string SignoffRoleLabel(string role) => role switch
     {
@@ -855,14 +869,19 @@
 
     /// <summary>
     /// Người có quyền phê duyệt có thể hoàn trả về soạn thảo từ pending_approval.
+    /// Điều kiện: phải có chữ ký kiểm tra hợp lệ (checker đã ký).
+    /// Nếu chưa có chữ ký checker, dùng CanReturnToDraftFromReview thay thế.
     /// </summary>
     private bool CanReturnToDraftApproval(ApprovalRow row)
     {
         if (row.Version.StatusCode != "pending_approval") return false;
         var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
         if (userId == Guid.Empty) return false;
+        // Chỉ hoàn trả từ pending_approval khi checker đã thực sự ký
+        var checkerSignoff = Signoffs.GetActiveSignoff(row.Version.ProcedureVersionId, "checker");
+        if (checkerSignoff is null) return false;
         return Guard.HasPermission("SCR_PROCEDURES:APPROVE") ||
-               Signoffs.GetCurrentSignerUserId(row.Version.ProcedureVersionId, "checker") == userId;
+               checkerSignoff.SignerUserId == userId;
     }
 
     private void OpenRevokeCheckerModal(ApprovalRow row)
