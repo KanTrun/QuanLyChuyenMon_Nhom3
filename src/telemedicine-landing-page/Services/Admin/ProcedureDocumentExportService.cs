@@ -843,8 +843,11 @@ public sealed class ProcedureDocumentExportService : IProcedureDocumentExportSer
     }
 
     private static string H(object? value) => WebUtility.HtmlEncode(value?.ToString() ?? "");
-    private static string D(DateTime? value) => value?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "";
-    private static string DateOnly(DateTime? value) => value?.ToLocalTime().ToString("dd/MM/yyyy") ?? "";
+    private static string D(DateTime? value)
+        => value.HasValue ? Models.Admin.AdminDateTimeDisplay.DateTime(value) : "";
+
+    private static string DateOnly(DateTime? value)
+        => value.HasValue ? Models.Admin.AdminDateTimeDisplay.Date(value) : "";
     private static string Shape(string? shape) => shape is "terminator" or "decision" or "data" or "document" ? shape : "process";
     private static string StatusLabel(string status) => status switch { "draft" => "Bản nháp", "pending_approval" => "Chờ phê duyệt", "active" => "Đang hiệu lực", "superseded" => "Đã được thay thế", "archived" => "Lưu trữ", "rejected" => "Bị từ chối", _ => status };
     private static string RoleLabel(string role) => role switch { "writer" => "Người viết", "checker" => "Người kiểm tra", "approver" => "Người phê duyệt", _ => role };
