@@ -68,6 +68,9 @@ public sealed class ProcedureDocumentSnapshotService
 
     public string ComputeContentHash(Guid versionId)
     {
+        if (_store.IsProcedureWriteBatchActive)
+            _store.FlushProcedureWriteBatchPendingChanges();
+
         var snapshot = GetSnapshot(versionId);
         var canonical = new
         {
@@ -321,15 +324,17 @@ public sealed class ProcedureDocumentSnapshotService
 
     public bool IsSignoffStale(ProcedureDocumentSnapshot snapshot, ProcedureSignoffRecord signoff)
     {
-        if (!string.Equals(snapshot.Version.StatusCode, "draft", StringComparison.OrdinalIgnoreCase))
-            return false;
+        if (signoff.IsRevoked)
+            return true;
 
         if (string.Equals(signoff.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
             signoff.SignerUserId is { } signerUserId &&
             IsWriterEffectivelySigned(snapshot, signerUserId))
             return false;
 
-        var currentHash = ComputeContentHash(snapshot.Version.ProcedureVersionId);
+        var currentHash = string.Equals(snapshot.Version.StatusCode, "draft", StringComparison.OrdinalIgnoreCase)
+            ? ComputeContentHash(snapshot.Version.ProcedureVersionId)
+            : GetAuthoritativeContentHash(snapshot);
         return !string.Equals(signoff.ContentHashSha256, currentHash, StringComparison.OrdinalIgnoreCase);
     }
 

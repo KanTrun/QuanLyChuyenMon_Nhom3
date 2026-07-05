@@ -36,6 +36,9 @@ public sealed class ProcedureSignoffService
 
         if (!_store.IsProcedureWriteBatchActive)
             _store.Refresh();
+        else
+            // Đảm bảo nội dung soạn thảo đã ghi DB trước khi băm — tránh "chữ ký đã cũ" ngay sau khi ký.
+            _store.FlushProcedureWriteBatchPendingChanges();
         var normalizedRole = role.ToLowerInvariant();
         var snapshot = _snapshots.GetSnapshot(versionId);
         EnsureSigningStage(snapshot, normalizedRole);

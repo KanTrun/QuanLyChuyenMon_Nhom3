@@ -98,9 +98,45 @@ public sealed class ProcedureAuthoringServiceTests
 
         var snapshot = snapshots.GetSnapshot(created.Version.ProcedureVersionId);
         var writerSignoffs = snapshots.GetCurrentSignoffs(snapshot, "writer");
+        var writerSignoff = snapshots.GetWriterSignoffForDisplay(snapshot, MedDataStoreSeed.AdminUserId);
         Assert.Contains(writerSignoffs, item => item.SignerUserId == MedDataStoreSeed.AdminUserId);
+        Assert.NotNull(writerSignoff);
+        Assert.False(snapshots.IsSignoffStale(snapshot, writerSignoff!));
         Assert.Equal(1, signoffs.GetOutstandingWriterSignatures(created.Version.ProcedureVersionId));
         Assert.False(signoffs.CanUserSign(created.Version.ProcedureVersionId, "writer", MedDataStoreSeed.AdminUserId, out _));
+    }
+
+    [Fact]
+    public void CreateVersion_SignInWriteBatch_DbStore_KeepsWriterSignoffCurrent()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var store = new MedDbDataStore(db);
+        var snapshots = new ProcedureDocumentSnapshotService(store);
+        var service = new ProcedureAuthoringService(store, snapshots);
+        var signoffs = new ProcedureSignoffService(store, snapshots);
+
+        ProcedureAuthoringResult? created = null;
+        ProcedureSignoffRecord? signoff = null;
+        store.RunProcedureWriteBatch(() =>
+        {
+            created = service.CreateVersion(CreateCommand());
+            signoff = signoffs.Sign(
+                created.Version.ProcedureVersionId,
+                "writer",
+                MedDataStoreSeed.AdminUserId,
+                "admin",
+                "Quản trị viên",
+                ValidSignature);
+            snapshots.PersistSnapshot(created.Version.ProcedureVersionId, "draft_signed", MedDataStoreSeed.AdminUserId);
+        });
+
+        Assert.NotNull(created);
+        Assert.NotNull(signoff);
+        var snapshot = snapshots.GetSnapshot(created!.Version.ProcedureVersionId);
+        var displayed = snapshots.GetWriterSignoffForDisplay(snapshot, MedDataStoreSeed.AdminUserId);
+        Assert.NotNull(displayed);
+        Assert.False(snapshots.IsSignoffStale(snapshot, displayed!));
+        Assert.True(snapshots.IsWriterEffectivelySigned(snapshot, MedDataStoreSeed.AdminUserId));
     }
 
     [Fact]
