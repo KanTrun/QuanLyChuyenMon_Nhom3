@@ -461,13 +461,18 @@ public sealed class ProcedureSignoffService
             if (assignedWriterIds.Count > 0 && !assignedWriterIds.Contains(userId))
                 throw new InvalidOperationException("Tài khoản hiện tại không nằm trong danh sách người viết được phân công.");
 
-            // Kiểm tra thứ tự ký: tất cả người viết có thứ tự thấp hơn phải ký trước
+            // Kiểm tra thứ tự ký: tất cả người viết có thứ tự thấp hơn phải có ít nhất 1 chữ ký chưa bị thu hồi.
+            // Dùng HasAnyActiveWriterSignoff (không kiểm tra hash) vì Writer 2 có thể sửa nội dung
+            // làm hash thay đổi, khiến chữ ký Writer 1 trở thành "cũ" — nhưng thứ tự vẫn được đảm bảo.
             var myAssignment = writerAssignments.FirstOrDefault(w => w.AssignedUserId == userId);
             if (myAssignment is not null && myAssignment.DisplayOrder > writerAssignments.Min(w => w.DisplayOrder))
             {
                 var unsignedPriorWriters = writerAssignments
                     .Where(w => w.DisplayOrder < myAssignment.DisplayOrder &&
-                                !_snapshots.IsWriterEffectivelySigned(snapshot, w.AssignedUserId))
+                                !snapshot.Signoffs.Any(s =>
+                                    !s.IsRevoked &&
+                                    string.Equals(s.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase) &&
+                                    s.SignerUserId == w.AssignedUserId))
                     .ToList();
                 if (unsignedPriorWriters.Count > 0)
                 {
