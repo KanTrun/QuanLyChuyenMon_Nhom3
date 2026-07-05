@@ -453,13 +453,29 @@ public sealed class ProcedureSignoffService
 
         if (role == "writer")
         {
-            var assignedWriterIds = snapshot.WriterAssignments
+            var writerAssignments = snapshot.WriterAssignments
                 .Where(item => string.Equals(item.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase))
-                .Select(item => item.AssignedUserId)
-                .Distinct()
+                .OrderBy(item => item.DisplayOrder)
                 .ToList();
+            var assignedWriterIds = writerAssignments.Select(item => item.AssignedUserId).Distinct().ToList();
             if (assignedWriterIds.Count > 0 && !assignedWriterIds.Contains(userId))
                 throw new InvalidOperationException("Tài khoản hiện tại không nằm trong danh sách người viết được phân công.");
+
+            // Kiểm tra thứ tự ký: tất cả người viết có thứ tự thấp hơn phải ký trước
+            var myAssignment = writerAssignments.FirstOrDefault(w => w.AssignedUserId == userId);
+            if (myAssignment is not null && myAssignment.DisplayOrder > writerAssignments.Min(w => w.DisplayOrder))
+            {
+                var unsignedPriorWriters = writerAssignments
+                    .Where(w => w.DisplayOrder < myAssignment.DisplayOrder &&
+                                !_snapshots.IsWriterEffectivelySigned(snapshot, w.AssignedUserId))
+                    .ToList();
+                if (unsignedPriorWriters.Count > 0)
+                {
+                    var minUnsignedOrder = unsignedPriorWriters.Min(w => w.DisplayOrder);
+                    throw new InvalidOperationException(
+                        $"Người viết thứ {minUnsignedOrder} trong danh sách chưa ký. Vui lòng ký theo thứ tự phân công.");
+                }
+            }
         }
 
         if (role == "checker" && writerUserIds.Contains(userId))

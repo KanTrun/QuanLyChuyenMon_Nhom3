@@ -121,16 +121,16 @@
             }
             else if (_snapshot.Version.StatusCode == "draft" && OutstandingWriterCount > 0 && WriterSignoffRows.Any(w => w.Signed))
             {
-                <aside class="admin-callout procedure-signoff-callout" style="border-left-color:var(--color-warning,#f59e0b);">
-                    <strong>Draft_2 — Chờ người viết tiếp theo ký</strong>
-                    Người viết 1 đã ký. Người viết tiếp theo cần mở <strong>Soạn thảo &amp; ký</strong> để bổ sung nội dung và ký xác nhận.
+                var isOutOfOrder = DraftSubStatusHint.StartsWith("Cảnh báo:");
+                <aside class="admin-callout procedure-signoff-callout" style="border-left-color:var(--color-@(isOutOfOrder ? "danger" : "warning"),#f59e0b);">
+                    <strong>@DraftSubStatusLabel</strong> — @DraftSubStatusHint
                     @if (CanCurrentUserRecallAsWriter1)
                     {
-                        <br /><span class="admin-table-cell-muted">Nếu cần sửa lại phần của mình, bấm <strong>Thu hồi chữ ký</strong> bên dưới.</span>
+                        <br /><span class="admin-table-cell-muted">Nếu cần sửa lại, bấm <strong>Thu hồi chữ ký</strong> trên thẻ của bạn bên dưới.</span>
                     }
                     @if (CanCurrentUserReturnToWriter1)
                     {
-                        <br /><span class="admin-table-cell-muted">Nếu thấy nội dung người viết 1 sai, bấm <strong>Trả về Người viết 1</strong> bên dưới.</span>
+                        <br /><span class="admin-table-cell-muted">Nếu thấy nội dung người viết trước sai, bấm <strong>Trả về Người viết 1</strong> bên dưới.</span>
                     }
                 </aside>
             }
@@ -607,15 +607,39 @@
         get
         {
             if (_snapshot is null || _snapshot.Version.StatusCode != "draft") return string.Empty;
-            var total = _snapshot.WriterAssignments.Count;
-            var signedCount = _snapshot.WriterAssignments.Count(w => Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
-            if (signedCount == 0) return $"Người viết 1 đang soạn thảo ({total} người viết được phân công)";
-            if (signedCount < total) return $"Người viết {signedCount}/{total} đã ký — chờ người viết tiếp theo";
-            return "Tất cả người viết đã ký, sẵn sàng gửi kiểm tra";
+            var orderedWriters = _snapshot.WriterAssignments.OrderBy(w => w.DisplayOrder).ToList();
+            var total = orderedWriters.Count;
+            if (total == 0) return "Chưa có người viết được phân công.";
+
+            var signedCount = orderedWriters.Count(w => Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+            if (signedCount == total) return "Tất cả người viết đã ký, sẵn sàng gửi kiểm tra.";
+
+            // Tìm người viết đầu tiên theo thứ tự CHƯA ký
+            var nextUnsigned = orderedWriters.FirstOrDefault(w => !Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+            if (nextUnsigned is null) return $"{signedCount}/{total} người viết đã ký.";
+
+            // Kiểm tra trạng thái ký đúng thứ tự không
+            var allPriorSigned = orderedWriters
+                .Where(w => w.DisplayOrder < nextUnsigned.DisplayOrder)
+                .All(w => Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+
+            if (!allPriorSigned)
+            {
+                // Ký sai thứ tự — có người viết thứ tự cao ký trước người thứ tự thấp
+                return $"Cảnh báo: ký sai thứ tự ({signedCount}/{total} đã ký) — người viết thứ {nextUnsigned.DisplayOrder} cần ký trước. Người viết đã ký sai thứ tự có thể thu hồi chữ ký để sửa.";
+            }
+
+            var nextName = nextUnsigned.AssignedFullName ?? nextUnsigned.AssignedUsername ?? $"Người viết {nextUnsigned.DisplayOrder}";
+            return $"Người viết {nextUnsigned.DisplayOrder} ({nextName}) cần mở Soạn thảo & ký để bổ sung nội dung và ký xác nhận.";
         }
     }
 
-    // Writer 1 can recall their own signature when writer 2 hasn't signed yet
+    /// <summary>
+    /// Người viết có thể thu hồi chữ ký của mình khi:
+    /// - Đã ký (normal case: Writer 1 đã ký, Writer 2 chưa ký)
+    /// - ĐÃ ký nhưng ký sai thứ tự (Writer 2 ký trước Writer 1) — mở khóa cho Writer 1
+    /// - Không có người viết nào có thứ tự CAO HƠN đã ký (vì recall xóa toàn bộ chữ ký)
+    /// </summary>
     private bool CanCurrentUserRecallAsWriter1
     {
         get
@@ -624,18 +648,21 @@
             var currentUserId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
             if (currentUserId == Guid.Empty) return false;
             var orderedWriters = _snapshot.WriterAssignments.OrderBy(w => w.DisplayOrder).ToList();
-            if (orderedWriters.Count < 2) return false; // single writer uses regular revoke
+            if (orderedWriters.Count < 2) return false;
             var myAssignment = orderedWriters.FirstOrDefault(w => w.AssignedUserId == currentUserId);
-            if (myAssignment is null || myAssignment.DisplayOrder != orderedWriters.Min(w => w.DisplayOrder)) return false;
-            // I have signed
+            if (myAssignment is null) return false;
+            // Tôi phải đã ký
             if (!Snapshots.IsWriterEffectivelySigned(_snapshot, currentUserId)) return false;
-            // No later writer has signed
+            // Không có người viết nào có thứ tự CAO HƠN tôi đã ký (sẽ bị thu hồi kèm)
             return orderedWriters.Where(w => w.DisplayOrder > myAssignment.DisplayOrder)
                 .All(w => !Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
         }
     }
 
-    // Writer 2+ can return to Writer 1 when writer 1 has signed but current user (writer 2) hasn't
+    /// <summary>
+    /// Người viết 2+ có thể trả về Writer 1 khi Writer 1 đã ký và tôi CHƯA ký.
+    /// (Trường hợp tôi thấy nội dung Writer 1 sai cần làm lại từ đầu.)
+    /// </summary>
     private bool CanCurrentUserReturnToWriter1
     {
         get
@@ -647,11 +674,11 @@
             if (orderedWriters.Count < 2) return false;
             var myAssignment = orderedWriters.FirstOrDefault(w => w.AssignedUserId == currentUserId);
             if (myAssignment is null || myAssignment.DisplayOrder <= orderedWriters.Min(w => w.DisplayOrder)) return false;
-            // I haven't signed yet
+            // Tôi chưa ký (nếu đã ký thì dùng CanCurrentUserRecallAsWriter1)
             if (Snapshots.IsWriterEffectivelySigned(_snapshot, currentUserId)) return false;
-            // Writer 1 (earliest) has signed
-            var writer1 = orderedWriters.OrderBy(w => w.DisplayOrder).First();
-            return Snapshots.IsWriterEffectivelySigned(_snapshot, writer1.AssignedUserId);
+            // Ít nhất một người viết thứ tự thấp hơn đã ký
+            return orderedWriters.Where(w => w.DisplayOrder < myAssignment.DisplayOrder)
+                .Any(w => Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
         }
     }
 
@@ -810,13 +837,13 @@
                 var canEdit = !signed
                     && writer.AssignedUserId == currentUserId
                     && Signoffs.CanUserEditDraft(ProcedureVersionId, currentUserId, out _);
-                // Writer 1 can recall when no later writer has signed
+                // Bất kỳ người viết nào đã ký đều có thể thu hồi nếu không có người có thứ tự CAO HƠN đã ký
+                // (bao gồm cả trường hợp Writer 2 ký sai thứ tự trước Writer 1)
                 var canRecall = signed
                     && writer.AssignedUserId == currentUserId
-                    && writer.DisplayOrder == minOrder
                     && orderedWriters.Count > 1
                     && _snapshot.Version.StatusCode == "draft"
-                    && orderedWriters.Where(w => w.DisplayOrder > minOrder)
+                    && orderedWriters.Where(w => w.DisplayOrder > writer.DisplayOrder)
                         .All(w => !Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
                 return new WriterSignoffRow(
                     WriterName(writer),
