@@ -1029,8 +1029,9 @@ public sealed class ProcedureLifecycleService
         foreach (var gm in _store.UserGroupMembers.Where(m => viaGroup.Contains(m.GroupId)))
             userIds.Add(gm.UserId);
         foreach (var ov in _store.UserPermissionOverrides
-                     .Where(o => permIds.Contains(o.PermissionId) && o.IsGrant == true))
-            userIds.Add(o.UserId);
+                     .Where(o => permIds.Contains(o.PermissionId)
+                              && string.Equals(o.EffectCode, "allow", StringComparison.OrdinalIgnoreCase)))
+            userIds.Add(ov.UserId);
         return [.. userIds];
     }
 
