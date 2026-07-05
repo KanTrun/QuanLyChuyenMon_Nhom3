@@ -667,8 +667,19 @@
             }
 
             _signOpen = false;
+            var versionId = _signTarget.ProcedureVersionId;
             Recompute();
-            RefreshSelected(_signTarget.ProcedureVersionId);
+            if (_publishAfterSign)
+            {
+                // Phiên bản đã ban hành → không còn trong danh sách pending → đóng drawer
+                _drawerOpen = false;
+                _selected = null;
+                _detailVersionId = null;
+            }
+            else
+            {
+                RefreshSelected(versionId);
+            }
         }
         catch (Exception ex)
         {
@@ -942,15 +953,20 @@
         if (_returnToDraftPdTarget is null || string.IsNullOrWhiteSpace(_returnToDraftPdReason)) return;
         try
         {
+            var title = _returnToDraftPdTarget.Version.Title;
             Lifecycle.ReturnToDraft(_returnToDraftPdTarget.Version.ProcedureVersionId,
                 UserContext.CurrentUser?.UserId ?? Guid.Empty,
                 _returnToDraftPdReason.Trim());
-            Recompute();
-            RefreshSelected(_returnToDraftPdTarget.Version.ProcedureVersionId);
-            Toasts.Show("Đã hoàn toàn bộ về soạn thảo",
-                $"{_returnToDraftPdTarget.Version.Title} — tất cả chữ ký đã bị vô hiệu, người viết cần ký lại từ đầu.",
-                ToastVariant.Info);
             _returnToDraftPdOpen = false;
+            _returnToDraftPdTarget = null;
+            // Phiên bản đổi sang draft → không còn trong danh sách chờ → đóng drawer
+            Recompute();
+            _drawerOpen = false;
+            _selected = null;
+            _detailVersionId = null;
+            Toasts.Show("Đã hoàn toàn bộ về soạn thảo",
+                $"{title} — tất cả chữ ký đã bị vô hiệu, người viết cần ký lại từ đầu.",
+                ToastVariant.Info);
         }
         catch (Exception ex)
         {
@@ -971,15 +987,19 @@
         if (_returnToCheckerTarget is null || string.IsNullOrWhiteSpace(_returnToCheckerReason)) return;
         try
         {
-            Lifecycle.ReturnToChecker(_returnToCheckerTarget.Version.ProcedureVersionId,
+            var versionId = _returnToCheckerTarget.Version.ProcedureVersionId;
+            var title = _returnToCheckerTarget.Version.Title;
+            Lifecycle.ReturnToChecker(versionId,
                 UserContext.CurrentUser?.UserId ?? Guid.Empty,
                 _returnToCheckerReason.Trim());
-            Recompute();
-            RefreshSelected(_returnToCheckerTarget.Version.ProcedureVersionId);
-            Toasts.Show("Đã hoàn về kiểm tra",
-                $"{_returnToCheckerTarget.Version.Title} — chữ ký kiểm tra bị vô hiệu, người kiểm tra cần ký lại.",
-                ToastVariant.Info);
             _returnToCheckerOpen = false;
+            _returnToCheckerTarget = null;
+            // Phiên bản đổi sang pending_review → vẫn còn trong danh sách → refresh drawer
+            Recompute();
+            RefreshSelected(versionId);
+            Toasts.Show("Đã hoàn về kiểm tra",
+                $"{title} — chữ ký kiểm tra bị vô hiệu, người kiểm tra cần ký lại.",
+                ToastVariant.Info);
         }
         catch (Exception ex)
         {
@@ -1000,15 +1020,20 @@
         if (_returnToLastWriterTarget is null || string.IsNullOrWhiteSpace(_returnToLastWriterReason)) return;
         try
         {
+            var title = _returnToLastWriterTarget.Version.Title;
             Lifecycle.ReturnToLastWriter(_returnToLastWriterTarget.Version.ProcedureVersionId,
                 UserContext.CurrentUser?.UserId ?? Guid.Empty,
                 _returnToLastWriterReason.Trim());
-            Recompute();
-            RefreshSelected(_returnToLastWriterTarget.Version.ProcedureVersionId);
-            Toasts.Show("Đã hoàn về người viết cuối",
-                $"{_returnToLastWriterTarget.Version.Title} — chữ ký người viết cuối bị vô hiệu, người viết 1 giữ nguyên.",
-                ToastVariant.Info);
             _returnToLastWriterOpen = false;
+            _returnToLastWriterTarget = null;
+            // Phiên bản đổi sang draft → không còn trong danh sách chờ → đóng drawer
+            Recompute();
+            _drawerOpen = false;
+            _selected = null;
+            _detailVersionId = null;
+            Toasts.Show("Đã hoàn về người viết cuối",
+                $"{title} — chữ ký người viết cuối bị vô hiệu, người viết 1 giữ nguyên chữ ký.",
+                ToastVariant.Info);
         }
         catch (Exception ex)
         {
