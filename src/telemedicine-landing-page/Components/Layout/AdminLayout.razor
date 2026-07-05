@@ -6,6 +6,7 @@
 @inject IJSRuntime JS
 @inject ICurrentUserContext UserContext
 @inject NavGate Gate
+@inject IAdminNavigationState NavState
 @inject LoadingService Loading
 @inject BrowserSessionService BrowserSession
 
@@ -208,6 +209,16 @@ else
             if (!string.Equals(displayRoute, currentRoute, StringComparison.OrdinalIgnoreCase))
             {
                 Navigation.NavigateTo(displayRoute, replace: true);
+            }
+        }
+        else
+        {
+            var fallback = Gate.GetFirstAccessibleRoute(NavState.NavItems);
+            if (!string.Equals(fallback, "/AccessDenied", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(fallback, currentRoute, StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(fallback, _currentPath, StringComparison.OrdinalIgnoreCase))
+            {
+                Navigation.NavigateTo(fallback, replace: true);
             }
         }
     }

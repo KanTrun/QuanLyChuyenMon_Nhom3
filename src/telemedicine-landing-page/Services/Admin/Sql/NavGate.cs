@@ -34,10 +34,30 @@ public sealed class NavGate
         ["/admin/to-chuc/vai-tro"] = new[] { "SCR_ORG_ROLES:VIEW", "PERM_PERMISSIONS_view" },
         ["/admin/to-chuc/nhom"] = new[] { "SCR_ORG_GROUPS:VIEW", "PERM_PERMISSIONS_view" },
         ["/admin/to-chuc"] = new[] { "SCR_ORG_USERS:VIEW", "PERM_PERMISSIONS_view" },
-        ["/admin/quy-trinh/tao"] = new[] { "SCR_PROCEDURES:CREATE", "PERM_PROCEDURES_create" },
-        ["/admin/quy-trinh/phe-duyet"] = new[] { "SCR_PROCEDURES:APPROVE", "PERM_PROCEDURES_approve" },
-        ["/admin/quy-trinh/lich-su"] = new[] { "SCR_PROCEDURES:VIEW", "PERM_PROCEDURES_view" },
-        ["/admin/quy-trinh"] = new[] { "SCR_PROCEDURES:VIEW", "PERM_PROCEDURES_view" },
+        ["/admin/quy-trinh/tao"] = new[]
+        {
+            "SCR_PROCEDURES:CREATE", "PERM_PROCEDURES_create",
+            "SCR_PROCEDURE_CREATE:VIEW", "SCR_PROCEDURE_CREATE:CREATE",
+        },
+        ["/admin/quy-trinh/phe-duyet"] = new[]
+        {
+            "SCR_PROCEDURES:APPROVE", "PERM_PROCEDURES_approve",
+            "SCR_PROCEDURE_APPROVAL:VIEW", "SCR_PROCEDURE_APPROVAL:APPROVE",
+        },
+        ["/admin/quy-trinh/lich-su"] = new[]
+        {
+            "SCR_PROCEDURES:VIEW", "PERM_PROCEDURES_view",
+            "SCR_PROCEDURE_CREATE:VIEW", "SCR_PROCEDURE_APPROVAL:VIEW",
+            "SCR_PROCEDURES:CREATE", "SCR_PROCEDURES:UPDATE", "SCR_PROCEDURES:DELETE", "SCR_PROCEDURES:APPROVE",
+        },
+        ["/admin/quy-trinh"] = new[]
+        {
+            "SCR_PROCEDURES:VIEW", "PERM_PROCEDURES_view",
+            "SCR_PROCEDURES_WORKSPACE:VIEW", "PROCEDURE_MANAGEMENT:VIEW",
+            "SCR_PROCEDURE_CREATE:VIEW", "SCR_PROCEDURE_CREATE:CREATE",
+            "SCR_PROCEDURE_APPROVAL:VIEW", "SCR_PROCEDURE_APPROVAL:APPROVE",
+            "SCR_PROCEDURES:CREATE", "SCR_PROCEDURES:UPDATE", "SCR_PROCEDURES:DELETE", "SCR_PROCEDURES:APPROVE",
+        },
         ["/admin/phan-quyen"] = new[] { "SCR_PERMISSIONS:VIEW", "PERM_PERMISSIONS_view" },
         ["/admin/bao-cao/tieu-thu"] = new[] { "SCR_REPORT_CONSUMPTION:VIEW", "REPORTS:VIEW" },
         ["/admin/bao-cao"] = new[] { "SCR_REPORTS:VIEW", "REPORTS:VIEW" },

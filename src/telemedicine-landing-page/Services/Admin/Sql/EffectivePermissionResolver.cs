@@ -165,16 +165,19 @@ public sealed class EffectivePermissionResolver
         Guid? userPrimaryDepartmentId,
         Guid? contextDepartmentId)
     {
+        var effectiveContext = contextDepartmentId ?? userPrimaryDepartmentId;
+
         return scopeType switch
         {
             "global" => true,
-            "department" => contextDepartmentId.HasValue && scopeDepartmentId == contextDepartmentId,
-            "department_tree" => contextDepartmentId.HasValue &&
+            "department" => effectiveContext.HasValue && scopeDepartmentId == effectiveContext,
+            "department_tree" => effectiveContext.HasValue &&
                 scopeDepartmentId.HasValue &&
                 _db.DepartmentClosure.Any(dc =>
                     dc.AncestorDepartmentId == scopeDepartmentId.Value &&
-                    dc.DescendantDepartmentId == contextDepartmentId.Value),
-            "own_department" => contextDepartmentId.HasValue && userPrimaryDepartmentId == contextDepartmentId,
+                    dc.DescendantDepartmentId == effectiveContext.Value),
+            "own_department" => userPrimaryDepartmentId.HasValue &&
+                (!contextDepartmentId.HasValue || userPrimaryDepartmentId == contextDepartmentId),
             _ => false,
         };
     }

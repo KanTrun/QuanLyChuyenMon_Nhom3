@@ -215,20 +215,48 @@
 
         if (_assigningUser is null) return;
         var departmentId = Guid.TryParse(_selectedDepartmentId, out var parsedDeptId) ? parsedDeptId : (Guid?)null;
+        var roleName = _allRoles.FirstOrDefault(r => r.RoleId == roleId)?.Name ?? "";
+        var departmentName = departmentId.HasValue
+            ? _allDepartments.FirstOrDefault(d => d.DepartmentId == departmentId.Value)?.Name
+            : "Toàn hệ thống";
+        var currentUser = UserContext.CurrentUser;
 
-        // Kiểm tra đã gán chưa
+        // Mỗi tài khoản chỉ giữ một bản gán cho cùng vai trò; cập nhật phạm vi nếu đã tồn tại.
         var existing = Db.UserRoles.FirstOrDefault(ur =>
             ur.UserId == _assigningUser.UserId &&
             ur.RoleId == roleId &&
-            ur.DepartmentId == departmentId &&
             ur.EffectiveTo == null);
         if (existing is not null)
         {
-            _assignError = "Tài khoản đã có vai trò này trong phạm vi đã chọn.";
+            if (existing.DepartmentId == departmentId)
+            {
+                _assignError = "Tài khoản đã có vai trò này trong phạm vi đã chọn.";
+                return;
+            }
+
+            var entry = Db.Entry(existing);
+            entry.Property(ur => ur.DepartmentId).CurrentValue = departmentId;
+            Db.SaveChanges();
+
+            Db.AuditLogs.Add(new AuditLog
+            {
+                CorrelationId = Guid.NewGuid(),
+                ActorUserId = currentUser?.UserId,
+                ActorUsername = currentUser?.Username,
+                ActionCode = "assign_role",
+                TargetType = "user_role",
+                TargetId = _assigningUser.UserId.ToString(),
+                AfterJson = $"{{\"role\":\"{roleName}\",\"department\":\"{departmentName}\",\"user\":\"{_assigningUser.FullName}\",\"updated\":true}}"
+            });
+            Db.SaveChanges();
+
+            Toast.Show("Đã cập nhật phạm vi", $"Vai trò {roleName} áp dụng cho {departmentName}.", ToastVariant.Success);
+            _assignModalOpen = false;
+            LoadUsers();
             return;
         }
 
-        // Gán vai trò
+        // Gán vai trò mới
         Db.UserRoles.Add(new UserRole
         {
             UserId = _assigningUser.UserId,
@@ -238,11 +266,6 @@
         Db.SaveChanges();
 
         // Ghi audit log
-        var roleName = _allRoles.FirstOrDefault(r => r.RoleId == roleId)?.Name ?? "";
-        var departmentName = departmentId.HasValue
-            ? _allDepartments.FirstOrDefault(d => d.DepartmentId == departmentId.Value)?.Name
-            : "Toàn hệ thống";
-        var currentUser = UserContext.CurrentUser;
         Db.AuditLogs.Add(new AuditLog
         {
             CorrelationId = Guid.NewGuid(),

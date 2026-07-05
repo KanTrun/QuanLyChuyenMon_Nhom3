@@ -219,9 +219,10 @@ public class GeminiChatbotClientTests
         var contents = GeminiChatbotClient.BuildGeminiContents(messages);
 
         Assert.Single(contents);
-        using var body = JsonDocument.SerializeToElement(contents[0]);
-        Assert.Equal("user", body.GetProperty("role").GetString());
-        Assert.Equal("line 1\n\nline 2", body.GetProperty("parts")[0].GetProperty("text").GetString());
+        using var body = JsonDocument.Parse(JsonSerializer.Serialize(contents[0]));
+        var root = body.RootElement;
+        Assert.Equal("user", root.GetProperty("role").GetString());
+        Assert.Equal("line 1\n\nline 2", root.GetProperty("parts")[0].GetProperty("text").GetString());
     }
 
     [Fact]

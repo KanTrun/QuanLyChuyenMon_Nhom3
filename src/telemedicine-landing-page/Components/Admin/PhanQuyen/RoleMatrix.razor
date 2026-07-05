@@ -311,7 +311,7 @@
         _memberCounts = Store.UserRoles
             .Where(ur => ur.EffectiveTo == null)
             .GroupBy(ur => ur.RoleId)
-            .ToDictionary(g => g.Key, g => g.Count());
+            .ToDictionary(g => g.Key, g => g.Select(ur => ur.UserId).Distinct().Count());
     }
 
     private int GetMemberCount(Guid roleId)

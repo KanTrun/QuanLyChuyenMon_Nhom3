@@ -250,7 +250,51 @@ public sealed class NavGateTests
 
         var route = gate.GetFirstAccessibleRoute(nav);
 
-        Assert.Equal("/qlcm/quy-trinh/tao", route);
+        Assert.Equal("/qlcm/quy-trinh", route);
+    }
+
+    [Fact]
+    public void CanAccess_AllowsFeatureLevelProcedureCreatePermission()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var userId = Guid.NewGuid();
+        var roleId = Guid.NewGuid();
+        var permissionId = Guid.NewGuid();
+
+        db.Users.Add(new AppUser
+        {
+            UserId = userId,
+            Username = "feature_proc_creator",
+            FullName = "Nguoi tao quy trinh feature",
+            PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
+        });
+        db.Roles.Add(new Role { RoleId = roleId, Code = "FEATURE_PROC_CREATOR_TEST", Name = "Tien si" });
+        db.UserRoles.Add(new UserRole { UserId = userId, RoleId = roleId });
+        db.Permissions.Add(new MedPermission
+        {
+            PermissionId = permissionId,
+            PermissionCode = "SCR_PROCEDURE_CREATE:CREATE",
+            ScreenId = MedDataStoreSeed.ScreenProcId,
+            ActionCode = "create"
+        });
+        db.RolePermissions.Add(new RolePermission { RoleId = roleId, PermissionId = permissionId });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+        context.SetCurrentUser(userId);
+        var gate = new NavGate(context);
+
+        Assert.True(gate.CanAccess("/admin/quy-trinh/tao"));
+        Assert.True(gate.CanAccess("/admin/quy-trinh"));
+        Assert.Equal("/qlcm/quy-trinh", gate.GetFirstAccessibleRoute(new[]
+        {
+            new AdminNavItem("Tong quan", "/admin", "dashboard", null),
+            new AdminNavItem("Quy trinh", "/admin/quy-trinh", "workflow", null, new List<AdminNavItem>
+            {
+                new("Danh sach", "/admin/quy-trinh", "list", null),
+                new("Tao moi", "/admin/quy-trinh/tao", "plus", null),
+            }),
+        }));
     }
 
     [Fact]
@@ -297,6 +341,45 @@ public sealed class NavGateTests
                 new("Tao moi", "/admin/quy-trinh/tao", "plus", null)
             })
         }));
+    }
+
+    [Fact]
+    public void CanAccess_HonorsOwnDepartmentScopeWithoutExplicitContext()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var userId = Guid.NewGuid();
+        var roleId = Guid.NewGuid();
+        var permissionId = Guid.NewGuid();
+
+        db.Users.Add(new AppUser
+        {
+            UserId = userId,
+            Username = "own_dept_viewer",
+            FullName = "Nguoi xem theo khoa",
+            PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
+        });
+        db.Roles.Add(new Role { RoleId = roleId, Code = "OWN_DEPT_VIEWER_TEST", Name = "Xem theo khoa" });
+        db.UserRoles.Add(new UserRole { UserId = userId, RoleId = roleId });
+        db.Permissions.Add(new MedPermission
+        {
+            PermissionId = permissionId,
+            PermissionCode = "SCR_REPORTS:VIEW",
+            ScreenId = MedDataStoreSeed.ScreenDashId,
+            ActionCode = "view"
+        });
+        db.RolePermissions.Add(new RolePermission
+        {
+            RoleId = roleId,
+            PermissionId = permissionId,
+            DepartmentScopeType = "own_department"
+        });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+        context.SetCurrentUser(userId);
+        var gate = new NavGate(context);
+
+        Assert.True(gate.CanAccess("/admin/bao-cao"));
     }
 
     [Fact]
