@@ -987,21 +987,31 @@
     private void LoadSourceVersion()
     {
         var procedure = Store.Procedures.FirstOrDefault(item => item.ProcedureId == ProcedureId);
-        var existingDraft = Store.ProcedureVersions
+        var existingInProgress = Store.ProcedureVersions
             .Where(item => item.ProcedureId == ProcedureId &&
-                           (item.StatusCode == "draft" || item.StatusCode == "pending_review"))
+                           (item.StatusCode == "draft" ||
+                            item.StatusCode == "pending_review" ||
+                            item.StatusCode == "pending_approval"))
             .OrderByDescending(item => item.VersionNo)
             .FirstOrDefault();
-        if (existingDraft is not null)
+        if (existingInProgress is not null)
         {
-            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
-            if (Signoffs.CanUserEditDraft(existingDraft.ProcedureVersionId, userId, out _))
+            if (existingInProgress.StatusCode == "pending_approval")
             {
-                Navigation.NavigateTo($"/qlcm/quy-trinh/{ProcedureId}/phien-ban/{existingDraft.ProcedureVersionId}/chinh-sua");
+                Toasts.Show("Không thể tạo phiên bản mới",
+                    $"Phiên bản {existingInProgress.VersionLabel ?? $"v{existingInProgress.VersionNo}"} đang chờ phê duyệt. Hãy hoàn tất hoặc hoàn trả trước khi tạo bản kế tiếp.",
+                    ToastVariant.Warning);
+                Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
+                return;
+            }
+            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            if (Signoffs.CanUserEditDraft(existingInProgress.ProcedureVersionId, userId, out _))
+            {
+                Navigation.NavigateTo($"/qlcm/quy-trinh/{ProcedureId}/phien-ban/{existingInProgress.ProcedureVersionId}/chinh-sua");
             }
             else
             {
-                Navigation.NavigateTo($"/qlcm/quy-trinh/{ProcedureId}/phien-ban/{existingDraft.ProcedureVersionId}");
+                Navigation.NavigateTo($"/qlcm/quy-trinh/{ProcedureId}/phien-ban/{existingInProgress.ProcedureVersionId}");
             }
             return;
         }

@@ -120,7 +120,15 @@
                                 }
                             }
                             <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => GoToVersionHistory(row.Procedure.ProcedureId)">Lịch sử phiên bản</button>
-                            <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenUpdate(row)">Cập nhật phiên bản</button>
+                            @{
+                                var rowInProgress = LatestInProgressVersion(row.Procedure.ProcedureId);
+                                var updateLabel = rowInProgress?.StatusCode == "pending_approval"
+                                    ? "Xem phiên bản đang phê duyệt"
+                                    : rowInProgress is not null
+                                        ? "Tiếp tục soạn thảo"
+                                        : "Cập nhật phiên bản mới";
+                            }
+                            <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenUpdate(row)">@updateLabel</button>
                             @if (row.Procedure.Status == "archived")
                             {
                                 <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => RestoreAsync(row)">Khôi phục</button>
@@ -198,26 +206,35 @@
     <FooterContent>
         @if (_selected is not null)
         {
-            var draftVersion = LatestDraftVersion(_selected.Procedure.ProcedureId);
-            if (draftVersion is not null)
+            var inProgress = LatestInProgressVersion(_selected.Procedure.ProcedureId);
+            if (inProgress is not null && inProgress.StatusCode is "draft" or "pending_review")
             {
                 var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
-                if (Signoffs.CanUserEditDraft(draftVersion.ProcedureVersionId, userId, out _))
+                if (Signoffs.CanUserEditDraft(inProgress.ProcedureVersionId, userId, out _))
                 {
-                    <a class="admin-btn admin-btn-primary" href="@EditDraftUrl(_selected.Procedure.ProcedureId, draftVersion.ProcedureVersionId)">
+                    <a class="admin-btn admin-btn-primary" href="@EditDraftUrl(_selected.Procedure.ProcedureId, inProgress.ProcedureVersionId)">
                         Soạn thảo &amp; ký
                     </a>
                 }
                 else
                 {
-                    <a class="admin-btn admin-btn-ghost" href="@ReviewDraftUrl(_selected.Procedure.ProcedureId, draftVersion.ProcedureVersionId)">
+                    <a class="admin-btn admin-btn-ghost" href="@ReviewDraftUrl(_selected.Procedure.ProcedureId, inProgress.ProcedureVersionId)">
                         Xem &amp; ký trên trang soạn thảo
                     </a>
                 }
-                @if (CanSubmitDraft(draftVersion))
+                @if (CanSubmitDraft(inProgress))
                 {
-                    <button type="button" class="admin-btn admin-btn-primary" @onclick="() => SubmitAsync(draftVersion)">Gửi duyệt</button>
+                    <button type="button" class="admin-btn admin-btn-primary" @onclick="() => SubmitAsync(inProgress)">Gửi duyệt</button>
                 }
+            }
+            else if (inProgress is not null && inProgress.StatusCode == "pending_approval")
+            {
+                <span class="admin-table-cell-muted" style="align-self:center;font-size:.85rem;">
+                    @(inProgress.VersionLabel ?? $"v{inProgress.VersionNo}") đang chờ phê duyệt
+                </span>
+                <a class="admin-btn admin-btn-ghost" href="/qlcm/quy-trinh/phe-duyet">
+                    Mở trang phê duyệt
+                </a>
             }
             else
             {
@@ -436,17 +453,22 @@
 
     private void OpenUpdate(ProcedureRow row)
     {
-        var draft = LatestDraftVersion(row.Procedure.ProcedureId);
-        if (draft is not null)
+        var inProgress = LatestInProgressVersion(row.Procedure.ProcedureId);
+        if (inProgress is not null)
         {
-            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
-            if (Signoffs.CanUserEditDraft(draft.ProcedureVersionId, userId, out _))
+            if (inProgress.StatusCode == "pending_approval")
             {
-                Navigation.NavigateTo(EditDraftUrl(row.Procedure.ProcedureId, draft.ProcedureVersionId));
+                Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
+                return;
+            }
+            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            if (Signoffs.CanUserEditDraft(inProgress.ProcedureVersionId, userId, out _))
+            {
+                Navigation.NavigateTo(EditDraftUrl(row.Procedure.ProcedureId, inProgress.ProcedureVersionId));
             }
             else
             {
-                Navigation.NavigateTo(ReviewDraftUrl(row.Procedure.ProcedureId, draft.ProcedureVersionId));
+                Navigation.NavigateTo(ReviewDraftUrl(row.Procedure.ProcedureId, inProgress.ProcedureVersionId));
             }
             return;
         }
@@ -460,10 +482,13 @@
     private static string EditDraftUrl(Guid procedureId, Guid versionId)
         => $"/qlcm/quy-trinh/{procedureId}/phien-ban/{versionId}/chinh-sua";
 
-    private Sql.ProcedureVersion? LatestDraftVersion(Guid procedureId)
+    /// <summary>Trả về phiên bản đang "trong quá trình" (draft/pending_review/pending_approval) mới nhất.</summary>
+    private Sql.ProcedureVersion? LatestInProgressVersion(Guid procedureId)
         => Store.ProcedureVersions
             .Where(item => item.ProcedureId == procedureId &&
-                           (item.StatusCode == "draft" || item.StatusCode == "pending_review"))
+                           (item.StatusCode == "draft" ||
+                            item.StatusCode == "pending_review" ||
+                            item.StatusCode == "pending_approval"))
             .OrderByDescending(item => item.VersionNo)
             .FirstOrDefault();
 
