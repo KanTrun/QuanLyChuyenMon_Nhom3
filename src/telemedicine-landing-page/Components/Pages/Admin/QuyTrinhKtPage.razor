@@ -100,8 +100,11 @@
                 <td>@GetDeptName(row.DepartmentId)</td>
                 <td>@FormatVersionSummary(row.Procedure.ProcedureId)</td>
                 <td>
-                    <AdminBadge Tone="@VersionTone(row.LatestVersion?.StatusCode ?? row.Procedure.Status)">
-                        @StatusLabel(row.LatestVersion?.StatusCode ?? row.Procedure.Status)
+                    @{
+                        var effectiveStatus = ProcedureEffectiveStatus(row.Procedure.ProcedureId);
+                    }
+                    <AdminBadge Tone="@VersionTone(effectiveStatus)">
+                        @StatusLabel(effectiveStatus)
                     </AdminBadge>
                 </td>
                 <td class="admin-table-cell-muted">@AdminDateTimeDisplay.ShortDateTime(row.Procedure.UpdatedAt)</td>
@@ -825,6 +828,27 @@
     }
     private static string VersionLabel(Sql.ProcedureVersion? version) => version is null ? "—" : version.VersionLabel ?? $"v{version.VersionNo}";
     private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    /// <summary>
+    /// Trạng thái hiệu lực thực sự của quy trình:
+    /// 1. Nếu có phiên bản đang hoạt động (active) → Đang hiệu lực
+    /// 2. Nếu có phiên bản đang xử lý (draft/pending_*) → trạng thái đó
+    /// 3. Fallback → trạng thái phiên bản mới nhất
+    /// </summary>
+    private string ProcedureEffectiveStatus(Guid procedureId)
+    {
+        var versions = Store.ProcedureVersions.Where(v => v.ProcedureId == procedureId).ToList();
+        if (versions.Count == 0) return Store.Procedures.FirstOrDefault(p => p.ProcedureId == procedureId)?.Status ?? "draft";
+        // Priority 1: active
+        if (versions.Any(v => v.StatusCode == "active")) return "active";
+        // Priority 2: in-progress
+        var inProgress = versions
+            .Where(v => v.StatusCode is "pending_approval" or "pending_review" or "draft")
+            .OrderByDescending(v => v.VersionNo).FirstOrDefault();
+        if (inProgress is not null) return inProgress.StatusCode;
+        // Fallback: latest version
+        return versions.OrderByDescending(v => v.VersionNo).First().StatusCode;
+    }
+
     private static string StatusLabel(string status) => Sql.MedLookups.VersionStatuses.FirstOrDefault(s => s.Code == status)?.Name
         ?? Sql.MedLookups.RecordStatuses.FirstOrDefault(s => s.Code == status)?.Name
         ?? status;

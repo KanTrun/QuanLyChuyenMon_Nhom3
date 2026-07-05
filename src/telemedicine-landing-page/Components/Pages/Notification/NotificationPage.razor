@@ -295,7 +295,11 @@
             .Where(p => userId.HasValue && p.UserId == userId.Value)
             .Select(p => p.NotificationType);
         return fromNotifications.Concat(fromPrefs)
-            .Concat(new[] { "procedure_approval", "procedure_submitted", "order_status" })
+            .Concat(new[]
+            {
+                "procedure_submitted", "procedure_approval", "procedure_published",
+                "procedure_returned", "procedure_signed", "order_status"
+            })
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(t => t);
     }
@@ -392,9 +396,10 @@
 
         return notification.SourceType switch
         {
-            "permission_change" => "Yêu cầu thay đổi quyền",
-            "procedure_approval" => "Quy trình cần phê duyệt",
-            "order_status" => "Chỉ định kỹ thuật",
+            "permission_change"    => "Yêu cầu thay đổi quyền",
+            "procedure_version"    => "Quy trình",
+            "procedure_approval"   => "Quy trình cần phê duyệt",
+            "order_status"         => "Chỉ định kỹ thuật",
             _ => AdminBusinessDisplay.Source(notification.SourceType)
         };
     }

@@ -53,6 +53,13 @@ public sealed record ProcedureVersion
     [Column("version_no")]
     public required int VersionNo { get; init; }
 
+    /// <summary>
+    /// Số phiên bản phụ (revision), tăng mỗi lần bản nháp bị hoàn trả và sửa lại.
+    /// 0 = bản gốc (v01, v02, ...), 1 = v01.1, 2 = v01.2, ...
+    /// </summary>
+    [Column("revision_no")]
+    public int RevisionNo { get; init; } = 0;
+
     [Column("version_label")]
     public string? VersionLabel { get; init; }
 

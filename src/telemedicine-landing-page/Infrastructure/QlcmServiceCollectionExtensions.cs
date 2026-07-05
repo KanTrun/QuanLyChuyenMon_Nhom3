@@ -165,7 +165,8 @@ public static class QlcmServiceCollectionExtensions
                 sp.GetRequiredService<AuditTrailService>(),
                 sp.GetRequiredService<IWorkflowGuard<ProcedureVersion, string>>(),
                 sp.GetRequiredService<ProcedureDocumentSnapshotService>(),
-                sp.GetRequiredService<IMedDataChangeBus>()));
+                sp.GetRequiredService<IMedDataChangeBus>(),
+                sp.GetRequiredService<IMedDataStore>()));
         services.AddScoped<ProcedureAuthoringService>(sp =>
             new ProcedureAuthoringService(
                 sp.GetRequiredService<IMedDataStore>(),

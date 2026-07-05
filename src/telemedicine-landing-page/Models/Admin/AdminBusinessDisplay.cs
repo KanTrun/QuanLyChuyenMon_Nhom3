@@ -90,13 +90,16 @@ public static class AdminBusinessDisplay
 
     public static string NotificationType(string? code) => code switch
     {
-        "procedure_approval" => "Quy trình chờ phê duyệt",
-        "procedure_published" => "Quy trình đã ban hành",
-        "permission_change" => "Thay đổi quyền",
-        "resource_warning" => "Cảnh báo nguồn lực",
-        "clinical_protocol" => "Phác đồ lâm sàng",
-        "protocol_approval" => "Phác đồ chờ duyệt",
-        "order_resource" => "Nguồn lực chỉ định",
+        "procedure_submitted"  => "Quy trình chờ kiểm tra",
+        "procedure_approval"   => "Quy trình chờ phê duyệt",
+        "procedure_published"  => "Quy trình đã ban hành",
+        "procedure_returned"   => "Quy trình bị hoàn trả",
+        "procedure_signed"     => "Ký xác nhận quy trình",
+        "permission_change"    => "Thay đổi quyền",
+        "resource_warning"     => "Cảnh báo nguồn lực",
+        "clinical_protocol"    => "Phác đồ lâm sàng",
+        "protocol_approval"    => "Phác đồ chờ duyệt",
+        "order_resource"       => "Nguồn lực chỉ định",
         _ => Fallback(code)
     };
 

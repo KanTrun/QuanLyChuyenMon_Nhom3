@@ -266,7 +266,7 @@
         var subject = TargetLabel(log.TargetType);
         var targetName = ResolveTargetName(log);
         var changes = DescribeChange(log.BeforeJson, log.AfterJson);
-        var reason = ReadJsonValue(log.MetadataJson, "reason");
+        var reason = ReadJsonValue(log.MetadataJson, "Reason") ?? ReadJsonValue(log.MetadataJson, "reason");
         var roleLabel = ReadJsonValue(log.MetadataJson, "RoleLabel") ?? ReadJsonValue(log.MetadataJson, "roleLabel");
         var versionLabel = ReadJsonValue(log.MetadataJson, "VersionLabel") ?? ReadJsonValue(log.AfterJson, "version_label");
         var versionTitle = ReadJsonValue(log.MetadataJson, "VersionTitle")
@@ -281,33 +281,56 @@
         var eventCode = ReadJsonValue(log.MetadataJson, "Event");
         var descriptor = BuildProcedureDescriptor(procedureCode, procedureName, versionLabel, versionTitle, targetName, subject);
 
+        var actorName = log.ActorUserId.HasValue
+            ? Store.Users.FirstOrDefault(u => u.UserId == log.ActorUserId)?.FullName
+              ?? Store.Users.FirstOrDefault(u => u.UserId == log.ActorUserId)?.Username
+              ?? log.ActorUsername
+            : log.ActorUsername;
+
         return log.ActionCode.ToLowerInvariant() switch
         {
             "create" when IsProcedureVersionTarget(log.TargetType) =>
-                $"Tạo phiên bản {versionLabel ?? targetName} cho {descriptor}.",
+                $"{actorName} tạo phiên bản {versionLabel ?? targetName} cho {descriptor}.",
             "create" when IsProcedureTarget(log.TargetType) =>
-                $"Tạo quy trình {descriptor}.",
-            "create" => $"Tạo mới {descriptor}.",
+                $"{actorName} tạo quy trình {descriptor}.",
+            "create" => $"{actorName} tạo mới {descriptor}.",
             "update" when string.Equals(eventCode, "procedure_workflow", StringComparison.OrdinalIgnoreCase)
                 || (!string.IsNullOrWhiteSpace(fromState) && !string.IsNullOrWhiteSpace(toState)) =>
-                $"Chuyển trạng thái {descriptor} từ {StatusLabel(fromState!)} sang {StatusLabel(toState!)}.",
+                $"{actorName} chuyển trạng thái {descriptor} từ \"{StatusLabel(fromState!)}\" sang \"{StatusLabel(toState!)}\".",
             "update" when IsProcedureVersionTarget(log.TargetType) =>
-                string.IsNullOrWhiteSpace(changes) ? $"Cập nhật thông tin phiên bản {descriptor}." : $"Cập nhật phiên bản {descriptor}: {changes}",
+                string.IsNullOrWhiteSpace(changes) ? $"{actorName} cập nhật phiên bản {descriptor}." : $"{actorName} cập nhật phiên bản {descriptor}: {changes}",
             "update" when IsProcedureTarget(log.TargetType) =>
-                string.IsNullOrWhiteSpace(changes) ? $"Cập nhật quy trình {descriptor}." : $"Cập nhật quy trình {descriptor}: {changes}",
-            "update" => string.IsNullOrWhiteSpace(changes) ? $"Cập nhật {descriptor}." : changes,
-            "archive" => $"Lưu trữ {descriptor}.",
-            "delete" => $"Lưu trữ hoặc xoá {subject}.",
-            "restore" => $"Khôi phục {descriptor}.",
-            "submit" => $"Gửi {descriptor} sang bước phê duyệt.",
-            "approve" or "publish" => $"Phê duyệt và ban hành {descriptor}.",
+                string.IsNullOrWhiteSpace(changes) ? $"{actorName} cập nhật quy trình {descriptor}." : $"{actorName} cập nhật quy trình {descriptor}: {changes}",
+            "update" => string.IsNullOrWhiteSpace(changes) ? $"{actorName} cập nhật {descriptor}." : changes,
+            "archive" => $"{actorName} lưu trữ {descriptor}.",
+            "delete" => $"{actorName} xoá/lưu trữ {subject}.",
+            "restore" => $"{actorName} khôi phục {descriptor}.",
+            "submit_to_review" => $"{actorName} (người soạn thảo) gửi {descriptor} sang bước kiểm tra.",
+            "submit_to_approval" => $"{actorName} (người kiểm tra) gửi {descriptor} sang bước phê duyệt.",
+            "submit" => $"{actorName} gửi {descriptor} sang bước phê duyệt.",
+            "approve" or "publish" => $"{actorName} (người phê duyệt) đã ký phê duyệt và ban hành {descriptor}.",
             "sign" when string.Equals(eventCode, "procedure_signoff", StringComparison.OrdinalIgnoreCase) =>
-                $"Ghi nhận chữ ký {roleLabel ?? "nội bộ"} cho {descriptor}.",
-            "sign" => $"Ghi nhận chữ ký cho {descriptor}.",
-            "reject" => string.IsNullOrWhiteSpace(reason) ? $"Từ chối {descriptor}." : $"Từ chối {descriptor}: {reason}.",
-            "revoke" or "withdraw" => string.IsNullOrWhiteSpace(reason) ? $"Thu hồi {descriptor}." : $"Thu hồi {descriptor}: {reason}.",
-            "rollback" => string.IsNullOrWhiteSpace(reason) ? $"Khôi phục hiệu lực {descriptor}." : $"Khôi phục hiệu lực {descriptor}: {reason}.",
-            _ => $"{ActionLabel(log.ActionCode)} {descriptor}."
+                $"{actorName} ký xác nhận vai trò {roleLabel ?? "nội bộ"} trên {descriptor}.",
+            "sign" => $"{actorName} ký xác nhận {descriptor}.",
+            "return_to_draft" => string.IsNullOrWhiteSpace(reason)
+                ? $"{actorName} hoàn trả {descriptor} về soạn thảo."
+                : $"{actorName} hoàn trả {descriptor} về soạn thảo. Lý do: {reason}.",
+            "return_to_last_writer" or "return_to_writer" => string.IsNullOrWhiteSpace(reason)
+                ? $"{actorName} hoàn trả {descriptor} về người viết."
+                : $"{actorName} hoàn trả {descriptor} về người viết. Lý do: {reason}.",
+            "return_to_review" or "return_to_checker" => string.IsNullOrWhiteSpace(reason)
+                ? $"{actorName} hoàn trả {descriptor} về người kiểm tra."
+                : $"{actorName} hoàn trả {descriptor} về người kiểm tra. Lý do: {reason}.",
+            "recall_writer" => string.IsNullOrWhiteSpace(reason)
+                ? $"{actorName} thu hồi chữ ký soạn thảo trên {descriptor}."
+                : $"{actorName} thu hồi chữ ký soạn thảo trên {descriptor}. Lý do: {reason}.",
+            "revoke_signoff" => string.IsNullOrWhiteSpace(reason)
+                ? $"{actorName} hủy chữ ký trên {descriptor}."
+                : $"{actorName} hủy chữ ký trên {descriptor}. Lý do: {reason}.",
+            "reject" => string.IsNullOrWhiteSpace(reason) ? $"{actorName} từ chối {descriptor}." : $"{actorName} từ chối {descriptor}: {reason}.",
+            "revoke" or "withdraw" => string.IsNullOrWhiteSpace(reason) ? $"{actorName} thu hồi {descriptor}." : $"{actorName} thu hồi {descriptor}: {reason}.",
+            "rollback" => string.IsNullOrWhiteSpace(reason) ? $"{actorName} khôi phục hiệu lực {descriptor}." : $"{actorName} khôi phục hiệu lực {descriptor}: {reason}.",
+            _ => $"{actorName} {ActionLabel(log.ActionCode)} {descriptor}."
         };
     }
 

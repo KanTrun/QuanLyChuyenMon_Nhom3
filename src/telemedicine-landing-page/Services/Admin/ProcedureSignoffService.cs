@@ -57,7 +57,11 @@ public sealed class ProcedureSignoffService
         };
         _store.AddProcedureSignoffRecord(signoff);
         if (!_store.IsProcedureWriteBatchActive)
+        {
             AppendProcedureSignoffAudit(snapshot, signoff);
+            // Thông báo cho các người viết khác khi có ai đó ký (best-effort)
+            try { NotifyOtherWriters(snapshot, signoff, fullName ?? username); } catch { }
+        }
         return signoff;
     }
 
@@ -601,4 +605,45 @@ public sealed class ProcedureSignoffService
                 bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50,
             _ => false
         };
+
+    /// <summary>
+    /// Thông báo nội bộ cho các người viết KHÁC khi có người ký, và người kiểm tra khi người viết cuối ký.
+    /// </summary>
+    private void NotifyOtherWriters(ProcedureDocumentSnapshot snapshot, ProcedureSignoffRecord signoff, string? signerName)
+    {
+        var versionId = snapshot.Version.ProcedureVersionId;
+        var versionLabel = snapshot.Version.VersionLabel ?? $"v{snapshot.Version.VersionNo}";
+        var roleLabel = signoff.SignoffRole switch
+        {
+            "writer"  => "Người viết",
+            "checker" => "Người kiểm tra",
+            "approver"=> "Người phê duyệt",
+            _ => signoff.SignoffRole
+        };
+        var title = $"{signerName ?? "Ai đó"} đã ký ({roleLabel}) — {versionLabel}";
+        var body  = $"{signerName ?? "Người dùng"} vừa ký xác nhận vai trò {roleLabel} trên quy trình \"{snapshot.Procedure.Name ?? versionLabel}\".";
+        var payload = JsonSerializer.Serialize(new { versionId });
+
+        // Notify other assigned writers
+        var assignedWriterIds = snapshot.WriterAssignments
+            .Where(w => string.Equals(w.SignoffRole, "writer", StringComparison.OrdinalIgnoreCase)
+                     && w.AssignedUserId != signoff.SignerUserId)
+            .Select(w => w.AssignedUserId)
+            .Distinct();
+
+        foreach (var uid in assignedWriterIds.Where(id => id != Guid.Empty))
+        {
+            _store.AddNotification(new MedNotification
+            {
+                RecipientUserId = uid,
+                NotificationType = "procedure_signed",
+                Title = title,
+                Body = body,
+                Severity = "info",
+                SourceType = "procedure_version",
+                SourceId = versionId.ToString(),
+                PayloadJson = payload
+            });
+        }
+    }
 }

@@ -19,6 +19,7 @@ public sealed class ProcedureLifecycleService
     private readonly IWorkflowGuard<ProcedureVersion, string> _workflow;
     private readonly ProcedureDocumentSnapshotService? _documents;
     private readonly IMedDataChangeBus? _changeBus;
+    private readonly IMedDataStore? _store;
 
     public ProcedureLifecycleService(MedDbContext db, AuditTrailService audit)
         : this(db, audit, new ProcedureVersionWorkflowGuard(audit))
@@ -47,13 +48,15 @@ public sealed class ProcedureLifecycleService
         AuditTrailService audit,
         IWorkflowGuard<ProcedureVersion, string> workflow,
         ProcedureDocumentSnapshotService? documents,
-        IMedDataChangeBus? changeBus)
+        IMedDataChangeBus? changeBus,
+        IMedDataStore? store = null)
     {
         _db = db;
         _audit = audit;
         _workflow = workflow;
         _documents = documents;
         _changeBus = changeBus;
+        _store = store;
     }
 
     /// <summary>Tạo phiên bản mới cho quy trình (trạng thái draft).</summary>
@@ -143,6 +146,13 @@ public sealed class ProcedureLifecycleService
                 ToState = updated.StatusCode
             })
         });
+        // Thông báo cho người kiểm tra
+        SendNotifications(
+            GetUsersWithPermission("SCR_PROCEDURES:REVIEW"),
+            "procedure_submitted",
+            $"Quy trình {updated.VersionLabel ?? updated.Title} chờ kiểm tra",
+            $"{GetUserDisplayName(submittedBy)} đã hoàn tất soạn thảo và gửi \"{updated.Title ?? updated.VersionLabel}\" để kiểm tra.",
+            "info", versionId);
         NotifyDataChanged();
     }
 
@@ -188,6 +198,13 @@ public sealed class ProcedureLifecycleService
                 ToState = updated.StatusCode
             })
         });
+        // Thông báo cho người phê duyệt
+        SendNotifications(
+            GetUsersWithPermission("SCR_PROCEDURES:APPROVE"),
+            "procedure_approval",
+            $"Quy trình {updated.VersionLabel ?? updated.Title} chờ phê duyệt",
+            $"{GetUserDisplayName(checkerUserId)} đã kiểm tra và gửi \"{updated.Title ?? updated.VersionLabel}\" để phê duyệt.",
+            "warning", versionId);
         NotifyDataChanged();
     }
 
@@ -256,6 +273,16 @@ public sealed class ProcedureLifecycleService
                 ToState = published.StatusCode
             })
         });
+        // Thông báo cho người viết (assignments) và toàn bộ người liên quan
+        var writerAssignments = _store?.ProcedureVersionAuthorAssignments
+            .Where(a => a.ProcedureVersionId == versionId)
+            .Select(a => a.AssignedUserId).ToList() ?? [];
+        SendNotifications(
+            writerAssignments,
+            "procedure_published",
+            $"Quy trình \"{published.Title ?? published.VersionLabel}\" đã được ban hành",
+            $"{GetUserDisplayName(approvedBy)} đã phê duyệt và ban hành {published.VersionLabel}. Hiệu lực từ {DateTime.Now:dd/MM/yyyy}.",
+            "success", versionId);
         NotifyDataChanged();
     }
 
@@ -407,9 +434,14 @@ public sealed class ProcedureLifecycleService
         // Hủy TẤT CẢ chữ ký (writer + checker) để người viết phải ký lại từ đầu
         RevokeCurrentSignoffs(versionId, returnedBy, reason.Trim());
 
+        var newRevisionNo = ver.RevisionNo + 1;
+        var baseLabel = $"v{ver.VersionNo:00}";
+        var newLabel = $"{baseLabel}.{newRevisionNo}";
         var returned = ver with
         {
             StatusCode = "draft",
+            RevisionNo = newRevisionNo,
+            VersionLabel = newLabel,
             SubmittedBy = null,
             SubmittedAt = null,
             ChangeReason = reason.Trim()
@@ -438,6 +470,15 @@ public sealed class ProcedureLifecycleService
                 Reason = reason.Trim()
             })
         });
+        // Thông báo cho người viết được phân công
+        var writerIds = _store?.ProcedureVersionAuthorAssignments
+            .Where(a => a.ProcedureVersionId == versionId)
+            .Select(a => a.AssignedUserId).ToList() ?? [];
+        SendNotifications(writerIds,
+            "procedure_returned",
+            $"Quy trình \"{returned.Title ?? returned.VersionLabel}\" bị hoàn trả về soạn thảo",
+            $"{GetUserDisplayName(returnedBy)} đã hoàn trả {returned.VersionLabel} về soạn thảo. Lý do: {reason.Trim()}",
+            "warning", versionId);
         NotifyDataChanged();
     }
 
@@ -468,9 +509,12 @@ public sealed class ProcedureLifecycleService
         // Hủy chỉ chữ ký người viết cuối (display_order cao nhất có chữ ký)
         RevokeLastWriterSignoff(versionId, returnedBy, reason.Trim());
 
+        var newRevisionNoW = ver.RevisionNo + 1;
         var returned = ver with
         {
             StatusCode = "draft",
+            RevisionNo = newRevisionNoW,
+            VersionLabel = $"v{ver.VersionNo:00}.{newRevisionNoW}",
             SubmittedBy = null,
             SubmittedAt = null,
             ChangeReason = reason.Trim()
@@ -571,6 +615,15 @@ public sealed class ProcedureLifecycleService
 
         var trimmedReason = string.IsNullOrWhiteSpace(reason) ? "Thu hồi chữ ký người viết" : reason.Trim();
         RevokeCurrentSignoffs(versionId, revokedBy, trimmedReason, "writer");
+
+        // Tăng revision_no và cập nhật label khi recall
+        var newRevisionNoR = ver.RevisionNo + 1;
+        var recalledVer = ver with
+        {
+            RevisionNo = newRevisionNoR,
+            VersionLabel = $"v{ver.VersionNo:00}.{newRevisionNoR}"
+        };
+        PersistVersionUpdate(recalledVer);
         _documents?.PersistSnapshot(versionId, "writer_recalled", revokedBy);
 
         _audit.Append(new AuditLog
@@ -586,7 +639,7 @@ public sealed class ProcedureLifecycleService
                 Event = "procedure_writer_recalled",
                 ver.ProcedureId,
                 ver.ProcedureVersionId,
-                ver.VersionLabel,
+                VersionLabel = recalledVer.VersionLabel,
                 VersionTitle = ver.Title,
                 Reason = trimmedReason
             })
@@ -914,5 +967,78 @@ public sealed class ProcedureLifecycleService
                 .SetProperty(s => s.RevokedByUserId, (Guid?)revokedBy)
                 .SetProperty(s => s.RevokeReason, reason));
         _db.ChangeTracker.Clear();
+    }
+
+    /// <summary>
+    /// Gửi thông báo nội bộ tới danh sách người nhận.
+    /// Không ném exception nếu store null hoặc lỗi (best-effort).
+    /// </summary>
+    private void SendNotifications(
+        IEnumerable<Guid> recipientIds,
+        string notificationType,
+        string title,
+        string? body,
+        string severity,
+        Guid versionId,
+        string? procedureName = null)
+    {
+        if (_store is null) return;
+        var payload = JsonSerializer.Serialize(new { versionId });
+        foreach (var uid in recipientIds.Distinct().Where(id => id != Guid.Empty))
+        {
+            try
+            {
+                _store.AddNotification(new MedNotification
+                {
+                    RecipientUserId = uid,
+                    NotificationType = notificationType,
+                    Title = title,
+                    Body = body,
+                    Severity = severity,
+                    SourceType = "procedure_version",
+                    SourceId = versionId.ToString(),
+                    PayloadJson = payload
+                });
+            }
+            catch { /* best-effort */ }
+        }
+    }
+
+    /// <summary>
+    /// Lấy danh sách userId có quyền nhất định trong hệ thống để gửi thông báo.
+    /// </summary>
+    private List<Guid> GetUsersWithPermission(string screenPermission)
+    {
+        if (_store is null) return [];
+        var permIds = _store.Permissions
+            .Where(p => string.Equals(p.PermissionCode, screenPermission, StringComparison.OrdinalIgnoreCase))
+            .Select(p => p.PermissionId)
+            .ToHashSet();
+        if (permIds.Count == 0) return [];
+
+        var viaRole = _store.RolePermissions
+            .Where(rp => permIds.Contains(rp.PermissionId))
+            .Select(rp => rp.RoleId).ToHashSet();
+        var viaGroup = _store.GroupPermissions
+            .Where(gp => permIds.Contains(gp.PermissionId))
+            .Select(gp => gp.GroupId).ToHashSet();
+
+        var userIds = new HashSet<Guid>();
+        foreach (var ur in _store.UserRoles.Where(ur => viaRole.Contains(ur.RoleId)))
+            userIds.Add(ur.UserId);
+        foreach (var gm in _store.UserGroupMembers.Where(m => viaGroup.Contains(m.GroupId)))
+            userIds.Add(gm.UserId);
+        foreach (var ov in _store.UserPermissionOverrides
+                     .Where(o => permIds.Contains(o.PermissionId) && o.IsGrant == true))
+            userIds.Add(o.UserId);
+        return [.. userIds];
+    }
+
+    /// <summary>Lấy tên người dùng (fullname ưu tiên) để hiển thị trong thông báo.</summary>
+    private string GetUserDisplayName(Guid? userId)
+    {
+        if (userId is null || _store is null) return "Người dùng";
+        var u = _store.Users.FirstOrDefault(x => x.UserId == userId);
+        return u?.FullName ?? u?.Username ?? "Người dùng";
     }
 }
