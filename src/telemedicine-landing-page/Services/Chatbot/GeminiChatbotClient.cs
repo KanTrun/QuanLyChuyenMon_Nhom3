@@ -59,17 +59,12 @@ public sealed class GeminiChatbotClient : IChatbotClient
         var system = _contextBuilder.BuildSystemPrompt(conversation, opts.SystemPrompt, prefs.AiSystemPrompt);
         var temperature = Math.Round(Math.Clamp(prefs.AiTemperature, 0d, 1d), 2);
 
-        var contents = conversation
-            .Where(m => m.Role != ChatRole.System)
-            .Select(m => new
-            {
-                role = m.Role == ChatRole.User ? "user" : "model",
-                parts = new[]
-                {
-                    new { text = m.Content ?? string.Empty },
-                },
-            })
-            .ToList();
+        var contents = BuildGeminiContents(conversation);
+        if (contents.Count == 0)
+        {
+            yield return "[Trợ lý không thể phản hồi: chưa có câu hỏi người dùng]";
+            yield break;
+        }
 
         var payload = new
         {
@@ -106,6 +101,52 @@ public sealed class GeminiChatbotClient : IChatbotClient
         {
             yield return chunk;
         }
+    }
+
+    /// <summary>
+    /// Gemini requires contents to start and end with <c>user</c> and to alternate
+    /// <c>user</c>/<c>model</c>. The UI seeds a local assistant greeting that must
+    /// not be forwarded as the first model turn.
+    /// </summary>
+    internal static List<object> BuildGeminiContents(IReadOnlyList<ChatMessage> conversation)
+    {
+        var turns = conversation
+            .Where(m => m.Role != ChatRole.System)
+            .Select(m => (
+                Role: m.Role == ChatRole.User ? "user" : "model",
+                Text: (m.Content ?? string.Empty).Trim()))
+            .Where(turn => turn.Text.Length > 0)
+            .ToList();
+
+        while (turns.Count > 0 && turns[0].Role == "model")
+        {
+            turns.RemoveAt(0);
+        }
+
+        var merged = new List<(string Role, string Text)>();
+        foreach (var turn in turns)
+        {
+            if (merged.Count > 0 && merged[^1].Role == turn.Role)
+            {
+                var last = merged[^1];
+                merged[^1] = (last.Role, last.Text + "\n\n" + turn.Text);
+            }
+            else
+            {
+                merged.Add(turn);
+            }
+        }
+
+        return merged
+            .Select(turn => (object)new
+            {
+                role = turn.Role,
+                parts = new[]
+                {
+                    new { text = turn.Text },
+                },
+            })
+            .ToList();
     }
 
     private async Task<(HttpResponseMessage? Response, string? FailureMessage)> SendRequestAsync(

@@ -175,15 +175,53 @@ public class GeminiChatbotClientTests
         Assert.Contains("Trợ lý nội bộ.", systemText, StringComparison.Ordinal);
 
         var contents = root.GetProperty("contents");
-        Assert.Equal(2, contents.GetArrayLength());
-        Assert.Equal("model", contents[0].GetProperty("role").GetString());
-        Assert.Equal("user", contents[1].GetProperty("role").GetString());
+        Assert.Equal(1, contents.GetArrayLength());
+        Assert.Equal("user", contents[0].GetProperty("role").GetString());
         Assert.Equal("Cho tôi quy trình",
-            contents[1].GetProperty("parts")[0].GetProperty("text").GetString());
+            contents[0].GetProperty("parts")[0].GetProperty("text").GetString());
 
         var generationConfig = root.GetProperty("generationConfig");
         Assert.Equal(256, generationConfig.GetProperty("maxOutputTokens").GetInt32());
         Assert.True(generationConfig.GetProperty("temperature").GetDouble() is >= 0 and <= 1);
+    }
+
+    [Fact]
+    public async Task StreamReplyAsync_StripsUiGreetingBeforeFirstUserTurn()
+    {
+        var handler = new RecordingHandler(CreateGeminiSse("OK", "STOP"));
+        var client = CreateDirectGeminiClient(handler);
+
+        var messages = new[]
+        {
+            new ChatMessage(Guid.NewGuid(), ChatRole.Assistant, ChatbotConversationStore.GreetingText, DateTime.Now),
+            new ChatMessage(Guid.NewGuid(), ChatRole.User, "hi", DateTime.Now),
+        };
+
+        _ = await CollectAsync(client.StreamReplyAsync(messages, CancellationToken.None));
+
+        Assert.NotNull(handler.LastBody);
+        using var body = JsonDocument.Parse(handler.LastBody!);
+        var contents = body.RootElement.GetProperty("contents");
+        Assert.Equal(1, contents.GetArrayLength());
+        Assert.Equal("user", contents[0].GetProperty("role").GetString());
+        Assert.Equal("hi", contents[0].GetProperty("parts")[0].GetProperty("text").GetString());
+    }
+
+    [Fact]
+    public void BuildGeminiContents_MergesConsecutiveUserTurns()
+    {
+        var messages = new[]
+        {
+            new ChatMessage(Guid.NewGuid(), ChatRole.User, "line 1", DateTime.Now),
+            new ChatMessage(Guid.NewGuid(), ChatRole.User, "line 2", DateTime.Now),
+        };
+
+        var contents = GeminiChatbotClient.BuildGeminiContents(messages);
+
+        Assert.Single(contents);
+        using var body = JsonDocument.SerializeToElement(contents[0]);
+        Assert.Equal("user", body.GetProperty("role").GetString());
+        Assert.Equal("line 1\n\nline 2", body.GetProperty("parts")[0].GetProperty("text").GetString());
     }
 
     [Fact]
