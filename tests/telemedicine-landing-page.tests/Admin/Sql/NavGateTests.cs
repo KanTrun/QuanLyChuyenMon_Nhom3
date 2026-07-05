@@ -383,6 +383,57 @@ public sealed class NavGateTests
     }
 
     [Fact]
+    public void CanAccess_AllowsProfileForAnyAuthenticatedUser()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var userId = Guid.NewGuid();
+        db.Users.Add(new AppUser
+        {
+            UserId = userId,
+            Username = "limited_profile_user",
+            FullName = "Nguoi dung han che",
+            PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
+        });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+        context.SetCurrentUser(userId);
+        var gate = new NavGate(context);
+
+        Assert.True(gate.CanAccess("/admin/ho-so"));
+        Assert.True(gate.CanAccess("/qlcm/ho-so"));
+        Assert.Contains(gate.Filter(new[]
+        {
+            new AdminNavItem("Ho so", "/admin/ho-so", "user", null),
+        }), item => item.Url.Contains("ho-so", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void GetFirstAccessibleRoute_FallsBackToProfileWhenNoOtherAccess()
+    {
+        using var db = TestDbHelper.CreateSeededContext();
+        var userId = Guid.NewGuid();
+        db.Users.Add(new AppUser
+        {
+            UserId = userId,
+            Username = "profile_only_user",
+            FullName = "Chi co ho so",
+            PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
+        });
+        db.SaveChanges();
+
+        var context = new CurrentUserContext(db, new EffectivePermissionResolver(db));
+        context.SetCurrentUser(userId);
+        var gate = new NavGate(context);
+
+        Assert.Equal("/qlcm/ho-so", gate.GetFirstAccessibleRoute(new[]
+        {
+            new AdminNavItem("Tong quan", "/admin", "dashboard", null),
+            new AdminNavItem("Ho so", "/admin/ho-so", "user", null),
+        }));
+    }
+
+    [Fact]
     public void Filter_RemovesNavItemsTheUserCannotOpen()
     {
         using var db = TestDbHelper.CreateSeededContext();

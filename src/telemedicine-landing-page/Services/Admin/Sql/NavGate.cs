@@ -102,7 +102,7 @@ public sealed class NavGate
                     result.Add(ToDisplayItem(item with { Children = filteredChildren }, isSystemAdmin));
                 }
             }
-            else if (canAccessParent)
+            else if (canAccessParent || IsSelfServiceRoute(item.Url))
             {
                 result.Add(ToDisplayItem(item, isSystemAdmin));
             }
@@ -119,7 +119,17 @@ public sealed class NavGate
     public string GetFirstAccessibleRoute(IReadOnlyList<AdminNavItem> items, string fallbackRoute = "/AccessDenied")
     {
         var firstItem = GetFirstNavigableItem(Filter(items));
-        return firstItem?.Url ?? fallbackRoute;
+        if (firstItem is not null)
+        {
+            return firstItem.Url;
+        }
+
+        if (_userContext.CurrentUser is not null)
+        {
+            return GetDisplayRoute("/admin/ho-so");
+        }
+
+        return fallbackRoute;
     }
 
     public bool CanAccess(string route)
@@ -127,12 +137,37 @@ public sealed class NavGate
         return CanAccess(route, IsSystemAdmin());
     }
 
+    public bool CanUserAccess(Guid userId, string route, EffectivePermissionResolver resolver)
+    {
+        if (_userContext.CurrentUser is null && userId == Guid.Empty)
+        {
+            return false;
+        }
+
+        var normalizedRoute = ToPermissionRoute(NormalizeRoute(route));
+        if (IsSelfServiceRoute(normalizedRoute))
+        {
+            return true;
+        }
+
+        var permissions = resolver.Resolve(userId);
+        return PageAccessCatalog.UserHasRouteAccess(permissions, GetRoutePermissionCodes(normalizedRoute), normalizedRoute);
+    }
+
+    public static bool IsSelfServiceRoute(string route)
+        => PageAccessCatalog.IsSelfServiceRoute(route);
+
     private bool CanAccess(string route, bool isSystemAdmin)
     {
         if (_userContext.CurrentUser is null) return false;
         if (isSystemAdmin) return true;
 
         var normalizedRoute = ToPermissionRoute(NormalizeRoute(route));
+        if (IsSelfServiceRoute(normalizedRoute))
+        {
+            return true;
+        }
+
         var matchedPermissions = GetRoutePermissionCodes(normalizedRoute);
         if (matchedPermissions.Count == 0)
         {
