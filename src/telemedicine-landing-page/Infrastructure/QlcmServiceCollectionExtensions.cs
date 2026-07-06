@@ -184,6 +184,7 @@ public static class QlcmServiceCollectionExtensions
         services.AddScoped<ICurrentUserContext, CurrentUserContext>();
         services.AddScoped<BrowserSessionCircuitState>();
         services.AddScoped<AdminActionGuard>();
+        services.AddScoped<ProcedureWorkflowGuard>();
         services.AddScoped<BrowserSessionService>();
         services.AddScoped<NavGate>();
         services.AddScoped<IUserPreferencesService, UserPreferencesService>();

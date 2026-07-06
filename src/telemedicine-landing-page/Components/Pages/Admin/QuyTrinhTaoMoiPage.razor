@@ -11,6 +11,7 @@
 @inject ICurrentUserContext UserContext
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@inject ProcedureWorkflowGuard WorkflowGuard
 @inject ProcedureLifecycleService Lifecycle
 @inject ProcedureAuthoringService Authoring
 @inject ProcedureSignoffService Signoffs
@@ -509,8 +510,19 @@
             return;
         }
 
-        var permission = IsEditDraftMode || IsUpdateMode ? "SCR_PROCEDURES:UPDATE" : "SCR_PROCEDURES:CREATE";
-        if (!Guard.CanDo(permission, IsEditDraftMode ? "chỉnh sửa bản nháp" : IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình")) return;
+        var versionId = IsEditDraftMode && _editDraftVersion is not null
+            ? _editDraftVersion.ProcedureVersionId
+            : (Guid?)null;
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (!WorkflowGuard.CanCreateOrUpdate(
+                IsEditDraftMode || IsUpdateMode,
+                versionId,
+                userId,
+                IsEditDraftMode ? "chỉnh sửa bản nháp" : IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình"))
+        {
+            return;
+        }
+
         var validationMessage = Validate(submit: true);
         if (validationMessage is not null)
         {
@@ -713,8 +725,19 @@
         bool persistDraftSnapshot = true,
         bool signWriterAfterSave = false)
     {
-        var permission = IsEditDraftMode || IsUpdateMode ? "SCR_PROCEDURES:UPDATE" : "SCR_PROCEDURES:CREATE";
-        if (_isSaving || !Guard.CanDo(permission, IsEditDraftMode ? "chỉnh sửa bản nháp" : IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình")) return false;
+        var saveVersionId = IsEditDraftMode && _editDraftVersion is not null
+            ? _editDraftVersion.ProcedureVersionId
+            : (Guid?)null;
+        var saveUserId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (_isSaving || !WorkflowGuard.CanCreateOrUpdate(
+                IsEditDraftMode || IsUpdateMode,
+                saveVersionId,
+                saveUserId,
+                IsEditDraftMode ? "chỉnh sửa bản nháp" : IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình"))
+        {
+            return false;
+        }
+
         var validationMessage = Validate(submit || signWriterAfterSave);
         if (validationMessage is not null)
         {

@@ -102,7 +102,7 @@
     else
     {
         <div class="page-access-presets" aria-label="Gán nhanh theo nhóm nghiệp vụ">
-            <span class="page-access-presets-label">Gán nhanh (quyền Xem):</span>
+            <span class="page-access-presets-label">Gán nhanh (quyền trang + thao tác cần thiết):</span>
             @foreach (var preset in PageAccessCatalog.Presets)
             {
                 <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" @onclick="() => ApplyPreset(preset.Key)">
@@ -322,21 +322,44 @@
         _isSaving = true;
         try
         {
+            var bundle = PageAccessCatalog.GetBundlePermissions(page, Store.Permissions);
             if (enabled)
             {
-                SubmitRolePermissionChange("grant", page.ViewPermission.PermissionId, null);
+                foreach (var permission in bundle)
+                {
+                    if (Store.RolePermissions.Any(assignment =>
+                            assignment.RoleId == _selectedRoleId.Value
+                            && assignment.PermissionId == permission.PermissionId
+                            && assignment.EffectiveTo is null
+                            && string.Equals(assignment.EffectCode, "allow", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
+
+                    SubmitRolePermissionChange("grant", permission.PermissionId, null);
+                }
+
                 Toasts.Show("Đã gửi yêu cầu", $"Bật trang {page.ScreenName} cho vai trò.", ToastVariant.Success);
             }
             else
             {
-                var existing = Store.RolePermissions.FirstOrDefault(assignment =>
-                    assignment.RoleId == _selectedRoleId.Value
-                    && assignment.PermissionId == page.ViewPermission.PermissionId
-                    && assignment.DepartmentScopeType == "global"
-                    && assignment.DepartmentId is null
-                    && assignment.EffectiveTo is null);
+                foreach (var permission in bundle)
+                {
+                    var existing = Store.RolePermissions.FirstOrDefault(assignment =>
+                        assignment.RoleId == _selectedRoleId.Value
+                        && assignment.PermissionId == permission.PermissionId
+                        && assignment.DepartmentScopeType == "global"
+                        && assignment.DepartmentId is null
+                        && assignment.EffectiveTo is null);
 
-                SubmitRolePermissionChange("revoke", page.ViewPermission.PermissionId, existing);
+                    if (existing is null)
+                    {
+                        continue;
+                    }
+
+                    SubmitRolePermissionChange("revoke", permission.PermissionId, existing);
+                }
+
                 Toasts.Show("Đã gửi yêu cầu", $"Tắt trang {page.ScreenName} khỏi vai trò.", ToastVariant.Info);
             }
         }
@@ -368,15 +391,27 @@
         foreach (var screenCode in screenCodes)
         {
             var page = _pages.FirstOrDefault(item => string.Equals(item.ScreenCode, screenCode, StringComparison.OrdinalIgnoreCase));
-            if (page?.ViewPermission is null || page.IsSelfService || IsRolePageEnabled(page))
+            if (page is null || page.IsSelfService || IsRolePageEnabled(page))
             {
                 continue;
             }
 
             try
             {
-                SubmitRolePermissionChange("grant", page.ViewPermission.PermissionId, null);
-                granted++;
+                foreach (var permission in PageAccessCatalog.GetBundlePermissions(page, Store.Permissions))
+                {
+                    if (Store.RolePermissions.Any(assignment =>
+                            assignment.RoleId == _selectedRoleId.Value
+                            && assignment.PermissionId == permission.PermissionId
+                            && assignment.EffectiveTo is null
+                            && string.Equals(assignment.EffectCode, "allow", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
+
+                    SubmitRolePermissionChange("grant", permission.PermissionId, null);
+                    granted++;
+                }
             }
             catch
             {

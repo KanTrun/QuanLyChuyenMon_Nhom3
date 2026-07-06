@@ -9,6 +9,7 @@
 @inject IConfirmDialogService Confirm
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@inject ProcedureWorkflowGuard WorkflowGuard
 @inject AuditTrailService Audit
 @inject ProcedureSignoffService Signoffs
 @inject ProcedureDocumentSnapshotService Snapshots
@@ -568,9 +569,12 @@
         }, "H1", "initial");
         // #endregion
 
-        var permission = role == "checker" ? "SCR_PROCEDURES:APPROVE" : "SCR_PROCEDURES:UPDATE";
-        if (!Guard.CanDo(permission, "ký xác nhận quy trình")) return;
         var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (!WorkflowGuard.CanSign(version.ProcedureVersionId, role, userId, "ký xác nhận quy trình"))
+        {
+            return;
+        }
+
         var canSign = Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out var reason);
 
         // #region agent log

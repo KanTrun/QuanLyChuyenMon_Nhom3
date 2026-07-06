@@ -13,6 +13,22 @@ public static class PageAccessCatalog
         "SCR_PROFILE",
     };
 
+    /// <summary>Action codes granted together when a page is enabled in the simplified access UI.</summary>
+    public static readonly IReadOnlyDictionary<string, string[]> ScreenActionBundles = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["SCR_PROCEDURES"] = ["view", "create", "update"],
+        ["SCR_PROCEDURE_CREATE"] = ["view", "create"],
+        ["SCR_PROCEDURE_APPROVAL"] = ["view", "approve"],
+        ["SCR_PROCEDURES_WORKSPACE"] = ["view", "approve"],
+        ["SCR_PROTOCOLS"] = ["view", "create", "update"],
+        ["SCR_PROTOCOLS_WORKSPACE"] = ["view", "execute"],
+        ["SCR_CLINICAL"] = ["view", "create", "update", "execute"],
+        ["SCR_CLINICAL_ADMIN"] = ["view", "create", "update", "execute"],
+        ["SCR_ORDERS"] = ["view", "create", "update"],
+        ["SCR_CATALOG"] = ["view", "create", "update"],
+        ["SCR_RESOURCES"] = ["view", "create", "update"],
+    };
+
     public static readonly IReadOnlyDictionary<string, string[]> Presets = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
     {
         ["Nền tảng"] = ["SCR_DASHBOARD", "SCR_NOTIFICATIONS", "SCR_PROFILE"],
@@ -89,6 +105,28 @@ public static class PageAccessCatalog
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         return routePermissionCodes.Any(allowed.Contains);
+    }
+
+    public static IReadOnlyList<MedPermission> GetBundlePermissions(
+        PageAccessRow page,
+        IReadOnlyList<MedPermission> permissions)
+    {
+        if (page.IsSelfService)
+        {
+            return Array.Empty<MedPermission>();
+        }
+
+        var actionCodes = ScreenActionBundles.TryGetValue(page.ScreenCode, out var bundle)
+            ? bundle
+            : ["view"];
+
+        return permissions
+            .Where(permission =>
+                permission.ScreenId == page.ScreenId
+                && permission.Status == "active"
+                && actionCodes.Contains(permission.ActionCode, StringComparer.OrdinalIgnoreCase))
+            .OrderBy(permission => permission.PermissionCode, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     public static string NormalizeRoute(string route)

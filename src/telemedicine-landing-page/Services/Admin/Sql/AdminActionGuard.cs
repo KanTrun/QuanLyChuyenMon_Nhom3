@@ -15,7 +15,7 @@ public sealed class AdminActionGuard
 
     private static readonly Dictionary<string, string[]> PermissionAliases = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["SCR_PROCEDURES:CREATE"] = ["PERM_MANAGE_PROC", "PERM_PROCEDURES_create"],
+        ["SCR_PROCEDURES:CREATE"] = ["PERM_MANAGE_PROC", "PERM_PROCEDURES_create", "SCR_PROCEDURE_CREATE:CREATE"],
         ["SCR_PROCEDURES:UPDATE"] = ["PERM_MANAGE_PROC", "PERM_PROCEDURES_update", "PERM_PROCEDURES_manage"],
         ["SCR_PROCEDURES:DELETE"] = ["PERM_MANAGE_PROC", "PERM_PROCEDURES_delete"],
         ["SCR_PROCEDURES:APPROVE"] = ["PERM_APPROVE_PROC", "PERM_PROCEDURES_approve"],
