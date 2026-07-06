@@ -1,15 +1,31 @@
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using TelemedicineLandingPage.Components;
-using TelemedicineLandingPage.Models;
-using TelemedicineLandingPage.Services;
+using TelemedicineLandingPage.Hubs;
+using TelemedicineLandingPage.Infrastructure;
+using TelemedicineLandingPage.Services.Admin.Sql;
+using TelemedicineLandingPage.Services.Auth;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+var medDbConnectionString = QlcmServiceCollectionExtensions.BuildResilientSqlConnectionString(
+    builder.Configuration.GetConnectionString("MedDb")
+        ?? throw new InvalidOperationException("Connection string 'MedDb' is missing."));
 
-builder.Services.AddRazorComponents();
-builder.Services.AddSingleton<ILandingPageContentService, LandingPageContentService>();
-builder.Services.AddOptions<LandingPageLinksOptions>()
-    .Bind(builder.Configuration.GetSection(LandingPageLinksOptions.SectionName))
-    .Validate(options => options.HasValidUrls(), "Landing page CTA URLs must be absolute URLs or in-page anchors.")
-    .ValidateOnStart();
+builder.Host.UseQlcmSerilog();
+
+builder.Services
+    .AddRazorComponents()
+    .AddInteractiveServerComponents()
+    .AddHubOptions(options =>
+    {
+        options.MaximumReceiveMessageSize = 512 * 1024;
+    });
+builder.Services.AddSignalR();
+builder.Services.AddQlcmDatabase(medDbConnectionString);
+builder.Services.AddQlcmIdentityAndAuthorization();
+builder.Services.AddQlcmAdminServices(builder.Configuration);
+builder.Services.AddQlcmHangfire(medDbConnectionString);
+builder.Services.AddQlcmChatbot(builder.Configuration);
 
 var app = builder.Build();
 
@@ -24,10 +40,23 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseSerilogRequestLogging();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseQlcmHangfireDashboard();
+app.UseQlcmRecurringJobs();
 app.UseAntiforgery();
 
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = HealthCheckJsonResponseWriter.WriteAsync
+});
 app.MapStaticAssets();
-app.MapRazorComponents<App>();
+app.MapHub<NotificationHub>("/hubs/notification");
+app.MapProcedureAttachmentEndpoints();
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+
+_ = app.Services.GetRequiredService<MedDataChangeSignalRNotifier>();
 
 app.Run();
 

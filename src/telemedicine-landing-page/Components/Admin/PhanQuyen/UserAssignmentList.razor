@@ -1,0 +1,342 @@
+@using Microsoft.EntityFrameworkCore
+@using TelemedicineLandingPage.Data
+@using TelemedicineLandingPage.Models.Admin.Sql
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin.Sql
+@inject MedDbContext Db
+@inject IToastService Toast
+@inject ICurrentUserContext UserContext
+@inject IConfirmDialogService Confirm
+
+<article class="admin-panel">
+    <header class="admin-panel-head">
+        <div>
+            <h2 class="admin-panel-title">Tài khoản và vai trò</h2>
+            <p class="admin-panel-subtitle">Tổng @_users.Count tài khoản đang hoạt động.</p>
+        </div>
+    </header>
+
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Họ tên</th>
+                    <th>Email</th>
+                    <th>Khoa/phòng</th>
+                    <th>Vai trò</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in _users)
+                {
+                    <tr>
+                        <td class="admin-table-cell-muted">@user.Username</td>
+                        <td class="admin-table-cell-strong">@user.FullName</td>
+                        <td class="admin-table-cell-muted">@(user.Email ?? "—")</td>
+                        <td>@(user.DepartmentName ?? "—")</td>
+                        <td>
+                            <div class="admin-card-tags">
+                                @if (user.Roles.Count > 0)
+                                {
+                                    @foreach (var role in user.Roles)
+                                    {
+                                        <span style="display:inline-flex;align-items:center;gap:2px;">
+                                            <AdminBadge Tone="tone-secondary">@role.DisplayName</AdminBadge>
+                                            <button type="button"
+                                                    class="admin-btn-icon-xs"
+                                                    title="Hủy vai trò @role.DisplayName"
+                                                    @onclick="() => RemoveRole(user.UserId, user.FullName, role.UserRoleId, role.DisplayName)">×</button>
+                                        </span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="admin-table-cell-muted">Chưa gán vai trò</span>
+                                }
+                            </div>
+                        </td>
+                        <td style="text-align:right;">
+                            <button type="button" class="admin-btn admin-btn-ghost" style="font-size:0.8rem;padding:4px 10px;" @onclick="() => OpenAssignRole(user)">Gán vai trò</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</article>
+
+@if (_assignModalOpen && _assigningUser is not null)
+{
+    <AdminModal IsOpen="_assignModalOpen" IsOpenChanged="@(v => _assignModalOpen = v)" Title="@($"Gán vai trò cho {_assigningUser.FullName}")">
+        <ChildContent>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Chọn vai trò</label>
+                <select class="admin-select" @bind="_selectedRoleId">
+                    <option value="">-- Chọn vai trò --</option>
+                    @foreach (var role in _allRoles)
+                    {
+                        <option value="@role.RoleId">@role.Name (@role.Code)</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field" style="margin-top:12px;">
+                <label class="admin-form-field-label">Phạm vi khoa/phòng của vai trò</label>
+                <select class="admin-select" @bind="_selectedDepartmentId">
+                    <option value="">Toàn hệ thống</option>
+                    @foreach (var dept in _allDepartments)
+                    {
+                        <option value="@dept.DepartmentId">@dept.Name</option>
+                    }
+                </select>
+                <p class="admin-panel-subtitle" style="margin-top:6px;">Để trống nếu vai trò có hiệu lực toàn hệ thống. Chọn khoa/phòng nếu quyền chỉ áp dụng trong khoa đó và các đơn vị con.</p>
+            </div>
+            @if (!string.IsNullOrEmpty(_assignError))
+            {
+                <div class="login-error" style="margin-top:12px;">⚠️ @_assignError</div>
+            }
+        </ChildContent>
+        <FooterContent>
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _assignModalOpen = false">Hủy</button>
+            <button type="button" class="admin-btn admin-btn-primary" @onclick="ConfirmAssignRole">Gán vai trò</button>
+        </FooterContent>
+    </AdminModal>
+}
+
+<style>
+    .admin-btn-icon-xs {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border: none;
+        background: transparent;
+        color: var(--color-text-muted, #94a3b8);
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1;
+        border-radius: 50%;
+        cursor: pointer;
+        padding: 0;
+        transition: background 0.15s, color 0.15s;
+    }
+    .admin-btn-icon-xs:hover {
+        background: var(--color-danger-subtle, #fee2e2);
+        color: var(--color-danger, #dc2626);
+    }
+</style>
+
+@code {
+    private List<UserView> _users = new();
+    private List<Role> _allRoles = new();
+    private List<Sql.Department> _allDepartments = new();
+    private bool _assignModalOpen;
+    private UserView? _assigningUser;
+    private string _selectedRoleId = "";
+    private string _selectedDepartmentId = "";
+    private string? _assignError;
+
+    protected override void OnInitialized()
+    {
+        _allRoles = Db.Roles.Where(r => r.Status == "active").OrderBy(r => r.Name).ToList();
+        _allDepartments = Db.Departments.Where(d => d.Status == "active").OrderBy(d => d.Code).ToList();
+        LoadUsers();
+    }
+
+    private void LoadUsers()
+    {
+        var activeUsers = Db.Users
+            .Where(u => u.Status == "active")
+            .OrderBy(u => u.FullName)
+            .ToList();
+
+        var activeUserRoles = Db.UserRoles
+            .Where(ur => ur.EffectiveTo == null)
+            .ToList();
+
+        var allRoles = Db.Roles.ToDictionary(r => r.RoleId, r => r.Name);
+        var allDepts = Db.Departments.ToDictionary(d => d.DepartmentId, d => d.Name);
+
+        _users = activeUsers.Select(u =>
+        {
+            var userRoles = activeUserRoles
+                .Where(ur => ur.UserId == u.UserId)
+                .Select(ur =>
+                {
+                    var roleName = allRoles.GetValueOrDefault(ur.RoleId, "(Không rõ)");
+                    var roleDept = ur.DepartmentId.HasValue ? allDepts.GetValueOrDefault(ur.DepartmentId.Value) : null;
+                    return new RoleInfo
+                    {
+                        UserRoleId = ur.UserRoleId,
+                        RoleId = ur.RoleId,
+                        Name = roleName,
+                        DepartmentName = roleDept,
+                        DisplayName = roleDept is null ? roleName : $"{roleName} • {roleDept}"
+                    };
+                })
+                .ToList();
+
+            string? deptName = u.PrimaryDepartmentId.HasValue
+                ? allDepts.GetValueOrDefault(u.PrimaryDepartmentId.Value)
+                : null;
+
+            return new UserView
+            {
+                UserId = u.UserId,
+                Username = u.Username,
+                FullName = u.FullName,
+                Email = u.Email,
+                DepartmentName = deptName,
+                Roles = userRoles
+            };
+        }).ToList();
+    }
+
+    private void OpenAssignRole(UserView user)
+    {
+        _assigningUser = user;
+        _selectedRoleId = "";
+        _selectedDepartmentId = "";
+        _assignError = null;
+        _assignModalOpen = true;
+    }
+
+    private void ConfirmAssignRole()
+    {
+        _assignError = null;
+
+        if (!Guid.TryParse(_selectedRoleId, out var roleId))
+        {
+            _assignError = "Vui lòng chọn vai trò.";
+            return;
+        }
+
+        if (_assigningUser is null) return;
+        var departmentId = Guid.TryParse(_selectedDepartmentId, out var parsedDeptId) ? parsedDeptId : (Guid?)null;
+        var roleName = _allRoles.FirstOrDefault(r => r.RoleId == roleId)?.Name ?? "";
+        var departmentName = departmentId.HasValue
+            ? _allDepartments.FirstOrDefault(d => d.DepartmentId == departmentId.Value)?.Name
+            : "Toàn hệ thống";
+        var currentUser = UserContext.CurrentUser;
+
+        // Mỗi tài khoản chỉ giữ một bản gán cho cùng vai trò; cập nhật phạm vi nếu đã tồn tại.
+        var existing = Db.UserRoles.FirstOrDefault(ur =>
+            ur.UserId == _assigningUser.UserId &&
+            ur.RoleId == roleId &&
+            ur.EffectiveTo == null);
+        if (existing is not null)
+        {
+            if (existing.DepartmentId == departmentId)
+            {
+                _assignError = "Tài khoản đã có vai trò này trong phạm vi đã chọn.";
+                return;
+            }
+
+            var entry = Db.Entry(existing);
+            entry.Property(ur => ur.DepartmentId).CurrentValue = departmentId;
+            Db.SaveChanges();
+
+            Db.AuditLogs.Add(new AuditLog
+            {
+                CorrelationId = Guid.NewGuid(),
+                ActorUserId = currentUser?.UserId,
+                ActorUsername = currentUser?.Username,
+                ActionCode = "assign_role",
+                TargetType = "user_role",
+                TargetId = _assigningUser.UserId.ToString(),
+                AfterJson = $"{{\"role\":\"{roleName}\",\"department\":\"{departmentName}\",\"user\":\"{_assigningUser.FullName}\",\"updated\":true}}"
+            });
+            Db.SaveChanges();
+
+            Toast.Show("Đã cập nhật phạm vi", $"Vai trò {roleName} áp dụng cho {departmentName}.", ToastVariant.Success);
+            _assignModalOpen = false;
+            LoadUsers();
+            return;
+        }
+
+        // Gán vai trò mới
+        Db.UserRoles.Add(new UserRole
+        {
+            UserId = _assigningUser.UserId,
+            RoleId = roleId,
+            DepartmentId = departmentId
+        });
+        Db.SaveChanges();
+
+        // Ghi audit log
+        Db.AuditLogs.Add(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = currentUser?.UserId,
+            ActorUsername = currentUser?.Username,
+            ActionCode = "assign_role",
+            TargetType = "user_role",
+            TargetId = _assigningUser.UserId.ToString(),
+            AfterJson = $"{{\"role\":\"{roleName}\",\"department\":\"{departmentName}\",\"user\":\"{_assigningUser.FullName}\"}}"
+        });
+        Db.SaveChanges();
+
+        Toast.Show("Thành công", "Đã gán vai trò thành công", ToastVariant.Success);
+
+        _assignModalOpen = false;
+        LoadUsers();
+    }
+
+    private async Task RemoveRole(Guid userId, string fullName, Guid userRoleId, string roleName)
+    {
+        var confirmed = await Confirm.ShowAsync(
+            "Hủy vai trò",
+            $"Bạn có chắc muốn hủy vai trò {roleName} cho {fullName}?",
+            "Xác nhận hủy");
+
+        if (!confirmed) return;
+
+        // Soft-delete: đặt effective_to = now
+        var userRole = Db.UserRoles.FirstOrDefault(ur =>
+            ur.UserRoleId == userRoleId && ur.UserId == userId && ur.EffectiveTo == null);
+
+        if (userRole is null) return;
+
+        var entry = Db.Entry(userRole);
+        entry.Property(ur => ur.EffectiveTo).CurrentValue = DateTime.UtcNow;
+        Db.SaveChanges();
+
+        // Ghi audit log
+        var currentUser = UserContext.CurrentUser;
+        Db.AuditLogs.Add(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = currentUser?.UserId,
+            ActorUsername = currentUser?.Username,
+            ActionCode = "remove_role",
+            TargetType = "user_role",
+            TargetId = userId.ToString(),
+            BeforeJson = $"{{\"role\":\"{roleName}\",\"user\":\"{fullName}\"}}"
+        });
+        Db.SaveChanges();
+
+        Toast.Show("Thành công", "Đã hủy vai trò thành công", ToastVariant.Success);
+        LoadUsers();
+    }
+
+    private sealed class RoleInfo
+    {
+        public Guid UserRoleId { get; init; }
+        public Guid RoleId { get; init; }
+        public string Name { get; init; } = "";
+        public string? DepartmentName { get; init; }
+        public string DisplayName { get; init; } = "";
+    }
+
+    private sealed class UserView
+    {
+        public Guid UserId { get; init; }
+        public string Username { get; init; } = "";
+        public string FullName { get; init; } = "";
+        public string? Email { get; init; }
+        public string? DepartmentName { get; init; }
+        public List<RoleInfo> Roles { get; init; } = new();
+    }
+}

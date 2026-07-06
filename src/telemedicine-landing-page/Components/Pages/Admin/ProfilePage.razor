@@ -1,0 +1,309 @@
+@page "/admin/ho-so"
+@page "/qlcm/ho-so"
+@layout AdminLayout
+@using System.Text.Json
+@using TelemedicineLandingPage.Data
+@using TelemedicineLandingPage.Application.Validation
+@using TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin.Sql
+@inject ICurrentUserContext UserContext
+@inject MedDbContext Db
+@inject IToastService Toast
+@inject IValidationService Validation
+@inject IPasswordStrengthService PasswordStrengthService
+@implements IDisposable
+
+<PageTitle>Hồ sơ cá nhân | QLCM Pro</PageTitle>
+
+<section class="admin-page admin-profile-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Tài khoản</span>
+            <h1 class="admin-page-title">Hồ sơ cá nhân</h1>
+            <p class="admin-page-subtitle">Quản lý thông tin hiển thị, email công vụ và mật khẩu đăng nhập nội bộ.</p>
+        </div>
+        <div class="admin-page-actions">
+            <a class="admin-btn admin-btn-ghost" href="/admin/cai-dat">Cài đặt hệ thống</a>
+        </div>
+    </header>
+
+    @if (_user is null)
+    {
+        <article class="admin-panel">
+            <p class="admin-panel-subtitle">Chưa có phiên đăng nhập. Vui lòng đăng nhập lại để cập nhật hồ sơ.</p>
+        </article>
+    }
+    else
+    {
+        <div class="admin-profile-grid">
+            <aside class="admin-panel admin-profile-summary" aria-label="Thông tin tài khoản hiện tại">
+                <div class="admin-profile-avatar" aria-hidden="true">@Initials</div>
+                <div>
+                    <h2 class="admin-profile-name">@_user.FullName</h2>
+                    <p class="admin-profile-username">@_user.Username</p>
+                </div>
+
+                <dl class="admin-profile-facts">
+                    <div>
+                        <dt>Vai trò</dt>
+                        <dd>@_roleName</dd>
+                    </div>
+                    <div>
+                        <dt>Khoa/phòng</dt>
+                        <dd>@_departmentName</dd>
+                    </div>
+                    <div>
+                        <dt>Trạng thái</dt>
+                        <dd><AdminBadge Tone="tone-success">Đang hoạt động</AdminBadge></dd>
+                    </div>
+                </dl>
+            </aside>
+
+            <div class="admin-profile-stack">
+                <article class="admin-panel admin-profile-card">
+                    <header class="admin-panel-head">
+                        <div>
+                            <h2 class="admin-panel-title">Thông tin liên hệ</h2>
+                            <p class="admin-panel-subtitle">Tên hiển thị và email dùng cho thông báo hệ thống.</p>
+                        </div>
+                    </header>
+
+                    <div class="admin-form-grid">
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label" for="profile-fullname">Họ và tên</label>
+                            <input id="profile-fullname" class="admin-input" @bind="_fullName" autocomplete="name" />
+                            <span class="admin-form-field-hint">Tên này hiển thị trên thanh công cụ và nhật ký thao tác.</span>
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label" for="profile-email">Email công vụ</label>
+                            <input id="profile-email" class="admin-input" type="email" @bind="_email" autocomplete="email" />
+                            <span class="admin-form-field-hint">Có thể để trống nếu tài khoản chưa dùng email.</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="admin-panel admin-profile-card">
+                    <header class="admin-panel-head">
+                        <div>
+                            <h2 class="admin-panel-title">Bảo mật đăng nhập</h2>
+                            <p class="admin-panel-subtitle">@PasswordHelpText</p>
+                        </div>
+                    </header>
+
+                    <div class="admin-form-grid">
+                        @if (_hasPassword)
+                        {
+                            <div class="admin-form-field">
+                                <label class="admin-form-field-label" for="profile-old-pw">Mật khẩu hiện tại</label>
+                                <input id="profile-old-pw" class="admin-input" type="password" @bind="_oldPassword" autocomplete="current-password" />
+                            </div>
+                        }
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label" for="profile-new-pw">Mật khẩu mới</label>
+                            <input id="profile-new-pw" class="admin-input" type="password" @bind="_newPassword" @bind:event="oninput" autocomplete="new-password" />
+                            @if (!string.IsNullOrEmpty(_newPassword))
+                            {
+                                <div class="password-strength" aria-live="polite">
+                                    <meter min="0" max="@PasswordStrength.MaxScore" value="@PasswordStrength.Score"></meter>
+                                    <span>@PasswordStrength.Label</span>
+                                </div>
+                            }
+                            <span class="admin-form-field-hint">Tối thiểu 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.</span>
+                        </div>
+                        <div class="admin-form-field">
+                            <label class="admin-form-field-label" for="profile-confirm-pw">Xác nhận mật khẩu mới</label>
+                            <input id="profile-confirm-pw" class="admin-input" type="password" @bind="_confirmPassword" autocomplete="new-password" />
+                        </div>
+                    </div>
+                </article>
+
+                <div class="admin-profile-actions">
+                    <button type="button" class="admin-btn admin-btn-ghost" @onclick="ResetForm" disabled="@_isSaving">Hoàn tác</button>
+                    <button type="button" class="admin-btn admin-btn-primary" @onclick="SaveProfile" disabled="@_isSaving">
+                        @(_isSaving ? "Đang lưu..." : "Lưu thay đổi")
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</section>
+
+@code {
+    private AppUser? _user;
+    private string _fullName = string.Empty;
+    private string _email = string.Empty;
+    private string _roleName = "Không có";
+    private string _departmentName = "Không có";
+    private bool _hasPassword;
+    private bool _isSaving;
+
+    private string _oldPassword = string.Empty;
+    private string _newPassword = string.Empty;
+    private string _confirmPassword = string.Empty;
+    private PasswordStrengthResult PasswordStrength => PasswordStrengthService.Evaluate(_newPassword, _user?.Username, _user?.PasswordHash);
+
+    private string Initials
+    {
+        get
+        {
+            var source = string.IsNullOrWhiteSpace(_fullName) ? _user?.Username : _fullName;
+            if (string.IsNullOrWhiteSpace(source)) return "QT";
+            var parts = source.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1) return parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant();
+            return string.Concat(parts.TakeLast(2).Select(p => char.ToUpperInvariant(p[0])));
+        }
+    }
+
+    private string PasswordHelpText => _hasPassword
+        ? "Đổi mật khẩu khi cần bàn giao ca trực hoặc nghi ngờ lộ tài khoản."
+        : "Tài khoản chưa đặt mật khẩu riêng; nhập mật khẩu mới để kích hoạt đăng nhập bảo mật.";
+
+    protected override void OnInitialized()
+    {
+        UserContext.StateChanged += OnUserChanged;
+        LoadUserData();
+    }
+
+    private void OnUserChanged() => _ = InvokeAsync(() =>
+    {
+        LoadUserData();
+        StateHasChanged();
+    });
+
+    private void LoadUserData()
+    {
+        _user = UserContext.CurrentUser;
+        if (_user is null) return;
+
+        _fullName = _user.FullName;
+        _email = _user.Email ?? string.Empty;
+        _hasPassword = !string.IsNullOrEmpty(_user.PasswordHash);
+
+        var roleIds = Db.UserRoles
+            .Where(ur => ur.UserId == _user.UserId && (ur.EffectiveTo == null || ur.EffectiveTo > DateTime.UtcNow))
+            .Select(ur => ur.RoleId)
+            .ToList();
+
+        var roleNames = Db.Roles
+            .Where(r => roleIds.Contains(r.RoleId))
+            .OrderBy(r => r.Name)
+            .Select(r => r.Name)
+            .ToList();
+
+        _roleName = roleNames.Count > 0 ? string.Join(", ", roleNames) : "Không có";
+
+        _departmentName = _user.PrimaryDepartmentId is null
+            ? "Không có"
+            : Db.Departments.FirstOrDefault(d => d.DepartmentId == _user.PrimaryDepartmentId)?.Name ?? "Không có";
+    }
+
+    private void ResetForm()
+    {
+        LoadUserData();
+        _oldPassword = string.Empty;
+        _newPassword = string.Empty;
+        _confirmPassword = string.Empty;
+        Toast.Show("Đã hoàn tác", "Khôi phục dữ liệu hồ sơ đang lưu trong hệ thống.", ToastVariant.Info);
+    }
+
+    private async Task SaveProfile()
+    {
+        if (_user is null || _isSaving) return;
+
+        var nextName = _fullName.Trim();
+        var nextEmail = _email.Trim();
+        var changingPassword = !string.IsNullOrEmpty(_newPassword) || !string.IsNullOrEmpty(_confirmPassword);
+
+        if (string.IsNullOrWhiteSpace(nextName))
+        {
+            Toast.Show("Thiếu thông tin", "Vui lòng nhập họ và tên.", ToastVariant.Warning);
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(nextEmail) && !nextEmail.Contains('@', StringComparison.Ordinal))
+        {
+            Toast.Show("Email chưa hợp lệ", "Vui lòng nhập email công vụ đúng định dạng.", ToastVariant.Warning);
+            return;
+        }
+
+        if (changingPassword && !await ValidatePasswordChange())
+        {
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            var dbUser = Db.Users.FirstOrDefault(u => u.UserId == _user.UserId);
+            if (dbUser is null)
+            {
+                Toast.Show("Không tìm thấy tài khoản", "Vui lòng đăng nhập lại trước khi cập nhật hồ sơ.", ToastVariant.Error);
+                return;
+            }
+
+            var beforeJson = JsonSerializer.Serialize(new { dbUser.FullName, dbUser.Email });
+            var entry = Db.Entry(dbUser);
+            entry.Property(u => u.FullName).CurrentValue = nextName;
+            entry.Property(u => u.Email).CurrentValue = string.IsNullOrWhiteSpace(nextEmail) ? null : nextEmail;
+            entry.Property(u => u.UpdatedAt).CurrentValue = DateTime.UtcNow;
+
+            if (changingPassword)
+            {
+                entry.Property(u => u.PasswordHash).CurrentValue = CurrentUserContext.HashPassword(_newPassword);
+            }
+
+            Db.AuditLogs.Add(new AuditLog
+            {
+                CorrelationId = Guid.NewGuid(),
+                ActorUserId = _user.UserId,
+                ActorUsername = _user.Username,
+                ActionCode = "update",
+                TargetType = "user_profile",
+                TargetId = _user.UserId.ToString(),
+                BeforeJson = beforeJson,
+                AfterJson = JsonSerializer.Serialize(new { FullName = nextName, Email = nextEmail }),
+                MetadataJson = JsonSerializer.Serialize(new { PasswordChanged = changingPassword })
+            });
+
+            Db.SaveChanges();
+            UserContext.SetCurrentUser(_user.UserId);
+            LoadUserData();
+            _oldPassword = string.Empty;
+            _newPassword = string.Empty;
+            _confirmPassword = string.Empty;
+
+            Toast.Show("Đã lưu hồ sơ", "Thông tin tài khoản đã được cập nhật.", ToastVariant.Success);
+        }
+        catch (Exception ex)
+        {
+            Toast.Show("Không thể lưu hồ sơ", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task<bool> ValidatePasswordChange()
+    {
+        var errors = await Validation.ValidateAsync(new ProfilePasswordChangeCommand(
+            _user?.Username ?? string.Empty,
+            _user?.PasswordHash,
+            _hasPassword,
+            _oldPassword,
+            _newPassword,
+            _confirmPassword));
+        if (errors.Count == 0)
+        {
+            return true;
+        }
+
+        Toast.Show("Mật khẩu chưa hợp lệ", errors[0], ToastVariant.Warning);
+        return false;
+    }
+
+    public void Dispose()
+    {
+        UserContext.StateChanged -= OnUserChanged;
+    }
+}

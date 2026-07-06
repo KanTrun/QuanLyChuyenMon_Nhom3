@@ -1,0 +1,52 @@
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@inject ProcedureSignoffService Signoffs
+@inject ICurrentUserContext UserContext
+
+<div class="procedure-workflow-bar" aria-label="Tiến trình phê duyệt quy trình">
+        @foreach (var step in Steps)
+        {
+            <div class="procedure-workflow-step @step.StateClass">
+                <span class="procedure-workflow-step-index">@step.Index</span>
+                <div class="procedure-workflow-step-body">
+                    <strong>@step.Title</strong>
+                    <span>@step.Subtitle</span>
+                </div>
+            </div>
+            @if (step.Index < 3)
+            {
+                <span class="procedure-workflow-connector" aria-hidden="true"></span>
+            }
+        }
+    </div>
+
+@code {
+    [Parameter, EditorRequired] public Guid VersionId { get; set; }
+    [Parameter, EditorRequired] public string StatusCode { get; set; } = string.Empty;
+
+    private IReadOnlyList<WorkflowStep> Steps { get; set; } = [];
+
+    protected override void OnParametersSet() => Rebuild();
+
+    private void Rebuild()
+    {
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        var writerDone = Signoffs.HasCurrentSignoff(VersionId, "writer");
+        var checkerDone = Signoffs.HasCurrentSignoff(VersionId, "checker");
+        var approverDone = Signoffs.HasCurrentSignoff(VersionId, "approver");
+
+        Signoffs.CanUserSign(VersionId, "checker", userId, out var checkerBlockReason);
+        Signoffs.CanUserSign(VersionId, "approver", userId, out var approverBlockReason);
+
+        Steps =
+        [
+            BuildStep(1, "Soạn & ký", writerDone ? "Người viết đã ký" : "Chờ người viết ký trước khi gửi", writerDone ? "is-complete" : StatusCode == "draft" ? "is-current" : "is-pending"),
+            BuildStep(2, "Kiểm tra", checkerDone ? "Người kiểm tra đã ký" : checkerBlockReason ?? "Chờ người kiểm tra ký", checkerDone ? "is-complete" : writerDone && StatusCode == "pending_approval" ? "is-current" : "is-pending"),
+            BuildStep(3, "Phê duyệt & ban hành", approverDone ? "Đã ký ban hành" : approverBlockReason ?? "Chờ người phê duyệt ký", approverDone || StatusCode == "active" ? "is-complete" : checkerDone && StatusCode == "pending_approval" ? "is-current" : "is-pending")
+        ];
+    }
+
+    private static WorkflowStep BuildStep(int index, string title, string subtitle, string stateClass)
+        => new(index, title, subtitle, stateClass);
+
+    private sealed record WorkflowStep(int Index, string Title, string Subtitle, string StateClass);
+}

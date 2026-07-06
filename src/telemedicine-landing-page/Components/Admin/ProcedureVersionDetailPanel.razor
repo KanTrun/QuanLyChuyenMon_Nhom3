@@ -1,0 +1,1127 @@
+@using System.Text.Json.Nodes
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@inject ProcedureDocumentSnapshotService Snapshots
+@inject ProcedureSignoffService Signoffs
+@inject ProcedureLifecycleService Lifecycle
+@inject IMedDataStore Store
+@using TelemedicineLandingPage.Services.Admin
+@using TelemedicineLandingPage.Services.Admin.Sql
+@inject IJSRuntime JS
+@inject ICurrentUserContext UserContext
+@inject IToastService Toasts
+
+@if (_snapshot is not null)
+{
+    <div class="procedure-detail-shell">
+    <ProcedureWorkflowStatusBar VersionId="_snapshot.Version.ProcedureVersionId" StatusCode="_snapshot.Version.StatusCode" />
+
+    <article class="procedure-detail-hero procedure-detail-hero-rich">
+        <div class="procedure-detail-hero-copy">
+            <span class="procedure-detail-hero-kicker">Mã quy trình</span>
+            <strong class="procedure-detail-hero-code">@_snapshot.Procedure.ProcedureCode</strong>
+            <p class="procedure-detail-hero-subtitle">@VersionLabel(_snapshot.Version) • @_snapshot.Version.Title</p>
+            <div class="procedure-detail-hero-meta">
+                <AdminBadge Tone="@VersionTone(_snapshot.Version.StatusCode)">@StatusLabel(_snapshot.Version.StatusCode)</AdminBadge>
+                <span class="procedure-detail-hero-meta-item">Ban hành: @AdminDateTimeDisplay.Date(_snapshot.Version.IssueDate)</span>
+                <span class="procedure-detail-hero-meta-item">@WriterSignoffSummary</span>
+            </div>
+        </div>
+        @if (CanCurrentUserSignWriter)
+        {
+            <button type="button" class="admin-btn admin-btn-primary" @onclick='() => OnSignRequested.InvokeAsync("writer")'>
+                Ký người viết
+            </button>
+        }
+        else if (CanCurrentUserEditDraft)
+        {
+            <a class="admin-btn admin-btn-primary" href="@EditDraftHref">
+                Tiếp tục soạn thảo
+            </a>
+        }
+        else if (CanCurrentUserSignApprover)
+        {
+            <button type="button" class="admin-btn admin-btn-primary" @onclick='() => OnSignRequested.InvokeAsync("approver")'>
+                Phê duyệt &amp; ban hành
+            </button>
+        }
+    </article>
+
+    <nav class="procedure-detail-quicknav" aria-label="Mục nội dung chi tiết">
+        <a href="#procedure-signatures">Chữ ký nội bộ</a>
+        <a href="#procedure-writers">Người viết</a>
+        <a href="#procedure-diff">So sánh phiên bản</a>
+        <a href="#procedure-steps">Lưu đồ bước</a>
+        <a href="#procedure-metadata">Metadata</a>
+    </nav>
+
+    <section class="procedure-detail-section procedure-signature-gallery" id="procedure-signatures">
+        <header class="procedure-section-head">
+            <div>
+                <span class="procedure-section-kicker">Xác nhận nội bộ</span>
+                <h3 class="admin-panel-title">Chữ ký và đối chiếu vai trò</h3>
+                <p class="admin-panel-hint">Ảnh chữ ký tay, thời điểm ký và hash nội dung tại thời điểm xác nhận.</p>
+            </div>
+        </header>
+        <div class="procedure-signature-grid">
+            @foreach (var card in SignatureCards)
+            {
+                <article class="procedure-signature-card @(card.Signed ? "is-signed" : "is-pending") @(card.Stale ? "is-stale" : null)">
+                    <header class="procedure-signature-card-head">
+                        <span class="procedure-signature-role">@card.RoleLabel</span>
+                        <AdminBadge Tone="@card.Tone">@card.StatusLabel</AdminBadge>
+                    </header>
+                    <div class="procedure-signature-card-body">
+                        @if (!string.IsNullOrWhiteSpace(card.SignatureImageDataUrl))
+                        {
+                            <div class="procedure-signature-image-frame">
+                                <img src="@card.SignatureImageDataUrl" alt="Chữ ký @card.RoleLabel" loading="lazy" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="procedure-signature-image-placeholder">
+                                <span>@(card.Signed ? "Không có ảnh" : "Chưa ký")</span>
+                            </div>
+                        }
+                        <dl class="procedure-signature-meta">
+                            <div><dt>Người ký</dt><dd>@card.SignerLabel</dd></div>
+                            <div><dt>Thời điểm</dt><dd>@card.SignedAtLabel</dd></div>
+                            @if (!string.IsNullOrWhiteSpace(card.HashLabel))
+                            {
+                                <div><dt>Hash nội dung</dt><dd class="procedure-signature-hash">@card.HashLabel</dd></div>
+                            }
+                        </dl>
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
+
+    @if (_snapshot.WriterAssignments.Count > 0)
+    {
+        <section class="procedure-detail-section" id="procedure-writers">
+            <header class="procedure-section-head">
+                <div>
+                    <span class="procedure-section-kicker">Phân công</span>
+                    <h3 class="admin-panel-title">Người viết và trạng thái ký</h3>
+                    @if (_snapshot.Version.StatusCode == "draft")
+                    {
+                        <p class="admin-panel-hint" style="margin-top:0.25rem;">
+                            <strong>@DraftSubStatusLabel</strong> — @DraftSubStatusHint
+                        </p>
+                    }
+                </div>
+            </header>
+            @if (_snapshot.Version.StatusCode == "draft" && OutstandingWriterCount == 0)
+            {
+                <aside class="admin-callout procedure-signoff-callout">
+                    <strong>Đủ chữ ký người viết</strong>
+                    Phiên bản sẽ tự chuyển sang chờ kiểm tra khi người viết cuối cùng ký.
+                </aside>
+            }
+            else if (_snapshot.Version.StatusCode == "draft" && OutstandingWriterCount > 0 && WriterSignoffRows.Any(w => w.Signed))
+            {
+                var isOutOfOrder = DraftSubStatusHint.StartsWith("Cảnh báo:");
+                <aside class="admin-callout procedure-signoff-callout" style="border-left-color:var(--color-@(isOutOfOrder ? "danger" : "warning"),#f59e0b);">
+                    <strong>@DraftSubStatusLabel</strong> — @DraftSubStatusHint
+                    @if (CanCurrentUserRecallAsWriter1)
+                    {
+                        <br /><span class="admin-table-cell-muted">Nếu cần sửa lại, bấm <strong>Thu hồi chữ ký</strong> trên thẻ của bạn bên dưới.</span>
+                    }
+                    @if (CanCurrentUserReturnToWriter1)
+                    {
+                        <br /><span class="admin-table-cell-muted">Nếu thấy nội dung người viết trước sai, bấm <strong>Trả về Người viết 1</strong> bên dưới.</span>
+                    }
+                </aside>
+            }
+            else if (_snapshot.Version.StatusCode == "draft" && OutstandingWriterCount > 0)
+            {
+                <aside class="admin-callout procedure-signoff-callout">
+                    <strong>Draft_1 — Đang soạn thảo</strong>
+                    Còn @OutstandingWriterCount chữ ký người viết. Mỗi người được phân công đăng nhập bằng tài khoản riêng và ký trên nội dung hiện tại.
+                </aside>
+            }
+            <div class="procedure-writer-grid">
+                @foreach (var writerRow in WriterSignoffRows)
+                {
+                    <article class="procedure-writer-card @(writerRow.Signed ? "is-signed" : "is-pending")">
+                        <div class="procedure-writer-card-top">
+                            <span class="procedure-writer-order">@writerRow.DisplayOrder</span>
+                            <div>
+                                <strong class="procedure-writer-name">@writerRow.WriterName</strong>
+                                <AdminBadge Tone="@writerRow.Tone">@writerRow.StatusLabel</AdminBadge>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(writerRow.SignatureImageDataUrl))
+                        {
+                            <div class="procedure-signature-image-frame is-compact">
+                                <img src="@writerRow.SignatureImageDataUrl" alt="Chữ ký @writerRow.WriterName" loading="lazy" />
+                            </div>
+                        }
+                        <div class="procedure-writer-card-meta">
+                            <span>@writerRow.SignedAtLabel</span>
+                        </div>
+                        <div class="procedure-writer-card-actions">
+                            @if (writerRow.CanSign)
+                            {
+                                <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => OnSignRequested.InvokeAsync("writer")'>
+                                    Ký người viết
+                                </button>
+                            }
+                            else if (writerRow.CanEdit)
+                            {
+                                <a class="admin-btn admin-btn-sm admin-btn-ghost" href="@EditDraftHref">Soạn tiếp</a>
+                            }
+                            @if (writerRow.CanRecall)
+                            {
+                                <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost is-danger" @onclick="OpenRecallModal">
+                                    Thu hồi chữ ký
+                                </button>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+            @if (CanCurrentUserReturnToWriter1)
+            {
+                <div style="margin-top:0.75rem;display:flex;gap:0.5rem;justify-content:flex-end;">
+                    <button type="button" class="admin-btn admin-btn-ghost is-danger" @onclick="OpenReturnToWriter1Modal">
+                        Trả về Người viết 1 (hủy chữ ký hiện tại)
+                    </button>
+                </div>
+            }
+        </section>
+    }
+    else if (_snapshot.Version.StatusCode == "draft" && _snapshot.Version.RequiredWriterSignatures > 0)
+    {
+        <section class="procedure-detail-section" id="procedure-writers">
+            <aside class="admin-callout procedure-signoff-callout">
+                <strong>Chưa có phân công người viết</strong>
+                Phiên bản nháp này chưa ghi nhận danh sách người viết. Hãy mở trang cập nhật để phân công trước khi ký.
+            </aside>
+        </section>
+    }
+
+    @if (_snapshot.Steps.Count > 0)
+    {
+        <section class="procedure-detail-section" id="procedure-steps">
+            <h3 class="admin-panel-title">Lưu đồ thực hiện</h3>
+            <ol class="admin-step-list">
+                @foreach (var step in _snapshot.Steps)
+                {
+                    <li class="admin-step-card">
+                        <div class="admin-step-card-head">
+                            <span class="procedure-step-code">@StepCodeLabel(step)</span>
+                            <span class="admin-step-card-seq">Bước @step.StepNo</span>
+                            <span class="admin-table-cell-muted">@((step.StandardDurationMinutes?.ToString() ?? "—")) phút</span>
+                        </div>
+                        <div class="admin-table-cell-strong">@step.Name</div>
+                        @if (!string.IsNullOrWhiteSpace(step.ResponsibilityText))
+                        {
+                            <div class="admin-table-cell-muted">Trách nhiệm: @step.ResponsibilityText</div>
+                        }
+                        @if (StepRoles(step).Count > 0)
+                        {
+                            <div class="admin-table-cell-muted">Vai trò: @string.Join(", ", StepRoles(step))</div>
+                        }
+                        @if (StepLocations(step).Count > 0)
+                        {
+                            <div class="admin-table-cell-muted">Nơi thực hiện: @string.Join(", ", StepLocations(step))</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(step.Description))
+                        {
+                            <div class="admin-table-cell-muted">@step.Description</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(step.DetailSectionNumber))
+                        {
+                            <div class="admin-table-cell-muted">Mục chi tiết: @step.DetailSectionNumber</div>
+                        }
+                        @{
+                            var linkedAttachments = ResolveStepAttachments(step);
+                        }
+                        @if (linkedAttachments.Count > 0)
+                        {
+                            <div class="procedure-step-attachment-link">
+                                @foreach (var attachment in linkedAttachments)
+                                {
+                                    <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => DownloadAttachmentAsync(attachment)">
+                                        Tải @attachment.FileName
+                                    </button>
+                                }
+                            </div>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(step.FormReferenceText))
+                        {
+                            <div class="admin-table-cell-muted">Biểu mẫu: @step.FormReferenceText</div>
+                        }
+                    </li>
+                }
+            </ol>
+        </section>
+    }
+
+    <section class="procedure-detail-section" id="procedure-metadata">
+        <h3 class="admin-panel-title">Thông tin kiểm soát</h3>
+        <dl class="admin-detail-grid">
+            <dt>Mã quy trình</dt>
+            <dd>@_snapshot.Procedure.ProcedureCode</dd>
+            <dt>Tên quy trình</dt>
+            <dd>@_snapshot.Procedure.Name</dd>
+            <dt>Loại quy trình</dt>
+            <dd>@ProcedureTypeName(_snapshot.Procedure.ProcedureType)</dd>
+            <dt>Khoa/phòng</dt>
+            <dd>@(_snapshot.DepartmentName ?? "—")</dd>
+            <dt>Phiên bản</dt>
+            <dd>@VersionLabel(_snapshot.Version)</dd>
+            <dt>Tiêu đề phiên bản</dt>
+            <dd>@_snapshot.Version.Title</dd>
+            <dt>Tóm tắt</dt>
+            <dd>@ProcedureVersionSummaryFormatter.Display(_snapshot.Version.Summary)</dd>
+            <dt>Lý do thay đổi</dt>
+            <dd>@(string.IsNullOrWhiteSpace(_snapshot.Version.ChangeReason) ? "—" : ProcedureVersionSummaryFormatter.NormalizeDisplayText(_snapshot.Version.ChangeReason))</dd>
+            <dt>Lần ban hành</dt>
+            <dd>@(_snapshot.Version.IssueNumber?.ToString() ?? "—")</dd>
+            <dt>Ngày ban hành</dt>
+            <dd>@AdminDateTimeDisplay.Date(_snapshot.Version.IssueDate)</dd>
+            <dt>Trạng thái</dt>
+            <dd><AdminBadge Tone="@VersionTone(_snapshot.Version.StatusCode)">@StatusLabel(_snapshot.Version.StatusCode)</AdminBadge></dd>
+            <dt>Gửi duyệt</dt>
+            <dd>@AdminDateTimeDisplay.DateTime(_snapshot.Version.SubmittedAt)</dd>
+            <dt>Phê duyệt</dt>
+            <dd>@AdminDateTimeDisplay.DateTime(_snapshot.Version.ApprovedAt)</dd>
+            <dt>Ban hành</dt>
+            <dd>@AdminDateTimeDisplay.DateTime(_snapshot.Version.PublishedAt)</dd>
+            <dt>Hiệu lực từ</dt>
+            <dd>@AdminDateTimeDisplay.Date(_snapshot.Version.EffectiveFrom)</dd>
+            <dt>PDF nguồn</dt>
+            <dd>@(_snapshot.Version.SourcePdfFileName ?? "—")</dd>
+            <dt>Số người viết cần ký</dt>
+            <dd>@_snapshot.Version.RequiredWriterSignatures</dd>
+        </dl>
+    </section>
+
+    @if (OlderVersions.Count > 0)
+    {
+        <section class="procedure-detail-section">
+            <h3 class="admin-panel-title">Phiên bản trước (đã lưu trữ)</h3>
+            <p class="admin-panel-hint">Phiên bản hiện tại không ghi đè bản cũ. Các phiên bản trước vẫn tra cứu và in/PDF từ bảng lịch sử phía trên.</p>
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead><tr><th>Phiên bản</th><th>Tiêu đề</th><th>Trạng thái</th><th>Ban hành</th></tr></thead>
+                    <tbody>
+                        @foreach (var older in OlderVersions)
+                        {
+                            <tr>
+                                <td>@(older.VersionLabel ?? $"v{older.VersionNo}")</td>
+                                <td>@older.Title</td>
+                                <td><AdminBadge Tone="@VersionTone(older.StatusCode)">@StatusLabel(older.StatusCode)</AdminBadge></td>
+                                <td>@AdminDateTimeDisplay.ShortDateTime(older.PublishedAt)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+
+    @if (CurrentDiff is not null || _snapshot.VersionSnapshots.Count > 0)
+    {
+        <section class="procedure-detail-section procedure-diff-section" id="procedure-diff">
+            <header class="procedure-section-head">
+                <div>
+                    <span class="procedure-section-kicker">Đối chiếu</span>
+                    <h3 class="admin-panel-title">So sánh với phiên bản trước</h3>
+                </div>
+            </header>
+            @if (CurrentDiff is not null)
+            {
+                var diffView = BuildDiffView(CurrentDiff);
+                <article class="procedure-diff-hero">
+                    <div class="procedure-diff-hero-copy">
+                        <span class="procedure-diff-kicker">So sánh phiên bản</span>
+                        <h4 class="procedure-diff-title">@diffView.FromVersionLabel -> @diffView.ToVersionLabel</h4>
+                        <p class="procedure-diff-subtitle">Tóm tắt các thay đổi chính của quy trình theo từng nhóm nội dung.</p>
+                    </div>
+                    <div class="procedure-diff-stats">
+                        <div class="procedure-diff-stat">
+                            <strong>@diffView.TotalChangedFields</strong>
+                            <span>thuộc tính đổi</span>
+                        </div>
+                        <div class="procedure-diff-stat">
+                            <strong>@diffView.TotalAddedItems</strong>
+                            <span>mục thêm mới</span>
+                        </div>
+                        <div class="procedure-diff-stat">
+                            <strong>@diffView.TotalRemovedItems</strong>
+                            <span>mục bỏ đi</span>
+                        </div>
+                    </div>
+                </article>
+
+                @if (diffView.MetadataChanges.Count > 0)
+                {
+                    <article class="procedure-diff-section-card">
+                        <header class="procedure-diff-section-head">
+                            <div>
+                                <span class="procedure-diff-section-kicker">Metadata</span>
+                                <strong>Thông tin kiểm soát thay đổi</strong>
+                            </div>
+                        </header>
+                        <div class="procedure-diff-change-list">
+                            @foreach (var change in diffView.MetadataChanges)
+                            {
+                                <div class="procedure-diff-change-row">
+                                    <div class="procedure-diff-change-label">@change.Label</div>
+                                    <div class="procedure-diff-change-values">
+                                        <div class="procedure-diff-value-box is-before">
+                                            <span class="procedure-diff-value-caption">Phiên bản cũ</span>
+                                            <strong>@DisplayDiffValue(change.Label, change.Before)</strong>
+                                        </div>
+                                        <div class="procedure-diff-value-arrow">-></div>
+                                        <div class="procedure-diff-value-box is-after">
+                                            <span class="procedure-diff-value-caption">Phiên bản mới</span>
+                                            <strong>@DisplayDiffValue(change.Label, change.After)</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </article>
+                }
+
+                @if (diffView.ListGroups.Count > 0)
+                {
+                    <div class="procedure-diff-grid">
+                        @foreach (var group in diffView.ListGroups)
+                        {
+                            <article class="procedure-diff-section-card">
+                                <header class="procedure-diff-section-head">
+                                    <div>
+                                        <span class="procedure-diff-section-kicker">@group.Kicker</span>
+                                        <strong>@group.Title</strong>
+                                    </div>
+                                    <span class="procedure-diff-pill">@group.Summary</span>
+                                </header>
+                                @if (group.Added.Count == 0 && group.Removed.Count == 0)
+                                {
+                                    <div class="procedure-diff-empty">Không có thay đổi trong nhóm này.</div>
+                                }
+                                else
+                                {
+                                    @if (group.Added.Count > 0)
+                                    {
+                                        <div class="procedure-diff-bucket">
+                                            <span class="procedure-diff-bucket-title is-added">Thêm mới</span>
+                                            <ul class="procedure-diff-tag-list">
+                                                @foreach (var item in group.Added)
+                                                {
+                                                    <li class="procedure-diff-tag is-added">@item</li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+                                    @if (group.Removed.Count > 0)
+                                    {
+                                        <div class="procedure-diff-bucket">
+                                            <span class="procedure-diff-bucket-title is-removed">Bỏ đi</span>
+                                            <ul class="procedure-diff-tag-list">
+                                                @foreach (var item in group.Removed)
+                                                {
+                                                    <li class="procedure-diff-tag is-removed">@item</li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+                                }
+                            </article>
+                        }
+                    </div>
+                }
+            }
+            else if (_snapshot.VersionSnapshots.Count > 0)
+            {
+                <div class="procedure-snapshot-timeline">
+                    @foreach (var snapshotRecord in _snapshot.VersionSnapshots.OrderByDescending(item => item.CreatedAt))
+                    {
+                        <div class="procedure-snapshot-timeline-item">
+                            <span class="procedure-snapshot-kind">@SnapshotKindLabel(snapshotRecord.SnapshotKind)</span>
+                            <code class="procedure-signature-hash">@snapshotRecord.ContentHashSha256[..Math.Min(16, snapshotRecord.ContentHashSha256.Length)]…</code>
+                            <span class="admin-table-cell-muted">@AdminDateTimeDisplay.ShortDateTime(snapshotRecord.CreatedAt)</span>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="admin-panel-hint">Phiên bản này chưa có bản ghi so sánh với phiên bản trước.</p>
+            }
+        </section>
+    }
+
+    @if (_snapshot.Sections.Count > 0)
+    {
+        <section class="procedure-detail-section">
+            <h3 class="admin-panel-title">Nội dung tài liệu</h3>
+            @foreach (var docSection in _snapshot.Sections)
+            {
+                <article class="procedure-detail-card">
+                    <header class="procedure-detail-card-head">
+                        <strong>@docSection.SectionNumber. @docSection.Title</strong>
+                    </header>
+                    <div class="procedure-detail-card-body">@(string.IsNullOrWhiteSpace(docSection.ContentText) ? "—" : docSection.ContentText)</div>
+                </article>
+            }
+        </section>
+    }
+
+    @if (_snapshot.Recipients.Count > 0)
+    {
+        <section class="procedure-detail-section">
+            <h3 class="admin-panel-title">Nơi nhận và phân phối</h3>
+            <ul class="admin-step-list">
+                @foreach (var recipient in _snapshot.Recipients)
+                {
+                    <li class="admin-step-card">
+                        <span class="admin-table-cell-strong">@recipient.RecipientName</span>
+                        @if (recipient.IsMarked)
+                        {
+                            <span class="admin-table-cell-muted"> • Đánh dấu phân phối</span>
+                        }
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
+    @if (_snapshot.Revisions.Count > 0)
+    {
+        <section class="procedure-detail-section">
+            <h3 class="admin-panel-title">Theo dõi sửa đổi</h3>
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead><tr><th>Ngày</th><th>Trang</th><th>Mục</th><th>Nội dung</th></tr></thead>
+                    <tbody>
+                        @foreach (var revision in _snapshot.Revisions)
+                        {
+                            <tr>
+                                <td>@AdminDateTimeDisplay.Date(revision.RevisionDate)</td>
+                                <td>@(revision.PageRef ?? "—")</td>
+                                <td>@(revision.SectionRef ?? "—")</td>
+                                <td>@revision.Summary</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+
+    @if (_snapshot.Attachments.Count > 0)
+    {
+        <section class="procedure-detail-section">
+            <h3 class="admin-panel-title">Tệp đính kèm</h3>
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead><tr><th>Tệp</th><th>Loại</th><th>Dung lượng</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var attachment in _snapshot.Attachments)
+                        {
+                            <tr>
+                                <td>@attachment.FileName</td>
+                                <td>@AttachmentTypeName(attachment.AttachmentType)</td>
+                                <td>@FormatBytes(attachment.FileSizeBytes ?? 0)</td>
+                                <td>
+                                    <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => DownloadAttachmentAsync(attachment)">Tải</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+    </div>
+}
+
+<AdminModal IsOpen="_recallOpen" IsOpenChanged="v => _recallOpen = v" Title="Thu hồi chữ ký người viết (Recall)">
+    <ChildContent>
+        <p style="margin:0 0 0.75rem;">Chữ ký của bạn sẽ bị hủy. Phiên bản trở về trạng thái <strong>Draft_1</strong> — tất cả người viết cần ký lại.</p>
+        <label class="admin-form-field-label" for="recall-reason-panel">Lý do thu hồi (tùy chọn)</label>
+        <textarea id="recall-reason-panel" class="admin-textarea" rows="2" placeholder="VD: Cần chỉnh sửa lại nội dung bước quy trình." @bind="_recallReason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _recallOpen = false">Hủy bỏ</button>
+        <button type="button" class="admin-btn admin-btn-danger" disabled="@_isActing" @onclick="ConfirmRecallAsync">Xác nhận Thu hồi</button>
+    </FooterContent>
+</AdminModal>
+
+<AdminModal IsOpen="_returnToWriter1Open" IsOpenChanged="v => _returnToWriter1Open = v" Title="Trả về Người viết 1">
+    <ChildContent>
+        <p style="margin:0 0 0.75rem;">Tất cả chữ ký người viết sẽ bị hủy. Phiên bản trở về <strong>Draft_1</strong> — người viết 1 cần chỉnh sửa và ký lại từ đầu.</p>
+        <label class="admin-form-field-label" for="return-writer1-reason-panel">Lý do hoàn trả (bắt buộc)</label>
+        <textarea id="return-writer1-reason-panel" class="admin-textarea" rows="3" placeholder="VD: Nội dung bước 3 của người viết 1 cần được làm lại hoàn toàn." @bind="_returnToWriter1Reason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _returnToWriter1Open = false">Hủy bỏ</button>
+        <button type="button" class="admin-btn admin-btn-danger" disabled="@(_isActing || string.IsNullOrWhiteSpace(_returnToWriter1Reason))" @onclick="ConfirmReturnToWriter1Async">Trả về Người viết 1</button>
+    </FooterContent>
+</AdminModal>
+
+@code {
+    [Parameter, EditorRequired] public Guid ProcedureVersionId { get; set; }
+    [Parameter] public EventCallback<string> OnSignRequested { get; set; }
+    [Parameter] public bool EnableApproverSigning { get; set; }
+
+    private ProcedureDocumentSnapshot? _snapshot;
+    private IReadOnlyList<SignatureCard> SignatureCards { get; set; } = [];
+    private IReadOnlyList<WriterSignoffRow> WriterSignoffRows { get; set; } = [];
+    private IReadOnlyList<Sql.ProcedureVersion> OlderVersions { get; set; } = [];
+    private int OutstandingWriterCount { get; set; }
+    private Sql.ProcedureVersionDiffRecord? CurrentDiff { get; set; }
+
+    // Modal state for recall/return actions
+    private bool _recallOpen;
+    private string _recallReason = string.Empty;
+    private bool _returnToWriter1Open;
+    private string _returnToWriter1Reason = string.Empty;
+    private bool _isActing;
+
+    private string WriterSignoffSummary => _snapshot is null
+        ? string.Empty
+        : $"{WriterSignoffRows.Count(item => item.Signed)}/{Math.Max(1, _snapshot.WriterAssignments.Count)} người viết đã ký";
+
+    // Draft_1/Draft_2 sub-status labels
+    private string DraftSubStatusLabel
+    {
+        get
+        {
+            if (_snapshot is null || _snapshot.Version.StatusCode != "draft") return string.Empty;
+            var signedCount = _snapshot.WriterAssignments.Count(w => Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+            if (signedCount == 0) return "Draft_1";
+            if (signedCount < _snapshot.WriterAssignments.Count) return "Draft_2";
+            return "Đủ chữ ký — Chờ gửi kiểm tra";
+        }
+    }
+    private string DraftSubStatusHint
+    {
+        get
+        {
+            if (_snapshot is null || _snapshot.Version.StatusCode != "draft") return string.Empty;
+            var orderedWriters = _snapshot.WriterAssignments.OrderBy(w => w.DisplayOrder).ToList();
+            var total = orderedWriters.Count;
+            if (total == 0) return "Chưa có người viết được phân công.";
+
+            var signedCount = orderedWriters.Count(w => Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+            if (signedCount == total) return "Tất cả người viết đã ký, sẵn sàng gửi kiểm tra.";
+
+            // Tìm người viết đầu tiên theo thứ tự CHƯA ký
+            var nextUnsigned = orderedWriters.FirstOrDefault(w => !Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+            if (nextUnsigned is null) return $"{signedCount}/{total} người viết đã ký.";
+
+            // Kiểm tra trạng thái ký đúng thứ tự không
+            var allPriorSigned = orderedWriters
+                .Where(w => w.DisplayOrder < nextUnsigned.DisplayOrder)
+                .All(w => Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+
+            if (!allPriorSigned)
+            {
+                // Ký sai thứ tự — có người viết thứ tự cao ký trước người thứ tự thấp
+                return $"Cảnh báo: ký sai thứ tự ({signedCount}/{total} đã ký) — người viết thứ {nextUnsigned.DisplayOrder} cần ký trước. Người viết đã ký sai thứ tự có thể thu hồi chữ ký để sửa.";
+            }
+
+            var nextName = nextUnsigned.AssignedFullName ?? nextUnsigned.AssignedUsername ?? $"Người viết {nextUnsigned.DisplayOrder}";
+            return $"Người viết {nextUnsigned.DisplayOrder} ({nextName}) cần mở Soạn thảo & ký để bổ sung nội dung và ký xác nhận.";
+        }
+    }
+
+    /// <summary>
+    /// Người viết có thể thu hồi chữ ký của mình khi:
+    /// - Đã ký (normal case: Writer 1 đã ký, Writer 2 chưa ký)
+    /// - ĐÃ ký nhưng ký sai thứ tự (Writer 2 ký trước Writer 1) — mở khóa cho Writer 1
+    /// - Không có người viết nào có thứ tự CAO HƠN đã ký (vì recall xóa toàn bộ chữ ký)
+    /// </summary>
+    private bool CanCurrentUserRecallAsWriter1
+    {
+        get
+        {
+            if (_snapshot?.Version.StatusCode != "draft") return false;
+            var currentUserId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            if (currentUserId == Guid.Empty) return false;
+            var orderedWriters = _snapshot.WriterAssignments.OrderBy(w => w.DisplayOrder).ToList();
+            if (orderedWriters.Count < 2) return false;
+            var myAssignment = orderedWriters.FirstOrDefault(w => w.AssignedUserId == currentUserId);
+            if (myAssignment is null) return false;
+            // Tôi phải đã ký
+            if (!Snapshots.IsWriterEffectivelySigned(_snapshot, currentUserId)) return false;
+            // Không có người viết nào có thứ tự CAO HƠN tôi đã ký (sẽ bị thu hồi kèm)
+            return orderedWriters.Where(w => w.DisplayOrder > myAssignment.DisplayOrder)
+                .All(w => !Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+        }
+    }
+
+    /// <summary>
+    /// Người viết 2+ có thể trả về Writer 1 khi Writer 1 đã ký và tôi CHƯA ký.
+    /// (Trường hợp tôi thấy nội dung Writer 1 sai cần làm lại từ đầu.)
+    /// </summary>
+    private bool CanCurrentUserReturnToWriter1
+    {
+        get
+        {
+            if (_snapshot?.Version.StatusCode != "draft") return false;
+            var currentUserId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            if (currentUserId == Guid.Empty) return false;
+            var orderedWriters = _snapshot.WriterAssignments.OrderBy(w => w.DisplayOrder).ToList();
+            if (orderedWriters.Count < 2) return false;
+            var myAssignment = orderedWriters.FirstOrDefault(w => w.AssignedUserId == currentUserId);
+            if (myAssignment is null || myAssignment.DisplayOrder <= orderedWriters.Min(w => w.DisplayOrder)) return false;
+            // Tôi chưa ký (nếu đã ký thì dùng CanCurrentUserRecallAsWriter1)
+            if (Snapshots.IsWriterEffectivelySigned(_snapshot, currentUserId)) return false;
+            // Ít nhất một người viết thứ tự thấp hơn đã ký
+            return orderedWriters.Where(w => w.DisplayOrder < myAssignment.DisplayOrder)
+                .Any(w => Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+        }
+    }
+
+    private bool CanCurrentUserSignWriter
+    {
+        get
+        {
+            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            return userId != Guid.Empty
+                && Signoffs.CanUserSign(ProcedureVersionId, "writer", userId, out _);
+        }
+    }
+
+    private bool CanCurrentUserEditDraft
+    {
+        get
+        {
+            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            return userId != Guid.Empty
+                && Signoffs.CanUserEditDraft(ProcedureVersionId, userId, out _);
+        }
+    }
+
+    private string EditDraftHref
+        => _snapshot is null
+            ? "#"
+            : $"/qlcm/quy-trinh/{_snapshot.Procedure.ProcedureId}/phien-ban/{_snapshot.Version.ProcedureVersionId}/chinh-sua";
+
+    private bool CanCurrentUserSignApprover
+    {
+        get
+        {
+            if (!EnableApproverSigning || _snapshot?.Version.StatusCode != "pending_approval")
+                return false;
+
+            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            return userId != Guid.Empty
+                && Signoffs.CanUserSign(ProcedureVersionId, "approver", userId, out _);
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        _snapshot = Snapshots.GetSnapshot(ProcedureVersionId);
+        SignatureCards = BuildSignatureCards();
+        WriterSignoffRows = BuildWriterSignoffRows();
+        OlderVersions = _snapshot is null
+            ? []
+            : Store.ProcedureVersions
+                .Where(item => item.ProcedureId == _snapshot.Procedure.ProcedureId && item.VersionNo < _snapshot.Version.VersionNo)
+                .OrderByDescending(item => item.VersionNo)
+                .ToList();
+        OutstandingWriterCount = _snapshot is null ? 0 : Signoffs.GetOutstandingWriterSignatures(ProcedureVersionId);
+        CurrentDiff = Store.ProcedureVersionDiffRecords
+            .FirstOrDefault(item => item.ToVersionId == ProcedureVersionId);
+    }
+
+    private IReadOnlyList<SignatureCard> BuildSignatureCards()
+    {
+        if (_snapshot is null)
+            return [];
+
+        return new[] { "writer", "checker", "approver" }
+            .SelectMany(BuildRoleSignatureCards)
+            .ToList();
+    }
+
+    private IEnumerable<SignatureCard> BuildRoleSignatureCards(string role)
+    {
+        if (_snapshot is null)
+            yield break;
+
+        if (role == "writer")
+        {
+            foreach (var writer in _snapshot.WriterAssignments.OrderBy(item => item.DisplayOrder))
+            {
+                var signoff = Snapshots.GetWriterSignoffForDisplay(_snapshot, writer.AssignedUserId);
+                yield return BuildSignatureCard(role, WriterName(writer), signoff);
+            }
+
+            if (!_snapshot.WriterAssignments.Any())
+            {
+                foreach (var signoff in Snapshots.GetDisplaySignoffs(_snapshot, "writer"))
+                    yield return BuildSignatureCard(role, signoff.SignerFullName ?? signoff.SignerUsername ?? "—", signoff);
+            }
+
+            yield break;
+        }
+
+        var roleSignoff = Snapshots.GetDisplaySignoffs(_snapshot, role).OrderByDescending(item => item.SignedAt).FirstOrDefault();
+        yield return BuildSignatureCard(role, roleSignoff?.SignerFullName ?? roleSignoff?.SignerUsername ?? "—", roleSignoff);
+    }
+
+    private SignatureCard BuildSignatureCard(string role, string signerLabel, Sql.ProcedureSignoffRecord? signoff)
+    {
+        var signed = signoff is not null;
+        var stale = signed && Snapshots.IsSignoffStale(_snapshot!, signoff!);
+        var workflowValid = signed && !stale && (
+            string.Equals(role, "writer", StringComparison.OrdinalIgnoreCase)
+                ? Snapshots.GetCurrentSignoffs(_snapshot!, "writer").Any(item => item.ProcedureSignoffRecordId == signoff!.ProcedureSignoffRecordId)
+                : Signoffs.HasCurrentSignoff(ProcedureVersionId, role));
+
+        string statusLabel;
+        string tone;
+        if (!signed)
+        {
+            statusLabel = "Chưa ký";
+            tone = "tone-muted";
+        }
+        else if (stale)
+        {
+            statusLabel = "Chữ ký đã cũ";
+            tone = "tone-warning";
+        }
+        else if (workflowValid || !string.Equals(_snapshot!.Version.StatusCode, "draft", StringComparison.OrdinalIgnoreCase))
+        {
+            statusLabel = "Đã ký hợp lệ";
+            tone = "tone-success";
+        }
+        else
+        {
+            statusLabel = "Đã ký";
+            tone = "tone-success";
+        }
+
+        return new SignatureCard(
+            RoleLabel(role),
+            statusLabel,
+            tone,
+            signerLabel,
+            signed ? AdminDateTimeDisplay.ShortDateTime(signoff!.SignedAt) : "—",
+            signoff?.SignatureImageDataUrl,
+            signed ? ShortHash(signoff!.ContentHashSha256) : null,
+            signed,
+            stale);
+    }
+
+    private IReadOnlyList<WriterSignoffRow> BuildWriterSignoffRows()
+    {
+        if (_snapshot is null)
+            return [];
+
+        var currentUserId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        var orderedWriters = _snapshot.WriterAssignments.OrderBy(w => w.DisplayOrder).ToList();
+        var minOrder = orderedWriters.Count > 0 ? orderedWriters.Min(w => w.DisplayOrder) : 1;
+
+        return orderedWriters
+            .Select(writer =>
+            {
+                var signoff = Snapshots.GetWriterSignoffForDisplay(_snapshot, writer.AssignedUserId);
+                var signed = signoff is not null;
+                var stale = signed && Snapshots.IsSignoffStale(_snapshot, signoff!);
+                var canSign = !signed
+                    && writer.AssignedUserId == currentUserId
+                    && Signoffs.CanUserSign(ProcedureVersionId, "writer", currentUserId, out _);
+                var canEdit = !signed
+                    && writer.AssignedUserId == currentUserId
+                    && Signoffs.CanUserEditDraft(ProcedureVersionId, currentUserId, out _);
+                // Bất kỳ người viết nào đã ký đều có thể thu hồi nếu không có người có thứ tự CAO HƠN đã ký
+                // (bao gồm cả trường hợp Writer 2 ký sai thứ tự trước Writer 1)
+                var canRecall = signed
+                    && writer.AssignedUserId == currentUserId
+                    && orderedWriters.Count > 1
+                    && _snapshot.Version.StatusCode == "draft"
+                    && orderedWriters.Where(w => w.DisplayOrder > writer.DisplayOrder)
+                        .All(w => !Snapshots.IsWriterEffectivelySigned(_snapshot, w.AssignedUserId));
+                return new WriterSignoffRow(
+                    WriterName(writer),
+                    writer.DisplayOrder,
+                    !signed ? "Chưa ký" : stale ? "Chữ ký đã cũ" : "Đã ký hợp lệ",
+                    !signed ? "tone-warning" : stale ? "tone-warning" : "tone-success",
+                    signed ? AdminDateTimeDisplay.ShortDateTime(signoff!.SignedAt) : "—",
+                    signoff?.SignatureImageDataUrl,
+                    signed,
+                    canSign,
+                    canEdit,
+                    canRecall);
+            })
+            .ToList();
+    }
+
+    private void OpenRecallModal()
+    {
+        _recallReason = string.Empty;
+        _recallOpen = true;
+    }
+
+    private void OpenReturnToWriter1Modal()
+    {
+        _returnToWriter1Reason = string.Empty;
+        _returnToWriter1Open = true;
+    }
+
+    private async Task ConfirmRecallAsync()
+    {
+        if (_snapshot is null || UserContext.CurrentUser is not { UserId: var userId }) return;
+        _isActing = true;
+        try
+        {
+            Lifecycle.RecallDraftWriterSignoffs(_snapshot.Version.ProcedureVersionId, userId, _recallReason);
+            Store.Refresh();
+            _snapshot = Snapshots.GetSnapshot(ProcedureVersionId);
+            SignatureCards = BuildSignatureCards();
+            WriterSignoffRows = BuildWriterSignoffRows();
+            OutstandingWriterCount = Signoffs.GetOutstandingWriterSignatures(ProcedureVersionId);
+            _recallOpen = false;
+            Toasts.Show("Đã thu hồi chữ ký", "Phiên bản trở về Draft_1. Người viết có thể chỉnh sửa và ký lại.", ToastVariant.Info);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể thu hồi", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isActing = false;
+        }
+    }
+
+    private async Task ConfirmReturnToWriter1Async()
+    {
+        if (_snapshot is null || UserContext.CurrentUser is not { UserId: var userId }) return;
+        if (string.IsNullOrWhiteSpace(_returnToWriter1Reason)) return;
+        _isActing = true;
+        try
+        {
+            Lifecycle.RecallDraftWriterSignoffs(_snapshot.Version.ProcedureVersionId, userId, _returnToWriter1Reason.Trim());
+            Store.Refresh();
+            _snapshot = Snapshots.GetSnapshot(ProcedureVersionId);
+            SignatureCards = BuildSignatureCards();
+            WriterSignoffRows = BuildWriterSignoffRows();
+            OutstandingWriterCount = Signoffs.GetOutstandingWriterSignatures(ProcedureVersionId);
+            _returnToWriter1Open = false;
+            Toasts.Show("Đã trả về Người viết 1", "Tất cả chữ ký đã bị hủy. Người viết 1 cần chỉnh sửa và ký lại từ đầu.", ToastVariant.Info);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể hoàn trả", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isActing = false;
+        }
+    }
+
+    private static string StepCodeLabel(Sql.ProcedureStep step)
+        => !string.IsNullOrWhiteSpace(step.StepCode) ? step.StepCode! : $"B{step.StepNo:00}";
+
+    private static string ShortHash(string hash)
+        => hash.Length <= 16 ? hash : $"{hash[..16]}…";
+
+    private static string SnapshotKindLabel(string kind) => kind switch
+    {
+        "published" => "Ban hành",
+        "submitted" => "Gửi duyệt",
+        "draft_signed" => "Ký nháp",
+        "draft" => "Bản nháp",
+        "rejected" => "Từ chối",
+        "archived" => "Lưu trữ",
+        "restored" => "Khôi phục",
+        _ => kind
+    };
+
+    private IReadOnlyList<Sql.ProcedureAttachment> ResolveStepAttachments(Sql.ProcedureStep step)
+    {
+        if (_snapshot is null) return [];
+        var attachmentIds = _snapshot.StepAttachmentAssignments
+            .Where(item => item.ProcedureStepId == step.ProcedureStepId)
+            .OrderBy(item => item.DisplayOrder)
+            .Select(item => item.ProcedureAttachmentId)
+            .ToList();
+        if (attachmentIds.Count == 0 && step.FormAttachmentId is { } legacyId)
+        {
+            attachmentIds.Add(legacyId);
+        }
+        return _snapshot.Attachments
+            .Where(item => attachmentIds.Contains(item.ProcedureAttachmentId))
+            .ToList();
+    }
+
+    private IReadOnlyList<string> StepRoles(Sql.ProcedureStep step)
+        => _snapshot is null
+            ? []
+            : _snapshot.StepRoleAssignments
+                .Where(item => item.ProcedureStepId == step.ProcedureStepId)
+                .OrderBy(item => item.DisplayOrder)
+                .Select(item => Store.Roles.FirstOrDefault(role => role.RoleId == item.RoleId)?.Name ?? item.RoleId.ToString())
+                .ToList();
+
+    private IReadOnlyList<string> StepLocations(Sql.ProcedureStep step)
+        => _snapshot is null
+            ? []
+            : _snapshot.StepLocationAssignments
+                .Where(item => item.ProcedureStepId == step.ProcedureStepId)
+                .OrderBy(item => item.DisplayOrder)
+                .Select(item => Store.Departments.FirstOrDefault(department => department.DepartmentId == item.DepartmentId)?.Name ?? item.DepartmentId.ToString())
+                .ToList();
+
+    private static string WriterName(Sql.ProcedureVersionAuthorAssignment writer)
+        => writer.AssignedFullName ?? writer.AssignedUsername ?? writer.AssignedUserId.ToString();
+
+    private static ProcedureDiffView BuildDiffView(Sql.ProcedureVersionDiffRecord diff)
+    {
+        if (string.IsNullOrWhiteSpace(diff.DiffJson))
+        {
+            return new ProcedureDiffView("Phiên bản cũ", "Phiên bản mới", [], [], 0, 0, 0);
+        }
+
+        var node = JsonNode.Parse(diff.DiffJson);
+        if (node is null)
+        {
+            return new ProcedureDiffView("Phiên bản cũ", "Phiên bản mới", [], [], 0, 0, 0);
+        }
+
+        var metadataChanges = new List<ProcedureDiffMetadataChange>();
+        if (node["metadata"] is JsonArray metadata)
+        {
+            foreach (var item in metadata)
+            {
+                if (item?["changed"]?.GetValue<bool>() == true)
+                {
+                    metadataChanges.Add(new ProcedureDiffMetadataChange(
+                        item["label"]?.ToString() ?? "Thuộc tính",
+                        item["before"]?.ToString() ?? string.Empty,
+                        item["after"]?.ToString() ?? string.Empty));
+                }
+            }
+        }
+
+        var groups = new List<ProcedureDiffListGroup>();
+        var totalAdded = 0;
+        var totalRemoved = 0;
+        foreach (var key in new[] { "writers", "sections", "steps", "attachments" })
+        {
+            if (node[key] is JsonObject listChange)
+            {
+                var added = listChange["added"]?.AsArray().Select(item => item?.ToString()).Where(item => !string.IsNullOrWhiteSpace(item)).Cast<string>().ToList() ?? [];
+                var removed = listChange["removed"]?.AsArray().Select(item => item?.ToString()).Where(item => !string.IsNullOrWhiteSpace(item)).Cast<string>().ToList() ?? [];
+                totalAdded += added.Count;
+                totalRemoved += removed.Count;
+                groups.Add(new ProcedureDiffListGroup(
+                    key switch
+                    {
+                        "writers" => "Người viết",
+                        "sections" => "Nội dung tài liệu",
+                        "steps" => "Các bước quy trình",
+                        "attachments" => "Tệp đính kèm",
+                        _ => key
+                    },
+                    key switch
+                    {
+                        "writers" => "Phân công",
+                        "sections" => "Tài liệu",
+                        "steps" => "Lưu đồ",
+                        "attachments" => "Tệp",
+                        _ => "Khác"
+                    },
+                    added,
+                    removed,
+                    $"{added.Count} thêm / {removed.Count} bỏ"));
+            }
+        }
+
+        return new ProcedureDiffView(
+            node["fromVersionLabel"]?.ToString() ?? "Phiên bản cũ",
+            node["toVersionLabel"]?.ToString() ?? "Phiên bản mới",
+            metadataChanges,
+            groups,
+            metadataChanges.Count,
+            totalAdded,
+            totalRemoved);
+    }
+
+    private static string DisplayDiffValue(string label, string? value)
+        => ProcedureVersionSummaryFormatter.FormatDiffValue(label, value);
+
+    private async Task DownloadAttachmentAsync(Sql.ProcedureAttachment attachment)
+    {
+        var ok = await JS.InvokeAsync<bool>(
+            "qlcmShell.downloadProcedureAttachment",
+            attachment.ProcedureAttachmentId,
+            attachment.FileName);
+        if (!ok)
+        {
+            // no toast service here — parent pages handle errors when needed
+        }
+    }
+
+    private static string RoleLabel(string role) => role switch
+    {
+        "writer" => "Người viết",
+        "checker" => "Người kiểm tra",
+        "approver" => "Người phê duyệt",
+        _ => role
+    };
+
+    private static string ProcedureTypeName(string code)
+        => Sql.MedLookups.ProcedureTypes.FirstOrDefault(item => item.Code == code)?.Name ?? code;
+
+    private static string AttachmentTypeName(string code)
+        => Sql.MedLookups.AttachmentTypes.FirstOrDefault(item => item.Code == code)?.Name ?? code;
+
+    private static string VersionLabel(Sql.ProcedureVersion version) => version.VersionLabel ?? $"v{version.VersionNo:00}";
+    private static string StatusLabel(string status) => Sql.MedLookups.VersionStatuses.FirstOrDefault(s => s.Code == status)?.Name ?? status;
+    private static string VersionTone(string status) => status switch
+    {
+        "active" => "tone-success",
+        "pending_approval" or "pending_review" => "tone-warning",
+        "rejected" or "archived" => "tone-danger",
+        "draft" => "tone-muted",
+        _ => "tone-muted"
+    };
+
+    private static string FormatBytes(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
+
+    private sealed record SignatureCard(
+        string RoleLabel,
+        string StatusLabel,
+        string Tone,
+        string SignerLabel,
+        string SignedAtLabel,
+        string? SignatureImageDataUrl,
+        string? HashLabel,
+        bool Signed,
+        bool Stale);
+    private sealed record WriterSignoffRow(
+        string WriterName,
+        int DisplayOrder,
+        string StatusLabel,
+        string Tone,
+        string SignedAtLabel,
+        string? SignatureImageDataUrl,
+        bool Signed,
+        bool CanSign,
+        bool CanEdit,
+        bool CanRecall);
+    private sealed record ProcedureDiffMetadataChange(string Label, string Before, string After);
+    private sealed record ProcedureDiffListGroup(string Title, string Kicker, IReadOnlyList<string> Added, IReadOnlyList<string> Removed, string Summary);
+    private sealed record ProcedureDiffView(
+        string FromVersionLabel,
+        string ToVersionLabel,
+        IReadOnlyList<ProcedureDiffMetadataChange> MetadataChanges,
+        IReadOnlyList<ProcedureDiffListGroup> ListGroups,
+        int TotalChangedFields,
+        int TotalAddedItems,
+        int TotalRemovedItems);
+}

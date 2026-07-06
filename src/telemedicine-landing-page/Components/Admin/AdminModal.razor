@@ -1,0 +1,100 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@* Centered modal dialog used for short forms (CSV import, reject reason, etc.).
+   Sits inside .admin-shell-modal-host so the sidebar remains visible. *@
+
+@if (IsOpen)
+{
+    <div class="admin-modal-backdrop" @onclick="OnBackdropClick" role="presentation"></div>
+    <div class="admin-modal admin-modal-form" role="dialog" aria-modal="true" aria-label="@Title" @onkeydown="OnKeyDown" tabindex="-1" @ref="_panelRef">
+        <header class="admin-modal-head">
+            <h2>@Title</h2>
+            <button type="button" class="admin-modal-close" @onclick="OnCloseClick" aria-label="Đóng">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+            </button>
+        </header>
+        <div class="admin-modal-body">
+            @ChildContent
+        </div>
+        @if (FooterContent is not null)
+        {
+            <footer class="admin-modal-foot">@FooterContent</footer>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+
+    private ElementReference _panelRef;
+    private bool _wasOpen;
+    private bool _scrollLocked;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsOpen && !_wasOpen)
+        {
+            _wasOpen = true;
+            try
+            {
+                await JS.InvokeVoidAsync("qlcmShell.lockBodyScroll", true);
+                _scrollLocked = true;
+                await _panelRef.FocusAsync();
+            }
+            catch (JSDisconnectedException) { }
+            catch (Exception) { }
+        }
+        else if (!IsOpen && _wasOpen)
+        {
+            _wasOpen = false;
+            if (_scrollLocked)
+            {
+                _scrollLocked = false;
+                try
+                {
+                    await JS.InvokeVoidAsync("qlcmShell.lockBodyScroll", false);
+                }
+                catch (JSDisconnectedException) { }
+                catch (Exception) { }
+            }
+        }
+    }
+
+    private async Task OnCloseClick() => await CloseAsync();
+
+    private async Task OnBackdropClick() => await CloseAsync();
+
+    private async Task OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape" || args.Key == "Esc")
+        {
+            await CloseAsync();
+        }
+    }
+
+    private async Task CloseAsync()
+    {
+        if (!IsOpen) return;
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_scrollLocked)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("qlcmShell.lockBodyScroll", false);
+            }
+            catch (JSDisconnectedException) { }
+            catch (Exception) { }
+        }
+    }
+}

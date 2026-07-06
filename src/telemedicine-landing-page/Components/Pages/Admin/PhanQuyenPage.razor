@@ -1,0 +1,453 @@
+@page "/admin/phan-quyen"
+@layout AdminLayout
+@using System.Text.Json
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.EntityFrameworkCore
+@using TelemedicineLandingPage.Data
+@using TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Components.Admin.PhanQuyen
+@inject MedDbContext Db
+@inject IMedDataStore Store
+@inject ICurrentUserContext UserContext
+@inject IToastService Toasts
+@inject AdminActionGuard Guard
+@inject PermissionChangeRequestService RequestService
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Phân quyền</span>
+            <h1 class="admin-page-title">Tổ chức, nhóm và phân quyền</h1>
+            <p class="admin-page-subtitle">Gán quyền truy cập trang theo người dùng, quản lý vai trò và phê duyệt thay đổi.</p>
+        </div>
+    </header>
+
+    <AdminTabs Tabs="_tabs" ActiveKey="_active" ActiveKeyChanged="SetActiveTab" AriaLabel="Phân quyền" />
+
+    @switch (_active)
+    {
+        case "truy-cap":
+            <UserPageAccessPanel />
+            break;
+        case "khoa-phong":
+            <section class="admin-panel" style="padding:16px;">
+                <header class="admin-panel-head">
+                    <div>
+                        <h2 class="admin-panel-title">Khoa/phòng</h2>
+                        <p class="admin-panel-subtitle">Khoa/phòng là phạm vi tổ chức dùng cho vai trò, nhóm và scope quyền.</p>
+                    </div>
+                    <a class="admin-btn admin-btn-primary" href="/admin/to-chuc/khoa-phong">Mở quản lý khoa/phòng</a>
+                </header>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Mã</th>
+                                <th>Tên khoa/phòng</th>
+                                <th>Đơn vị cha</th>
+                                <th>Người dùng</th>
+                                <th>Nhóm</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var dept in Store.Departments.OrderBy(d => d.Code))
+                            {
+                                <tr>
+                                    <td class="admin-table-cell-muted">@dept.Code</td>
+                                    <td class="admin-table-cell-strong">@dept.Name</td>
+                                    <td>@GetDeptName(dept.ParentDepartmentId)</td>
+                                    <td>@Store.Users.Count(u => u.PrimaryDepartmentId == dept.DepartmentId)</td>
+                                    <td>@Store.Groups.Count(g => g.DepartmentId == dept.DepartmentId)</td>
+                                    <td><AdminBadge Tone="@(dept.Status == "active" ? "tone-success" : "tone-muted")">@Lookup(MedLookups.RecordStatuses, dept.Status)</AdminBadge></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            break;
+        case "nhom":
+            <section class="admin-panel" style="padding:16px;">
+                <header class="admin-panel-head">
+                    <div>
+                        <h2 class="admin-panel-title">Nhóm người dùng</h2>
+                        <p class="admin-panel-subtitle">Nhóm gom người dùng theo nghiệp vụ và có thể nhận quyền riêng, ưu tiên sau vai trò theo database.</p>
+                    </div>
+                    <a class="admin-btn admin-btn-primary" href="/admin/to-chuc/nhom">Mở quản lý nhóm</a>
+                </header>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Mã nhóm</th>
+                                <th>Tên nhóm</th>
+                                <th>Khoa/phòng</th>
+                                <th>Thành viên</th>
+                                <th>Quyền nhóm</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var group in Store.Groups.OrderBy(g => g.Name))
+                            {
+                                <tr>
+                                    <td class="admin-table-cell-muted">@group.Code</td>
+                                    <td class="admin-table-cell-strong">@group.Name</td>
+                                    <td>@GetDeptName(group.DepartmentId)</td>
+                                    <td>@Store.UserGroupMembers.Count(m => m.GroupId == group.GroupId && m.EffectiveTo is null)</td>
+                                    <td>@Store.GroupPermissions.Count(p => p.GroupId == group.GroupId && p.EffectiveTo is null)</td>
+                                    <td><AdminBadge Tone="@(group.Status == "active" ? "tone-success" : "tone-muted")">@Lookup(MedLookups.RecordStatuses, group.Status)</AdminBadge></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            break;
+        case "vai-tro":
+            <p class="admin-page-subtitle" style="margin:0 0 12px;">Ma trận chi tiết từng quyền (dành cho quản trị viên). Gán nhanh theo người dùng: tab <a href="/admin/phan-quyen?tab=truy-cap"><strong>Gán theo trang</strong></a>.</p>
+            <RoleMatrix />
+            break;
+        case "tai-khoan":
+            <UserAssignmentList />
+            break;
+        case "lich-su":
+            <ChangeLogList />
+            break;
+        case "ghi-de":
+            <section class="admin-panel" style="padding:16px;">
+                <h2 class="admin-panel-title">Ghi đè quyền cá nhân</h2>
+                <p class="admin-panel-subtitle">Cho phép hoặc từ chối một quyền cụ thể cho từng người dùng, có thể giới hạn theo phạm vi khoa/phòng.</p>
+
+                <div class="admin-table-wrapper" style="margin-top:12px;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Người dùng</th>
+                                <th>Quyền</th>
+                                <th>Hiệu lực</th>
+                                <th>Phạm vi</th>
+                                <th>Khoa</th>
+                                <th>Lý do</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Store.UserPermissionOverrides.OrderByDescending(o => o.CreatedAt))
+                            {
+                                <tr>
+                                    <td>@GetUserName(item.UserId)</td>
+                                    <td>@GetPermissionDisplayName(item.PermissionId)</td>
+                                    <td><AdminBadge Tone="@EffectTone(item.EffectCode)">@Lookup(MedLookups.PermissionEffects, item.EffectCode)</AdminBadge></td>
+                                    <td>@Lookup(MedLookups.DepartmentScopeTypes, item.DepartmentScopeType)</td>
+                                    <td>@GetDeptName(item.DepartmentId)</td>
+                                    <td>@item.Reason</td>
+                                    <td style="text-align:right;">
+                                        <div class="admin-row-actions">
+                                            <button type="button" class="admin-icon-btn" title="Sửa" @onclick="() => EditOverride(item)">✎</button>
+                                            <button type="button" class="admin-icon-btn is-danger" title="Xóa" @onclick="() => RemoveOverride(item)">×</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="admin-form-grid" style="margin-top:16px;">
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Người dùng</label>
+                        <select class="admin-select" @bind="_overrideUserId">
+                            <option value="">Chọn người dùng</option>
+                            @foreach (var user in Store.Users.Where(u => u.Status == "active").OrderBy(u => u.Username))
+                            {
+                                <option value="@user.UserId">@user.Username - @user.FullName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Quyền</label>
+                        <select class="admin-select" @bind="_overridePermissionId">
+                            <option value="">Chọn quyền</option>
+                            @foreach (var permission in Store.Permissions.Where(p => p.Status == "active").OrderBy(p => p.PermissionCode))
+                            {
+                                <option value="@permission.PermissionId">@GetPermissionDisplayName(permission.PermissionId)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Hiệu lực</label>
+                        <select class="admin-select" @bind="_overrideEffect">
+                            @foreach (var effect in MedLookups.PermissionEffects)
+                            {
+                                <option value="@effect.Code">@effect.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Phạm vi</label>
+                        <select class="admin-select" @bind="_overrideScope">
+                            @foreach (var scope in MedLookups.DepartmentScopeTypes)
+                            {
+                                <option value="@scope.Code">@scope.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Khoa</label>
+                        <select class="admin-select" @bind="_overrideDepartmentId">
+                            <option value="">Không chọn</option>
+                            @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Code))
+                            {
+                                <option value="@dept.DepartmentId">@dept.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="admin-form-field admin-form-field-full">
+                        <label class="admin-form-field-label">Lý do</label>
+                        <input class="admin-input" @bind="_overrideReason" />
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+                    @if (_editingOverrideId.HasValue)
+                    {
+                        <button type="button" class="admin-btn admin-btn-ghost" @onclick="ResetOverrideForm">Hủy sửa</button>
+                    }
+                    <button type="button" class="admin-btn admin-btn-primary" @onclick="SaveOverride">@(_editingOverrideId.HasValue ? "Cập nhật ghi đè" : "Thêm ghi đè")</button>
+                </div>
+            </section>
+            break;
+    }
+</section>
+
+@code {
+    private string _active = "truy-cap";
+    private IReadOnlyList<AdminTabs.TabItem> _tabs = Array.Empty<AdminTabs.TabItem>();
+    private Guid? _editingOverrideId;
+    private string _overrideUserId = string.Empty;
+    private string _overridePermissionId = string.Empty;
+    private string _overrideEffect = "allow";
+    private string _overrideScope = "global";
+    private string _overrideDepartmentId = string.Empty;
+    private string _overrideReason = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        BuildTabs();
+        ApplyTabFromQuery();
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        ApplyTabFromQuery();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ApplyTabFromQuery()
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        if (query.TryGetValue("tab", out var tabValues))
+        {
+            var tab = tabValues.FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(tab) && _tabs.Any(item => item.Key == tab))
+            {
+                _active = tab;
+                return;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(_active))
+        {
+            _active = "truy-cap";
+        }
+    }
+
+    private void SetActiveTab(string key)
+    {
+        if (string.Equals(key, _active, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _active = key;
+        Navigation.NavigateTo($"/admin/phan-quyen?tab={Uri.EscapeDataString(key)}", replace: true);
+    }
+
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+
+    private void BuildTabs()
+    {
+        var roleCount = Db.Roles.Count(r => r.Status == "active");
+        var userCount = Db.Users.Count(u => u.Status == "active");
+        var logCount = Db.AuditLogs.Count(a => a.TargetType == "role_permission" ||
+                                               a.TargetType == "group_permission" ||
+                                               a.TargetType == "user_permission_override" ||
+                                               a.TargetType == "user_role" ||
+                                               a.TargetType == "permission_change_request" ||
+                                               a.TargetType == "permission_change_item");
+
+        _tabs = new List<AdminTabs.TabItem>
+        {
+            new("truy-cap", "Gán theo trang", userCount),
+            new("khoa-phong", "Khoa/phòng", Store.Departments.Count(d => d.Status == "active")),
+            new("nhom", "Nhóm", Store.Groups.Count(g => g.Status == "active")),
+            new("vai-tro", "Vai trò (nâng cao)", roleCount),
+            new("tai-khoan", "Tài khoản", userCount),
+            new("lich-su", "Lịch sử thay đổi", logCount),
+            new("ghi-de", "Ghi đè cá nhân", Store.UserPermissionOverrides.Count),
+        };
+    }
+
+    private void SaveOverride()
+    {
+        if (!Guard.CanDo("SCR_PERMISSIONS:UPDATE", "lưu ghi đè quyền")) return;
+        if (!Guid.TryParse(_overrideUserId, out var userId) || !Guid.TryParse(_overridePermissionId, out var permissionId) || string.IsNullOrWhiteSpace(_overrideReason))
+        {
+            Toasts.Show("Thiếu thông tin ghi đè", "Chọn người dùng, quyền và nhập lý do.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            var departmentId = ParseGuid(_overrideDepartmentId);
+            if (RequiresDepartment(_overrideScope) && departmentId is null)
+            {
+                Toasts.Show("Thiếu khoa/phòng", "Phạm vi một khoa hoặc cây khoa/phòng phải chọn khoa/phòng.", ToastVariant.Warning);
+                return;
+            }
+            if (!RequiresDepartment(_overrideScope))
+            {
+                departmentId = null;
+            }
+
+            var current = _editingOverrideId.HasValue
+                ? Store.UserPermissionOverrides.FirstOrDefault(o => o.UserPermissionOverrideId == _editingOverrideId.Value)
+                : null;
+            CreateAndSubmitOverrideRequest(
+                current is null ? "grant" : "update",
+                userId,
+                permissionId,
+                _overrideEffect,
+                _overrideScope,
+                departmentId,
+                _overrideReason.Trim(),
+                current);
+            Toasts.Show("Đã gửi yêu cầu phê duyệt", GetPermissionDisplayName(permissionId), ToastVariant.Success);
+
+            ResetOverrideForm();
+            BuildTabs();
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể lưu ghi đè quyền", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void EditOverride(UserPermissionOverride item)
+    {
+        _editingOverrideId = item.UserPermissionOverrideId;
+        _overrideUserId = item.UserId.ToString();
+        _overridePermissionId = item.PermissionId.ToString();
+        _overrideEffect = item.EffectCode;
+        _overrideScope = item.DepartmentScopeType;
+        _overrideDepartmentId = item.DepartmentId?.ToString() ?? string.Empty;
+        _overrideReason = item.Reason;
+    }
+
+    private void RemoveOverride(UserPermissionOverride item)
+    {
+        if (!Guard.CanDo("SCR_PERMISSIONS:DELETE", "thu hồi ghi đè quyền")) return;
+        try
+        {
+            CreateAndSubmitOverrideRequest(
+                "revoke",
+                item.UserId,
+                item.PermissionId,
+                item.EffectCode,
+                item.DepartmentScopeType,
+                item.DepartmentId,
+                $"Thu hồi ghi đè quyền {GetPermissionDisplayName(item.PermissionId)} của {GetUserName(item.UserId)}.",
+                item);
+            Toasts.Show("Đã gửi yêu cầu thu hồi quyền", GetPermissionDisplayName(item.PermissionId), ToastVariant.Info);
+            ResetOverrideForm();
+            BuildTabs();
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể xóa ghi đè quyền", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void CreateAndSubmitOverrideRequest(string operation, Guid userId, Guid permissionId,
+        string effectCode, string scopeType, Guid? departmentId, string reason, UserPermissionOverride? before)
+    {
+        var actor = UserContext.CurrentUser?.UserId;
+        if (actor is null)
+        {
+            Toasts.Show("Không xác định người thao tác", "Vui lòng đăng nhập lại trước khi gửi yêu cầu.", ToastVariant.Warning);
+            return;
+        }
+
+        var req = RequestService.CreateDraft(
+            actor.Value,
+            "user",
+            null,
+            null,
+            userId,
+            reason,
+            DateTime.UtcNow);
+        RequestService.AddItem(req.PermissionChangeRequestId, new PermissionChangeItem
+        {
+            PermissionChangeRequestId = req.PermissionChangeRequestId,
+            PermissionId = permissionId,
+            OperationCode = operation,
+            EffectCode = effectCode,
+            DepartmentScopeType = scopeType,
+            DepartmentId = departmentId,
+            BeforeJson = before is null ? null : JsonSerializer.Serialize(new
+            {
+                before.EffectCode,
+                before.DepartmentScopeType,
+                before.DepartmentId,
+                before.Reason
+            }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                EffectCode = effectCode,
+                DepartmentScopeType = scopeType,
+                DepartmentId = departmentId,
+                Reason = reason
+            })
+        });
+        RequestService.SubmitForApproval(req.PermissionChangeRequestId, actor.Value);
+    }
+
+    private void ResetOverrideForm()
+    {
+        _editingOverrideId = null;
+        _overrideUserId = string.Empty;
+        _overridePermissionId = string.Empty;
+        _overrideEffect = "allow";
+        _overrideScope = "global";
+        _overrideDepartmentId = string.Empty;
+        _overrideReason = string.Empty;
+    }
+
+    private string GetUserName(Guid userId) => Store.Users.FirstOrDefault(u => u.UserId == userId)?.FullName ?? "—";
+    private string GetPermissionName(Guid permissionId) => Store.Permissions.FirstOrDefault(p => p.PermissionId == permissionId)?.PermissionCode ?? "—";
+    private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+    private string GetPermissionDisplayName(Guid permissionId)
+    {
+        var permission = Store.Permissions.FirstOrDefault(p => p.PermissionId == permissionId);
+        return AdminBusinessDisplay.PermissionLabel(permission, Store.Screens, Store.Features);
+    }
+
+    private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    private static string Lookup(IReadOnlyList<LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
+    private static string EffectTone(string effect) => effect == "allow" ? "tone-success" : "tone-danger";
+    private static bool RequiresDepartment(string scopeType) => scopeType is "department" or "department_tree";
+}

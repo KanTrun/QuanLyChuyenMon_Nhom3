@@ -1,0 +1,912 @@
+@page "/admin/quy-trinh"
+@page "/qlcm/quy-trinh"
+@layout AdminLayout
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin
+@inject IMedDataStore Store
+@inject ProcedureLifecycleService Lifecycle
+@inject ICurrentUserContext UserContext
+@inject IConfirmDialogService Confirm
+@inject IToastService Toasts
+@inject AdminActionGuard Guard
+@inject ProcedureWorkflowGuard WorkflowGuard
+@inject AuditTrailService Audit
+@inject ProcedureSignoffService Signoffs
+@inject ProcedureDocumentSnapshotService Snapshots
+@inject IProcedureDocumentExportService ProcedureExport
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@implements IDisposable
+@using System.Text.Json
+@using System.IO
+
+<PageTitle>Quy trình kỹ thuật | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Quy trình</span>
+            <h1 class="admin-page-title">Quy trình kỹ thuật chuyên môn</h1>
+            <p class="admin-page-subtitle">Quản lý danh mục quy trình SQL, phiên bản và trạng thái áp dụng.</p>
+        </div>
+        <div class="admin-page-actions">
+            <a class="admin-btn admin-btn-ghost" href="/qlcm/quy-trinh/phe-duyet">Phê duyệt chờ duyệt</a>
+            <a class="admin-btn admin-btn-primary" href="/qlcm/quy-trinh/tao">Tạo quy trình mới</a>
+        </div>
+    </header>
+
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="proc-search">Tìm kiếm</label>
+            <input id="proc-search" class="admin-input" type="search" placeholder="Mã, tên hoặc mô tả" @bind="_search" @bind:event="oninput" @bind:after="Recompute" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="proc-status">Trạng thái phiên bản</label>
+            <select id="proc-status" class="admin-select" @bind="_versionStatus" @bind:after="Recompute">
+                <option value="">Tất cả</option>
+                @foreach (var status in Sql.MedLookups.VersionStatuses)
+                {
+                    <option value="@status.Code">@status.Name</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="proc-dept">Khoa</label>
+            <select id="proc-dept" class="admin-select" @bind="_departmentId" @bind:after="Recompute">
+                <option value="">Tất cả khoa</option>
+                @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
+                {
+                    <option value="@dept.DepartmentId">@dept.Name</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="proc-archive">Lưu trữ</label>
+            <select id="proc-archive" class="admin-select" @bind="_archiveFilter" @bind:after="Recompute">
+                <option value="active">Đang hoạt động</option>
+                <option value="archived">Lưu trữ</option>
+                <option value="all">Tất cả</option>
+            </select>
+        </div>
+        <div class="admin-filter-field" style="align-self:end; justify-self:end;">
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="ResetFilters">Xóa bộ lọc</button>
+        </div>
+    </div>
+
+    <AdminDataTable TItem="ProcedureRow"
+                    Items="_paged"
+                    ColumnCount="7"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_rows.Count"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }"
+                    EmptyTitle="Không có quy trình phù hợp"
+                    EmptyBody="Hãy điều chỉnh bộ lọc hoặc tạo quy trình mới.">
+        <HeaderTemplate>
+            <th>Mã</th>
+            <th>Tên quy trình</th>
+            <th>Khoa</th>
+            <th>@VersionColumnTitle</th>
+            <th>Trạng thái</th>
+            <th>Cập nhật</th>
+            <th style="text-align:right;">Hành động</th>
+        </HeaderTemplate>
+        <RowTemplate Context="row">
+            <tr @onclick="() => OpenDetail(row)" style="cursor:pointer;">
+                <td class="admin-table-cell-strong">@row.Procedure.ProcedureCode</td>
+                <td>
+                    <div class="admin-table-cell-strong">@row.Procedure.Name</div>
+                    <div class="admin-table-cell-muted">@row.Procedure.Description</div>
+                </td>
+                <td>@GetDeptName(row.DepartmentId)</td>
+                <td>@FormatVersionSummary(row.Procedure.ProcedureId)</td>
+                <td>
+                    @{
+                        var effectiveStatus = ProcedureEffectiveStatus(row.Procedure.ProcedureId);
+                    }
+                    <AdminBadge Tone="@VersionTone(effectiveStatus)">
+                        @StatusLabel(effectiveStatus)
+                    </AdminBadge>
+                </td>
+                <td class="admin-table-cell-muted">@AdminDateTimeDisplay.ShortDateTime(row.Procedure.UpdatedAt)</td>
+                <td style="text-align:right;" @onclick:stopPropagation="true">
+                    <AdminRowActionMenu MenuTitle="Hành động quy trình">
+                        <PrimaryContent>
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => OpenDetail(row)">Xem</button>
+                        </PrimaryContent>
+                        <ChildContent>
+                            @if (row.LatestVersion is not null)
+                            {
+                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => ExportVersionAsync(row.LatestVersion)">In/PDF</button>
+                                @foreach (var attachment in VersionAttachments(row.LatestVersion.ProcedureVersionId))
+                                {
+                                    <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => DownloadAttachmentAsync(attachment)">Tải @attachment.FileName</button>
+                                }
+                            }
+                            <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => GoToVersionHistory(row.Procedure.ProcedureId)">Lịch sử phiên bản</button>
+                            @{
+                                var rowInProgress = LatestInProgressVersion(row.Procedure.ProcedureId);
+                                var updateLabel = rowInProgress?.StatusCode == "pending_approval"
+                                    ? "Xem phiên bản đang phê duyệt"
+                                    : rowInProgress is not null
+                                        ? "Tiếp tục soạn thảo"
+                                        : "Cập nhật phiên bản mới";
+                            }
+                            <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => OpenUpdate(row)">@updateLabel</button>
+                            @if (row.Procedure.Status == "archived")
+                            {
+                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => RestoreAsync(row)">Khôi phục</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="admin-flyout-menu-item" role="menuitem" @onclick="() => ArchiveAsync(row)">Lưu trữ</button>
+                            }
+                        </ChildContent>
+                    </AdminRowActionMenu>
+                </td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
+</section>
+
+<AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" SizeClass="admin-drawer-wide"
+             Eyebrow="Chi tiết quy trình"
+             Title="@(_selected?.Procedure.Name ?? string.Empty)"
+             Subtitle="@(_selected is null ? null : $"{_selected.Procedure.ProcedureCode} • {GetDeptName(_selected.DepartmentId)}")">
+    <ChildContent>
+        @if (_selected is not null)
+        {
+            var versions = VersionsFor(_selected.Procedure.ProcedureId);
+            var pendingWriterVersion = versions.FirstOrDefault(v => CanSignFromList(v, "writer"));
+            var pendingCheckerVersion = versions.FirstOrDefault(v =>
+                (v.StatusCode == "pending_review" || v.StatusCode == "pending_approval") && CanSignFromList(v, "checker"));
+            @if (pendingWriterVersion is not null)
+            {
+                <aside class="admin-callout procedure-signoff-callout">
+                    <strong>Bạn được phân công ký người viết</strong>
+                    Phiên bản <strong>@(pendingWriterVersion.VersionLabel ?? $"v{pendingWriterVersion.VersionNo}")</strong>
+                    đang chờ chữ ký của bạn. Nhấn <strong>Ký người viết</strong> ở bảng phiên bản bên dưới
+                    (hoặc dùng menu ⋯) trước khi gửi kiểm tra.
+                </aside>
+            }
+            else if (pendingCheckerVersion is not null)
+            {
+                <aside class="admin-callout procedure-signoff-callout">
+                    <strong>Phiên bản chờ kiểm tra</strong>
+                    Bạn có thể ký kiểm tra cho
+                    <strong>@(pendingCheckerVersion.VersionLabel ?? $"v{pendingCheckerVersion.VersionNo}")</strong>
+                    ở bảng phiên bản bên dưới.
+                </aside>
+            }
+
+            <ProcedureVersionHistoryPanel ProcedureId="_selected.Procedure.ProcedureId"
+                                          @bind-SelectedVersionId="_detailVersionId"
+                                          OnExport="ExportVersionAsync"
+                                          OnRollbackRequested="OpenRollbackModal"
+                                          OnSubmitRequested="SubmitAsync"
+                                          OnWithdrawRequested="WithdrawAsync"
+                                          OnSignRequested="HandleSignRequestedAsync"
+                                          ShowFullPageLink="true"
+                                          EnableSigning="true" />
+
+            @if (DetailVersionId is Guid detailVersionId)
+            {
+                <ProcedureVersionDetailPanel ProcedureVersionId="detailVersionId"
+                                             OnSignRequested="HandleDetailSignAsync" />
+            }
+            else
+            {
+                <dl class="admin-detail-grid">
+                    <dt>Loại quy trình</dt>
+                    <dd>@_selected.Procedure.ProcedureType</dd>
+                    <dt>Trạng thái hồ sơ</dt>
+                    <dd>@StatusLabel(_selected.Procedure.Status)</dd>
+                    <dt>Mô tả</dt>
+                    <dd>@(_selected.Procedure.Description ?? "—")</dd>
+                </dl>
+            }
+        }
+    </ChildContent>
+    <FooterContent>
+        @if (_selected is not null)
+        {
+            var inProgress = LatestInProgressVersion(_selected.Procedure.ProcedureId);
+            if (inProgress is not null && inProgress.StatusCode is "draft" or "pending_review")
+            {
+                var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+                if (Signoffs.CanUserEditDraft(inProgress.ProcedureVersionId, userId, out _))
+                {
+                    <a class="admin-btn admin-btn-primary" href="@EditDraftUrl(_selected.Procedure.ProcedureId, inProgress.ProcedureVersionId)">
+                        Soạn thảo &amp; ký
+                    </a>
+                }
+                else
+                {
+                    <a class="admin-btn admin-btn-ghost" href="@ReviewDraftUrl(_selected.Procedure.ProcedureId, inProgress.ProcedureVersionId)">
+                        Xem &amp; ký trên trang soạn thảo
+                    </a>
+                }
+                @if (CanSubmitDraft(inProgress))
+                {
+                    <button type="button" class="admin-btn admin-btn-primary" @onclick="() => SubmitAsync(inProgress)">Gửi duyệt</button>
+                }
+            }
+            else if (inProgress is not null && inProgress.StatusCode == "pending_approval")
+            {
+                <span class="admin-table-cell-muted" style="align-self:center;font-size:.85rem;">
+                    @(inProgress.VersionLabel ?? $"v{inProgress.VersionNo}") đang chờ phê duyệt
+                </span>
+                <a class="admin-btn admin-btn-ghost" href="/qlcm/quy-trinh/phe-duyet">
+                    Mở trang phê duyệt
+                </a>
+            }
+            else
+            {
+                <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => OpenUpdate(_selected)">Cập nhật thành phiên bản mới</button>
+            }
+        }
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="() => _drawerOpen = false">Đóng</button>
+    </FooterContent>
+</AdminDrawer>
+
+<AdminModal IsOpen="_withdrawOpen" IsOpenChanged="v => _withdrawOpen = v" Title="Thu hồi phiên bản">
+    <ChildContent>
+        <p style="margin:0;">Nhập lý do thu hồi phiên bản <strong>@_withdrawTarget?.Title</strong>.</p>
+        <textarea class="admin-textarea" rows="3" @bind="_withdrawReason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _withdrawOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-danger" @onclick="ConfirmWithdrawAsync" disabled="@string.IsNullOrWhiteSpace(_withdrawReason)">Thu hồi</button>
+    </FooterContent>
+</AdminModal>
+
+<AdminModal IsOpen="_rollbackOpen" IsOpenChanged="v => _rollbackOpen = v" Title="Khôi phục hiệu lực phiên bản cũ">
+    <ChildContent>
+        @if (_rollbackTarget is not null)
+        {
+            var currentActive = Lifecycle.GetActiveVersion(_rollbackTarget.ProcedureId);
+            <p style="margin:0 0 1rem;">
+                Bản <strong>@(_rollbackTarget.VersionLabel ?? $"v{_rollbackTarget.VersionNo}")</strong>
+                sẽ trở lại <strong>đang hiệu lực</strong>.
+                @if (currentActive is not null)
+                {
+                    <span>
+                        Bản hiện tại <strong>@(currentActive.VersionLabel ?? $"v{currentActive.VersionNo}")</strong>
+                        sẽ được <strong>lưu trữ</strong>.
+                    </span>
+                }
+            </p>
+            <label class="admin-form-field-label" for="rollback-reason-kt">Lý do khôi phục (bắt buộc)</label>
+            <textarea id="rollback-reason-kt" class="admin-textarea" rows="3" @bind="_rollbackReason"></textarea>
+        }
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _rollbackOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="ConfirmRollbackAsync" disabled="@string.IsNullOrWhiteSpace(_rollbackReason)">Khôi phục hiệu lực</button>
+    </FooterContent>
+</AdminModal>
+
+<ProcedureSignatureModal IsOpen="_signOpen"
+                         IsOpenChanged="v => _signOpen = v"
+                         CanvasId="procedure-list-signature-pad"
+                         RoleLabel="@SignoffRoleLabel(_signRole)"
+                         DocumentLabel="@(_signTarget?.Title ?? string.Empty)"
+                         SignerName="@(UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username ?? string.Empty)"
+                         SignerUsername="@(UserContext.CurrentUser?.Username ?? string.Empty)"
+                         SignatureConfirmed="ConfirmSignAsync" />
+
+@code {
+    private const int _pageSize = 10;
+    private int _page = 1;
+    private string _search = string.Empty;
+    private string _versionStatus = string.Empty;
+    private string _departmentId = string.Empty;
+    private string _archiveFilter = "active";
+    private IReadOnlyList<ProcedureRow> _rows = Array.Empty<ProcedureRow>();
+    private IReadOnlyList<ProcedureRow> _paged = Array.Empty<ProcedureRow>();
+    private ProcedureRow? _selected;
+    private Guid? _detailVersionId;
+    private bool _drawerOpen;
+    private bool _withdrawOpen;
+    private Sql.ProcedureVersion? _withdrawTarget;
+    private string _withdrawReason = string.Empty;
+    private bool _rollbackOpen;
+    private Sql.ProcedureVersion? _rollbackTarget;
+    private string _rollbackReason = string.Empty;
+    private bool _signOpen;
+    private Sql.ProcedureVersion? _signTarget;
+    private string _signRole = "writer";
+    private string VersionColumnTitle => string.IsNullOrWhiteSpace(_versionStatus) && string.IsNullOrWhiteSpace(_departmentId)
+        ? "Phiên bản mới nhất"
+        : "Phiên bản phù hợp";
+
+    private Guid? DetailVersionId => _detailVersionId ?? _selected?.LatestVersion?.ProcedureVersionId;
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+        Recompute();
+    }
+
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        if (_selected is not null)
+        {
+            _selected = BuildRow(_selected.Procedure.ProcedureId);
+        }
+        Recompute();
+        StateHasChanged();
+    });
+
+    private void Recompute()
+    {
+        var deptId = Guid.TryParse(_departmentId, out var parsedDept) ? parsedDept : (Guid?)null;
+        var search = _search.Trim();
+        _rows = Store.Procedures
+            .Select(p => BuildRow(p.ProcedureId, _versionStatus, deptId))
+            .Where(r => r is not null)
+            .Cast<ProcedureRow>()
+            .Where(r => _archiveFilter == "all" || (_archiveFilter == "archived" ? r.Procedure.Status == "archived" : r.Procedure.Status != "archived"))
+            .Where(r => MatchesSearch(r, search))
+            .OrderByDescending(r => r.Procedure.UpdatedAt)
+            .ToList();
+        Paginate();
+    }
+
+    private void Paginate()
+    {
+        var totalPages = Math.Max(1, (int)Math.Ceiling(_rows.Count / (double)_pageSize));
+        _page = Math.Clamp(_page, 1, totalPages);
+        _paged = _rows.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private ProcedureRow? BuildRow(Guid procedureId)
+    {
+        var deptId = Guid.TryParse(_departmentId, out var parsedDept) ? parsedDept : (Guid?)null;
+        return BuildRow(procedureId, _versionStatus, deptId);
+    }
+
+    private ProcedureRow? BuildRow(Guid procedureId, string statusFilter, Guid? departmentFilter)
+    {
+        var proc = Store.Procedures.FirstOrDefault(p => p.ProcedureId == procedureId);
+        if (proc is null) return null;
+        var selection = Sql.ProcedureVersionDisplaySelector.Select(
+            proc,
+            Store.ProcedureVersions.Where(v => v.ProcedureId == proc.ProcedureId),
+            statusFilter,
+            departmentFilter);
+
+        return selection.MatchesFilters
+            ? new ProcedureRow(proc, selection.Version, selection.DepartmentId)
+            : null;
+    }
+
+    private void ResetFilters()
+    {
+        _search = _versionStatus = _departmentId = string.Empty;
+        _archiveFilter = "active";
+        _page = 1;
+        Recompute();
+    }
+
+    private void OpenDetail(ProcedureRow row)
+    {
+        _selected = row;
+        _detailVersionId = row.LatestVersion?.ProcedureVersionId;
+        _drawerOpen = true;
+    }
+
+    private Task HandleSignRequestedAsync((Sql.ProcedureVersion Version, string Role) request)
+    {
+        return OpenSignModalAsync(request.Version, request.Role, "history-panel");
+    }
+
+    private void OpenRollbackModal(Sql.ProcedureVersion version)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "khôi phục phiên bản")) return;
+        _rollbackTarget = version;
+        _rollbackReason = string.Empty;
+        _rollbackOpen = true;
+    }
+
+    private void ConfirmRollbackAsync()
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "khôi phục phiên bản")) return;
+        if (_rollbackTarget is null || string.IsNullOrWhiteSpace(_rollbackReason)) return;
+        try
+        {
+            Lifecycle.RollbackToVersion(
+                _rollbackTarget.ProcedureVersionId,
+                UserContext.CurrentUser?.UserId ?? Guid.Empty,
+                _rollbackReason.Trim());
+            Recompute();
+            if (_selected is not null)
+            {
+                _selected = BuildRow(_selected.Procedure.ProcedureId);
+                _detailVersionId = _rollbackTarget.ProcedureVersionId;
+            }
+            Toasts.Show(
+                "Đã khôi phục hiệu lực",
+                $"{_rollbackTarget.VersionLabel ?? $"v{_rollbackTarget.VersionNo}"} đang hiệu lực trở lại.",
+                ToastVariant.Success);
+            _rollbackOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể khôi phục phiên bản", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private string FormatVersionSummary(Guid procedureId)
+        => ProcedureVersionSummaryFormatter.FormatVersionSummary(
+            Store.ProcedureVersions.Where(v => v.ProcedureId == procedureId));
+
+    private Task HandleDetailSignAsync(string role)
+    {
+        var version = DetailVersionId is { } versionId
+            ? Store.ProcedureVersions.FirstOrDefault(item => item.ProcedureVersionId == versionId)
+            : _selected?.LatestVersion;
+        if (version is null)
+            return Task.CompletedTask;
+
+        return OpenSignModalAsync(version, role, "detail-panel");
+    }
+
+    private void GoToVersionHistory(Guid procedureId)
+        => Navigation.NavigateTo($"/qlcm/quy-trinh/{procedureId}/lich-su");
+
+    private void OpenUpdate(ProcedureRow row)
+    {
+        var inProgress = LatestInProgressVersion(row.Procedure.ProcedureId);
+        if (inProgress is not null)
+        {
+            if (inProgress.StatusCode == "pending_approval")
+            {
+                Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
+                return;
+            }
+            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            if (Signoffs.CanUserEditDraft(inProgress.ProcedureVersionId, userId, out _))
+            {
+                Navigation.NavigateTo(EditDraftUrl(row.Procedure.ProcedureId, inProgress.ProcedureVersionId));
+            }
+            else
+            {
+                Navigation.NavigateTo(ReviewDraftUrl(row.Procedure.ProcedureId, inProgress.ProcedureVersionId));
+            }
+            return;
+        }
+
+        Navigation.NavigateTo($"/qlcm/quy-trinh/{row.Procedure.ProcedureId}/cap-nhat");
+    }
+
+    private static string ReviewDraftUrl(Guid procedureId, Guid versionId)
+        => $"/qlcm/quy-trinh/{procedureId}/phien-ban/{versionId}";
+
+    private static string EditDraftUrl(Guid procedureId, Guid versionId)
+        => $"/qlcm/quy-trinh/{procedureId}/phien-ban/{versionId}/chinh-sua";
+
+    /// <summary>Trả về phiên bản đang "trong quá trình" (draft/pending_review/pending_approval) mới nhất.</summary>
+    private Sql.ProcedureVersion? LatestInProgressVersion(Guid procedureId)
+        => Store.ProcedureVersions
+            .Where(item => item.ProcedureId == procedureId &&
+                           (item.StatusCode == "draft" ||
+                            item.StatusCode == "pending_review" ||
+                            item.StatusCode == "pending_approval"))
+            .OrderByDescending(item => item.VersionNo)
+            .FirstOrDefault();
+
+    private bool CanSubmitDraft(Sql.ProcedureVersion version)
+        => version.StatusCode == "draft"
+            && Signoffs.GetOutstandingWriterSignatures(version.ProcedureVersionId) == 0;
+
+    private async Task ArchiveAsync(ProcedureRow row)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:DELETE", "lưu trữ quy trình")) return;
+        var ok = await Confirm.ShowAsync("Lưu trữ quy trình", $"Lưu trữ quy trình \"{row.Procedure.Name}\"?", confirmText: "Lưu trữ", isDanger: true);
+        if (!ok) return;
+        Store.UpdateProcedure(row.Procedure with { Status = "archived" });
+        AppendProcedureAudit("archive", row.Procedure);
+        Toasts.Show("Đã lưu trữ quy trình", row.Procedure.Name, ToastVariant.Success);
+    }
+
+    private async Task RestoreAsync(ProcedureRow row)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "khôi phục quy trình")) return;
+        var ok = await Confirm.ShowAsync("Khôi phục quy trình", $"Khôi phục quy trình \"{row.Procedure.Name}\"?", confirmText: "Khôi phục");
+        if (!ok) return;
+        Store.UpdateProcedure(row.Procedure with { Status = "active" });
+        AppendProcedureAudit("restore", row.Procedure);
+        Toasts.Show("Đã khôi phục quy trình", row.Procedure.Name, ToastVariant.Success);
+    }
+
+    private void AppendProcedureAudit(string actionCode, Sql.ProfessionalProcedure procedure)
+    {
+        Audit.Append(new Sql.AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = UserContext.CurrentUser?.UserId,
+            ActorUsername = UserContext.CurrentUser?.Username,
+            ActionCode = actionCode,
+            TargetType = "professional_procedure",
+            TargetId = procedure.ProcedureId.ToString(),
+            DepartmentId = procedure.OwnerDepartmentId
+        });
+    }
+
+    private async Task SubmitAsync(Sql.ProcedureVersion version)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "gửi duyệt phiên bản")) return;
+        var ok = await Confirm.ShowAsync("Gửi phê duyệt", $"Gửi phiên bản \"{version.Title}\" để phê duyệt?", confirmText: "Gửi");
+        if (!ok) return;
+        try
+        {
+            Lifecycle.Submit(version.ProcedureVersionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
+            Recompute();
+            if (_selected is not null)
+            {
+                _selected = BuildRow(_selected.Procedure.ProcedureId);
+            }
+            Toasts.Show("Đã gửi phê duyệt", version.Title, ToastVariant.Success);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể gửi phê duyệt", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private async Task OpenSignModalAsync(Sql.ProcedureVersion version, string role, string source)
+    {
+        // #region agent log
+        await DebugLogAsync("QuyTrinhKtPage.razor:505", "Open sign modal requested", new
+        {
+            source,
+            role,
+            versionId = version.ProcedureVersionId,
+            versionStatus = version.StatusCode,
+            detailVersionId = DetailVersionId,
+            hasCurrentUser = UserContext.CurrentUser is not null
+        }, "H1", "initial");
+        // #endregion
+
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (!WorkflowGuard.CanSign(version.ProcedureVersionId, role, userId, "ký xác nhận quy trình"))
+        {
+            return;
+        }
+
+        var canSign = Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out var reason);
+
+        // #region agent log
+        await DebugLogAsync("QuyTrinhKtPage.razor:517", "Sign permission evaluated", new
+        {
+            source,
+            role,
+            versionId = version.ProcedureVersionId,
+            userId,
+            canSign,
+            reason,
+            signOpenBefore = _signOpen
+        }, canSign ? "H2" : "H1", "initial");
+        // #endregion
+
+        if (!canSign)
+        {
+            Toasts.Show("Không thể ký", reason ?? "Tài khoản hiện tại không đủ điều kiện ký vai trò này.", ToastVariant.Warning);
+            return;
+        }
+        _signTarget = version;
+        _signRole = role;
+        _signOpen = true;
+
+        // #region agent log
+        await DebugLogAsync("QuyTrinhKtPage.razor:532", "Sign modal state updated", new
+        {
+            source,
+            role,
+            versionId = version.ProcedureVersionId,
+            signOpenAfter = _signOpen,
+            signTargetId = _signTarget?.ProcedureVersionId
+        }, "H2", "initial");
+        // #endregion
+    }
+
+    private Task ConfirmSignAsync(string signatureImageDataUrl)
+    {
+        if (_signTarget is null) return Task.CompletedTask;
+        try
+        {
+            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+
+            // #region agent log
+            _ = DebugLogAsync("QuyTrinhKtPage.razor:543", "Signature confirmation started", new
+            {
+                role = _signRole,
+                versionId = _signTarget.ProcedureVersionId,
+                userId,
+                hasImage = !string.IsNullOrWhiteSpace(signatureImageDataUrl),
+                imageLength = signatureImageDataUrl?.Length ?? 0
+            }, "H3", "initial");
+            // #endregion
+
+            Signoffs.Sign(
+                _signTarget.ProcedureVersionId,
+                _signRole,
+                userId,
+                UserContext.CurrentUser?.Username,
+                UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username,
+                signatureImageDataUrl,
+                "Chữ ký tay trực tiếp nội bộ");
+            Snapshots.PersistSnapshot(_signTarget.ProcedureVersionId, "draft_signed", userId);
+
+            var outstandingWriters = _signRole == "writer"
+                ? Signoffs.GetOutstandingWriterSignatures(_signTarget.ProcedureVersionId)
+                : -1;
+            var autoSubmitted = false;
+            string? autoSubmitError = null;
+            if (_signRole == "writer" && outstandingWriters == 0 && _signTarget.StatusCode == "draft")
+            {
+                try
+                {
+                    Lifecycle.Submit(_signTarget.ProcedureVersionId, userId);
+                    autoSubmitted = true;
+                }
+                catch (Exception exception)
+                {
+                    autoSubmitError = exception.Message;
+                }
+            }
+
+            _signOpen = false;
+            Recompute();
+            if (_selected is not null)
+            {
+                _selected = BuildRow(_selected.Procedure.ProcedureId);
+            }
+
+            Toasts.Show(
+                autoSubmitted ? "Đã ký đủ người viết và gửi kiểm tra" : "Đã ký trực tiếp",
+                autoSubmitted
+                    ? $"{_signTarget.Title} đã chuyển sang chờ phê duyệt."
+                    : $"{SignoffRoleLabel(_signRole)}: {_signTarget.Title}",
+                ToastVariant.Success);
+            if (!string.IsNullOrWhiteSpace(autoSubmitError))
+            {
+                Toasts.Show(
+                    "Đã ghi nhận chữ ký nhưng chưa thể gửi duyệt",
+                    autoSubmitError,
+                    ToastVariant.Warning);
+            }
+
+            // #region agent log
+            _ = DebugLogAsync("QuyTrinhKtPage.razor:576", "Signature confirmation completed", new
+            {
+                role = _signRole,
+                versionId = _signTarget.ProcedureVersionId,
+                outstandingWriters,
+                autoSubmitted,
+                autoSubmitError,
+                signOpenAfter = _signOpen
+            }, "H3", "initial");
+            // #endregion
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể ký", ex.Message, ToastVariant.Error);
+        }
+        return Task.CompletedTask;
+    }
+
+    private static string SignoffRoleLabel(string role) => role switch
+    {
+        "writer" => "Người viết",
+        "checker" => "Người kiểm tra",
+        "approver" => "Người phê duyệt",
+        _ => role
+    };
+
+    private bool CanSignFromList(Sql.ProcedureVersion version, string role)
+    {
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (role == "writer" && version.StatusCode == "draft")
+            return Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out _);
+        // Checker ký tại pending_review (luồng mới) hoặc pending_approval (compat cũ)
+        if (role == "checker" && (version.StatusCode == "pending_review" || version.StatusCode == "pending_approval"))
+            return Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out _);
+        return false;
+    }
+
+    private async Task ExportVersionAsync(Sql.ProcedureVersion version)
+    {
+        try
+        {
+            var html = ProcedureExport.BuildProcedureDocumentHtml(version.ProcedureVersionId, DateTime.UtcNow, Navigation.BaseUri);
+            var code = Store.Procedures.FirstOrDefault(p => p.ProcedureId == version.ProcedureId)?.ProcedureCode ?? "quy-trinh";
+            var fileName = $"{SafeFileNamePart(code)}-{SafeFileNamePart(version.VersionLabel ?? $"v{version.VersionNo}")}.html";
+            var ok = await JS.InvokeAsync<bool>("qlcmShell.openPrintableHtml", fileName, html);
+            Toasts.Show(
+                ok ? "Đã mở bản in A4" : "Không thể mở bản in",
+                ok ? "Chọn In / Lưu PDF trong tab bản xem trước." : "Trình duyệt đã từ chối mở hoặc tải tệp.",
+                ok ? ToastVariant.Success : ToastVariant.Warning);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể xuất quy trình", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private IReadOnlyList<Sql.ProcedureAttachment> VersionAttachments(Guid versionId)
+        => Store.ProcedureAttachments
+            .Where(attachment => attachment.ProcedureVersionId == versionId)
+            .OrderBy(attachment => attachment.AttachmentType)
+            .ThenBy(attachment => attachment.FileName)
+            .ToList();
+
+    private async Task DownloadAttachmentAsync(Sql.ProcedureAttachment attachment)
+    {
+        var ok = await JS.InvokeAsync<bool>(
+            "qlcmShell.downloadProcedureAttachment",
+            attachment.ProcedureAttachmentId,
+            attachment.FileName);
+        Toasts.Show(
+            ok ? "Đã tải tệp" : "Không thể tải tệp",
+            ok ? attachment.FileName : "Phiên đăng nhập không hợp lệ hoặc tệp không còn tồn tại.",
+            ok ? ToastVariant.Success : ToastVariant.Warning);
+    }
+
+    private void WithdrawAsync(Sql.ProcedureVersion version)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "thu hồi phiên bản")) return;
+        _withdrawTarget = version;
+        _withdrawReason = string.Empty;
+        _withdrawOpen = true;
+    }
+
+    private void ConfirmWithdrawAsync()
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "thu hồi phiên bản")) return;
+        if (_withdrawTarget is null || string.IsNullOrWhiteSpace(_withdrawReason)) return;
+        try
+        {
+            Lifecycle.Withdraw(_withdrawTarget.ProcedureVersionId, UserContext.CurrentUser?.UserId ?? Guid.Empty, _withdrawReason.Trim());
+            Recompute();
+            if (_selected is not null)
+            {
+                _selected = BuildRow(_selected.Procedure.ProcedureId);
+            }
+            Toasts.Show("Đã thu hồi phiên bản", _withdrawTarget.Title, ToastVariant.Info);
+            _withdrawOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể thu hồi phiên bản", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private IReadOnlyList<Sql.ProcedureVersion> VersionsFor(Guid procedureId)
+        => Store.ProcedureVersions.Where(v => v.ProcedureId == procedureId).OrderByDescending(v => v.VersionNo).ToList();
+
+    private bool MatchesSearch(ProcedureRow row, string search)
+    {
+        if (string.IsNullOrWhiteSpace(search))
+        {
+            return true;
+        }
+
+        var status = row.LatestVersion?.StatusCode ?? row.Procedure.Status;
+        var stepSearch = row.LatestVersion is null ? [] : MatchingStepTexts(row.LatestVersion.ProcedureVersionId);
+        return Contains(row.Procedure.ProcedureCode, search)
+            || Contains(row.Procedure.Name, search)
+            || Contains(row.Procedure.Description, search)
+            || Contains(row.Procedure.ProcedureType, search)
+            || Contains(row.LatestVersion?.VersionLabel, search)
+            || Contains(row.LatestVersion?.Title, search)
+            || Contains(row.LatestVersion?.Summary, search)
+            || Contains(GetDeptName(row.DepartmentId), search)
+            || Contains(StatusLabel(status), search)
+            || Contains(status, search)
+            || stepSearch.Any(item => Contains(item, search));
+    }
+
+    private IReadOnlyList<string> MatchingStepTexts(Guid versionId)
+        => Store.ProcedureSteps
+            .Where(step => step.ProcedureVersionId == versionId)
+            .SelectMany(step => new[]
+            {
+                step.Name,
+                step.Description,
+                step.ResponsibilityText,
+                step.FormReferenceText,
+                step.DetailSectionNumber
+            })
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Cast<string>()
+            .ToList();
+
+    private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+    private static bool Contains(string? value, string search) => value?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false;
+    private static string SafeFileNamePart(string? value)
+    {
+        var safe = new string((value ?? string.Empty).Where(c => char.IsLetterOrDigit(c) || c is '-' or '_').ToArray());
+        return string.IsNullOrWhiteSpace(safe) ? "quy-trinh" : safe;
+    }
+    private static string VersionLabel(Sql.ProcedureVersion? version) => version is null ? "—" : version.VersionLabel ?? $"v{version.VersionNo}";
+    private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    /// <summary>
+    /// Trạng thái hiệu lực thực sự của quy trình:
+    /// 1. Nếu có phiên bản đang hoạt động (active) → Đang hiệu lực
+    /// 2. Nếu có phiên bản đang xử lý (draft/pending_*) → trạng thái đó
+    /// 3. Fallback → trạng thái phiên bản mới nhất
+    /// </summary>
+    private string ProcedureEffectiveStatus(Guid procedureId)
+    {
+        var versions = Store.ProcedureVersions.Where(v => v.ProcedureId == procedureId).ToList();
+        if (versions.Count == 0) return Store.Procedures.FirstOrDefault(p => p.ProcedureId == procedureId)?.Status ?? "draft";
+        // Priority 1: active
+        if (versions.Any(v => v.StatusCode == "active")) return "active";
+        // Priority 2: in-progress
+        var inProgress = versions
+            .Where(v => v.StatusCode is "pending_approval" or "pending_review" or "draft")
+            .OrderByDescending(v => v.VersionNo).FirstOrDefault();
+        if (inProgress is not null) return inProgress.StatusCode;
+        // Fallback: latest version
+        return versions.OrderByDescending(v => v.VersionNo).First().StatusCode;
+    }
+
+    private static string StatusLabel(string status) => Sql.MedLookups.VersionStatuses.FirstOrDefault(s => s.Code == status)?.Name
+        ?? Sql.MedLookups.RecordStatuses.FirstOrDefault(s => s.Code == status)?.Name
+        ?? status;
+    private static string VersionTone(string? status) => status switch
+    {
+        "active" => "tone-success",
+        "pending_approval" => "tone-warning",
+        "rejected" or "archived" => "tone-danger",
+        "draft" => "tone-muted",
+        _ => "tone-muted"
+    };
+
+    private ValueTask DebugLogAsync(string location, string message, object data, string hypothesisId, string runId)
+    {
+        WriteServerDebugLog(location, message, data, hypothesisId, runId);
+        var payload = JsonSerializer.Serialize(new
+        {
+            sessionId = "103684",
+            runId,
+            hypothesisId,
+            location,
+            message,
+            data,
+            timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+        });
+
+        var script = $"fetch('http://127.0.0.1:7857/ingest/02f953eb-d638-4403-8995-399505bf881e',{{method:'POST',headers:{{'Content-Type':'application/json','X-Debug-Session-Id':'103684'}},body:{JsonSerializer.Serialize(payload)}}}).catch(()=>{{}});";
+        return JS.InvokeVoidAsync("eval", script);
+    }
+
+    private static void WriteServerDebugLog(string location, string message, object data, string hypothesisId, string runId)
+    {
+        try
+        {
+            var entry = JsonSerializer.Serialize(new
+            {
+                sessionId = "103684",
+                runId,
+                hypothesisId,
+                location,
+                message,
+                data,
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            });
+            // #region agent log
+            File.AppendAllText("D:\\BenhVienQuanLy_Nhom3\\QuanLyChuyenMon_Nhom3\\debug-103684.log", entry + Environment.NewLine);
+            // #endregion
+        }
+        catch
+        {
+        }
+    }
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+
+    private sealed record ProcedureRow(Sql.ProfessionalProcedure Procedure, Sql.ProcedureVersion? LatestVersion, Guid? DepartmentId);
+}

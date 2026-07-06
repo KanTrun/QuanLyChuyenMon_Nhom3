@@ -1,0 +1,773 @@
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE MOBILE — cross-cutting layout fixes
+   Desktop-first app; this layer polishes phone/tablet.
+   Load after all other stylesheets.
+   ═══════════════════════════════════════════════════ */
+
+/* ── Foundations ─────────────────────────────────── */
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    overflow-x: clip;
+}
+
+img,
+video,
+svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.site-shell,
+.qlcm-intro-nav,
+.qlcm-intro-hero,
+.qlcm-intro-modules {
+    width: min(100% - clamp(1rem, 4vw, 2.5rem), var(--site-width, 1180px));
+}
+
+/* ── Admin shell: không bị tràn ngang ─────────────── */
+
+.admin-shell,
+.admin-main-column,
+.admin-content,
+.admin-page,
+.admin-panel {
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* ── Admin tables: card layout trên điện thoại ───── */
+
+.admin-table-mobile-hint,
+.admin-table-scroll-hint {
+    display: none;
+}
+
+.admin-table-wrapper.is-mobile-cards .admin-table-mobile-hint {
+    display: none !important;
+}
+
+.admin-table--layout-scroll,
+.admin-table.admin-table--scroll,
+.admin-table.admin-permission-table,
+.admin-table.procedure-signoff-table {
+    min-width: 640px;
+    width: max-content;
+}
+
+@media (max-width: 768px) {
+    .admin-table-wrapper.is-mobile-cards,
+    .admin-table-wrapper:has(.admin-table--layout-cards),
+    .admin-table-wrapper:has(.admin-table--cards-mobile) {
+        overflow: visible;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+    }
+
+    .admin-table-wrapper:has(.admin-table--layout-scroll),
+    .admin-table-wrapper:has(.admin-table--scroll),
+    .admin-table-wrapper:has(.admin-permission-table),
+    .admin-table-wrapper:has(.procedure-signoff-table) {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .admin-table-wrapper:has(.admin-table--layout-scroll) .admin-table-mobile-hint,
+    .admin-table-wrapper:has(.admin-table--scroll) .admin-table-mobile-hint,
+    .admin-table-wrapper:has(.admin-permission-table) .admin-table-mobile-hint,
+    .admin-table-wrapper:has(.procedure-signoff-table) .admin-table-mobile-hint {
+        display: block;
+        margin: 0 0 8px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: var(--color-primary-soft);
+        color: var(--color-primary-deep);
+        font-size: 0.76rem;
+        font-weight: 600;
+    }
+
+    .admin-table--layout-cards,
+    .admin-table.admin-table--cards-mobile {
+        width: 100%;
+        min-width: 0;
+        display: block;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .admin-table--layout-cards thead,
+    .admin-table.admin-table--cards-mobile thead {
+        display: none;
+    }
+
+    .admin-table--layout-cards tbody,
+    .admin-table.admin-table--cards-mobile tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .admin-table--layout-cards tbody tr,
+    .admin-table.admin-table--cards-mobile tbody tr {
+        display: block;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+    }
+
+    .admin-table--layout-cards tbody tr:hover,
+    .admin-table.admin-table--cards-mobile tbody tr:hover {
+        background: var(--color-surface);
+        border-color: var(--color-primary-light);
+    }
+
+    .admin-table--layout-cards tbody tr.admin-table-empty-row,
+    .admin-table.admin-table--cards-mobile tbody tr.admin-table-empty-row {
+        padding: 0;
+    }
+
+    .admin-table--layout-cards tbody td,
+    .admin-table.admin-table--cards-mobile tbody td {
+        display: grid;
+        grid-template-columns: minmax(88px, 34%) 1fr;
+        gap: 4px 12px;
+        align-items: start;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--color-border-subtle);
+        text-align: left !important;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        vertical-align: top;
+    }
+
+    .admin-table--layout-cards tbody td::before,
+    .admin-table.admin-table--cards-mobile tbody td::before {
+        content: attr(data-label);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-muted);
+        line-height: 1.35;
+        padding-top: 2px;
+    }
+
+    .admin-table--layout-cards tbody td:last-child,
+    .admin-table.admin-table--cards-mobile tbody td:last-child {
+        border-bottom: 0;
+    }
+
+    .admin-table--layout-cards tbody td:not([data-label]),
+    .admin-table.admin-table--cards-mobile tbody td:not([data-label]) {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-table--layout-cards tbody td:not([data-label])::before,
+    .admin-table.admin-table--cards-mobile tbody td:not([data-label])::before {
+        display: none;
+    }
+
+    .admin-table--layout-cards tbody tr.admin-table-empty-row td,
+    .admin-table.admin-table--cards-mobile tbody tr.admin-table-empty-row td {
+        display: block;
+        padding: 28px 16px;
+        border: 0;
+    }
+
+    .admin-table--layout-cards tbody tr.admin-table-empty-row td::before,
+    .admin-table.admin-table--cards-mobile tbody tr.admin-table-empty-row td::before {
+        display: none;
+    }
+
+    .admin-table-wrapper .admin-pagination {
+        margin-top: 8px;
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-card);
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        text-align: center;
+        padding: 12px;
+    }
+
+    .admin-pagination-controls {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* Bảng trong panel/drawer cũng dùng card */
+    .admin-panel .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table),
+    .admin-drawer .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) {
+        width: 100%;
+        min-width: 0;
+        display: block;
+    }
+
+    .admin-panel .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) thead,
+    .admin-drawer .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) thead {
+        display: none;
+    }
+
+    .admin-panel .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody,
+    .admin-drawer .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .admin-panel .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody tr,
+    .admin-drawer .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody tr {
+        display: block;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+    }
+
+    .admin-panel .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td,
+    .admin-drawer .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td {
+        display: grid;
+        grid-template-columns: minmax(88px, 34%) 1fr;
+        gap: 4px 12px;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--color-border-subtle);
+        text-align: left !important;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    .admin-panel .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td::before,
+    .admin-drawer .admin-table:not(.admin-table--layout-scroll):not(.admin-table--scroll):not(.admin-permission-table):not(.procedure-signoff-table) tbody td::before {
+        content: attr(data-label);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-muted);
+    }
+
+    .admin-filter-bar {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-filter-field[style*="justify-self"] {
+        justify-self: stretch !important;
+    }
+
+    .admin-filter-field .admin-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ── Page chrome ─────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .admin-page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-page-actions {
+        width: 100%;
+    }
+
+    .admin-page-actions .admin-btn,
+    .admin-page-actions .admin-btn-primary,
+    .admin-page-actions .admin-btn-ghost {
+        flex: 1 1 auto;
+        justify-content: center;
+        min-height: 44px;
+    }
+
+    .admin-page-title {
+        font-size: clamp(1.25rem, 5vw, 1.6rem);
+        line-height: 1.2;
+    }
+
+    .admin-page-subtitle {
+        max-width: none;
+    }
+
+    .admin-greeting {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-greeting-actions {
+        width: 100%;
+    }
+
+    .admin-greeting-actions .admin-btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+
+    .admin-panel-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .procedure-detail-hero {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .procedure-detail-quicknav {
+        width: 100%;
+    }
+}
+
+/* ── Top bar ─────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .admin-topbar {
+        gap: 8px;
+        padding: 0 12px;
+        min-height: var(--admin-topbar-height);
+        height: var(--admin-topbar-height);
+        flex-wrap: nowrap;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .admin-topbar-left {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .admin-topbar-right {
+        flex: 0 0 auto;
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+        gap: 4px;
+    }
+
+    .admin-breadcrumb {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .admin-breadcrumb-parent,
+    .admin-breadcrumb-separator {
+        display: none;
+    }
+
+    .admin-breadcrumb-current {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+        min-width: 0;
+    }
+
+    .admin-topbar-icon-button {
+        width: 44px;
+        height: 44px;
+    }
+
+    .admin-user-trigger {
+        min-height: 44px;
+    }
+
+    .admin-flyout-notifications {
+        position: fixed;
+        top: calc(var(--admin-topbar-height) + 8px);
+        left: 12px;
+        right: 12px;
+        width: auto;
+        min-width: 0;
+        max-height: min(70vh, 480px);
+        overflow: auto;
+    }
+
+    .admin-flyout-user {
+        position: fixed;
+        top: calc(var(--admin-topbar-height) + 8px);
+        right: 12px;
+        left: auto;
+        width: min(280px, calc(100vw - 24px));
+    }
+}
+
+@media (max-width: 520px) {
+    .admin-topbar-right .admin-topbar-icon-button[aria-label*="toàn màn hình"],
+    .admin-topbar-right .admin-topbar-icon-button[aria-label*="Thoát toàn màn hình"] {
+        display: none;
+    }
+
+    .admin-user-caret {
+        display: none;
+    }
+}
+
+/* ── Tabs & stepper ──────────────────────────────── */
+
+@media (max-width: 768px) {
+    .admin-tabs {
+        display: flex;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .admin-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .admin-tab {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        min-height: 40px;
+    }
+
+    .admin-stepper {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+    }
+
+    .admin-stepper::-webkit-scrollbar {
+        display: none;
+    }
+
+    .admin-stepper-item {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+}
+
+/* ── Charts & data viz ───────────────────────────── */
+
+@media (max-width: 768px) {
+    .admin-bar-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .admin-bar-value {
+        text-align: left;
+    }
+
+    .admin-trend-bars {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        min-height: 120px;
+    }
+
+    .admin-trend-bar-item {
+        height: 120px;
+    }
+
+    .kpi-value {
+        font-size: 1.65rem;
+    }
+
+    .admin-operations-summary strong {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-trend-bars {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ── Modals & palette ────────────────────────────── */
+
+@media (max-width: 640px) {
+    .admin-modal,
+    .admin-modal.admin-modal-form,
+    .admin-modal.admin-confirm {
+        width: calc(100vw - 20px) !important;
+        max-height: calc(100dvh - 24px);
+    }
+
+    .admin-modal-head,
+    .admin-modal-body,
+    .admin-modal-foot {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .palette-dialog {
+        top: 8vh;
+        width: calc(100vw - 16px);
+        max-height: calc(100dvh - 16vh);
+    }
+
+    .admin-loading-content {
+        padding: 1.75rem 1.25rem;
+        margin: 0 12px;
+        width: calc(100% - 24px);
+        max-width: 360px;
+    }
+}
+
+/* ── Persona shell (clinical / resource portals) ─── */
+
+.persona-topbar-user {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.persona-shell {
+    grid-template-columns: var(--admin-sidebar-width) 1fr;
+}
+
+@media (max-width: 520px) {
+    .persona-topbar-user {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .persona-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .persona-shell .persona-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: min(280px, 86vw);
+        z-index: 50;
+        transform: translateX(-105%);
+        transition: transform var(--motion-subtle);
+        box-shadow: var(--shadow-strong);
+    }
+
+    .persona-shell[data-mobile-menu="open"] .persona-sidebar {
+        transform: translateX(0);
+    }
+
+    .persona-shell .persona-sidebar-overlay {
+        display: none;
+    }
+
+    .persona-shell[data-mobile-menu="open"] .persona-sidebar-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 45;
+        background: rgba(15, 23, 42, 0.36);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+
+    .persona-shell .admin-topbar-left .admin-topbar-icon-button {
+        display: inline-grid;
+    }
+
+    .persona-shell .admin-content {
+        padding: 16px 14px 32px;
+    }
+}
+
+@media (min-width: 901px) {
+    .persona-shell .admin-topbar-left .admin-topbar-icon-button.persona-menu-toggle {
+        display: none;
+    }
+
+    .persona-shell .persona-sidebar-overlay {
+        display: none !important;
+    }
+}
+
+/* ── Landing intro ───────────────────────────────── */
+
+@media (max-width: 980px) {
+    .qlcm-intro-nav,
+    .qlcm-intro-hero,
+    .qlcm-intro-modules {
+        width: min(100% - 24px, 1180px);
+    }
+
+    .qlcm-intro-modules {
+        padding-bottom: 2rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .qlcm-intro-nav-actions {
+        flex-wrap: wrap;
+    }
+
+    .qlcm-intro-link {
+        flex: 1 1 auto;
+        text-align: center;
+        padding: 10px 0;
+    }
+
+    .qlcm-intro-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .qlcm-intro-btn {
+        width: 100%;
+    }
+
+    .qlcm-intro-modules {
+        gap: 12px;
+    }
+
+    .qlcm-intro-module {
+        padding: 16px;
+    }
+}
+
+/* ── Login / register ────────────────────────────── */
+
+@media (max-width: 860px) {
+    .login-features {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 680px) {
+    .login-page {
+        min-height: 100dvh;
+    }
+
+    .login-form-panel {
+        min-height: auto;
+        align-items: stretch;
+    }
+
+    .login-form-wrapper {
+        width: 100%;
+        max-width: none;
+    }
+
+    .login-submit {
+        width: 100%;
+        min-height: 48px;
+    }
+
+    .auth-command-strip {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+}
+
+/* ── Touch & safe areas (notched phones) ─────────── */
+
+@supports (padding: max(0px)) {
+    .admin-content {
+        padding-bottom: max(48px, env(safe-area-inset-bottom));
+    }
+
+    .chatbot-launcher,
+    .admin-shell .chatbot-launcher {
+        right: max(14px, env(safe-area-inset-right)) !important;
+        bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    }
+
+    .chatbot-panel,
+    .admin-shell .chatbot-panel {
+        right: max(12px, env(safe-area-inset-right)) !important;
+        bottom: max(88px, calc(72px + env(safe-area-inset-bottom))) !important;
+    }
+
+    .qlcm-intro-nav {
+        padding-top: max(20px, env(safe-area-inset-top));
+    }
+
+    .admin-topbar {
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .button,
+    .admin-btn,
+    .admin-nav-link,
+    .admin-tab,
+    .admin-quick-tile,
+    .kpi-card {
+        min-height: 44px;
+    }
+
+    .button:hover,
+    .admin-quick-tile:hover,
+    .kpi-card:hover {
+        transform: none;
+    }
+}
+
+/* ── Utility: stack action rows on phones ────────── */
+
+@media (max-width: 640px) {
+    .admin-page-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .admin-page-actions .admin-btn,
+    .admin-page-actions a.admin-btn {
+        width: 100%;
+    }
+
+    .admin-table-actions,
+    .procedure-version-actions,
+    .admin-row-actions {
+        flex-direction: column;
+        align-items: stretch !important;
+        width: 100%;
+    }
+
+    .admin-table-actions .admin-btn,
+    .admin-table-actions .admin-icon-btn,
+    .procedure-version-actions .admin-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .admin-pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .admin-detail-grid,
+    .admin-settings-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-form-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-stub-card {
+        flex-direction: column;
+        max-width: none;
+    }
+}

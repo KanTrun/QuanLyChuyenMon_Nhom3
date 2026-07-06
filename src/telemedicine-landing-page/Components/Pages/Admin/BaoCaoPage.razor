@@ -1,0 +1,89 @@
+@page "/admin/bao-cao"
+@page "/qlcm/bao-cao"
+@layout AdminLayout
+@using TelemedicineLandingPage.Services.Admin.Sql
+@inject IReportService ReportService
+@inject IMedDataStore Store
+
+<PageTitle>Báo cáo tổng hợp | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Báo cáo</span>
+            <h1 class="admin-page-title">Báo cáo tổng hợp</h1>
+            <p class="admin-page-subtitle">Truy cập nhanh các báo cáo trọng yếu phục vụ điều hành chuyên môn.</p>
+        </div>
+    </header>
+
+    <div class="admin-card-grid">
+        <a class="admin-card" href="/qlcm/bao-cao/tieu-thu">
+            <div class="admin-card-tags"><AdminBadge Tone="tone-primary">Vật tư</AdminBadge></div>
+            <h2 class="admin-card-title">Báo cáo tiêu thụ vật tư</h2>
+            <p class="admin-card-meta">So sánh tiêu thụ thực tế với định mức của từng kỹ thuật. @_consumptionCount dòng dữ liệu sẵn sàng.</p>
+        </a>
+        <article class="admin-card">
+            <div class="admin-card-tags"><AdminBadge Tone="tone-secondary">Tuân thủ</AdminBadge></div>
+            <h2 class="admin-card-title">Báo cáo tuân thủ quy trình</h2>
+            <p class="admin-card-meta">Theo dõi tỉ lệ quy trình đã ban hành so với toàn bộ quy trình kỹ thuật.</p>
+            <div class="admin-detail-grid">
+                <dt>Đã ban hành</dt><dd>@_complianceApproved / @_complianceTotal</dd>
+                <dt>Tuân thủ</dt><dd>@_compliancePercent.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)%</dd>
+            </div>
+        </article>
+        <article class="admin-card">
+            <div class="admin-card-tags"><AdminBadge Tone="tone-warning">Phân quyền</AdminBadge></div>
+            <h2 class="admin-card-title">Báo cáo thay đổi phân quyền</h2>
+            <p class="admin-card-meta">Lịch sử cập nhật quyền vai trò và tài khoản trong hệ thống.</p>
+            <div class="admin-detail-grid">
+                <dt>Số thay đổi</dt><dd>@_changeLogCount</dd>
+                <dt>Số vai trò</dt><dd>@_roleCount</dd>
+            </div>
+            <a class="admin-panel-link" href="/admin/phan-quyen">Mở danh sách</a>
+        </article>
+        <article class="admin-card">
+            <div class="admin-card-tags"><AdminBadge Tone="tone-success">Phác đồ</AdminBadge></div>
+            <h2 class="admin-card-title">Báo cáo áp dụng phác đồ</h2>
+            <p class="admin-card-meta">Tổng số lượt áp dụng phác đồ lâm sàng cho bệnh nhân.</p>
+            <div class="admin-detail-grid">
+                <dt>Tổng lượt áp dụng</dt><dd>@_protocolApplications</dd>
+                <dt>Số phác đồ</dt><dd>@_protocolCount</dd>
+            </div>
+            <a class="admin-panel-link" href="/qlcm/phac-do">Xem phác đồ</a>
+        </article>
+    </div>
+</section>
+
+@code {
+    private int _consumptionCount;
+    private int _complianceApproved;
+    private int _complianceTotal;
+    private double _compliancePercent;
+    private int _changeLogCount;
+    private int _roleCount;
+    private int _protocolApplications;
+    private int _protocolCount;
+
+    protected override void OnInitialized()
+    {
+        var to = AdminDateTimeDisplay.Today();
+        var from = to.AddDays(-30);
+        _consumptionCount = ReportService.GenerateConsumptionReportForDepartment(from, to, null).Count;
+
+        _changeLogCount = Store.AuditLogs.Count(a => a.TargetType.Contains("permission", StringComparison.OrdinalIgnoreCase) || a.TargetType.Contains("role", StringComparison.OrdinalIgnoreCase));
+        _roleCount = Store.Roles.Count;
+        _protocolCount = Store.ClinicalProtocols.Count;
+        _protocolApplications = Store.PatientProtocolApplications.Count;
+        var activeProcedureIds = Store.Procedures
+            .Where(p => p.Status == "active")
+            .Select(p => p.ProcedureId)
+            .ToHashSet();
+        _complianceTotal = activeProcedureIds.Count;
+        _complianceApproved = Store.ProcedureVersions
+            .Where(v => activeProcedureIds.Contains(v.ProcedureId) && v.StatusCode == "active")
+            .Select(v => v.ProcedureId)
+            .Distinct()
+            .Count();
+        _compliancePercent = _complianceTotal == 0 ? 0 : _complianceApproved * 100.0 / _complianceTotal;
+    }
+}

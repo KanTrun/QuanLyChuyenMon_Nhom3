@@ -1,0 +1,221 @@
+@inject IAdminNavigationState NavState
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject TelemedicineLandingPage.Services.Admin.Sql.NavGate Gate
+@implements IDisposable
+
+@if (NavState.IsPaletteOpen)
+{
+    <div class="palette-backdrop" @onclick="OnBackdropClick" role="presentation"></div>
+    <div class="palette-dialog" role="dialog" aria-modal="true" aria-label="Bảng lệnh nhanh"
+         @onkeydown="OnKeyDown">
+        <div class="palette-input-row">
+            <span class="palette-input-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                </svg>
+            </span>
+            <input id="@InputId"
+                   class="palette-input"
+                   type="text"
+                   placeholder="Tìm điều hướng, hành động hoặc lệnh..."
+                   aria-label="Tìm lệnh"
+                   value="@_query"
+                   @oninput="OnQueryInput" />
+            <button type="button" class="palette-input-close" @onclick="ClosePalette" aria-label="Đóng">Esc</button>
+        </div>
+
+        <div class="palette-results" role="listbox" aria-label="Kết quả lệnh">
+            @if (_filtered.Count == 0)
+            {
+                <div class="palette-empty">Không tìm thấy lệnh phù hợp.</div>
+            }
+            else
+            {
+                var index = 0;
+                foreach (var group in _grouped)
+                {
+                    <div class="palette-group" role="group" aria-label="@group.Key">
+                        <div class="palette-group-title">@group.Key</div>
+                        @foreach (var command in group.Value)
+                        {
+                            var current = index;
+                            var isHighlighted = current == _highlight;
+                            <button type="button"
+                                    class="palette-result @(isHighlighted ? "is-highlighted" : null)"
+                                    role="option"
+                                    aria-selected="@(isHighlighted ? "true" : "false")"
+                                    @onmouseenter="() => _highlight = current"
+                                    @onclick="() => ExecuteAsync(command)">
+                                <div class="palette-result-text">
+                                    <span class="palette-result-label">@command.Label</span>
+                                    @if (!string.IsNullOrEmpty(command.Description))
+                                    {
+                                        <span class="palette-result-description">@command.Description</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(command.Hotkey))
+                                {
+                                    <span class="palette-result-hotkey" aria-hidden="true">@command.Hotkey</span>
+                                }
+                            </button>
+                            index++;
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="palette-footer">
+            <span class="palette-footer-hint"><kbd>↑</kbd> <kbd>↓</kbd> Di chuyển</span>
+            <span class="palette-footer-hint"><kbd>Enter</kbd> Chọn</span>
+            <span class="palette-footer-hint"><kbd>Esc</kbd> Đóng</span>
+            <span class="palette-footer-hint">Trợ lý AI: <kbd>Ctrl</kbd> + <kbd>/</kbd></span>
+        </div>
+    </div>
+}
+
+@code {
+    private const string InputId = "qlcm-palette-input";
+
+    private string _query = string.Empty;
+    private int _highlight;
+    private bool _wasOpen;
+    private bool _scrollLocked;
+    private List<PaletteCommand> _filtered = new();
+    private List<KeyValuePair<string, List<PaletteCommand>>> _grouped = new();
+
+    protected override void OnInitialized()
+    {
+        NavState.StateChanged += OnStateChanged;
+        Recompute();
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (NavState.IsPaletteOpen && !_wasOpen)
+        {
+            _wasOpen = true;
+            try
+            {
+                await JS.InvokeVoidAsync("qlcmShell.lockBodyScroll", true);
+                _scrollLocked = true;
+                await JS.InvokeVoidAsync("qlcmShell.focusElement", "#" + InputId);
+            }
+            catch (JSDisconnectedException) { }
+            catch (Exception) { }
+        }
+        else if (!NavState.IsPaletteOpen && _wasOpen)
+        {
+            _wasOpen = false;
+            if (_scrollLocked)
+            {
+                _scrollLocked = false;
+                try
+                {
+                    await JS.InvokeVoidAsync("qlcmShell.lockBodyScroll", false);
+                }
+                catch (JSDisconnectedException) { }
+                catch (Exception) { }
+            }
+            // Reset query so reopening starts fresh.
+            _query = string.Empty;
+            _highlight = 0;
+            Recompute();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void OnQueryInput(ChangeEventArgs args)
+    {
+        _query = args.Value?.ToString() ?? string.Empty;
+        Recompute();
+        if (_highlight >= _filtered.Count)
+        {
+            _highlight = _filtered.Count == 0 ? 0 : _filtered.Count - 1;
+        }
+    }
+
+    private void Recompute()
+    {
+        var query = _query.Trim();
+        IEnumerable<PaletteCommand> source = NavState.Commands
+            .Where(command => string.IsNullOrEmpty(command.NavigateTo) || Gate.CanAccess(command.NavigateTo));
+        if (!string.IsNullOrEmpty(query))
+        {
+            source = source.Where(c =>
+                (c.Label?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (c.Description?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+        _filtered = source.ToList();
+
+        _grouped = _filtered
+            .GroupBy(c => c.Group)
+            .Select(g => new KeyValuePair<string, List<PaletteCommand>>(g.Key, g.ToList()))
+            .ToList();
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs args)
+    {
+        switch (args.Key)
+        {
+            case "ArrowDown":
+            case "Tab" when !args.ShiftKey:
+                if (_filtered.Count > 0)
+                {
+                    _highlight = (_highlight + 1) % _filtered.Count;
+                }
+                break;
+            case "ArrowUp":
+            case "Tab" when args.ShiftKey:
+                if (_filtered.Count > 0)
+                {
+                    _highlight = (_highlight - 1 + _filtered.Count) % _filtered.Count;
+                }
+                break;
+            case "Enter":
+                if (_highlight >= 0 && _highlight < _filtered.Count)
+                {
+                    await ExecuteAsync(_filtered[_highlight]);
+                }
+                break;
+            case "Escape":
+                ClosePalette();
+                break;
+        }
+    }
+
+    private async Task ExecuteAsync(PaletteCommand command)
+    {
+        // Close first so navigation events don't race the modal teardown.
+        ClosePalette();
+        if (command.Action is not null)
+        {
+            try
+            {
+                await command.Action.Invoke();
+            }
+            catch (Exception)
+            {
+                // Palette commands must not surface raw exceptions to the user.
+            }
+            return;
+        }
+        if (!string.IsNullOrEmpty(command.NavigateTo) && Gate.CanAccess(command.NavigateTo))
+        {
+            Navigation.NavigateTo(Gate.GetDisplayRoute(command.NavigateTo));
+        }
+    }
+
+    private void ClosePalette() => NavState.ClosePalette();
+
+    private void OnBackdropClick() => ClosePalette();
+
+    public void Dispose()
+    {
+        NavState.StateChanged -= OnStateChanged;
+    }
+}

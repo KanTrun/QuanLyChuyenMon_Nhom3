@@ -1,0 +1,363 @@
+@page "/tai-nguyen"
+@layout AdminLayout
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@inject IToastService Toasts
+@inject AdminActionGuard Guard
+@implements IDisposable
+
+<PageTitle>Tài nguyên | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Tài nguyên</span>
+            <h1 class="admin-page-title">Danh mục tài nguyên và định mức</h1>
+            <p class="admin-page-subtitle">Quản lý vật tư, thiết bị, thuốc, hóa chất và các dịch vụ đang sử dụng từng tài nguyên.</p>
+        </div>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="OpenCreate">Thêm tài nguyên</button>
+    </header>
+
+    <div class="admin-filter-bar is-compact">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="resource-search">Tìm kiếm</label>
+            <input id="resource-search" class="admin-input" type="search" placeholder="Mã hoặc tên tài nguyên" @bind="_search" @bind:event="oninput" @bind:after="ResetAndPaginate" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="resource-type">Loại</label>
+            <select id="resource-type" class="admin-select" @bind="_typeFilter" @bind:after="ResetAndPaginate">
+                <option value="">Tất cả</option>
+                @foreach (var type in Sql.MedLookups.ResourceTypes)
+                {
+                    <option value="@type.Code">@type.Name</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label" for="resource-status">Bộ lọc lưu trữ</label>
+            <select id="resource-status" class="admin-select" @bind="_statusFilter" @bind:after="ResetAndPaginate">
+                <option value="active">Đang hoạt động (@ActiveResourceCount)</option>
+                <option value="archived">Đã lưu trữ (@ArchivedResourceCount)</option>
+                <option value="all">Tất cả tài nguyên (@Store.ResourceCatalog.Count)</option>
+            </select>
+        </div>
+        <div class="admin-filter-field" style="align-self:end;">
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="ResetFilters">Đặt lại</button>
+        </div>
+    </div>
+
+    <AdminDataTable TItem="Sql.ResourceCatalogItem"
+                    Items="_pagedItems"
+                    ColumnCount="6"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_total"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }">
+        <HeaderTemplate>
+            <th>Mã</th>
+            <th>Tên tài nguyên</th>
+            <th>Loại</th>
+            <th>Đơn vị</th>
+            <th>Định mức</th>
+            <th></th>
+        </HeaderTemplate>
+        <RowTemplate Context="item">
+            <tr @onclick="() => OpenDetail(item)" style="cursor:pointer;">
+                <td class="admin-table-cell-strong">@item.ResourceCode</td>
+                <td>@item.Name</td>
+                <td><AdminBadge Tone="@ResourceTone(item.ResourceType)">@Lookup(Sql.MedLookups.ResourceTypes, item.ResourceType)</AdminBadge></td>
+                <td>@LookupUnit(item.DefaultUnitCode)</td>
+                <td>@Store.TechnicalResourceNorms.Count(n => n.ResourceId == item.ResourceId) dịch vụ</td>
+                <td style="text-align:right;" @onclick:stopPropagation="true">
+                    <div class="admin-row-actions">
+                        @if (item.Status == "active")
+                        {
+                            <button type="button" class="admin-icon-btn" title="Sửa" @onclick="() => OpenEdit(item)">✎</button>
+                            <button type="button" class="admin-icon-btn is-danger" title="Lưu trữ" @onclick="() => Archive(item)">×</button>
+                        }
+                    </div>
+                </td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
+</section>
+
+<AdminDrawer IsOpen="_detailOpen" IsOpenChanged="v => _detailOpen = v" SizeClass="admin-drawer-wide"
+             Eyebrow="Tài nguyên"
+             Title="@(_selected?.Name ?? string.Empty)"
+             Subtitle="@(_selected is null ? null : $"{_selected.ResourceCode} • {Lookup(Sql.MedLookups.ResourceTypes, _selected.ResourceType)}")">
+    <ChildContent>
+        @if (_selected is not null)
+        {
+            <dl class="admin-detail-grid">
+                <dt>Mã</dt>
+                <dd>@_selected.ResourceCode</dd>
+                <dt>Loại</dt>
+                <dd>@Lookup(Sql.MedLookups.ResourceTypes, _selected.ResourceType)</dd>
+                <dt>Đơn vị mặc định</dt>
+                <dd>@LookupUnit(_selected.DefaultUnitCode)</dd>
+                <dt>Trạng thái</dt>
+                <dd><AdminBadge Tone="@(_selected.Status == "active" ? "tone-success" : "tone-muted")">@Lookup(Sql.MedLookups.RecordStatuses, _selected.Status)</AdminBadge></dd>
+            </dl>
+
+            <div class="admin-panel" style="padding:14px;">
+                <h3 class="admin-panel-title">Dịch vụ đang dùng tài nguyên này</h3>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Dịch vụ</th><th>Số lượng chuẩn</th><th>Đơn vị</th><th>Bắt buộc</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var norm in Store.TechnicalResourceNorms.Where(n => n.ResourceId == _selected.ResourceId))
+                            {
+                                <tr>
+                                    <td>@GetServiceName(norm.TechnicalServiceId)</td>
+                                    <td>@norm.StandardQuantity.ToString("0.##")</td>
+                                    <td>@LookupUnit(norm.UnitCode)</td>
+                                    <td>@(norm.IsRequired ? "Có" : "Không")</td>
+                                </tr>
+                            }
+                            @if (!Store.TechnicalResourceNorms.Any(n => n.ResourceId == _selected.ResourceId))
+                            {
+                                <tr class="admin-table-empty-row">
+                                    <td colspan="4"><div class="admin-empty"><div class="admin-empty-title">Chưa có định mức</div><div class="admin-empty-body">Định mức được khai báo tại trang Danh mục kỹ thuật.</div></div></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="() => _detailOpen = false">Đóng</button>
+    </FooterContent>
+</AdminDrawer>
+
+<AdminModal IsOpen="_editOpen" IsOpenChanged="v => _editOpen = v" Title="@(_editingId.HasValue ? "Sửa tài nguyên" : "Thêm tài nguyên")">
+    <ChildContent>
+        <div class="admin-form-grid">
+            <div class="admin-form-field">
+                <label class="admin-form-field-label is-required">Mã tài nguyên</label>
+                <input class="admin-input" @bind="_draftCode" />
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label is-required">Tên tài nguyên</label>
+                <input class="admin-input" @bind="_draftName" />
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label is-required">Loại</label>
+                <select class="admin-select" @bind="_draftType">
+                    @foreach (var type in Sql.MedLookups.ResourceTypes)
+                    {
+                        <option value="@type.Code">@type.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Đơn vị mặc định</label>
+                <select class="admin-select" @bind="_draftUnit">
+                    <option value="">Không chọn</option>
+                    @foreach (var unit in Sql.MedLookups.UnitCatalog)
+                    {
+                        <option value="@unit.Code">@unit.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _editOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="Save">Lưu</button>
+    </FooterContent>
+</AdminModal>
+
+@code {
+    private const int _pageSize = 10;
+    private int _page = 1;
+    private int _total;
+    private string _search = string.Empty;
+    private string _typeFilter = string.Empty;
+    private string _statusFilter = "active";
+    private IReadOnlyList<Sql.ResourceCatalogItem> _pagedItems = Array.Empty<Sql.ResourceCatalogItem>();
+    private int ActiveResourceCount => Store.ResourceCatalog.Count(r => r.Status == "active");
+    private int ArchivedResourceCount => Store.ResourceCatalog.Count(r => r.Status != "active");
+
+    private bool _detailOpen;
+    private Sql.ResourceCatalogItem? _selected;
+
+    private bool _editOpen;
+    private Guid? _editingId;
+    private string _draftCode = string.Empty;
+    private string _draftName = string.Empty;
+    private string _draftType = "supply";
+    private string _draftUnit = "piece";
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+        Paginate();
+    }
+
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        if (_selected is not null)
+        {
+            _selected = Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == _selected.ResourceId);
+        }
+        Paginate();
+        StateHasChanged();
+    });
+
+    private void Paginate()
+    {
+        var query = Store.ResourceCatalog
+            .Where(r => string.IsNullOrEmpty(_typeFilter) || r.ResourceType == _typeFilter)
+            .Where(r => _statusFilter == "all"
+                || (_statusFilter == "archived" ? r.Status != "active" : r.Status == _statusFilter))
+            .Where(r => string.IsNullOrWhiteSpace(_search)
+                || r.ResourceCode.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                || r.Name.Contains(_search, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(r => r.ResourceCode)
+            .ToList();
+
+        _total = query.Count;
+        var totalPages = Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
+        _page = Math.Clamp(_page, 1, totalPages);
+        _pagedItems = query.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void ResetAndPaginate()
+    {
+        _page = 1;
+        Paginate();
+    }
+
+    private void ResetFilters()
+    {
+        _search = string.Empty;
+        _typeFilter = string.Empty;
+        _statusFilter = "active";
+        ResetAndPaginate();
+    }
+
+    private void OpenCreate()
+    {
+        if (!Guard.CanDo("SCR_RESOURCES:CREATE", "thêm tài nguyên"))
+        {
+            return;
+        }
+
+        _editingId = null;
+        _draftCode = string.Empty;
+        _draftName = string.Empty;
+        _draftType = Sql.MedLookups.ResourceTypes.First().Code;
+        _draftUnit = Sql.MedLookups.UnitCatalog.First().Code;
+        _editOpen = true;
+    }
+
+    private void OpenEdit(Sql.ResourceCatalogItem item)
+    {
+        if (!Guard.CanDo("SCR_RESOURCES:UPDATE", "sửa tài nguyên"))
+        {
+            return;
+        }
+
+        _editingId = item.ResourceId;
+        _draftCode = item.ResourceCode;
+        _draftName = item.Name;
+        _draftType = item.ResourceType;
+        _draftUnit = item.DefaultUnitCode ?? string.Empty;
+        _editOpen = true;
+    }
+
+    private void OpenDetail(Sql.ResourceCatalogItem item)
+    {
+        _selected = item;
+        _detailOpen = true;
+    }
+
+    private void Save()
+    {
+        var permission = _editingId.HasValue ? "SCR_RESOURCES:UPDATE" : "SCR_RESOURCES:CREATE";
+        var action = _editingId.HasValue ? "sửa tài nguyên" : "thêm tài nguyên";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_draftCode) || string.IsNullOrWhiteSpace(_draftName))
+        {
+            Toasts.Show("Thiếu thông tin", "Vui lòng nhập mã và tên tài nguyên.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            var item = new Sql.ResourceCatalogItem
+            {
+                ResourceId = _editingId ?? Guid.NewGuid(),
+                ResourceCode = _draftCode.Trim(),
+                Name = _draftName.Trim(),
+                ResourceType = _draftType,
+                DefaultUnitCode = string.IsNullOrWhiteSpace(_draftUnit) ? null : _draftUnit,
+                Status = "active",
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            if (_editingId.HasValue)
+            {
+                var current = Store.ResourceCatalog.First(r => r.ResourceId == _editingId.Value);
+                Store.UpdateResourceCatalogItem(item with { Status = current.Status, CreatedAt = current.CreatedAt });
+                Toasts.Show("Đã cập nhật tài nguyên", item.Name, ToastVariant.Success);
+            }
+            else
+            {
+                Store.AddResourceCatalogItem(item);
+                Toasts.Show("Đã thêm tài nguyên", item.Name, ToastVariant.Success);
+            }
+            _editOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể lưu tài nguyên", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void Archive(Sql.ResourceCatalogItem item)
+    {
+        if (!Guard.CanDo("SCR_RESOURCES:DELETE", "lưu trữ tài nguyên"))
+        {
+            return;
+        }
+
+        try
+        {
+            Store.RemoveResourceCatalogItem(item.ResourceId);
+            Toasts.Show("Đã lưu trữ tài nguyên", item.Name, ToastVariant.Info);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể lưu trữ tài nguyên", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private string GetServiceName(Guid serviceId)
+        => Store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == serviceId)?.Name ?? "—";
+
+    private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code)
+        => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
+
+    private static string LookupUnit(string? code)
+        => Sql.MedLookups.UnitCatalog.FirstOrDefault(u => u.Code == code)?.Name ?? code ?? "—";
+
+    private static string ResourceTone(string type) => type switch
+    {
+        "equipment" => "tone-primary",
+        "drug" => "tone-success",
+        "chemical" => "tone-warning",
+        _ => "tone-muted"
+    };
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+}

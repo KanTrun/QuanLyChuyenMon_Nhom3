@@ -1,0 +1,254 @@
+using System.Text.Json;
+using TelemedicineLandingPage.Data;
+using TelemedicineLandingPage.Models.Admin.Sql;
+
+namespace TelemedicineLandingPage.Services.Admin.Sql;
+
+/// <summary>Dịch vụ quản lý yêu cầu thay đổi quyền (workflow đầy đủ).</summary>
+public sealed partial class PermissionChangeRequestService
+{
+    private readonly MedDbContext _db;
+    private readonly AuditTrailService _audit;
+    private readonly IMedDataChangeBus? _changeBus;
+
+    public PermissionChangeRequestService(MedDbContext db, AuditTrailService audit, IMedDataChangeBus? changeBus = null)
+    {
+        _db = db;
+        _audit = audit;
+        _changeBus = changeBus;
+    }
+
+    /// <summary>Tạo yêu cầu thay đổi quyền mới (trạng thái: bản nháp).</summary>
+    public PermissionChangeRequest CreateDraft(
+        Guid actorUserId, string targetType,
+        Guid? targetRoleId, Guid? targetGroupId, Guid? targetUserId,
+        string reason, DateTime effectiveAt)
+    {
+        int targetCount = (targetRoleId.HasValue ? 1 : 0)
+                        + (targetGroupId.HasValue ? 1 : 0)
+                        + (targetUserId.HasValue ? 1 : 0);
+        if (targetCount != 1)
+            throw MedDomainException.Constraint("CK_permission_change_target_one", 50010,
+                "Phải chọn đúng một đối tượng mục tiêu (vai trò, nhóm, hoặc người dùng).");
+
+        if (string.IsNullOrWhiteSpace(reason))
+            throw MedDomainException.Constraint("CK_permission_change_reason", 50011,
+                "Lý do thay đổi không được để trống.");
+
+        var requestedAt = DateTime.UtcNow;
+        var normalizedEffectiveAt = effectiveAt < requestedAt ? requestedAt : effectiveAt;
+
+        var request = new PermissionChangeRequest
+        {
+            ChangeStatus = "draft",
+            TargetType = targetType,
+            TargetRoleId = targetRoleId,
+            TargetGroupId = targetGroupId,
+            TargetUserId = targetUserId,
+            Reason = reason,
+            RequestedBy = actorUserId,
+            RequestedAt = requestedAt,
+            EffectiveAt = normalizedEffectiveAt
+        };
+        _db.PermissionChangeRequests.Add(request);
+        _db.SaveChanges();
+        PublishChange();
+        return request;
+    }
+
+    /// <summary>Gửi yêu cầu để phê duyệt (draft → pending_approval).</summary>
+    public void SubmitForApproval(Guid requestId, Guid actorUserId)
+    {
+        var req = GetRequestOrThrow(requestId);
+        if (req.ChangeStatus != "draft")
+            throw MedDomainException.Constraint("CK_permission_change_submit", 50012,
+                "Chỉ có thể gửi yêu cầu ở trạng thái bản nháp.");
+
+        var items = _db.PermissionChangeItems
+            .Where(i => i.PermissionChangeRequestId == requestId).ToList();
+        if (items.Count == 0)
+            throw MedDomainException.Constraint("CK_permission_change_items_required", 50013,
+                "Yêu cầu phải có ít nhất một mục thay đổi.");
+
+        var updated = req with { ChangeStatus = "pending_approval" };
+        _db.PermissionChangeRequests.Entry(req).CurrentValues.SetValues(updated);
+        AddRequestNotification(req, "Yêu cầu thay đổi quyền đã gửi duyệt",
+            "Yêu cầu đang chờ người có thẩm quyền xem xét.", "info");
+        _db.SaveChanges();
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = actorUserId,
+            ActionCode = "submit",
+            TargetType = "permission_change_request",
+            TargetId = requestId.ToString()
+        });
+        PublishChange();
+    }
+
+    /// <summary>Phê duyệt yêu cầu (pending_approval → applied hoặc scheduled).</summary>
+    public void Approve(Guid requestId, Guid approverUserId, bool schedule = false)
+    {
+        var req = GetRequestOrThrow(requestId);
+        if (req.ChangeStatus != "pending_approval")
+            throw MedDomainException.Constraint("CK_permission_change_approve", 50014,
+                "Chỉ có thể phê duyệt yêu cầu đang chờ phê duyệt.");
+
+        var now = DateTime.UtcNow;
+        if (!schedule)
+        {
+            ApplyItems(req, approverUserId, now);
+        }
+
+        var newStatus = schedule ? "scheduled" : "applied";
+        var updated = req with
+        {
+            ChangeStatus = newStatus,
+            ApprovedBy = approverUserId,
+            ApprovedAt = now,
+            AppliedAt = schedule ? null : now,
+            AppliedBy = schedule ? null : approverUserId
+        };
+        _db.PermissionChangeRequests.Entry(req).CurrentValues.SetValues(updated);
+        AddRequestNotification(req,
+            schedule ? "Yêu cầu thay đổi quyền đã được lên lịch" : "Yêu cầu thay đổi quyền đã được áp dụng",
+            schedule ? "Thay đổi sẽ có hiệu lực theo lịch đã chọn." : "Thay đổi quyền đã được ghi vào hệ thống.",
+            "info");
+        _db.SaveChanges();
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = approverUserId,
+            ActionCode = "approve",
+            TargetType = "permission_change_request",
+            TargetId = requestId.ToString()
+        });
+        PublishChange();
+    }
+
+    /// <summary>Từ chối yêu cầu (pending_approval → rejected).</summary>
+    public void Reject(Guid requestId, Guid approverUserId, string reason)
+    {
+        var req = GetRequestOrThrow(requestId);
+        if (req.ChangeStatus != "pending_approval")
+            throw MedDomainException.Constraint("CK_permission_change_reject", 50015,
+                "Chỉ có thể từ chối yêu cầu đang chờ phê duyệt.");
+
+        var updated = req with { ChangeStatus = "rejected" };
+        _db.PermissionChangeRequests.Entry(req).CurrentValues.SetValues(updated);
+        AddRequestNotification(req, "Yêu cầu thay đổi quyền bị từ chối", reason, "warning");
+        _db.SaveChanges();
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = approverUserId,
+            ActionCode = "reject",
+            TargetType = "permission_change_request",
+            TargetId = requestId.ToString(),
+            MetadataJson = JsonSerializer.Serialize(new { reason })
+        });
+        PublishChange();
+    }
+
+    /// <summary>Hủy yêu cầu (draft hoặc scheduled → cancelled).</summary>
+    public void Cancel(Guid requestId, Guid actorUserId)
+    {
+        var req = GetRequestOrThrow(requestId);
+        if (req.ChangeStatus != "draft" && req.ChangeStatus != "scheduled")
+            throw MedDomainException.Constraint("CK_permission_change_cancel", 50016,
+                "Chỉ có thể hủy yêu cầu ở trạng thái bản nháp hoặc đã lên lịch.");
+
+        var updated = req with { ChangeStatus = "cancelled" };
+        _db.PermissionChangeRequests.Entry(req).CurrentValues.SetValues(updated);
+        _db.SaveChanges();
+
+        _audit.Append(new AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = actorUserId,
+            ActionCode = "revoke",
+            TargetType = "permission_change_request",
+            TargetId = requestId.ToString()
+        });
+        PublishChange();
+    }
+
+    /// <summary>Thêm mục thay đổi vào yêu cầu (chỉ khi trạng thái draft).</summary>
+    public void AddItem(Guid requestId, PermissionChangeItem item)
+    {
+        var req = GetRequestOrThrow(requestId);
+        if (req.ChangeStatus != "draft")
+            throw MedDomainException.Constraint("CK_permission_change_items_draft", 50017,
+                "Chỉ có thể thêm mục khi yêu cầu ở trạng thái bản nháp.");
+
+        _db.PermissionChangeItems.Add(item with { PermissionChangeRequestId = requestId });
+        _db.SaveChanges();
+        PublishChange();
+    }
+
+    /// <summary>Lấy tất cả yêu cầu thay đổi quyền.</summary>
+    public IReadOnlyList<PermissionChangeRequest> GetAll()
+        => _db.PermissionChangeRequests.OrderByDescending(r => r.RequestedAt).ToList();
+
+    /// <summary>Lấy yêu cầu theo trạng thái.</summary>
+    public IReadOnlyList<PermissionChangeRequest> GetByStatus(string status)
+        => _db.PermissionChangeRequests.Where(r => r.ChangeStatus == status).ToList();
+
+    /// <summary>Applies scheduled permission changes whose effective time has arrived.</summary>
+    public int ApplyDueScheduledRequests()
+    {
+        var now = DateTime.UtcNow;
+        var dueRequests = _db.PermissionChangeRequests
+            .Where(r => r.ChangeStatus == "scheduled" && r.EffectiveAt <= now)
+            .OrderBy(r => r.EffectiveAt)
+            .ToList();
+
+        foreach (var req in dueRequests)
+        {
+            var actorUserId = req.ApprovedBy ?? req.RequestedBy;
+            ApplyItems(req, actorUserId, now);
+            var updated = req with
+            {
+                ChangeStatus = "applied",
+                AppliedAt = now,
+                AppliedBy = actorUserId
+            };
+            _db.PermissionChangeRequests.Entry(req).CurrentValues.SetValues(updated);
+            AddRequestNotification(req,
+                "Yêu cầu thay đổi quyền đã đến hạn và được áp dụng",
+                "Quyền mới đã có hiệu lực trong hệ thống.",
+                "info");
+            _db.SaveChanges();
+
+            _audit.Append(new AuditLog
+            {
+                CorrelationId = Guid.NewGuid(),
+                ActorUserId = actorUserId,
+                ActionCode = "approve",
+                TargetType = "permission_change_request",
+                TargetId = req.PermissionChangeRequestId.ToString(),
+                MetadataJson = JsonSerializer.Serialize(new { scheduled = true, effectiveAt = req.EffectiveAt })
+            });
+        }
+
+        if (dueRequests.Count > 0)
+        {
+            PublishChange();
+        }
+
+        return dueRequests.Count;
+    }
+
+    private PermissionChangeRequest GetRequestOrThrow(Guid requestId)
+    {
+        return _db.PermissionChangeRequests
+                   .FirstOrDefault(r => r.PermissionChangeRequestId == requestId)
+               ?? throw MedDomainException.Constraint("FK_permission_change_request", 547,
+                   "Yêu cầu thay đổi quyền không tồn tại.");
+    }
+
+    private void PublishChange() => _changeBus?.Publish();
+}

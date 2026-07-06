@@ -1,0 +1,1224 @@
+@page "/admin/quy-trinh/tao"
+@page "/qlcm/quy-trinh/tao"
+@page "/qlcm/quy-trinh/{ProcedureId:guid}/cap-nhat"
+@page "/qlcm/quy-trinh/{ProcedureId:guid}/phien-ban/{VersionId:guid}"
+@page "/qlcm/quy-trinh/{ProcedureId:guid}/phien-ban/{VersionId:guid}/chinh-sua"
+@layout AdminLayout
+@using TelemedicineLandingPage.Models.Admin
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin
+@inject IMedDataStore Store
+@inject ICurrentUserContext UserContext
+@inject IToastService Toasts
+@inject AdminActionGuard Guard
+@inject ProcedureWorkflowGuard WorkflowGuard
+@inject ProcedureLifecycleService Lifecycle
+@inject ProcedureAuthoringService Authoring
+@inject ProcedureSignoffService Signoffs
+@inject ProcedureDocumentSnapshotService Snapshots
+@inject IProcedureAttachmentStorageService AttachmentStorage
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsUpdateMode ? "Cập nhật quy trình y tế" : "Tạo quy trình y tế") | QLCM Pro</PageTitle>
+
+<section class="admin-page procedure-authoring-page @(IsReviewMode ? "is-review-mode" : IsEditDraftMode ? "is-edit-draft-mode" : null)">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">@(IsEditDraftMode ? $"Chỉnh sửa bản nháp {_versionLabel}" : IsReviewMode ? $"Xem & ký {_versionLabel}" : IsUpdateMode ? $"Phiên bản nguồn {SourceVersionLabel}" : "Quy trình kỹ thuật")</span>
+            <h1 class="admin-page-title">@(IsEditDraftMode ? $"Tiếp tục soạn bản nháp {_versionLabel}" : IsReviewMode ? $"Xem và ký phiên bản nháp {_versionLabel}" : IsUpdateMode ? $"Cập nhật quy trình lên {_versionLabel}" : "Soạn quy trình y tế mới")</h1>
+            <p class="admin-page-subtitle">@(IsEditDraftMode
+                ? "Người viết được phân công có thể tiếp tục chỉnh sửa nội dung trước khi ký. Mọi thay đổi làm chữ ký cũ hết hiệu lực."
+                : IsReviewMode
+                ? "Toàn bộ nội dung quy trình hiển thị ở chế độ chỉ đọc. Người viết được phân công ký sau khi rà soát."
+                : IsUpdateMode
+                    ? $"Nội dung được sao chép từ {SourceVersionLabel}. Phiên bản cũ được giữ nguyên trong lịch sử."
+                    : "Tạo hồ sơ có cấu trúc, lưu đồ, kiểm soát sửa đổi, tệp nguồn và chuỗi ký nội bộ.")</p>
+        </div>
+        <a class="admin-btn admin-btn-ghost" href="/qlcm/quy-trinh">@(IsReviewMode || IsEditDraftMode ? "Quay lại danh sách" : "Hủy và quay lại")</a>
+    </header>
+
+    <fieldset class="procedure-authoring-fieldset" disabled="@IsReviewMode">
+    <article class="admin-panel">
+        <header class="admin-panel-head">
+            <div>
+                <h2 class="admin-panel-title">Thông tin kiểm soát và ban hành</h2>
+                <p class="admin-form-field-hint">Thông tin này xuất hiện trên bìa và đầu trang bản in.</p>
+            </div>
+        </header>
+        <div class="admin-form-grid">
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Mã quy trình</span>
+                <input class="admin-input" @bind="_code" placeholder="VD: QT.KSNK.18" readonly="@IsUpdateMode" />
+            </label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Tên quy trình</span>
+                <input class="admin-input" @bind="_name" readonly="@IsUpdateMode" />
+            </label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Loại quy trình</span>
+                <select class="admin-select" @bind="_procedureType" disabled="@IsUpdateMode">
+                    @foreach (var type in Sql.MedLookups.ProcedureTypes)
+                    {
+                        <option value="@type.Code">@type.Name</option>
+                    }
+                </select>
+            </label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Khoa/phòng chủ trì</span>
+                <select class="admin-select" @bind="_departmentId">
+                    <option value="">Chọn khoa/phòng</option>
+                    @foreach (var department in ActiveDepartments)
+                    {
+                        <option value="@department.DepartmentId">@DisplayDepartment(department)</option>
+                    }
+                </select>
+                <span class="admin-form-field-hint">Tên khoa bị trùng sẽ tự hiển thị kèm mã để tránh chọn nhầm.</span>
+            </label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Phiên bản</span>
+                <input class="admin-input" value="@_versionLabel" readonly />
+            </label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Lần ban hành</span>
+                <input class="admin-input" type="number" min="1" @bind="_issueNumber" />
+            </label>
+            <label class="admin-form-field">
+                <span class="admin-form-field-label is-required">Ngày dự kiến ban hành</span>
+                <input class="admin-input" type="date" @bind="_issueDate" />
+            </label>
+            <label class="admin-form-field admin-form-field-full">
+                <span class="admin-form-field-label">Mô tả quản trị</span>
+                <textarea class="admin-textarea" rows="2" @bind="_description"></textarea>
+            </label>
+            <label class="admin-form-field admin-form-field-full">
+                <span class="admin-form-field-label">Tóm tắt phiên bản / lý do xây dựng</span>
+                <textarea class="admin-textarea" rows="3" @bind="_summary"></textarea>
+            </label>
+        </div>
+    </article>
+
+    <ProcedureAuthoringGuidePanel />
+
+    <article class="admin-panel">
+        <header class="admin-panel-head">
+            <div>
+                <h2 class="admin-panel-title">Người viết quy trình</h2>
+                <p class="admin-form-field-hint">Có thể gán nhiều người viết. Người viết 1 luôn là người đang soạn/cập nhật. Mỗi người được phân công phải tự ký bằng tài khoản của mình trước khi bản nháp được gửi kiểm tra.</p>
+            </div>
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="AddWriterAssignment">Thêm người viết</button>
+        </header>
+        <div class="admin-step-rows">
+            @for (var writerIndex = 0; writerIndex < _writerAssignments.Count; writerIndex++)
+            {
+                var writer = _writerAssignments[writerIndex];
+                <article class="admin-step-row" @key="writer">
+                    <div class="admin-step-row-bullet">@(writerIndex + 1)</div>
+                    <div class="procedure-flow-step-fields">
+                        <label class="admin-form-field">
+                            <span class="admin-form-field-label is-required">Người viết @(writerIndex + 1)</span>
+                            @if (IsPrimaryWriterSlotLocked(writerIndex))
+                            {
+                                <input class="admin-input" value="@WriterDisplayName(writer.UserId)" readonly />
+                            }
+                            else
+                            {
+                                var takenIds = _writerAssignments
+                                    .Where(w => w != writer && !string.IsNullOrEmpty(w.UserId))
+                                    .Select(w => w.UserId)
+                                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                                <select class="admin-select" @bind="writer.UserId">
+                                    <option value="">Chọn người viết</option>
+                                    @foreach (var user in ActiveUsers.Where(u => !takenIds.Contains(u.UserId.ToString())))
+                                    {
+                                        <option value="@user.UserId">@user.FullName (@user.Username)</option>
+                                    }
+                                </select>
+                            }
+                        </label>
+                    </div>
+                    <button type="button" class="admin-icon-btn is-danger" title="Xóa người viết" @onclick="() => RemoveWriterAssignment(writer)" disabled="@(_writerAssignments.Count <= 1)">×</button>
+                </article>
+            }
+        </div>
+    </article>
+
+    <article class="admin-panel">
+        <header class="admin-panel-head">
+            <div>
+                <h2 class="admin-panel-title">Tệp gắn kèm</h2>
+                <p class="admin-form-field-hint">Upload trước khi soạn lưu đồ. Cần ít nhất một PDF nguồn; biểu mẫu/hướng dẫn có thể gắn vào từng bước.</p>
+            </div>
+            <InputFile OnChange="OnFilesSelectedAsync" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
+        </header>
+
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead><tr><th>Tệp</th><th>Loại</th><th>Dung lượng</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var attachment in _existingAttachments)
+                    {
+                        <tr @key="attachment.ClientId">
+                            <td>@attachment.Attachment.FileName <span class="admin-table-cell-muted">(từ @SourceVersionLabel)</span></td>
+                            <td>@AttachmentTypeName(attachment.Attachment.AttachmentType)</td>
+                            <td>@FormatBytes(attachment.Attachment.FileSizeBytes ?? 0)</td>
+                            <td></td>
+                        </tr>
+                    }
+                    @if (_attachments.Count == 0 && _existingAttachments.Count == 0)
+                    {
+                        <tr><td colspan="4">Chưa chọn tệp. Cần ít nhất một PDF nguồn trước khi gửi kiểm tra.</td></tr>
+                    }
+                    @foreach (var attachment in _attachments)
+                    {
+                        <tr @key="attachment.ClientId">
+                            <td>@attachment.FileName</td>
+                            <td>
+                                <select class="admin-select" @bind="attachment.AttachmentType">
+                                    @foreach (var type in Sql.MedLookups.AttachmentTypes)
+                                    {
+                                        <option value="@type.Code">@type.Name</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>@FormatBytes(attachment.Size)</td>
+                            <td><button type="button" class="admin-icon-btn is-danger" title="Xóa tệp" @onclick="() => _attachments.Remove(attachment)">×</button></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <ProcedureGovernanceEditor Recipients="_recipients" Revisions="_revisions" />
+    <ProcedureDocumentSectionsEditor Sections="_sections" />
+    <ProcedureFlowEditor Steps="_steps" Roles="ActiveRoles" Departments="ActiveDepartments" AvailableAttachments="AvailableAttachments" />
+
+    <article class="admin-panel procedure-signoff-panel">
+        <header class="admin-panel-head">
+            <div>
+                <h2 class="admin-panel-title">Chữ ký nội bộ trực tiếp</h2>
+                <p class="admin-form-field-hint">Người dùng ký bằng tay trong khung vẽ; hệ thống lưu ảnh chữ ký, tài khoản, thời điểm và hash nội dung tại lúc ký. Nếu có nhiều người viết, mỗi người viết cần ký riêng bằng chính tài khoản của mình.</p>
+            </div>
+        </header>
+        <div class="admin-table-wrapper">
+            <table class="admin-table procedure-signoff-table">
+                <thead><tr><th>Vai trò</th><th>Trạng thái</th><th>Nơi thực hiện</th><th>Hành động</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Người viết (@RequiredWriterCount)</strong></td>
+                        <td><AdminBadge Tone="tone-warning">Ký đủ trước khi gửi kiểm tra</AdminBadge></td>
+                        <td>
+                            Người viết đầu tiên ký tại đây khi lưu.
+                            @if (RequiredWriterCount > 1)
+                            {
+                                <span class="admin-table-cell-muted"> Người viết còn lại mở <strong>Quy trình kỹ thuật → Chi tiết → Soạn thảo &amp; ký</strong> để chỉnh sửa và ký trên bản nháp.</span>
+                            }
+                        </td>
+                        <td>
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" disabled="@_isSaving" @onclick="OpenWriterSignature">
+                                Ký người viết hiện tại
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Người kiểm tra</strong></td>
+                        <td><AdminBadge Tone="tone-muted">Sau khi gửi kiểm tra</AdminBadge></td>
+                        <td>Trang Phê duyệt hoặc chi tiết phiên bản chờ duyệt</td>
+                        <td><span class="admin-table-cell-muted">Ký khi phiên bản ở trạng thái chờ duyệt</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Người phê duyệt</strong></td>
+                        <td><AdminBadge Tone="tone-muted">Ký khi ban hành</AdminBadge></td>
+                        <td>Trang Phê duyệt, ngay trước khi xuất bản phiên bản</td>
+                        <td><span class="admin-table-cell-muted">Chỉ mở sau khi có chữ ký kiểm tra hợp lệ</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <aside class="admin-callout">
+        <strong>@(IsUpdateMode ? "Nguyên tắc phiên bản:" : "Chuỗi xác nhận nội bộ:")</strong>
+        @(IsUpdateMode
+            ? $"{SourceVersionLabel} không bị ghi đè. Hệ thống tạo {_versionLabel} độc lập; chữ ký cũ không được sao chép và phiên bản đang hiệu lực chỉ chuyển thành đã thay thế sau khi bản mới được ban hành."
+            : "Mỗi người viết được phân công ký trên hash hiện tại. Chỉ khi đủ chữ ký người viết thì bản nháp mới được gửi kiểm tra; sau đó người kiểm tra và người phê duyệt tiếp tục ký. Mọi chỉnh sửa nội dung làm chữ ký cũ hết hiệu lực.")
+    </aside>
+
+    </fieldset>
+
+    @if (IsReviewMode)
+    {
+        <div class="procedure-authoring-actions procedure-authoring-actions-review">
+            @if (CanSignReviewDraft)
+            {
+                <button type="button" class="admin-btn admin-btn-primary" disabled="@_isSaving" @onclick="OpenWriterSignature">
+                    Ký người viết sau khi rà soát
+                </button>
+            }
+            else if (CanRevokeWriterSignature)
+            {
+                <button type="button" class="admin-btn admin-btn-ghost is-danger" disabled="@_isSaving" @onclick="OpenRevokeWriterSignature">
+                    Hủy chữ ký người viết
+                </button>
+            }
+            else if (CanSubmitReviewDraft)
+            {
+                <button type="button" class="admin-btn admin-btn-primary" disabled="@_isSaving" @onclick="SubmitReviewDraftAsync">
+                    Gửi duyệt
+                </button>
+            }
+            else if (CanReturnToDraftFromPending)
+            {
+                <button type="button" class="admin-btn admin-btn-ghost is-danger" disabled="@_isSaving" @onclick="OpenReturnToDraftModal">
+                    Rút lại gửi duyệt
+                </button>
+            }
+            else if (ReviewDraftSubmitted)
+            {
+                <a class="admin-btn admin-btn-primary" href="/qlcm/quy-trinh/phe-duyet">Mở Phê duyệt quy trình</a>
+            }
+            else
+            {
+                <span class="admin-table-cell-muted">Tài khoản hiện tại không còn hành động ký trên bản nháp này.</span>
+            }
+        </div>
+    }
+    else
+    {
+    <div class="procedure-authoring-actions">
+        <button type="button" class="admin-btn admin-btn-ghost" disabled="@_isSaving" @onclick="SaveDraftAsync">@(IsEditDraftMode ? $"Lưu bản nháp {_versionLabel}" : IsUpdateMode ? $"Cập nhật thành {_versionLabel}" : "Tạo bản v01")</button>
+        <button type="button" class="admin-btn admin-btn-primary" disabled="@_isSaving" @onclick="OpenWriterSignature">@(IsEditDraftMode ? $"Lưu {_versionLabel}, ký người viết" : IsUpdateMode ? $"Cập nhật {_versionLabel}, ký người viết" : "Tạo v01, ký người viết")</button>
+    </div>
+    }
+</section>
+
+<ProcedureSignatureModal IsOpen="_writerSignOpen"
+                         IsOpenChanged="v => _writerSignOpen = v"
+                         CanvasId="procedure-author-signature-pad"
+                         RoleLabel="Người viết"
+                         DocumentLabel="@($"{_code} - {_name} - {_versionLabel}")"
+                         SignerName="@(UserContext.CurrentUser?.FullName ?? UserContext.CurrentUser?.Username ?? string.Empty)"
+                         SignerUsername="@(UserContext.CurrentUser?.Username ?? string.Empty)"
+                         ConfirmText="Ký người viết"
+                         SignatureConfirmed="SaveSignedVersionAsync" />
+
+<AdminModal IsOpen="_revokeWriterOpen" IsOpenChanged="v => _revokeWriterOpen = v" Title="Hủy chữ ký người viết">
+    <ChildContent>
+        <p style="margin:0 0 0.75rem;">Chữ ký của bạn trên phiên bản <strong>@_versionLabel</strong> sẽ bị thu hồi. Bạn có thể ký lại sau khi rà soát.</p>
+        <label class="admin-form-field-label" for="revoke-writer-reason-tao">Lý do hủy (tùy chọn)</label>
+        <textarea id="revoke-writer-reason-tao" class="admin-textarea" rows="2" placeholder="VD: Cần chỉnh sửa lại phần bước quy trình." @bind="_revokeWriterReason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _revokeWriterOpen = false">Hủy bỏ</button>
+        <button type="button" class="admin-btn admin-btn-danger" disabled="@_isSaving" @onclick="ConfirmRevokeWriterSignatureAsync">Xác nhận hủy chữ ký</button>
+    </FooterContent>
+</AdminModal>
+
+<AdminModal IsOpen="_returnToDraftOpen" IsOpenChanged="v => _returnToDraftOpen = v" Title="Rút lại gửi duyệt — Hoàn về soạn thảo">
+    <ChildContent>
+        <p style="margin:0 0 0.75rem;">Phiên bản <strong>@_versionLabel</strong> sẽ được chuyển về <strong>bản nháp</strong>. Tất cả chữ ký hiện tại sẽ không còn hiệu lực; các người viết cần ký lại sau khi chỉnh sửa.</p>
+        <label class="admin-form-field-label" for="return-draft-reason-tao">Lý do rút lại (bắt buộc)</label>
+        <textarea id="return-draft-reason-tao" class="admin-textarea" rows="3" placeholder="VD: Cần bổ sung thêm bước kiểm soát nhiễm khuẩn." @bind="_returnToDraftReason"></textarea>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _returnToDraftOpen = false">Hủy bỏ</button>
+        <button type="button" class="admin-btn admin-btn-danger" disabled="@(_isSaving || string.IsNullOrWhiteSpace(_returnToDraftReason))" @onclick="ConfirmReturnToDraftAsync">Hoàn về soạn thảo</button>
+    </FooterContent>
+</AdminModal>
+
+@code {
+    [Parameter] public Guid? ProcedureId { get; set; }
+    [Parameter] public Guid? VersionId { get; set; }
+
+    private string _code = string.Empty;
+    private string _name = string.Empty;
+    private string _procedureType = "technical";
+    private string _departmentId = string.Empty;
+    private string _versionLabel = "v01";
+    private int _issueNumber = 1;
+    private DateTime? _issueDate = DateTime.Today;
+    private string _description = string.Empty;
+    private string _summary = string.Empty;
+    private bool _isSaving;
+    private bool _writerSignOpen;
+    private bool _revokeWriterOpen;
+    private string _revokeWriterReason = string.Empty;
+    private bool _returnToDraftOpen;
+    private string _returnToDraftReason = string.Empty;
+    private Sql.ProcedureVersion? _sourceVersion;
+    private Sql.ProcedureVersion? _reviewVersion;
+    private Sql.ProcedureVersion? _editDraftVersion;
+
+    private readonly List<ProcedureSectionDraft> _sections = CreateSections();
+    private readonly List<ProcedureFlowStepDraft> _steps =
+    [
+        new() { Code = "BUOC-01", Name = "Bắt đầu", ShapeCode = "terminator", DetailSectionNumber = "VIII" },
+        new() { Code = "BUOC-02", Name = "Thực hiện", ShapeCode = "process", DetailSectionNumber = "VIII" },
+        new() { Code = "BUOC-03", Name = "Kết thúc và lưu hồ sơ", ShapeCode = "terminator", DetailSectionNumber = "X" }
+    ];
+    private readonly List<ProcedureRecipientDraft> _recipients = [new()];
+    private readonly List<ProcedureRevisionDraft> _revisions = [new() { Summary = "Ban hành lần đầu" }];
+    private readonly List<PendingAttachment> _attachments = [];
+    private readonly List<ExistingAttachmentEntry> _existingAttachments = [];
+    private readonly List<ProcedureWriterAssignmentDraft> _writerAssignments = [new()];
+
+    private IReadOnlyList<ProcedureAuthoringAttachmentOption> AvailableAttachments =>
+        _existingAttachments
+            .Select(item => new ProcedureAuthoringAttachmentOption(item.ClientId, item.Attachment.FileName, item.Attachment.AttachmentType))
+            .Concat(_attachments.Select(item => new ProcedureAuthoringAttachmentOption(item.ClientId, item.FileName, item.AttachmentType)))
+            .ToList();
+
+    private IReadOnlyList<Sql.Role> ActiveRoles => Store.Roles.Where(item => item.Status == "active").OrderBy(item => item.Code).ToList();
+    private IReadOnlyList<Sql.Department> ActiveDepartments => AdminBusinessDisplay.ActiveDepartmentsForSelection(Store.Departments);
+    private IReadOnlyList<Sql.AppUser> ActiveUsers => Store.Users.Where(item => item.Status == "active").OrderBy(item => item.FullName).ToList();
+    private bool IsUpdateMode => ProcedureId.HasValue && _sourceVersion is not null && !IsReviewMode && !IsEditDraftMode;
+    private bool IsReviewMode => _reviewVersion is not null;
+    private bool IsEditDraftMode => _editDraftVersion is not null;
+    private bool IsEditDraftRoute => Navigation.Uri.Contains("/chinh-sua", StringComparison.OrdinalIgnoreCase);
+    private string ActionVerb => IsEditDraftMode ? "cập nhật bản nháp" : IsReviewMode ? "ký phiên bản nháp" : IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình";
+    private string SourceVersionLabel => _sourceVersion?.VersionLabel ?? (_sourceVersion is null ? "phiên bản trước" : ProcedureAuthoringService.FormatVersionLabel(_sourceVersion.VersionNo));
+    private bool CanSignReviewDraft => IsReviewMode
+        && _reviewVersion?.StatusCode == "draft"
+        && UserContext.CurrentUser is { UserId: var userId }
+        && Signoffs.CanUserSign(_reviewVersion.ProcedureVersionId, "writer", userId, out _);
+    private bool CanSubmitReviewDraft => IsReviewMode
+        && _reviewVersion?.StatusCode == "draft"
+        && Signoffs.GetOutstandingWriterSignatures(_reviewVersion.ProcedureVersionId) == 0;
+
+    // Bản nháp đã được gửi đi (pending_review = gửi kiểm tra; pending_approval = đã kiểm tra, chờ duyệt)
+    private bool ReviewDraftSubmitted => IsReviewMode &&
+        (_reviewVersion?.StatusCode is "pending_review" or "pending_approval");
+
+    // Người viết đã ký và có thể hủy chữ ký của mình (chỉ khi đang draft)
+    private bool CanRevokeWriterSignature => IsReviewMode
+        && _reviewVersion?.StatusCode == "draft"
+        && UserContext.CurrentUser is { UserId: var revUid }
+        && Signoffs.GetActiveWriterSignoff(_reviewVersion.ProcedureVersionId, revUid) is not null;
+
+    // Người viết có thể rút lại gửi duyệt (pending_review: checker chưa ký, người viết là người đã ký)
+    private bool CanReturnToDraftFromPending
+    {
+        get
+        {
+            if (!IsReviewMode || _reviewVersion is null) return false;
+            var status = _reviewVersion.StatusCode;
+            // Chỉ cho rút lại khi chờ kiểm tra (checker chưa ký)
+            if (status != "pending_review") return false;
+            if (UserContext.CurrentUser is not { UserId: var uid }) return false;
+            // Checker chưa ký = cho phép rút lại
+            if (Signoffs.HasCurrentSignoff(_reviewVersion.ProcedureVersionId, "checker")) return false;
+            // Người dùng hiện tại là một trong số người viết đã ký
+            return Signoffs.IsCurrentUserAWriter(_reviewVersion.ProcedureVersionId, uid);
+        }
+    }
+    private int RequiredWriterCount => _writerAssignments
+        .Select(item => ParseGuid(item.UserId))
+        .Where(item => item.HasValue)
+        .Select(item => item!.Value)
+        .Distinct()
+        .Count();
+
+    protected override void OnInitialized()
+    {
+        if (ProcedureId.HasValue && VersionId.HasValue)
+        {
+            if (IsEditDraftRoute)
+            {
+                LoadEditDraftVersion();
+                return;
+            }
+
+            LoadReviewVersion();
+            return;
+        }
+
+        EnsureCurrentUserWriterAssignment();
+        if (ProcedureId.HasValue) LoadSourceVersion();
+    }
+
+    private bool IsPrimaryWriterSlotLocked(int writerIndex) => writerIndex == 0;
+
+    private string WriterDisplayName(string? userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+            return UserContext.CurrentUser is { } current
+                ? $"{current.FullName} ({current.Username})"
+                : "—";
+
+        var user = ActiveUsers.FirstOrDefault(item => item.UserId.ToString() == userId);
+        return user is null ? userId : $"{user.FullName} ({user.Username})";
+    }
+
+    private void EnsurePrimaryWriterIsCurrentUser()
+    {
+        if (IsEditDraftMode)
+            return;
+
+        if (_writerAssignments.Count == 0)
+            _writerAssignments.Add(new ProcedureWriterAssignmentDraft());
+
+        var currentUserId = UserContext.CurrentUser?.UserId.ToString();
+        if (!string.IsNullOrWhiteSpace(currentUserId))
+            _writerAssignments[0].UserId = currentUserId;
+    }
+
+    private async Task OnFilesSelectedAsync(InputFileChangeEventArgs args)
+    {
+        foreach (var file in args.GetMultipleFiles(10))
+        {
+            await using var stream = file.OpenReadStream(ProcedureAttachmentStorageService.MaxFileSizeBytes);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            var content = buffer.ToArray();
+            if (content.Length == 0 || content.Length > ProcedureAttachmentStorageService.MaxFileSizeBytes)
+            {
+                Toasts.Show("Tệp không hợp lệ", "Mỗi tệp phải có dung lượng từ 1 byte đến 50 MB.", ToastVariant.Warning);
+                continue;
+            }
+
+            var isFirstPdf = !_attachments.Any(item => item.AttachmentType == "source_pdf") &&
+                             !_existingAttachments.Any(item => item.Attachment.AttachmentType == "source_pdf") &&
+                             file.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+            _attachments.Add(new PendingAttachment(
+                Guid.NewGuid(),
+                file.Name,
+                string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
+                content,
+                isFirstPdf ? "source_pdf" : "other"));
+        }
+    }
+
+    private Task SaveDraftAsync() => SaveAsync(submit: false);
+
+    private void OpenWriterSignature()
+    {
+        if (IsReviewMode)
+        {
+            if (UserContext.CurrentUser is null)
+            {
+                Toasts.Show("Phiên đăng nhập không hợp lệ", "Vui lòng đăng nhập lại trước khi ký.", ToastVariant.Error);
+                return;
+            }
+
+            if (!CanSignReviewDraft)
+            {
+                Toasts.Show("Không thể ký", "Tài khoản hiện tại không còn được phép ký trên bản nháp này.", ToastVariant.Warning);
+                return;
+            }
+
+            _writerSignOpen = true;
+            return;
+        }
+
+        var versionId = IsEditDraftMode && _editDraftVersion is not null
+            ? _editDraftVersion.ProcedureVersionId
+            : (Guid?)null;
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (!WorkflowGuard.CanCreateOrUpdate(
+                IsEditDraftMode || IsUpdateMode,
+                versionId,
+                userId,
+                IsEditDraftMode ? "chỉnh sửa bản nháp" : IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình"))
+        {
+            return;
+        }
+
+        var validationMessage = Validate(submit: true);
+        if (validationMessage is not null)
+        {
+            Toasts.Show("Chưa thể ký quy trình", validationMessage, ToastVariant.Warning);
+            return;
+        }
+        if (UserContext.CurrentUser is null)
+        {
+            Toasts.Show("Phiên đăng nhập không hợp lệ", "Vui lòng đăng nhập lại trước khi ký.", ToastVariant.Error);
+            return;
+        }
+        _writerSignOpen = true;
+    }
+
+    private Task SaveSignedVersionAsync(string signatureImageDataUrl)
+        => IsReviewMode || IsEditDraftMode
+            ? SignDraftAfterSaveAsync(signatureImageDataUrl)
+            : SaveAsync(submit: true, signatureImageDataUrl);
+
+    private async Task SignDraftAfterSaveAsync(string signatureImageDataUrl)
+    {
+        if (IsEditDraftMode)
+        {
+            await SaveAsync(
+                submit: false,
+                navigateOnSuccess: false,
+                persistDraftSnapshot: false,
+                signWriterAfterSave: true,
+                signatureImageDataUrl: signatureImageDataUrl);
+            return;
+        }
+
+        if (IsReviewMode)
+            await SignReviewDraftAsync(signatureImageDataUrl);
+    }
+
+    private Task SignReviewDraftAsync(string signatureImageDataUrl)
+    {
+        if (_reviewVersion is null || UserContext.CurrentUser is not { UserId: var userId })
+            return Task.CompletedTask;
+
+        _isSaving = true;
+        Sql.ProcedureSignoffRecord? signoff = null;
+        try
+        {
+            Store.Refresh();
+            Store.RunProcedureWriteBatch(() =>
+            {
+                signoff = Signoffs.Sign(
+                    _reviewVersion.ProcedureVersionId,
+                    "writer",
+                    userId,
+                    UserContext.CurrentUser.Username,
+                    UserContext.CurrentUser.FullName ?? UserContext.CurrentUser.Username,
+                    signatureImageDataUrl,
+                    "Chữ ký tay trực tiếp sau khi rà soát toàn bộ quy trình");
+                Snapshots.PersistSnapshot(_reviewVersion.ProcedureVersionId, "draft_signed", userId);
+            });
+            if (signoff is not null)
+                Signoffs.RecordSignoffAudit(_reviewVersion.ProcedureVersionId, signoff);
+
+            var outstandingWriters = Signoffs.GetOutstandingWriterSignatures(_reviewVersion.ProcedureVersionId);
+            if (outstandingWriters == 0)
+            {
+                Lifecycle.Submit(_reviewVersion.ProcedureVersionId, userId);
+                _reviewVersion = Store.ProcedureVersions.First(item => item.ProcedureVersionId == _reviewVersion.ProcedureVersionId);
+                Toasts.Show("Đã ký và gửi kiểm tra",
+                    $"{_reviewVersion.Title} — phiên bản đã chuyển sang chờ kiểm tra.",
+                    ToastVariant.Success);
+                Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
+            }
+            else
+            {
+                Toasts.Show("Đã ký người viết", $"Còn thiếu {outstandingWriters} chữ ký người viết trước khi gửi kiểm tra.", ToastVariant.Info);
+                Navigation.NavigateTo("/qlcm/quy-trinh");
+            }
+        }
+        catch (Exception exception)
+        {
+            Toasts.Show("Không thể ký", exception.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void OpenRevokeWriterSignature()
+    {
+        if (_reviewVersion is null) return;
+        _revokeWriterReason = string.Empty;
+        _revokeWriterOpen = true;
+    }
+
+    private Task ConfirmRevokeWriterSignatureAsync()
+    {
+        if (_reviewVersion is null || UserContext.CurrentUser is not { UserId: var userId })
+            return Task.CompletedTask;
+
+        var signoff = Signoffs.GetActiveWriterSignoff(_reviewVersion.ProcedureVersionId, userId);
+        if (signoff is null)
+        {
+            Toasts.Show("Không tìm thấy chữ ký", "Không có chữ ký hợp lệ của bạn để thu hồi.", ToastVariant.Warning);
+            _revokeWriterOpen = false;
+            return Task.CompletedTask;
+        }
+
+        _isSaving = true;
+        try
+        {
+            Signoffs.RevokeSignoff(_reviewVersion.ProcedureVersionId, signoff.ProcedureSignoffRecordId, userId, _revokeWriterReason);
+            Store.Refresh();
+            _reviewVersion = Store.ProcedureVersions.First(v => v.ProcedureVersionId == _reviewVersion.ProcedureVersionId);
+            Toasts.Show("Đã hủy chữ ký người viết", "Bạn có thể chỉnh sửa và ký lại khi cần.", ToastVariant.Info);
+            _revokeWriterOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể hủy chữ ký", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void OpenReturnToDraftModal()
+    {
+        if (_reviewVersion is null) return;
+        _returnToDraftReason = string.Empty;
+        _returnToDraftOpen = true;
+    }
+
+    private Task ConfirmReturnToDraftAsync()
+    {
+        if (_reviewVersion is null || UserContext.CurrentUser is not { UserId: var userId })
+            return Task.CompletedTask;
+        if (string.IsNullOrWhiteSpace(_returnToDraftReason))
+        {
+            Toasts.Show("Thiếu lý do", "Vui lòng nhập lý do rút lại.", ToastVariant.Warning);
+            return Task.CompletedTask;
+        }
+
+        _isSaving = true;
+        try
+        {
+            Lifecycle.ReturnToDraft(_reviewVersion.ProcedureVersionId, userId, _returnToDraftReason.Trim());
+            Store.Refresh();
+            _reviewVersion = Store.ProcedureVersions.First(v => v.ProcedureVersionId == _reviewVersion.ProcedureVersionId);
+            Toasts.Show("Đã rút lại về soạn thảo",
+                "Phiên bản trở về bản nháp. Tất cả chữ ký đã bị vô hiệu; người viết có thể chỉnh sửa và ký lại.",
+                ToastVariant.Info);
+            _returnToDraftOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể hoàn về soạn thảo", ex.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task SubmitReviewDraftAsync()
+    {
+        if (_reviewVersion is null || UserContext.CurrentUser is not { UserId: var userId })
+            return Task.CompletedTask;
+
+        _isSaving = true;
+        try
+        {
+            Lifecycle.Submit(_reviewVersion.ProcedureVersionId, userId);
+            _reviewVersion = Store.ProcedureVersions.First(item => item.ProcedureVersionId == _reviewVersion.ProcedureVersionId);
+            Toasts.Show("Đã gửi phê duyệt", _reviewVersion.Title, ToastVariant.Success);
+            Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
+        }
+        catch (Exception exception)
+        {
+            Toasts.Show("Không thể gửi duyệt", exception.Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task<bool> SaveAsync(
+        bool submit,
+        string? signatureImageDataUrl = null,
+        bool navigateOnSuccess = true,
+        bool persistDraftSnapshot = true,
+        bool signWriterAfterSave = false)
+    {
+        var saveVersionId = IsEditDraftMode && _editDraftVersion is not null
+            ? _editDraftVersion.ProcedureVersionId
+            : (Guid?)null;
+        var saveUserId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (_isSaving || !WorkflowGuard.CanCreateOrUpdate(
+                IsEditDraftMode || IsUpdateMode,
+                saveVersionId,
+                saveUserId,
+                IsEditDraftMode ? "chỉnh sửa bản nháp" : IsUpdateMode ? "cập nhật quy trình" : "tạo quy trình"))
+        {
+            return false;
+        }
+
+        var validationMessage = Validate(submit || signWriterAfterSave);
+        if (validationMessage is not null)
+        {
+            Toasts.Show($"Chưa thể {ActionVerb}", validationMessage, ToastVariant.Warning);
+            return false;
+        }
+
+        var user = UserContext.CurrentUser;
+        if (user is null)
+        {
+            Toasts.Show("Phiên đăng nhập không hợp lệ", $"Vui lòng đăng nhập lại trước khi {ActionVerb}.", ToastVariant.Error);
+            return false;
+        }
+
+        EnsurePrimaryWriterIsCurrentUser();
+        _isSaving = true;
+        try
+        {
+            var versionId = IsEditDraftMode && _editDraftVersion is not null
+                ? _editDraftVersion.ProcedureVersionId
+                : Guid.NewGuid();
+            var storedAttachments = new List<(PendingAttachment Draft, StoredProcedureAttachment Stored)>();
+            foreach (var attachment in _attachments)
+            {
+                await using var contentStream = new MemoryStream(attachment.Content);
+                storedAttachments.Add((attachment, await AttachmentStorage.SaveAsync(
+                    versionId,
+                    attachment.FileName,
+                    attachment.ContentType,
+                    contentStream)));
+            }
+            var hasNewSourcePdf = storedAttachments.Any(item => item.Draft.AttachmentType == "source_pdf");
+            var attachments = _existingAttachments
+                .Where(item => !hasNewSourcePdf || item.Attachment.AttachmentType != "source_pdf")
+                .Select(item => new ProcedureStoredAttachmentDraft(
+                    item.ClientId,
+                    item.Attachment.AttachmentType,
+                    item.Attachment.FileName,
+                    item.Attachment.FileUri,
+                    item.Attachment.MimeType,
+                    item.Attachment.FileSizeBytes,
+                    item.Attachment.ChecksumSha256))
+                .Concat(storedAttachments.Select(item => new ProcedureStoredAttachmentDraft(
+                    item.Draft.ClientId,
+                    item.Draft.AttachmentType,
+                    item.Stored.FileName,
+                    item.Stored.FileUri,
+                    item.Stored.MimeType,
+                    item.Stored.FileSizeBytes,
+                    item.Stored.ChecksumSha256)))
+                .ToList();
+
+            var command = new ProcedureAuthoringCommand(
+                versionId,
+                ProcedureId ?? _editDraftVersion?.ProcedureId,
+                _sourceVersion?.ProcedureVersionId,
+                _code.Trim(),
+                _name.Trim(),
+                _procedureType,
+                ParseGuid(_departmentId)!.Value,
+                NullIfWhiteSpace(_description),
+                NullIfWhiteSpace(_summary),
+                _issueDate!.Value,
+                _issueNumber,
+                user.UserId,
+                _writerAssignments,
+                _sections,
+                _recipients,
+                _revisions,
+                _steps,
+                attachments);
+
+            ProcedureAuthoringResult result;
+            var signedWriter = submit || signWriterAfterSave;
+            if (IsEditDraftMode && signWriterAfterSave)
+            {
+                ProcedureAuthoringResult? updated = null;
+                Sql.ProcedureSignoffRecord? signoff = null;
+                Store.RunProcedureWriteBatch(() =>
+                {
+                    updated = Authoring.UpdateDraft(command, persistSnapshot: false);
+                    Store.FlushProcedureWriteBatchPendingChanges();
+                    signoff = Signoffs.Sign(
+                        updated.Version.ProcedureVersionId,
+                        "writer",
+                        user.UserId,
+                        user.Username,
+                        user.FullName,
+                        signatureImageDataUrl,
+                        "Chữ ký tay trực tiếp sau khi hoàn thiện bản nháp");
+                    Snapshots.PersistSnapshot(updated.Version.ProcedureVersionId, "draft_signed", user.UserId);
+                });
+                result = updated ?? throw new InvalidOperationException("Không thể cập nhật bản nháp quy trình.");
+                if (signoff is not null)
+                    Signoffs.RecordSignoffAudit(result.Version.ProcedureVersionId, signoff);
+            }
+            else if (!IsEditDraftMode && submit)
+            {
+                ProcedureAuthoringResult? created = null;
+                Sql.ProcedureSignoffRecord? signoff = null;
+                Store.RunProcedureWriteBatch(() =>
+                {
+                    created = Authoring.CreateVersion(command);
+                    signoff = Signoffs.Sign(
+                        created.Version.ProcedureVersionId,
+                        "writer",
+                        user.UserId,
+                        user.Username,
+                        user.FullName,
+                        signatureImageDataUrl,
+                        "Chữ ký tay trực tiếp của người soạn");
+                    Snapshots.PersistSnapshot(created.Version.ProcedureVersionId, "draft_signed", user.UserId);
+                });
+                result = created ?? throw new InvalidOperationException("Không thể tạo phiên bản quy trình.");
+                if (signoff is not null)
+                    Signoffs.RecordSignoffAudit(result.Version.ProcedureVersionId, signoff);
+            }
+            else
+            {
+                result = IsEditDraftMode
+                    ? Authoring.UpdateDraft(command, persistDraftSnapshot)
+                    : Authoring.CreateVersion(command);
+
+                if (submit)
+                {
+                    Sql.ProcedureSignoffRecord? signoff = null;
+                    Store.RunProcedureWriteBatch(() =>
+                    {
+                        signoff = Signoffs.Sign(
+                            result.Version.ProcedureVersionId,
+                            "writer",
+                            user.UserId,
+                            user.Username,
+                            user.FullName,
+                            signatureImageDataUrl,
+                            "Chữ ký tay trực tiếp sau khi hoàn thiện bản nháp");
+                        Snapshots.PersistSnapshot(result.Version.ProcedureVersionId, "draft_signed", user.UserId);
+                    });
+                    if (signoff is not null)
+                        Signoffs.RecordSignoffAudit(result.Version.ProcedureVersionId, signoff);
+                }
+            }
+
+            if (signedWriter && !signWriterAfterSave)
+            {
+                var outstandingWriters = Signoffs.GetOutstandingWriterSignatures(result.Version.ProcedureVersionId);
+                if (outstandingWriters == 0)
+                {
+                    Lifecycle.Submit(result.Version.ProcedureVersionId, user.UserId);
+                }
+                else
+                {
+                    Toasts.Show(
+                        "Đã lưu bản nháp và ghi nhận chữ ký người viết",
+                        $"Còn thiếu {outstandingWriters} chữ ký người viết trước khi gửi kiểm tra.",
+                        ToastVariant.Info);
+                }
+            }
+
+            if (signWriterAfterSave)
+            {
+                var outstandingWriters = Signoffs.GetOutstandingWriterSignatures(result.Version.ProcedureVersionId);
+                if (outstandingWriters == 0)
+                {
+                    Lifecycle.Submit(result.Version.ProcedureVersionId, user.UserId);
+                    Toasts.Show("Đã ký và gửi kiểm tra", result.Version.Title, ToastVariant.Success);
+                    Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
+                }
+                else
+                {
+                    Toasts.Show("Đã lưu bản nháp và ghi nhận chữ ký người viết", $"Còn thiếu {outstandingWriters} chữ ký người viết.", ToastVariant.Info);
+                    Navigation.NavigateTo("/qlcm/quy-trinh");
+                }
+
+                _editDraftVersion = result.Version;
+                return true;
+            }
+
+            var title = IsEditDraftMode
+                ? $"Đã cập nhật bản nháp {result.Version.VersionLabel}"
+                : IsUpdateMode
+                    ? $"Đã cập nhật thành {result.Version.VersionLabel}"
+                    : "Đã tạo bản v01";
+            var finalOutstandingWriters = signedWriter ? Signoffs.GetOutstandingWriterSignatures(result.Version.ProcedureVersionId) : 0;
+            if (!IsEditDraftMode || persistDraftSnapshot || signedWriter)
+            {
+                Toasts.Show(
+                    signedWriter
+                        ? (finalOutstandingWriters == 0 ? $"{title}, đã ký và gửi kiểm tra" : $"{title}, đã ký người viết")
+                        : title,
+                    result.Procedure.Name,
+                    ToastVariant.Success);
+            }
+
+            if (IsEditDraftMode)
+                _editDraftVersion = result.Version;
+            if (navigateOnSuccess)
+                Navigation.NavigateTo("/qlcm/quy-trinh");
+            return true;
+        }
+        catch (Exception exception)
+        {
+            Toasts.Show($"Không thể {ActionVerb}", exception.Message, ToastVariant.Error);
+            return false;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void LoadEditDraftVersion()
+    {
+        var procedure = Store.Procedures.FirstOrDefault(item => item.ProcedureId == ProcedureId);
+        var version = Store.ProcedureVersions.FirstOrDefault(item => item.ProcedureVersionId == VersionId);
+        if (procedure is null || version is null || version.ProcedureId != ProcedureId)
+        {
+            Toasts.Show("Không thể mở phiên bản", "Không tìm thấy quy trình hoặc phiên bản nháp.", ToastVariant.Error);
+            Navigation.NavigateTo("/qlcm/quy-trinh");
+            return;
+        }
+
+        if (version.StatusCode != "draft")
+        {
+            Toasts.Show("Không thể chỉnh sửa", "Chỉ phiên bản nháp mới chỉnh sửa được.", ToastVariant.Warning);
+            Navigation.NavigateTo("/qlcm/quy-trinh");
+            return;
+        }
+
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (!Signoffs.CanUserEditDraft(version.ProcedureVersionId, userId, out var reason))
+        {
+            Toasts.Show("Không thể chỉnh sửa bản nháp", reason ?? "Tài khoản hiện tại không được phép chỉnh sửa.", ToastVariant.Warning);
+            Navigation.NavigateTo($"/qlcm/quy-trinh/{ProcedureId}/phien-ban/{version.ProcedureVersionId}");
+            return;
+        }
+
+        _editDraftVersion = version;
+        LoadVersionContent(procedure, version);
+        _versionLabel = version.VersionLabel ?? ProcedureAuthoringService.FormatVersionLabel(version.VersionNo);
+        _summary = ProcedureVersionSummaryFormatter.Display(version.Summary);
+    }
+
+    private void LoadReviewVersion()
+    {
+        var procedure = Store.Procedures.FirstOrDefault(item => item.ProcedureId == ProcedureId);
+        var version = Store.ProcedureVersions.FirstOrDefault(item => item.ProcedureVersionId == VersionId);
+        if (procedure is null || version is null || version.ProcedureId != ProcedureId)
+        {
+            Toasts.Show("Không thể mở phiên bản", "Không tìm thấy quy trình hoặc phiên bản nháp.", ToastVariant.Error);
+            Navigation.NavigateTo("/qlcm/quy-trinh");
+            return;
+        }
+
+        // Cho phép xem/hành động trên draft (ký), pending_review (rút lại gửi), pending_approval (xem trạng thái)
+        var allowedStatuses = new[] { "draft", "pending_review", "pending_approval" };
+        if (!allowedStatuses.Contains(version.StatusCode, StringComparer.OrdinalIgnoreCase))
+        {
+            Toasts.Show("Không thể xem/ký", "Trang này chỉ hỗ trợ phiên bản đang soạn thảo hoặc chờ kiểm tra.", ToastVariant.Warning);
+            Navigation.NavigateTo("/qlcm/quy-trinh");
+            return;
+        }
+
+        _reviewVersion = version;
+        LoadVersionContent(procedure, version);
+        _versionLabel = version.VersionLabel ?? ProcedureAuthoringService.FormatVersionLabel(version.VersionNo);
+        _summary = ProcedureVersionSummaryFormatter.Display(version.Summary);
+    }
+
+    private void LoadSourceVersion()
+    {
+        var procedure = Store.Procedures.FirstOrDefault(item => item.ProcedureId == ProcedureId);
+        var existingInProgress = Store.ProcedureVersions
+            .Where(item => item.ProcedureId == ProcedureId &&
+                           (item.StatusCode == "draft" ||
+                            item.StatusCode == "pending_review" ||
+                            item.StatusCode == "pending_approval"))
+            .OrderByDescending(item => item.VersionNo)
+            .FirstOrDefault();
+        if (existingInProgress is not null)
+        {
+            if (existingInProgress.StatusCode == "pending_approval")
+            {
+                Toasts.Show("Không thể tạo phiên bản mới",
+                    $"Phiên bản {existingInProgress.VersionLabel ?? $"v{existingInProgress.VersionNo}"} đang chờ phê duyệt. Hãy hoàn tất hoặc hoàn trả trước khi tạo bản kế tiếp.",
+                    ToastVariant.Warning);
+                Navigation.NavigateTo("/qlcm/quy-trinh/phe-duyet");
+                return;
+            }
+            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+            if (Signoffs.CanUserEditDraft(existingInProgress.ProcedureVersionId, userId, out _))
+            {
+                Navigation.NavigateTo($"/qlcm/quy-trinh/{ProcedureId}/phien-ban/{existingInProgress.ProcedureVersionId}/chinh-sua");
+            }
+            else
+            {
+                Navigation.NavigateTo($"/qlcm/quy-trinh/{ProcedureId}/phien-ban/{existingInProgress.ProcedureVersionId}");
+            }
+            return;
+        }
+
+        var source = Store.ProcedureVersions
+            .Where(item => item.ProcedureId == ProcedureId)
+            .OrderByDescending(item => item.VersionNo)
+            .FirstOrDefault();
+        if (procedure is null || source is null)
+        {
+            Toasts.Show("Không thể cập nhật", "Không tìm thấy quy trình hoặc phiên bản nguồn.", ToastVariant.Error);
+            Navigation.NavigateTo("/qlcm/quy-trinh");
+            return;
+        }
+
+        _sourceVersion = source;
+        LoadVersionContent(procedure, source);
+        _summary = $"Cập nhật từ {SourceVersionLabel}";
+        _versionLabel = ProcedureAuthoringService.FormatVersionLabel(Authoring.GetNextVersionNo(procedure.ProcedureId));
+        _issueNumber = (source.IssueNumber ?? source.VersionNo) + 1;
+        _issueDate = DateTime.Today;
+
+        _revisions.Add(new ProcedureRevisionDraft
+        {
+            RevisionDate = DateTime.Today,
+            Summary = $"Cập nhật từ {SourceVersionLabel} lên {_versionLabel}"
+        });
+        EnsurePrimaryWriterIsCurrentUser();
+    }
+
+    private void LoadVersionContent(Sql.ProfessionalProcedure procedure, Sql.ProcedureVersion version)
+    {
+        _code = procedure.ProcedureCode;
+        _name = procedure.Name;
+        _procedureType = procedure.ProcedureType;
+        _departmentId = (version.DepartmentId ?? procedure.OwnerDepartmentId)?.ToString() ?? string.Empty;
+        _description = procedure.Description ?? string.Empty;
+        _issueNumber = version.IssueNumber ?? version.VersionNo;
+        _issueDate = version.IssueDate ?? DateTime.Today;
+
+        var sourceSections = Store.ProcedureDocumentSections.Where(item => item.ProcedureVersionId == version.ProcedureVersionId).ToList();
+        foreach (var section in _sections)
+        {
+            section.Content = sourceSections.FirstOrDefault(item => item.SectionKind == section.Kind)?.ContentText ?? string.Empty;
+        }
+
+        _recipients.Clear();
+        _recipients.AddRange(Store.ProcedureDistributionRecipients
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId)
+            .OrderBy(item => item.DisplayOrder)
+            .Select(item => new ProcedureRecipientDraft { Name = item.RecipientName, IsMarked = item.IsMarked }));
+        if (_recipients.Count == 0) _recipients.Add(new ProcedureRecipientDraft());
+
+        _revisions.Clear();
+        _revisions.AddRange(Store.ProcedureRevisionEntries
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId)
+            .OrderBy(item => item.DisplayOrder)
+            .Select(item => new ProcedureRevisionDraft
+            {
+                RevisionDate = item.RevisionDate,
+                PageReference = item.PageRef ?? string.Empty,
+                SectionReference = item.SectionRef ?? string.Empty,
+                Summary = item.Summary
+            }));
+        if (_revisions.Count == 0) _revisions.Add(new ProcedureRevisionDraft());
+
+        _writerAssignments.Clear();
+        _writerAssignments.AddRange(Store.ProcedureVersionAuthorAssignments
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId && item.SignoffRole == "writer")
+            .OrderBy(item => item.DisplayOrder)
+            .Select(item => new ProcedureWriterAssignmentDraft
+            {
+                UserId = item.AssignedUserId.ToString()
+            }));
+        if (_writerAssignments.Count == 0)
+        {
+            EnsureCurrentUserWriterAssignment();
+        }
+
+        _steps.Clear();
+        _steps.AddRange(Store.ProcedureSteps
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId)
+            .OrderBy(item => item.StepNo)
+            .Select(item => new ProcedureFlowStepDraft
+            {
+                Code = item.StepCode ?? string.Empty,
+                Name = item.Name,
+                RoleId = item.ActorRoleId?.ToString() ?? string.Empty,
+                RoleIds = Store.ProcedureStepRoleAssignments
+                    .Where(assignment => assignment.ProcedureStepId == item.ProcedureStepId)
+                    .OrderBy(assignment => assignment.DisplayOrder)
+                    .Select(assignment => assignment.RoleId.ToString())
+                    .ToList(),
+                LocationDepartmentIds = Store.ProcedureStepLocationAssignments
+                    .Where(assignment => assignment.ProcedureStepId == item.ProcedureStepId)
+                    .OrderBy(assignment => assignment.DisplayOrder)
+                    .Select(assignment => assignment.DepartmentId.ToString())
+                    .ToList(),
+                Responsibility = item.ResponsibilityText ?? string.Empty,
+                ShapeCode = item.FlowShapeCode,
+                FormReference = item.FormReferenceText ?? string.Empty,
+                LinkedAttachmentClientId = item.FormAttachmentId,
+                LinkedAttachmentClientIds = Store.ProcedureStepAttachmentAssignments
+                    .Where(assignment => assignment.ProcedureStepId == item.ProcedureStepId)
+                    .OrderBy(assignment => assignment.DisplayOrder)
+                    .Select(assignment => assignment.ProcedureAttachmentId)
+                    .ToList(),
+                DetailSectionNumber = item.DetailSectionNumber ?? string.Empty,
+                Minutes = item.StandardDurationMinutes ?? 5,
+                Description = item.Description ?? string.Empty
+            }));
+
+        _existingAttachments.Clear();
+        _existingAttachments.AddRange(Store.ProcedureAttachments
+            .Where(item => item.ProcedureVersionId == version.ProcedureVersionId)
+            .OrderBy(item => item.UploadedAt)
+            .Select(item => new ExistingAttachmentEntry(item.ProcedureAttachmentId, item)));
+    }
+
+    private string? Validate(bool submit)
+    {
+        if (string.IsNullOrWhiteSpace(_code) || string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_versionLabel))
+            return "Nhập mã, tên và phiên bản quy trình.";
+        if (!IsUpdateMode && !IsEditDraftMode && Store.Procedures.Any(item => string.Equals(item.ProcedureCode, _code.Trim(), StringComparison.OrdinalIgnoreCase)))
+            return "Mã quy trình đã tồn tại. Vui lòng dùng mã khác.";
+        if (IsUpdateMode && _sourceVersion?.StatusCode is "pending_review" or "pending_approval")
+            return "Phiên bản mới nhất đang chờ kiểm tra/phê duyệt. Hãy hoàn tất hoặc hoàn trả trước khi tạo bản kế tiếp.";
+        if (!Guid.TryParse(_departmentId, out _)) return "Chọn khoa/phòng chủ trì.";
+        if (_issueDate is null || _issueNumber < 1) return "Nhập ngày và lần ban hành hợp lệ.";
+        if (RequiredWriterCount == 0) return "Chọn ít nhất một người viết.";
+        if (!submit) return null;
+        if (_sections.Any(item => item.IsRequired && string.IsNullOrWhiteSpace(item.Content))) return "Hoàn thiện tất cả mục La Mã bắt buộc.";
+        if (_steps.Count == 0 || _steps.Any(item => string.IsNullOrWhiteSpace(item.Name) || string.IsNullOrWhiteSpace(item.Responsibility) || string.IsNullOrWhiteSpace(item.Description)))
+            return "Mỗi bước phải có tên, trách nhiệm và diễn giải thao tác.";
+        if (!_recipients.Any(item => !string.IsNullOrWhiteSpace(item.Name))) return "Thêm ít nhất một nơi nhận.";
+        if (!_revisions.Any(item => !string.IsNullOrWhiteSpace(item.Summary))) return "Thêm ít nhất một dòng theo dõi sửa đổi.";
+        if (!_existingAttachments.Any(item => item.Attachment.AttachmentType == "source_pdf") &&
+            !_attachments.Any(item => item.AttachmentType == "source_pdf" && item.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)))
+            return "Chọn một tệp PDF và đặt loại là PDF nguồn.";
+        return null;
+    }
+
+    private void AddWriterAssignment() => _writerAssignments.Add(new ProcedureWriterAssignmentDraft());
+
+    private void RemoveWriterAssignment(ProcedureWriterAssignmentDraft writer)
+    {
+        if (_writerAssignments.Count > 1)
+        {
+            _writerAssignments.Remove(writer);
+        }
+    }
+
+    private void EnsureCurrentUserWriterAssignment() => EnsurePrimaryWriterIsCurrentUser();
+
+    private static List<ProcedureSectionDraft> CreateSections() =>
+    [
+        new() { Order = 1, Number = "I", Title = "Mục đích", Kind = "purpose" },
+        new() { Order = 2, Number = "II", Title = "Phạm vi áp dụng", Kind = "scope" },
+        new() { Order = 3, Number = "III", Title = "Căn cứ và tài liệu viện dẫn", Kind = "basis" },
+        new() { Order = 4, Number = "IV", Title = "Thuật ngữ và định nghĩa", Kind = "definitions" },
+        new() { Order = 5, Number = "V", Title = "Trách nhiệm", Kind = "responsibilities" },
+        new() { Order = 6, Number = "VI", Title = "Nơi nhận và phân phối", Kind = "distribution" },
+        new() { Order = 7, Number = "VII", Title = "Theo dõi sửa đổi", Kind = "revision" },
+        new() { Order = 8, Number = "VIII", Title = "Nội dung quy trình", Kind = "procedure" },
+        new() { Order = 9, Number = "IX", Title = "Lưu đồ", Kind = "flowchart" },
+        new() { Order = 10, Number = "X", Title = "Hồ sơ, biểu mẫu và phụ lục", Kind = "records" },
+        new() { Order = 11, Number = "XI", Title = "Tệp đính kèm", Kind = "appendices" }
+    ];
+
+    private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    private static string? NullIfWhiteSpace(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    private static string FormatBytes(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
+    private static string AttachmentTypeName(string code) => Sql.MedLookups.AttachmentTypes.FirstOrDefault(item => item.Code == code)?.Name ?? code;
+    private string DisplayDepartment(Sql.Department? department) => AdminBusinessDisplay.DepartmentLabel(department, ActiveDepartments);
+
+    private sealed class PendingAttachment(Guid clientId, string fileName, string contentType, byte[] content, string attachmentType)
+    {
+        public Guid ClientId { get; } = clientId;
+        public string FileName { get; } = fileName;
+        public string ContentType { get; } = contentType;
+        public byte[] Content { get; } = content;
+        public long Size => Content.LongLength;
+        public string AttachmentType { get; set; } = attachmentType;
+    }
+
+    private sealed record ExistingAttachmentEntry(Guid ClientId, Sql.ProcedureAttachment Attachment);
+}

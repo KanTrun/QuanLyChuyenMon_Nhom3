@@ -1,0 +1,145 @@
+@page "/quy-trinh-pro"
+@layout PersonaLayout
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@inject ProcedureLifecycleService Lifecycle
+@inject ICurrentUserContext UserContext
+@inject IToastService Toast
+@inject AdminActionGuard Guard
+@implements IDisposable
+
+<PageTitle>Quy trình chuyên môn | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Quy trình</span>
+            <h1 class="admin-page-title">Danh sách quy trình chuyên môn</h1>
+            <p class="admin-page-subtitle">Quản lý vòng đời phiên bản: bản nháp → chờ duyệt → đang hiệu lực.</p>
+        </div>
+    </header>
+
+    <AdminDataTable TItem="ProcedureViewModel"
+                    Items="_pagedItems"
+                    ColumnCount="5"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_items.Count"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }">
+        <HeaderTemplate>
+            <th>Mã</th>
+            <th>Tên quy trình</th>
+            <th>Phiên bản hiện tại</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </HeaderTemplate>
+        <RowTemplate Context="vm">
+            <tr>
+                <td>@vm.Procedure.ProcedureCode</td>
+                <td>@vm.Procedure.Name</td>
+                <td>@(vm.LatestVersion?.VersionLabel ?? "—")</td>
+                <td>
+                    <AdminBadge Tone="@GetStatusTone(vm.LatestVersion?.StatusCode)">
+                        @GetStatusLabel(vm.LatestVersion?.StatusCode)
+                    </AdminBadge>
+                </td>
+                <td style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+                    @if (vm.LatestVersion?.StatusCode == "draft")
+                    {
+                        <button class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => Submit(vm.LatestVersion!.ProcedureVersionId)">
+                            Gửi duyệt
+                        </button>
+                    }
+                    @if (vm.LatestVersion?.StatusCode == "pending_approval")
+                    {
+                        <button class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => Publish(vm.LatestVersion!.ProcedureVersionId)">
+                            Xuất bản
+                        </button>
+                    }
+                </td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
+</section>
+
+@code {
+    private const int _pageSize = 10;
+    private int _page = 1;
+    private IReadOnlyList<ProcedureViewModel> _items = Array.Empty<ProcedureViewModel>();
+    private IReadOnlyList<ProcedureViewModel> _pagedItems = Array.Empty<ProcedureViewModel>();
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+        Refresh();
+    }
+
+    private void OnChanged() => InvokeAsync(() => { Refresh(); StateHasChanged(); });
+
+    private void Refresh()
+    {
+        _items = Store.Procedures.Select(p =>
+        {
+            var latest = Store.ProcedureVersions
+                .Where(v => v.ProcedureId == p.ProcedureId)
+                .OrderByDescending(v => v.VersionNo)
+                .FirstOrDefault();
+            return new ProcedureViewModel(p, latest);
+        }).ToList();
+        Paginate();
+    }
+
+    private void Paginate()
+    {
+        var totalPages = Math.Max(1, (int)Math.Ceiling(_items.Count / (double)_pageSize));
+        _page = Math.Clamp(_page, 1, totalPages);
+        _pagedItems = _items.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void Submit(Guid versionId)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:UPDATE", "gửi duyệt phiên bản")) return;
+        try
+        {
+            Lifecycle.Submit(versionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
+            Toast.Show("Đã gửi phiên bản để phê duyệt", null, ToastVariant.Success);
+        }
+        catch (MedDomainException ex) { Toast.Show("Không thể gửi phê duyệt", ex.Message, ToastVariant.Error); }
+    }
+
+    private void Publish(Guid versionId)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "xuất bản quy trình")) return;
+        try
+        {
+            Lifecycle.Publish(versionId, UserContext.CurrentUser?.UserId ?? Guid.Empty);
+            Toast.Show("Đã xuất bản phiên bản", null, ToastVariant.Success);
+        }
+        catch (MedDomainException ex) { Toast.Show("Không thể xuất bản", ex.Message, ToastVariant.Error); }
+    }
+
+    private static string GetStatusTone(string? status) => status switch
+    {
+        "active" => "tone-success",
+        "draft" => "tone-muted",
+        "pending_approval" => "tone-warning",
+        "rejected" => "tone-danger",
+        _ => "tone-muted"
+    };
+
+    private static string GetStatusLabel(string? status) => status switch
+    {
+        "active" => "Đang hiệu lực",
+        "draft" => "Bản nháp",
+        "pending_approval" => "Chờ duyệt",
+        "rejected" => "Bị từ chối",
+        "superseded" => "Đã thay thế",
+        "archived" => "Đã thu hồi",
+        _ => "Chưa có phiên bản"
+    };
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+
+    private sealed record ProcedureViewModel(ProfessionalProcedure Procedure, ProcedureVersion? LatestVersion);
+}

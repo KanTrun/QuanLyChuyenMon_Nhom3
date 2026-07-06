@@ -1,0 +1,218 @@
+@page "/admin/to-chuc/vai-tro"
+@layout AdminLayout
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@inject IToastService Toast
+@inject AdminActionGuard Guard
+@implements IDisposable
+
+<PageTitle>Vai trò | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Tổ chức</span>
+            <h1 class="admin-page-title">Quản lý vai trò</h1>
+            <p class="admin-page-subtitle">Định nghĩa vai trò và gán quyền truy cập cho từng vai trò.</p>
+        </div>
+        <button class="admin-btn admin-btn-primary" @onclick="OpenCreate">Thêm vai trò</button>
+    </header>
+
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Trạng thái</label>
+            <select class="admin-select" @bind="_statusFilter" @bind:after="ResetAndPaginate">
+                <option value="active">Đang hoạt động</option>
+                <option value="archived">Lưu trữ</option>
+                <option value="all">Tất cả</option>
+            </select>
+        </div>
+    </div>
+
+    <AdminDataTable TItem="Role"
+                    Items="_pagedItems"
+                    ColumnCount="7"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_total"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }">
+        <HeaderTemplate>
+            <th>Mã</th>
+            <th>Tên vai trò</th>
+                    <th>Mô tả</th>
+                    <th>Hệ thống</th>
+                    <th>Số người dùng</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </HeaderTemplate>
+        <RowTemplate Context="role">
+            <tr>
+                <td>@role.Code</td>
+                <td>@role.Name</td>
+                <td>@role.Description</td>
+                <td>
+                    <AdminBadge Tone="@(role.IsSystem ? "tone-warning" : "tone-muted")">
+                        @(role.IsSystem ? "Hệ thống" : "Tùy chỉnh")
+                    </AdminBadge>
+                </td>
+                <td>@Store.UserRoles.Count(ur => ur.RoleId == role.RoleId)</td>
+                <td><AdminBadge Tone="@(role.Status == "active" ? "tone-success" : "tone-muted")">@LookupStatus(role.Status)</AdminBadge></td>
+                <td style="text-align:right;">
+                    <div class="admin-row-actions">
+                        <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEdit(role)">Sửa</button>
+                        @if (!role.IsSystem && role.Status == "active")
+                        {
+                            <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => Archive(role)">Lưu trữ</button>
+                        }
+                    </div>
+                </td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
+
+    <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" Title="@_drawerTitle">
+        <ChildContent>
+            <div class="admin-form-group">
+                <label class="admin-label is-required">Mã vai trò</label>
+                <input class="admin-input" @bind="_code" placeholder="VD: PHARMACIST" />
+            </div>
+            <div class="admin-form-group">
+                <label class="admin-label is-required">Tên vai trò</label>
+                <input class="admin-input" @bind="_name" placeholder="VD: Dược sĩ" />
+            </div>
+            <div class="admin-form-group">
+                <label class="admin-label">Mô tả</label>
+                <textarea class="admin-input" @bind="_desc" rows="3"></textarea>
+            </div>
+        </ChildContent>
+        <FooterContent>
+            <button class="admin-btn admin-btn-primary" @onclick="SaveRole">Lưu</button>
+            <button class="admin-btn admin-btn-ghost" @onclick="() => _drawerOpen = false">Hủy</button>
+        </FooterContent>
+    </AdminDrawer>
+</section>
+
+@code {
+    private int _page = 1;
+    private const int _pageSize = 10;
+    private int _total;
+    private IReadOnlyList<Role> _pagedItems = Array.Empty<Role>();
+    private bool _drawerOpen;
+    private string _drawerTitle = "Thêm vai trò";
+    private Guid? _editingRoleId;
+    private string _code = "", _name = "", _desc = "";
+    private string _statusFilter = "active";
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+        Paginate();
+    }
+
+    private void OnChanged() => InvokeAsync(() => { Paginate(); StateHasChanged(); });
+
+    private void Paginate()
+    {
+        var all = Store.Roles
+            .Where(r => _statusFilter == "all" || (_statusFilter == "archived" ? r.Status != "active" : r.Status == "active"))
+            .OrderBy(r => r.Name)
+            .ToList();
+        _total = all.Count;
+        _pagedItems = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void ResetAndPaginate()
+    {
+        _page = 1;
+        Paginate();
+    }
+
+    private void OpenCreate()
+    {
+        if (!Guard.CanDo("SCR_ORG_ROLES:CREATE", "thêm vai trò"))
+        {
+            return;
+        }
+
+        _drawerTitle = "Thêm vai trò";
+        _editingRoleId = null;
+        _code = _name = _desc = "";
+        _drawerOpen = true;
+    }
+
+    private void OpenEdit(Role role)
+    {
+        if (!Guard.CanDo("SCR_ORG_ROLES:UPDATE", "sửa vai trò"))
+        {
+            return;
+        }
+
+        _drawerTitle = "Sửa vai trò";
+        _editingRoleId = role.RoleId;
+        _code = role.Code;
+        _name = role.Name;
+        _desc = role.Description ?? "";
+        _drawerOpen = true;
+    }
+
+    private void SaveRole()
+    {
+        var permission = _editingRoleId.HasValue ? "SCR_ORG_ROLES:UPDATE" : "SCR_ORG_ROLES:CREATE";
+        var action = _editingRoleId.HasValue ? "sửa vai trò" : "thêm vai trò";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_code) || string.IsNullOrWhiteSpace(_name))
+        {
+            Toast.Show("Thiếu thông tin", "Vui lòng nhập mã và tên vai trò.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            var role = new Role
+            {
+                RoleId = _editingRoleId ?? Guid.NewGuid(),
+                Code = _code.Trim(),
+                Name = _name.Trim(),
+                Description = string.IsNullOrWhiteSpace(_desc) ? null : _desc.Trim()
+            };
+            if (_editingRoleId.HasValue)
+            {
+                var current = Store.Roles.First(r => r.RoleId == _editingRoleId.Value);
+                Store.UpdateRole(role with { Status = current.Status, IsSystem = current.IsSystem, CreatedAt = current.CreatedAt });
+            }
+            else
+            {
+                Store.AddRole(role);
+            }
+            _drawerOpen = false;
+            Toast.Show("Đã lưu vai trò", "Thay đổi đã được cập nhật.", ToastVariant.Success);
+        }
+        catch (MedDomainException ex) { Toast.Show("Không thể lưu vai trò", ex.Message, ToastVariant.Error); }
+        catch (Exception ex) { Toast.Show("Không thể lưu vai trò", ex.Message, ToastVariant.Error); }
+    }
+
+    private void Archive(Role role)
+    {
+        if (!Guard.CanDo("SCR_ORG_ROLES:DELETE", "lưu trữ vai trò"))
+        {
+            return;
+        }
+
+        try
+        {
+            Store.ArchiveRole(role.RoleId);
+            Toast.Show("Đã lưu trữ vai trò", role.Name, ToastVariant.Success);
+        }
+        catch (Exception ex) { Toast.Show("Không thể lưu trữ vai trò", ex.Message, ToastVariant.Error); }
+    }
+
+    private static string LookupStatus(string status)
+        => MedLookups.RecordStatuses.FirstOrDefault(s => s.Code == status)?.Name ?? status;
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+}

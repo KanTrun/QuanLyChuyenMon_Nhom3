@@ -1,0 +1,232 @@
+@inherits LayoutComponentBase
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject ICurrentUserContext UserContext
+@inject NavigationManager Navigation
+@inject LoadingService Loading
+@inject BrowserSessionService BrowserSession
+@inject NavGate Gate
+@inject IJSRuntime JS
+@implements IDisposable
+
+<RealtimeDataRefreshBridge />
+
+@if (UserContext.CurrentUser is null)
+{
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;">
+        <p>Đang chuyển hướng đến trang đăng nhập...</p>
+    </div>
+}
+else
+{
+<div class="admin-shell persona-shell" data-mobile-menu="@(_mobileMenuOpen ? "open" : "closed")">
+    @if (_mobileMenuOpen)
+    {
+        <div class="persona-sidebar-overlay" @onclick="CloseMobileMenu" aria-hidden="true"></div>
+    }
+    <aside class="admin-sidebar persona-sidebar" aria-label="Điều hướng persona">
+        <div class="admin-sidebar-brand">
+            <div class="admin-sidebar-brand-mark" aria-hidden="true"><img src="/brand/logo-hos.jpg" alt="" /></div>
+            <div class="admin-sidebar-brand-text">
+                <span class="admin-sidebar-brand-name">QLCM Pro</span>
+                <span class="admin-sidebar-brand-caption">@_currentUserName</span>
+            </div>
+        </div>
+
+        <nav class="admin-sidebar-nav" aria-label="Cổng nghiệp vụ">
+            @foreach (var link in AuthorizedNavLinks)
+            {
+                <NavLink class="admin-nav-link" ActiveClass="is-active" Match="NavLinkMatch.Prefix" href="@link.Url" @onclick="CloseMobileMenu">
+                    <span class="admin-nav-icon" aria-hidden="true">●</span>
+                    <span class="admin-nav-label">@link.Label</span>
+                </NavLink>
+            }
+        </nav>
+
+        <div class="admin-sidebar-footer">
+            <a class="admin-nav-link" href="@Gate.GetDisplayRoute(AdminHomeRoute)">
+                <span class="admin-nav-icon" aria-hidden="true">←</span>
+                <span class="admin-nav-label">Quay lại quản trị</span>
+            </a>
+            <button type="button" class="admin-nav-link" @onclick="HandleLogout" style="border:none;background:none;cursor:pointer;width:100%;text-align:left;">
+                <span class="admin-nav-icon" aria-hidden="true">⏻</span>
+                <span class="admin-nav-label">Đăng xuất</span>
+            </button>
+            <span class="admin-sidebar-version" aria-label="Phiên bản v2.0">v2.0</span>
+        </div>
+    </aside>
+
+    <div class="admin-main-column">
+        <header class="admin-topbar" role="banner">
+            <div class="admin-topbar-left">
+                <button type="button"
+                        class="admin-topbar-icon-button persona-menu-toggle"
+                        aria-label="Mở menu điều hướng"
+                        title="Menu"
+                        @onclick="ToggleMobileMenu">
+                    <span aria-hidden="true">☰</span>
+                </button>
+                <nav class="admin-breadcrumb" aria-label="Đường dẫn">
+                    <span class="admin-breadcrumb-current">@_currentUserName</span>
+                </nav>
+            </div>
+            <div class="admin-topbar-right">
+                <span class="persona-topbar-user">@_currentUserName</span>
+            </div>
+        </header>
+
+        <main class="admin-content" id="main-content">
+            @if (_isAuthorized)
+            {
+                @Body
+            }
+            else
+            {
+                <div class="admin-empty" style="min-height:50vh;">
+                    <div class="admin-empty-title">Không có quyền truy cập</div>
+                    <div class="admin-empty-body">Tài khoản hiện tại không được phép mở chức năng này.</div>
+                </div>
+            }
+        </main>
+    </div>
+
+    <AdminLoadingOverlay IsVisible="Loading.IsLoading" Message="Loading.Message" />
+    <ResponsiveTableEnhancer />
+</div>
+}
+
+<div id="blazor-error-ui" data-nosnippet>
+    Đã xảy ra lỗi không mong muốn.
+    <a href="." class="reload">Tải lại</a>
+    <span class="dismiss">x</span>
+</div>
+
+@code {
+    private const string AdminHomeRoute = "/admin";
+    private string _currentUserName = "";
+    private bool _sessionRestoreAttempted;
+    private bool _isAuthorized = true;
+    private bool _mobileMenuOpen;
+
+    private record NavLink(string Label, string Url);
+
+    private static readonly NavLink[] _navLinks =
+    [
+        new("Phê duyệt", "/phe-duyet"),
+        new("Quy trình", "/quy-trinh-pro"),
+        new("Tài nguyên", "/tai-nguyen"),
+        new("Điều phối", "/dieu-phoi"),
+        new("Phác đồ", "/phac-do-pro"),
+        new("Lâm sàng", "/lam-sang"),
+        new("Thông báo", "/thong-bao"),
+    ];
+
+    protected override void OnInitialized()
+    {
+        UserContext.StateChanged += OnUserChanged;
+        Loading.StateChanged += OnLoadingChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+
+        if (UserContext.CurrentUser is not null)
+        {
+            _sessionRestoreAttempted = true;
+            RefreshUser();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("qlcmShell.initResponsiveTables");
+            }
+            catch (JSDisconnectedException) { }
+            catch (Exception) { }
+        }
+
+        if (!firstRender || _sessionRestoreAttempted)
+        {
+            return;
+        }
+
+        _sessionRestoreAttempted = true;
+        try
+        {
+            var restored = await BrowserSession.RestoreCurrentUserAsync();
+            if (!restored.IsAuthenticated && UserContext.CurrentUser is null)
+            {
+                Navigation.NavigateTo(GetLoginRoute(restored.Status), forceLoad: false);
+                return;
+            }
+
+            RefreshUser();
+            StateHasChanged();
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception)
+        {
+            Navigation.NavigateTo(GetLoginRoute(BrowserSessionRestoreStatus.MissingOrInvalid), forceLoad: false);
+        }
+    }
+
+    private void OnUserChanged() => InvokeAsync(() => { RefreshUser(); StateHasChanged(); });
+
+    private void OnLoadingChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+        => InvokeAsync(() => { _mobileMenuOpen = false; EvaluateRouteAccess(); StateHasChanged(); });
+
+    private void ToggleMobileMenu() => _mobileMenuOpen = !_mobileMenuOpen;
+
+    private void CloseMobileMenu()
+    {
+        if (_mobileMenuOpen)
+        {
+            _mobileMenuOpen = false;
+        }
+    }
+
+    private void RefreshUser()
+    {
+        var user = UserContext.CurrentUser;
+        _currentUserName = user?.FullName ?? "Chưa đăng nhập";
+        EvaluateRouteAccess();
+    }
+
+    private IEnumerable<NavLink> AuthorizedNavLinks => _navLinks.Where(link => Gate.CanAccess(link.Url));
+
+    private void EvaluateRouteAccess()
+    {
+        if (UserContext.CurrentUser is null)
+        {
+            _isAuthorized = false;
+            return;
+        }
+
+        var currentRoute = "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].TrimStart('/');
+        _isAuthorized = Gate.CanAccess(currentRoute);
+    }
+
+    private async Task HandleLogout()
+    {
+        await BrowserSession.SignOutAsync();
+        Navigation.NavigateTo("/login", forceLoad: false);
+    }
+
+    private static string GetLoginRoute(BrowserSessionRestoreStatus status) => status switch
+    {
+        BrowserSessionRestoreStatus.Expired => "/login?reason=expired",
+        BrowserSessionRestoreStatus.ReplacedByNewLogin => "/login?reason=replaced",
+        BrowserSessionRestoreStatus.UserUnavailable => "/login?reason=disabled",
+        _ => "/login"
+    };
+
+    public void Dispose()
+    {
+        UserContext.StateChanged -= OnUserChanged;
+        Loading.StateChanged -= OnLoadingChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}

@@ -1,0 +1,319 @@
+@using System.Text.Json
+@inject IAdminNavigationState NavState
+@inject IChatbotService Chatbot
+@inject IUserPreferencesService Preferences
+@inject IConfirmDialogService Confirm
+@inject IToastService Toasts
+@inject NavGate Gate
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
+@if (NavState.IsChatbotOpen)
+{
+    <section class="chatbot-panel" role="dialog" aria-label="Trợ lý AI QLCM Pro" aria-modal="false">
+        <header class="chatbot-header">
+            <span class="chatbot-avatar" aria-hidden="true">AI</span>
+            <div class="chatbot-header-text">
+                <span class="chatbot-title">Trợ lý QLCM AI</span>
+                <span class="chatbot-subtitle">@Chatbot.ProviderLabel · @Preferences.Current.AiModel</span>
+            </div>
+            <div class="chatbot-header-actions">
+                <button type="button" class="chatbot-icon-button" aria-label="Xóa hội thoại" title="Xóa hội thoại" @onclick="OnClearAsync">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                    </svg>
+                </button>
+                <button type="button" class="chatbot-icon-button" aria-label="Thu nhỏ trợ lý" title="Thu nhỏ" @onclick="OnClose">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="chatbot-messages" id="@MessagesContainerId" @onscroll="OnMessagesScroll">
+            @foreach (var message in Chatbot.Messages)
+            {
+                <MessageBubble Message="message" />
+            }
+        </div>
+
+        @if (_showNewChip)
+        {
+            <button type="button" class="chatbot-newchip" @onclick="ScrollToBottomAsync">
+                Tin nhắn mới ↓
+            </button>
+        }
+
+        <div class="chatbot-quick-actions" aria-label="Hành động nhanh">
+            <button type="button" @onclick='() => UsePrompt("Tóm tắt quy trình đăng ký tài khoản đến tạo hồ sơ lâm sàng")'>Quy trình</button>
+            <button type="button" @onclick="OpenClinicalDraftAsync">Tạo hồ sơ</button>
+            <button type="button" @onclick='() => NavigateSafe("/admin/phac-do")'>Phác đồ</button>
+        </div>
+
+        <form class="chatbot-composer" @onsubmit="OnSendAsync" @onsubmit:preventDefault>
+            <textarea id="@TextareaId"
+                      class="chatbot-textarea"
+                      rows="1"
+                      maxlength="2000"
+                      placeholder="Nhập câu hỏi cho trợ lý..."
+                      aria-label="Nội dung câu hỏi"
+                      @bind="_draft"
+                      @bind:event="oninput"
+                      @onkeydown="OnComposerKeyDown"></textarea>
+            <div class="chatbot-composer-actions">
+                <span class="chatbot-hint">Enter để gửi · Shift+Enter xuống dòng</span>
+                @if (Chatbot.IsStreaming)
+                {
+                    <button type="button" class="chatbot-stop" @onclick="OnCancelAsync">Dừng</button>
+                }
+                else
+                {
+                    <button type="submit" class="chatbot-send" disabled="@(string.IsNullOrWhiteSpace(_draft))">Gửi</button>
+                }
+            </div>
+        </form>
+    </section>
+}
+
+@code {
+    private const string MessagesContainerId = "qlcm-chatbot-messages";
+    private const string TextareaId = "qlcm-chatbot-textarea";
+    private const string MessagesSelector = "#" + MessagesContainerId;
+    private const string TextareaSelector = "#" + TextareaId;
+
+    private string _draft = string.Empty;
+    private bool _showNewChip;
+    private bool _stickToBottom = true;
+    private bool _forceScrollToBottom;
+    private bool _hasPendingChatbotUpdate;
+    private bool _wasOpen;
+
+    protected override void OnInitialized()
+    {
+        NavState.StateChanged += OnStateChanged;
+        Chatbot.StateChanged += OnChatbotChanged;
+        _wasOpen = NavState.IsChatbotOpen;
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnChatbotChanged()
+    {
+        _hasPendingChatbotUpdate = true;
+        if (NavState.IsChatbotOpen && !_stickToBottom)
+        {
+            _showNewChip = true;
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!NavState.IsChatbotOpen)
+        {
+            _wasOpen = false;
+            return;
+        }
+
+        var openingNow = !_wasOpen;
+        _wasOpen = true;
+        var hasPendingChatbotUpdate = _hasPendingChatbotUpdate;
+        _hasPendingChatbotUpdate = false;
+
+        if (openingNow)
+        {
+            await TryFocusAsync();
+            _stickToBottom = true;
+            _showNewChip = false;
+        }
+
+        if (firstRender || openingNow || _forceScrollToBottom)
+        {
+            _forceScrollToBottom = false;
+            await SafeInvokeAsync("qlcmShell.scrollToBottom", MessagesSelector, false);
+        }
+        else if (_stickToBottom)
+        {
+            var followed = await SafeInvokeBoolAsync("qlcmShell.scrollToBottomIfPinned", MessagesSelector, 24, false);
+            if (!followed)
+            {
+                _stickToBottom = false;
+                if (hasPendingChatbotUpdate && !_showNewChip)
+                {
+                    _showNewChip = true;
+                    StateHasChanged();
+                }
+            }
+        }
+
+        await SafeInvokeAsync("qlcmShell.autoGrowTextarea", TextareaSelector, 5);
+    }
+
+    private async Task OnMessagesScroll()
+    {
+        var atBottom = await SafeInvokeBoolAsync("qlcmShell.isAtBottom", MessagesSelector, 24);
+        _stickToBottom = atBottom;
+        if (atBottom && _showNewChip)
+        {
+            _showNewChip = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ScrollToBottomAsync()
+    {
+        _stickToBottom = true;
+        _showNewChip = false;
+        await SafeInvokeAsync("qlcmShell.scrollToBottom", MessagesSelector, false);
+    }
+
+    private async Task OnSendAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_draft) || Chatbot.IsStreaming)
+        {
+            return;
+        }
+        var text = _draft;
+        _draft = string.Empty;
+        _stickToBottom = true;
+        _forceScrollToBottom = true;
+        _showNewChip = false;
+        StateHasChanged();
+        await SafeInvokeAsync("qlcmShell.autoGrowTextarea", TextareaSelector, 5);
+        await Chatbot.SendAsync(text, CancellationToken.None);
+    }
+
+    private async Task OnComposerKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && !args.ShiftKey)
+        {
+            // Sending happens via the form submit handler; we just need to
+            // prevent the newline from being inserted into the textarea.
+            // @onsubmit:preventDefault handles the rest.
+            await OnSendAsync();
+        }
+    }
+
+    private async Task OnCancelAsync() => await Chatbot.CancelAsync();
+
+    private void UsePrompt(string prompt)
+    {
+        _draft = prompt;
+    }
+
+    private async Task OpenClinicalDraftAsync()
+    {
+        var nonce = Guid.NewGuid().ToString("N");
+        var payload = JsonSerializer.Serialize(new
+        {
+            source = "chatbot",
+            applicationStatus = "draft",
+            patientName = "",
+            patientCode = "",
+            encounterCode = "",
+            diagnosisCode = ""
+        });
+
+        if (!ChatActionParser.TryCreate(ChatActionKind.NavigateWithDraft, "Tạo hồ sơ", "/admin/lam-sang", nonce, out var action))
+        {
+            return;
+        }
+        if (!Gate.CanAccess(action.Route))
+        {
+            Toasts.Show("Không có quyền truy cập", "Tài khoản hiện tại không thể mở trang lâm sàng.", ToastVariant.Warning);
+            return;
+        }
+
+        var stored = await SafeInvokeWithResultAsync<bool>("qlcmShell.setSessionJson", $"draft:{nonce}", payload);
+        if (stored != true)
+        {
+            return;
+        }
+
+        NavState.CloseChatbot();
+        Navigation.NavigateTo($"{Gate.GetDisplayRoute(action.Route)}?draft_nonce={Uri.EscapeDataString(nonce)}");
+    }
+
+    private void NavigateSafe(string route)
+    {
+        if (!ChatActionParser.TryCreate(ChatActionKind.Navigate, route, route, null, out var action))
+        {
+            return;
+        }
+        if (!Gate.CanAccess(action.Route))
+        {
+            Toasts.Show("Không có quyền truy cập", "Tài khoản hiện tại không thể mở trang này.", ToastVariant.Warning);
+            return;
+        }
+
+        NavState.CloseChatbot();
+        Navigation.NavigateTo(Gate.GetDisplayRoute(action.Route));
+    }
+
+    private async Task OnClearAsync()
+    {
+        var ok = await Confirm.ShowAsync(
+            "Xóa hội thoại?",
+            "Toàn bộ tin nhắn hiện tại sẽ được xóa, chỉ giữ lại lời chào mặc định.",
+            confirmText: "Xóa hội thoại");
+        if (!ok) return;
+        await Chatbot.ClearAsync();
+        _draft = string.Empty;
+        _stickToBottom = true;
+        _forceScrollToBottom = true;
+        _showNewChip = false;
+    }
+
+    private void OnClose()
+    {
+        NavState.CloseChatbot();
+    }
+
+    private async Task TryFocusAsync()
+    {
+        await SafeInvokeAsync("qlcmShell.focusElement", TextareaSelector);
+    }
+
+    private async ValueTask SafeInvokeAsync(string identifier, params object?[] args)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync(identifier, args);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
+    }
+
+    private async ValueTask<T?> SafeInvokeWithResultAsync<T>(string identifier, params object?[] args)
+    {
+        try
+        {
+            return await JS.InvokeAsync<T>(identifier, args);
+        }
+        catch (JSDisconnectedException) { return default; }
+        catch (Exception) { return default; }
+    }
+
+    private async ValueTask<bool> SafeInvokeBoolAsync(string identifier, params object?[] args)
+    {
+        try
+        {
+            return await JS.InvokeAsync<bool>(identifier, args);
+        }
+        catch (JSDisconnectedException) { return true; }
+        catch (Exception) { return true; }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        NavState.StateChanged -= OnStateChanged;
+        Chatbot.StateChanged -= OnChatbotChanged;
+        return ValueTask.CompletedTask;
+    }
+}

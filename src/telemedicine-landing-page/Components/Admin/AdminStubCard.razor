@@ -1,0 +1,37 @@
+@* Shared "đang xây dựng" placeholder used by every FEAT-002 stub page. *@
+
+<section class="admin-stub">
+    <header class="admin-stub-head">
+        <div>
+            <span class="admin-stub-eyebrow">@Eyebrow</span>
+            <h1 class="admin-stub-title">@Title</h1>
+            @if (!string.IsNullOrEmpty(Subtitle))
+            {
+                <p class="admin-stub-subtitle">@Subtitle</p>
+            }
+        </div>
+        <a class="admin-btn admin-btn-ghost" href="/admin">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
+            Quay lại Tổng quan
+        </a>
+    </header>
+
+    <article class="admin-stub-card">
+        <div class="admin-stub-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                <path d="M12 8v4l3 2" />
+                <circle cx="12" cy="12" r="9" />
+            </svg>
+        </div>
+        <div class="admin-stub-card-body">
+            <h2 class="admin-stub-card-title">Tính năng đang được hoàn thiện</h2>
+            <p class="admin-stub-card-text">Vui lòng quay lại trong các bản phát hành tiếp theo. Đội ngũ phát triển đang triển khai phân hệ này theo lộ trình QLCM Pro.</p>
+        </div>
+    </article>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Eyebrow { get; set; } = "Đang xây dựng";
+    [Parameter] public string? Subtitle { get; set; }
+}

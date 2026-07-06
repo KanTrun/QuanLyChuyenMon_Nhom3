@@ -1,0 +1,97 @@
+@inject IToastService Toasts
+@implements IDisposable
+
+<div class="admin-toast-host" aria-live="polite" aria-atomic="true">
+    @foreach (var toast in Toasts.Active)
+    {
+        <div class="admin-toast @VariantClass(toast.Variant)" role="status">
+            <span class="admin-toast-icon" aria-hidden="true">@VariantIcon(toast.Variant)</span>
+            <div class="admin-toast-text">
+                <span class="admin-toast-title">@toast.Title</span>
+                @if (!string.IsNullOrEmpty(toast.Body))
+                {
+                    <span class="admin-toast-body">@toast.Body</span>
+                }
+            </div>
+            <button type="button" class="admin-toast-close" aria-label="Đóng" @onclick="() => Toasts.Dismiss(toast.Id)">×</button>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly Dictionary<Guid, CancellationTokenSource> _timers = new();
+    private const int AutoDismissMs = 4000;
+
+    protected override void OnInitialized()
+    {
+        Toasts.StateChanged += OnStateChanged;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // Schedule auto-dismiss for any toast we haven't already seen.
+        foreach (var toast in Toasts.Active)
+        {
+            if (_timers.ContainsKey(toast.Id)) continue;
+            var cts = new CancellationTokenSource();
+            _timers[toast.Id] = cts;
+            _ = ScheduleDismissAsync(toast.Id, cts.Token);
+        }
+    }
+
+    private async Task ScheduleDismissAsync(Guid id, CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(AutoDismissMs, token);
+            if (!token.IsCancellationRequested)
+            {
+                Toasts.Dismiss(id);
+            }
+        }
+        catch (TaskCanceledException) { }
+    }
+
+    private void OnStateChanged()
+    {
+        // Drop timers for toasts that no longer exist.
+        var live = Toasts.Active.Select(t => t.Id).ToHashSet();
+        foreach (var pair in _timers.ToList())
+        {
+            if (!live.Contains(pair.Key))
+            {
+                pair.Value.Cancel();
+                pair.Value.Dispose();
+                _timers.Remove(pair.Key);
+            }
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    private static string VariantClass(ToastVariant v) => v switch
+    {
+        ToastVariant.Success => "is-success",
+        ToastVariant.Warning => "is-warning",
+        ToastVariant.Error => "is-error",
+        _ => "is-info",
+    };
+
+    private static string VariantIcon(ToastVariant v) => v switch
+    {
+        ToastVariant.Success => "✓",
+        ToastVariant.Warning => "!",
+        ToastVariant.Error => "×",
+        _ => "i",
+    };
+
+    public void Dispose()
+    {
+        Toasts.StateChanged -= OnStateChanged;
+        foreach (var pair in _timers)
+        {
+            pair.Value.Cancel();
+            pair.Value.Dispose();
+        }
+        _timers.Clear();
+    }
+}

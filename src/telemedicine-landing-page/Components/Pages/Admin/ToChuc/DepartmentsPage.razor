@@ -1,0 +1,326 @@
+@page "/admin/to-chuc/khoa-phong"
+@layout AdminLayout
+@using Microsoft.Data.SqlClient
+@using Microsoft.EntityFrameworkCore
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@using Dept = TelemedicineLandingPage.Models.Admin.Sql.Department
+@inject IMedDataStore Store
+@inject IToastService Toast
+@inject AdminActionGuard Guard
+@implements IDisposable
+
+<PageTitle>Khoa/Phòng | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Tổ chức</span>
+            <h1 class="admin-page-title">Quản lý khoa/phòng</h1>
+            <p class="admin-page-subtitle">Cấu trúc cây tổ chức, di chuyển và lưu trữ đơn vị.</p>
+        </div>
+        <button class="admin-btn admin-btn-primary" @onclick="OpenCreate">Thêm khoa/phòng</button>
+    </header>
+
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Bộ lọc lưu trữ</label>
+            <select class="admin-select" @bind="_statusFilter" @bind:after="StateHasChanged">
+                <option value="active">Đang hoạt động (@ActiveDepartmentCount)</option>
+                <option value="archived">Đã lưu trữ (@ArchivedDepartmentCount)</option>
+                <option value="all">Tất cả khoa/phòng (@Store.Departments.Count)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="admin-panel" style="padding:16px;">
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Mã</th>
+                        <th>Khoa/phòng</th>
+                        <th>Đơn vị cha</th>
+                        <th>Cấp</th>
+                        <th>Trạng thái</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in FlattenDepartments())
+                    {
+                        <tr>
+                            <td class="admin-table-cell-muted">@row.Department.Code</td>
+                            <td class="admin-table-cell-strong">
+                                <span style="display:inline-block;width:@(row.Depth * 20)px"></span>@row.Department.Name
+                            </td>
+                            <td>@GetDeptName(row.Department.ParentDepartmentId)</td>
+                            <td>@row.Depth</td>
+                            <td><AdminBadge Tone="@(row.Department.Status == "active" ? "tone-success" : "tone-muted")">@LookupStatus(row.Department.Status)</AdminBadge></td>
+                            <td style="text-align:right;">
+                                <div class="admin-row-actions">
+                                    <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OpenEdit(row.Department)">Sửa</button>
+                                    @if (row.Department.Status == "active")
+                                    {
+                                        <button class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => Archive(row.Department.DepartmentId)">Lưu trữ</button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" Title="@_drawerTitle">
+        <ChildContent>
+            <div class="admin-form-group">
+                <label class="admin-label is-required">Mã khoa/phòng</label>
+                <input class="admin-input" @bind="_editCode" placeholder="VD: KHOA-TIM" />
+            </div>
+            <div class="admin-form-group">
+                <label class="admin-label is-required">Tên khoa/phòng</label>
+                <input class="admin-input" @bind="_editName" placeholder="VD: Khoa Tim mạch" />
+            </div>
+            <div class="admin-form-group">
+                <label class="admin-label">Đơn vị cha</label>
+                <select class="admin-select" @bind="_editParentId">
+                    <option value="">— Gốc —</option>
+                    @foreach (var d in GetAvailableParents())
+                    {
+                        <option value="@d.DepartmentId">@DepartmentOptionLabel(d)</option>
+                    }
+                </select>
+            </div>
+        </ChildContent>
+        <FooterContent>
+            <button class="admin-btn admin-btn-primary" @onclick="Save">Lưu</button>
+            <button class="admin-btn admin-btn-ghost" @onclick="() => _drawerOpen = false">Hủy</button>
+        </FooterContent>
+    </AdminDrawer>
+</section>
+
+@code {
+    private bool _drawerOpen;
+    private string _drawerTitle = "Thêm khoa/phòng";
+    private Guid? _editingDepartmentId;
+    private string _editCode = "";
+    private string _editName = "";
+    private string _editParentId = "";
+    private string _statusFilter = "active";
+    private int ActiveDepartmentCount => Store.Departments.Count(d => d.Status == "active");
+    private int ArchivedDepartmentCount => Store.Departments.Count(d => d.Status != "active");
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private IEnumerable<DepartmentRow> FlattenDepartments()
+    {
+        var all = Store.Departments
+            .Where(d => _statusFilter == "all" || (_statusFilter == "archived" ? d.Status != "active" : d.Status == "active"))
+            .OrderBy(d => d.Code)
+            .ToList();
+        var visibleIds = all.Select(d => d.DepartmentId).ToHashSet();
+        foreach (var root in all.Where(d => d.ParentDepartmentId is null || !visibleIds.Contains(d.ParentDepartmentId.Value)))
+        {
+            foreach (var row in FlattenFrom(root, 0, all))
+            {
+                yield return row;
+            }
+        }
+    }
+
+    private static IEnumerable<DepartmentRow> FlattenFrom(Dept department, int depth, IReadOnlyList<Dept> all)
+    {
+        yield return new DepartmentRow(department, depth);
+        foreach (var child in all.Where(d => d.ParentDepartmentId == department.DepartmentId).OrderBy(d => d.Code))
+        {
+            foreach (var row in FlattenFrom(child, depth + 1, all))
+            {
+                yield return row;
+            }
+        }
+    }
+
+    private void OpenCreate()
+    {
+        if (!Guard.CanDo("SCR_ORG_DEPARTMENTS:CREATE", "thêm khoa/phòng"))
+        {
+            return;
+        }
+
+        _drawerTitle = "Thêm khoa/phòng";
+        _editingDepartmentId = null;
+        _editCode = "";
+        _editName = "";
+        _editParentId = "";
+        _drawerOpen = true;
+    }
+
+    private void OpenEdit(Dept dept)
+    {
+        if (!Guard.CanDo("SCR_ORG_DEPARTMENTS:UPDATE", "sửa khoa/phòng"))
+        {
+            return;
+        }
+
+        _drawerTitle = "Sửa khoa/phòng";
+        _editingDepartmentId = dept.DepartmentId;
+        _editCode = dept.Code;
+        _editName = dept.Name;
+        _editParentId = dept.ParentDepartmentId?.ToString() ?? "";
+        _drawerOpen = true;
+    }
+
+    private void Archive(Guid deptId)
+    {
+        if (!Guard.CanDo("SCR_ORG_DEPARTMENTS:DELETE", "lưu trữ khoa/phòng"))
+        {
+            return;
+        }
+
+        try
+        {
+            Store.ArchiveDepartment(deptId);
+            Toast.Show("Đã lưu trữ khoa/phòng", "Đơn vị đã được cập nhật.", ToastVariant.Success);
+        }
+        catch (MedDomainException ex)
+        {
+            Toast.Show("Không thể lưu trữ khoa/phòng", ex.Message, ToastVariant.Error);
+        }
+        catch (DbUpdateException ex)
+        {
+            Toast.Show("Không thể lưu trữ khoa/phòng", FriendlyDatabaseMessage(ex), ToastVariant.Error);
+        }
+    }
+
+    private void Save()
+    {
+        var permission = _editingDepartmentId.HasValue ? "SCR_ORG_DEPARTMENTS:UPDATE" : "SCR_ORG_DEPARTMENTS:CREATE";
+        var action = _editingDepartmentId.HasValue ? "sửa khoa/phòng" : "thêm khoa/phòng";
+        if (!Guard.CanDo(permission, action))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_editCode) || string.IsNullOrWhiteSpace(_editName))
+        {
+            Toast.Show("Thiếu thông tin", "Vui lòng nhập mã và tên khoa/phòng.", ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            var normalizedCode = _editCode.Trim().ToUpperInvariant();
+            var normalizedName = _editName.Trim();
+            Guid? parentId = string.IsNullOrEmpty(_editParentId) ? null : Guid.Parse(_editParentId);
+            if (parentId == _editingDepartmentId)
+            {
+                Toast.Show("Đơn vị cha chưa hợp lệ", "Khoa/phòng không thể là đơn vị cha của chính nó.", ToastVariant.Warning);
+                return;
+            }
+
+            var duplicate = Store.Departments.Any(d =>
+                d.DepartmentId != _editingDepartmentId &&
+                string.Equals(d.Code, normalizedCode, StringComparison.OrdinalIgnoreCase));
+            if (duplicate)
+            {
+                Toast.Show("Mã khoa/phòng đã tồn tại", "Vui lòng dùng mã khác để tránh trùng trong cây tổ chức.", ToastVariant.Warning);
+                return;
+            }
+
+            var dept = new Dept
+            {
+                DepartmentId = _editingDepartmentId ?? Guid.NewGuid(),
+                Code = normalizedCode,
+                Name = normalizedName,
+                ParentDepartmentId = parentId
+            };
+
+            if (_editingDepartmentId.HasValue)
+            {
+                var current = Store.Departments.First(d => d.DepartmentId == _editingDepartmentId.Value);
+                Store.UpdateDepartment(dept with
+                {
+                    Status = current.Status,
+                    CreatedAt = current.CreatedAt
+                });
+            }
+            else
+            {
+                Store.AddDepartment(dept);
+            }
+            _drawerOpen = false;
+            Toast.Show("Đã lưu khoa/phòng", "Thay đổi đã được cập nhật.", ToastVariant.Success);
+        }
+        catch (MedDomainException ex)
+        {
+            Toast.Show("Không thể lưu khoa/phòng", ex.Message, ToastVariant.Error);
+        }
+        catch (DbUpdateException ex)
+        {
+            Toast.Show("Không thể lưu khoa/phòng", FriendlyDatabaseMessage(ex), ToastVariant.Error);
+        }
+        catch (SqlException ex)
+        {
+            Toast.Show("Không thể lưu khoa/phòng", FriendlySqlMessage(ex.Number, ex.Message), ToastVariant.Error);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Toast.Show("Không thể lưu khoa/phòng", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private IEnumerable<Dept> GetAvailableParents()
+    {
+        var active = Store.Departments.Where(d => d.Status == "active");
+        if (!_editingDepartmentId.HasValue)
+        {
+            return active.OrderBy(d => d.Code);
+        }
+
+        var blocked = Store.DepartmentClosure
+            .Where(e => e.AncestorDepartmentId == _editingDepartmentId.Value)
+            .Select(e => e.DescendantDepartmentId)
+            .ToHashSet();
+
+        return active
+            .Where(d => !blocked.Contains(d.DepartmentId))
+            .OrderBy(d => d.Code);
+    }
+
+    private string GetDeptName(Guid? deptId)
+        => deptId.HasValue ? DepartmentOptionLabel(Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)) : "—";
+
+    private string DepartmentOptionLabel(Dept? dept)
+        => AdminBusinessDisplay.DepartmentLabel(dept, Store.Departments);
+
+    private static string LookupStatus(string status)
+        => AdminBusinessDisplay.RecordStatus(status);
+
+    private static string FriendlyDatabaseMessage(DbUpdateException ex)
+    {
+        var sql = ex.GetBaseException() as SqlException;
+        return sql is null
+            ? "Dữ liệu chưa hợp lệ, vui lòng kiểm tra lại thông tin."
+            : FriendlySqlMessage(sql.Number, sql.Message);
+    }
+
+    private static string FriendlySqlMessage(int number, string fallback) => number switch
+    {
+        2627 or 2601 => "Mã khoa/phòng đã tồn tại. Vui lòng dùng mã khác.",
+        547 => "Đơn vị cha không tồn tại hoặc đang bị ràng buộc bởi dữ liệu khác.",
+        50020 => "Cấu trúc cây tổ chức chưa hợp lệ.",
+        50021 => "Không thể lưu trữ khoa/phòng còn đơn vị con đang hoạt động.",
+        _ => string.IsNullOrWhiteSpace(fallback) ? "Dữ liệu chưa hợp lệ, vui lòng kiểm tra lại." : fallback
+    };
+
+    private sealed record DepartmentRow(Dept Department, int Depth);
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+}

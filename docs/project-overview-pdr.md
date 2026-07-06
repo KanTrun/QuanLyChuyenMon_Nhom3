@@ -1,9 +1,9 @@
 # Project Overview PDR
 
 ## Current Implementation Scope
-Repo hiện có một ứng dụng Blazor Web App cho trang chủ khám từ xa tại `src/telemedicine-landing-page`. Scope hiện tại là landing page nền cho hệ thống bệnh viện: hero tiếng Việt, preview tư vấn video, danh bạ bác sĩ chuyên khoa, theo dõi sức khỏe, CTA tải ứng dụng và cấu hình link qua `LandingPageLinks`.
+Repo hiện có một ứng dụng Blazor Web App cho QLCM Pro tại `src/telemedicine-landing-page`. Landing page khám từ xa cũ không còn là runtime surface của nhánh mới; route `/` hiển thị trang giới thiệu QLCM Pro trước login/register, còn luồng nghiệp vụ chính nằm ở `/admin` và các workspace QLCM.
 
-Landing page không lưu dữ liệu người bệnh, không có DB/CMS/API và chưa triển khai đặt lịch thật. Nếu mở rộng sang đặt lịch, hồ sơ bệnh án hoặc tư vấn video thật, cần bổ sung API C#, phân quyền server-side, audit và review tuân thủ dữ liệu y tế.
+Scope hiện tại là hệ thống quản lý chuyên môn bệnh viện: quy trình kỹ thuật, phân quyền, điều chỉnh quyền có hiệu lực tức thời/theo lịch, version quy trình/phác đồ, định mức tài nguyên, kiểm tra nguồn lực khi chỉ định kỹ thuật, phác đồ gợi ý theo ICD và audit/notification.
 
 ## Legacy Procedure Module Overview
 Module quản lý quy trình kỹ thuật chuyên môn dùng để chuẩn hóa quy trình nghiệp vụ bệnh viện, quản lý phân quyền theo vai trò, kiểm soát thao tác theo quy trình, version hóa tài liệu, liên kết định mức vật tư/thuốc/thiết bị, và hỗ trợ tra cứu phác đồ lâm sàng.
@@ -135,17 +135,11 @@ Phạm vi gồm 6 chủ đề chính:
 |---|---|
 | AI tự sinh phác đồ | Cần hội đồng chuyên môn và kiểm định y khoa |
 | Tự động trừ kho thực tế | Phụ thuộc phân hệ kho/dược hiện hữu |
-| Ký số pháp lý | Cần hạ tầng CA/chữ ký số |
+| Ký số qua nhà cung cấp bên ngoài | Không thuộc phạm vi; hệ thống chỉ dùng xác nhận nội bộ theo tài khoản và hash nội dung |
 | Tích hợp HIS/EMR cụ thể | Chưa có thông tin stack/API hiện tại |
 
 ## Acceptance Summary
 Module đạt yêu cầu khi admin cấu hình được quy trình và quyền, quy trình được ban hành theo version, người dùng bị giới hạn đúng vai trò, thao tác lệch quy trình bị cảnh báo/chặn, tồn kho được kiểm tra khi chỉ định kỹ thuật, phác đồ được gợi ý theo ICD, và mọi thay đổi quan trọng có audit log.
 
 ## Unresolved Questions
-| Question | Impact |
-|---|---|
-| Stack backend/frontend/database hiện tại là gì? | Cần để chuyển plan sang code thực tế |
-| Danh sách màn hình/chức năng hiện hữu gồm những mã nào? | Cần để ánh xạ quy trình và quyền |
-| Quy trình duyệt có 1 cấp hay nhiều cấp? | Ảnh hưởng workflow ban hành |
-| Khi lệch quy trình sẽ chặn cứng hay chỉ cảnh báo? | Ảnh hưởng runtime guard |
-| Tồn kho/dược/thiết bị đã có API nào? | Ảnh hưởng tích hợp F05 |
+None.

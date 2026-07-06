@@ -1,0 +1,246 @@
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin
+@inject IMedDataStore Store
+@inject ProcedureLifecycleService Lifecycle
+@inject ProcedureSignoffService Signoffs
+@inject ProcedureDocumentSnapshotService Snapshots
+@inject ICurrentUserContext UserContext
+@inject AdminActionGuard Guard
+
+@if (ShowHeader)
+{
+    <div class="procedure-history-panel-header">
+        <div>
+            <h3 class="admin-panel-title">@Title</h3>
+            @if (!string.IsNullOrWhiteSpace(Hint))
+            {
+                <p class="admin-panel-hint">@Hint</p>
+            }
+        </div>
+        @if (ShowFullPageLink && ProcedureId != Guid.Empty)
+        {
+            <a class="admin-btn admin-btn-sm admin-btn-ghost" href="@FullHistoryUrl">Mở trang lịch sử đầy đủ</a>
+        }
+    </div>
+}
+
+@if (Versions.Count == 0)
+{
+    <div class="admin-empty">
+        <div class="admin-empty-title">Chưa có phiên bản được lưu</div>
+        <div class="admin-empty-body">Hãy tạo hoặc cập nhật quy trình để sinh phiên bản đầu tiên.</div>
+    </div>
+}
+else
+{
+    <div class="procedure-version-timeline">
+        @foreach (var version in Versions)
+        {
+            var row = BuildVersionRow(version);
+            var isSelected = SelectedVersionId == version.ProcedureVersionId;
+            <article class="procedure-version-timeline-card @(isSelected ? "is-selected" : null) @(row.IsActive ? "is-active" : null)">
+                <div class="procedure-version-timeline-rail" aria-hidden="true">
+                    <span class="procedure-version-timeline-dot"></span>
+                </div>
+                <div class="procedure-version-timeline-body">
+                    <header class="procedure-version-timeline-head">
+                        <div class="procedure-version-timeline-title">
+                            <strong class="procedure-version-label">@(version.VersionLabel ?? $"v{version.VersionNo}")</strong>
+                            <AdminBadge Tone="@VersionTone(version.StatusCode)">@StatusLabel(version.StatusCode)</AdminBadge>
+                            @if (row.IsActive)
+                            {
+                                <span class="procedure-version-active-pill">Đang hiệu lực</span>
+                            }
+                        </div>
+                        <span class="admin-table-cell-muted">@AdminDateTimeDisplay.ShortDateTime(version.PublishedAt ?? version.SubmittedAt ?? version.CreatedAt)</span>
+                    </header>
+
+                    <p class="procedure-version-timeline-subtitle">@version.Title</p>
+
+                    <div class="procedure-version-timeline-stats">
+                        <div class="procedure-version-stat">
+                            <span class="procedure-version-stat-label">Người viết</span>
+                            <strong>@row.WriterSignedCount/@row.WriterRequiredCount đã ký</strong>
+                        </div>
+                        @if (ShowEffectiveColumns)
+                        {
+                            <div class="procedure-version-stat">
+                                <span class="procedure-version-stat-label">Hiệu lực</span>
+                                <strong>@row.EffectiveLabel</strong>
+                            </div>
+                        }
+                        @if (row.HasDiff)
+                        {
+                            <div class="procedure-version-stat">
+                                <span class="procedure-version-stat-label">So với bản trước</span>
+                                <strong>@row.DiffSummary</strong>
+                            </div>
+                        }
+                    </div>
+
+                    @if (row.WriterPreview.Count > 0)
+                    {
+                        <div class="procedure-version-signoff-preview">
+                            @foreach (var writer in row.WriterPreview)
+                            {
+                                <div class="procedure-version-signoff-chip @(writer.Signed ? "is-signed" : "is-pending")">
+                                    @if (!string.IsNullOrWhiteSpace(writer.SignatureImageDataUrl))
+                                    {
+                                        <img src="@writer.SignatureImageDataUrl" alt="" class="procedure-version-signoff-thumb" loading="lazy" />
+                                    }
+                                    <span>@writer.Name</span>
+                                    <small>@(writer.Signed ? writer.SignedAtLabel : "Chưa ký")</small>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <div class="procedure-version-actions">
+                        <button type="button"
+                                class="admin-btn admin-btn-sm @(isSelected ? "admin-btn-primary" : "admin-btn-ghost")"
+                                @onclick="() => SelectVersion(version)">
+                            Xem chi tiết
+                        </button>
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OnExport.InvokeAsync(version)">
+                            In/PDF
+                        </button>
+                        @if (row.CanRollback)
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => OnRollbackRequested.InvokeAsync(version)">
+                                Khôi phục hiệu lực
+                            </button>
+                        }
+                        @if (EnableSigning && CanSign(version, "writer"))
+                        {
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick='() => OnSignRequested.InvokeAsync((version, "writer"))'>Ký người viết</button>
+                        }
+                    </div>
+                </div>
+            </article>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public Guid ProcedureId { get; set; }
+    [Parameter] public Guid? SelectedVersionId { get; set; }
+    [Parameter] public EventCallback<Guid?> SelectedVersionIdChanged { get; set; }
+    [Parameter] public EventCallback<Sql.ProcedureVersion> OnExport { get; set; }
+    [Parameter] public EventCallback<Sql.ProcedureVersion> OnRollbackRequested { get; set; }
+    [Parameter] public EventCallback<Sql.ProcedureVersion> OnSubmitRequested { get; set; }
+    [Parameter] public EventCallback<Sql.ProcedureVersion> OnWithdrawRequested { get; set; }
+    [Parameter] public EventCallback<(Sql.ProcedureVersion Version, string Role)> OnSignRequested { get; set; }
+    [Parameter] public bool ShowHeader { get; set; } = true;
+    [Parameter] public string Title { get; set; } = "Lịch sử phiên bản (đã lưu)";
+    [Parameter] public string? Hint { get; set; } = "Mỗi lần cập nhật tạo phiên bản mới; phiên bản cũ vẫn được giữ nguyên trong danh sách.";
+    [Parameter] public bool ShowFullPageLink { get; set; }
+    [Parameter] public bool ShowEffectiveColumns { get; set; }
+    [Parameter] public bool EnableSigning { get; set; }
+    [Parameter] public bool EnableApproverSigning { get; set; }
+
+    private IReadOnlyList<Sql.ProcedureVersion> Versions => Store.ProcedureVersions
+        .Where(v => v.ProcedureId == ProcedureId)
+        .OrderByDescending(v => v.VersionNo)
+        .ToList();
+
+    private string FullHistoryUrl => $"/qlcm/quy-trinh/{ProcedureId}/lich-su";
+
+    private async Task SelectVersion(Sql.ProcedureVersion version)
+    {
+        await SelectedVersionIdChanged.InvokeAsync(version.ProcedureVersionId);
+    }
+
+    private VersionTimelineRow BuildVersionRow(Sql.ProcedureVersion version)
+    {
+        var snapshot = Snapshots.GetSnapshot(version.ProcedureVersionId);
+        var writers = snapshot.WriterAssignments.OrderBy(item => item.DisplayOrder).ToList();
+        var writerRequired = Math.Max(1, writers.Count > 0 ? writers.Count : version.RequiredWriterSignatures);
+        var writerPreview = writers.Select(writer =>
+        {
+            var signoff = Snapshots.GetWriterSignoffForDisplay(snapshot, writer.AssignedUserId);
+            return new WriterPreview(
+                writer.AssignedFullName ?? writer.AssignedUsername ?? writer.AssignedUserId.ToString(),
+                signoff is not null,
+                signoff is not null ? AdminDateTimeDisplay.ShortDateTime(signoff.SignedAt) : "—",
+                signoff?.SignatureImageDataUrl);
+        }).ToList();
+        var writerSigned = writerPreview.Count(item => item.Signed);
+
+        var diff = Store.ProcedureVersionDiffRecords.FirstOrDefault(item => item.ToVersionId == version.ProcedureVersionId);
+        var diffSummary = "—";
+        if (diff?.DiffJson is { Length: > 0 } diffJson)
+        {
+            try
+            {
+                var node = System.Text.Json.Nodes.JsonNode.Parse(diffJson);
+                var meta = node?["metadata"]?.AsArray().Count(item => item?["changed"]?.GetValue<bool>() == true) ?? 0;
+                var added = node?["sections"]?["added"]?.AsArray().Count ?? 0;
+                var removed = node?["sections"]?["removed"]?.AsArray().Count ?? 0;
+                diffSummary = $"{meta} metadata • +{added}/-{removed} mục";
+            }
+            catch
+            {
+                diffSummary = "Có thay đổi";
+            }
+        }
+
+        var effectiveLabel = version.StatusCode == "active"
+            ? $"từ {AdminDateTimeDisplay.ShortDateTime(version.EffectiveFrom)}"
+            : version.EffectiveTo.HasValue
+                ? $"đến {AdminDateTimeDisplay.ShortDateTime(version.EffectiveTo)}"
+                : "—";
+
+        return new VersionTimelineRow(
+            version.StatusCode == "active",
+            writerSigned,
+            writerRequired,
+            writerPreview,
+            diff is not null,
+            diffSummary,
+            effectiveLabel,
+            CanRollback(version));
+    }
+
+    private bool CanRollback(Sql.ProcedureVersion version)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "khôi phục phiên bản"))
+            return false;
+
+        return Lifecycle.CanRollbackToVersion(version.ProcedureVersionId, out _);
+    }
+
+    private bool CanSign(Sql.ProcedureVersion version, string role)
+    {
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (role == "writer" && version.StatusCode == "draft")
+            return Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out _);
+        if (role == "checker" && version.StatusCode == "pending_approval")
+            return Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out _);
+        if (role == "approver" && EnableApproverSigning && version.StatusCode == "pending_approval")
+            return Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out _);
+        return false;
+    }
+
+    private static string StatusLabel(string status) => Sql.MedLookups.VersionStatuses.FirstOrDefault(s => s.Code == status)?.Name ?? status;
+
+    private static string VersionTone(string? status) => status switch
+    {
+        "active" => "tone-success",
+        "pending_approval" => "tone-warning",
+        "superseded" => "tone-muted",
+        "rejected" or "archived" => "tone-danger",
+        "draft" => "tone-muted",
+        _ => "tone-muted"
+    };
+
+    private sealed record WriterPreview(string Name, bool Signed, string SignedAtLabel, string? SignatureImageDataUrl);
+    private sealed record VersionTimelineRow(
+        bool IsActive,
+        int WriterSignedCount,
+        int WriterRequiredCount,
+        IReadOnlyList<WriterPreview> WriterPreview,
+        bool HasDiff,
+        string DiffSummary,
+        string EffectiveLabel,
+        bool CanRollback);
+}

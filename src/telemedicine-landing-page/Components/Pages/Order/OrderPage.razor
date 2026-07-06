@@ -1,0 +1,740 @@
+@page "/dieu-phoi"
+@layout AdminLayout
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@inject IMedDataStore Store
+@inject ICurrentUserContext UserContext
+@inject IToastService Toasts
+@inject AdminActionGuard Guard
+@inject AuditTrailService Audit
+@inject ITechnicalOrderWorkflowService OrderWorkflow
+@inject IInventoryAvailabilityService InventoryAvailability
+@implements IDisposable
+
+<PageTitle>Điều phối kỹ thuật | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Điều phối</span>
+            <h1 class="admin-page-title">Chỉ định kỹ thuật</h1>
+            <p class="admin-page-subtitle">Tạo chỉ định, kiểm tra nguồn lực, ghi nhận sử dụng thực tế và chuyển trạng thái thực hiện.</p>
+        </div>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="OpenCreate">Tạo chỉ định mới</button>
+    </header>
+
+    <div class="admin-filter-bar">
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Tìm kiếm</label>
+            <input class="admin-input" placeholder="Dịch vụ, bệnh nhân, mã lượt khám..." @bind="_search" @bind:after="ResetAndPaginate" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Trạng thái</label>
+            <select class="admin-select" @bind="_statusFilter" @bind:after="ResetAndPaginate">
+                <option value="">Tất cả</option>
+                @foreach (var status in Sql.MedLookups.OrderStatuses)
+                {
+                    <option value="@status.Code">@status.Name</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Khoa</label>
+            <select class="admin-select" @bind="_departmentFilter" @bind:after="ResetAndPaginate">
+                <option value="">Tất cả</option>
+                @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Name))
+                {
+                    <option value="@dept.DepartmentId">@dept.Name</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Dịch vụ</label>
+            <select class="admin-select" @bind="_serviceFilter" @bind:after="ResetAndPaginate">
+                <option value="">Tất cả</option>
+                @foreach (var service in Store.TechnicalServices.Where(s => s.Status == "active").OrderBy(s => s.Name))
+                {
+                    <option value="@service.TechnicalServiceId">@service.Name</option>
+                }
+            </select>
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Từ ngày</label>
+            <input class="admin-input" type="date" value="@_fromIso" @onchange="OnFromChanged" />
+        </div>
+        <div class="admin-filter-field">
+            <label class="admin-filter-label">Đến ngày</label>
+            <input class="admin-input" type="date" value="@_toIso" @onchange="OnToChanged" />
+        </div>
+    </div>
+
+    <AdminDataTable TItem="Sql.TechnicalOrder"
+                    Items="_pagedItems"
+                    ColumnCount="7"
+                    CurrentPage="_page"
+                    PageSize="_pageSize"
+                    TotalItems="_total"
+                    CurrentPageChanged="p => { _page = p; Paginate(); }">
+        <HeaderTemplate>
+            <th>Dịch vụ</th>
+            <th>Bệnh nhân</th>
+            <th>Lượt khám</th>
+            <th>Khoa chỉ định</th>
+            <th>Trạng thái</th>
+            <th>Ngày tạo</th>
+            <th></th>
+        </HeaderTemplate>
+        <RowTemplate Context="order">
+            <tr @onclick="() => OpenDetail(order)" style="cursor:pointer;">
+                <td>@GetServiceName(order.TechnicalServiceId)</td>
+                <td>@GetPatientName(order.PatientRefId)</td>
+                <td>@GetEncounterCode(order.EncounterRefId)</td>
+                <td>@GetDeptName(order.OrderingDepartmentId)</td>
+                <td><AdminBadge Tone="@OrderTone(order.OrderStatus)">@Lookup(Sql.MedLookups.OrderStatuses, order.OrderStatus)</AdminBadge></td>
+                <td>@AdminDateTimeDisplay.DateTime(order.OrderedAt)</td>
+                <td style="text-align:right;" @onclick:stopPropagation="true">
+                    <div class="admin-row-actions">
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => ScheduleOrder(order)">Lên lịch</button>
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" @onclick="() => StartOrder(order)">Bắt đầu</button>
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" @onclick="() => CompleteOrder(order)">Hoàn thành</button>
+                        <button type="button" class="admin-icon-btn is-danger" title="Hủy" @onclick="() => CancelOrder(order)">×</button>
+                    </div>
+                </td>
+            </tr>
+        </RowTemplate>
+    </AdminDataTable>
+</section>
+
+<AdminDrawer IsOpen="_drawerOpen" IsOpenChanged="v => _drawerOpen = v" SizeClass="admin-drawer-wide"
+             Eyebrow="Chỉ định"
+             Title="@(_selected is null ? string.Empty : GetServiceName(_selected.TechnicalServiceId))"
+             Subtitle="@(_selected is null ? null : $"{GetPatientName(_selected.PatientRefId)} • {Lookup(Sql.MedLookups.OrderStatuses, _selected.OrderStatus)}")">
+    <ChildContent>
+        @if (_selected is not null)
+        {
+            <dl class="admin-detail-grid">
+                <dt>Dịch vụ</dt>
+                <dd>@GetServiceName(_selected.TechnicalServiceId)</dd>
+                <dt>Bệnh nhân</dt>
+                <dd>@GetPatientName(_selected.PatientRefId)</dd>
+                <dt>Lượt khám</dt>
+                <dd>@GetEncounterCode(_selected.EncounterRefId)</dd>
+                <dt>Khoa chỉ định</dt>
+                <dd>@GetDeptName(_selected.OrderingDepartmentId)</dd>
+                <dt>Trạng thái</dt>
+                <dd><AdminBadge Tone="@OrderTone(_selected.OrderStatus)">@Lookup(Sql.MedLookups.OrderStatuses, _selected.OrderStatus)</AdminBadge></dd>
+            </dl>
+
+            <div class="admin-panel" style="padding:14px;">
+                <header class="admin-panel-head">
+                    <h3 class="admin-panel-title">Kiểm tra nguồn lực</h3>
+                    <button type="button" class="admin-btn admin-btn-ghost" @onclick="GenerateSnapshots">Tạo kiểm tra từ định mức</button>
+                </header>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Tài nguyên</th><th>Cần</th><th>Sẵn có</th><th>Đơn vị</th><th>Trạng thái</th><th>Thời điểm</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var snap in Store.ResourceAvailabilitySnapshots.Where(s => s.TechnicalOrderId == _selected.TechnicalOrderId).OrderByDescending(s => s.CheckedAt))
+                            {
+                                <tr>
+                                    <td>@GetResourceName(snap.ResourceId)</td>
+                                    <td>@snap.RequiredQuantity.ToString("0.##")</td>
+                                    <td>@(snap.AvailableQuantity?.ToString("0.##") ?? "—")</td>
+                                    <td>@LookupUnit(snap.UnitCode)</td>
+                                    <td><AdminBadge Tone="@AvailabilityTone(snap.AvailabilityStatus)">@Lookup(Sql.MedLookups.AvailabilityStatuses, snap.AvailabilityStatus)</AdminBadge></td>
+                                    <td>@AdminDateTimeDisplay.ShortDateTime(snap.CheckedAt)</td>
+                                </tr>
+                            }
+                            @if (!Store.ResourceAvailabilitySnapshots.Any(s => s.TechnicalOrderId == _selected.TechnicalOrderId))
+                            {
+                                <tr class="admin-table-empty-row"><td colspan="6"><div class="admin-empty"><div class="admin-empty-title">Chưa kiểm tra nguồn lực</div><div class="admin-empty-body">Bấm tạo kiểm tra để sinh snapshot từ định mức dịch vụ.</div></div></td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="admin-panel" style="padding:14px;">
+                <h3 class="admin-panel-title">Sử dụng thực tế</h3>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Tài nguyên</th><th>Số lượng</th><th>Đơn vị</th><th>Final</th><th>Lý do lệch</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var usage in Store.ActualResourceUsages.Where(u => u.TechnicalOrderId == _selected.TechnicalOrderId).OrderByDescending(u => u.CapturedAt))
+                            {
+                                <tr>
+                                    <td>@GetResourceName(usage.ResourceId)</td>
+                                    <td>@usage.ActualQuantity.ToString("0.##")</td>
+                                    <td>@LookupUnit(usage.UnitCode)</td>
+                                    <td>@(usage.IsFinal ? "Có" : "Không")</td>
+                                    <td>@(usage.VarianceReason ?? "—")</td>
+                                    <td style="text-align:right;"><button type="button" class="admin-icon-btn is-danger" @onclick="() => RemoveUsage(usage)">×</button></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="admin-form-grid" style="margin-top:14px;">
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Tài nguyên</label>
+                        <select class="admin-select" @bind="_usageResourceId" @bind:after="SyncUsageUnit">
+                            <option value="">Chọn tài nguyên</option>
+                            @foreach (var resource in ResourcesForSelectedService())
+                            {
+                                <option value="@resource.ResourceId">@resource.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Số lượng thực tế</label>
+                        <input class="admin-input" type="number" min="0" step="0.01" @bind="_usageQuantity" />
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Đơn vị</label>
+                        <select class="admin-select" @bind="_usageUnit">
+                            @foreach (var unit in UsageUnitOptions())
+                            {
+                                <option value="@unit.Code">@unit.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="admin-form-field">
+                        <label class="admin-form-field-label">Final</label>
+                        <label class="admin-check-row"><input type="checkbox" @bind="_usageFinal" /> Chốt số liệu</label>
+                    </div>
+                    <div class="admin-form-field admin-form-field-full">
+                        <label class="admin-form-field-label">Lý do chênh lệch</label>
+                        <input class="admin-input" @bind="_usageReason" />
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                    <button type="button" class="admin-btn admin-btn-primary" @onclick="AddUsage">Thêm sử dụng thực tế</button>
+                </div>
+            </div>
+
+            <div class="admin-panel" style="padding:14px;">
+                <h3 class="admin-panel-title">So sánh định mức và thực tế</h3>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Tài nguyên</th><th>Chuẩn</th><th>Thực tế final</th><th>Chênh lệch</th><th>Đơn vị</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in CompareRows())
+                            {
+                                <tr>
+                                    <td>@row.ResourceName</td>
+                                    <td>@row.Standard.ToString("0.##")</td>
+                                    <td>@row.Actual.ToString("0.##")</td>
+                                    <td><AdminBadge Tone="@(row.Variance == 0 ? "tone-success" : "tone-warning")">@row.Variance.ToString("0.##")</AdminBadge></td>
+                                    <td>@LookupUnit(row.UnitCode)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="admin-panel" style="padding:14px;">
+                <h3 class="admin-panel-title">Lịch sử chỉ định</h3>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead><tr><th>Thời điểm</th><th>Hành động</th><th>Người thực hiện</th></tr></thead>
+                        <tbody>
+                            @foreach (var log in OrderAuditLogs())
+                            {
+                                <tr>
+                                    <td>@AdminDateTimeDisplay.ShortDateTime(log.OccurredAt)</td>
+                                    <td>@OrderAuditLabel(log.ActionCode)</td>
+                                    <td>@(log.ActorUsername ?? "—")</td>
+                                </tr>
+                            }
+                            @if (!OrderAuditLogs().Any())
+                            {
+                                <tr class="admin-table-empty-row"><td colspan="3"><div class="admin-empty"><div class="admin-empty-title">Chưa có lịch sử</div><div class="admin-empty-body">Các thay đổi chỉ định sẽ xuất hiện tại đây.</div></div></td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="() => _drawerOpen = false">Đóng</button>
+    </FooterContent>
+</AdminDrawer>
+
+<AdminModal IsOpen="_createOpen" IsOpenChanged="v => _createOpen = v" Title="Tạo chỉ định mới">
+    <ChildContent>
+        <div class="admin-form-grid">
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Dịch vụ</label>
+                <select class="admin-select" @bind="_newServiceId">
+                    <option value="">Chọn dịch vụ</option>
+                    @foreach (var svc in Store.TechnicalServices.Where(s => s.Status == "active").OrderBy(s => s.ServiceCode))
+                    {
+                        <option value="@svc.TechnicalServiceId">@svc.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Bệnh nhân</label>
+                <select class="admin-select" @bind="_newPatientId">
+                    <option value="">Không chọn</option>
+                    @foreach (var patient in Store.PatientRefs.OrderBy(p => p.PatientCode))
+                    {
+                        <option value="@patient.PatientRefId">@patient.DisplayName</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Lượt khám</label>
+                <select class="admin-select" @bind="_newEncounterId" @bind:after="SyncEncounterPatient">
+                    <option value="">Không chọn</option>
+                    @foreach (var encounter in Store.EncounterRefs.OrderByDescending(e => e.StartedAt))
+                    {
+                        <option value="@encounter.EncounterRefId">@encounter.ExternalEncounterId - @GetPatientName(encounter.PatientRefId)</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label class="admin-form-field-label">Khoa chỉ định</label>
+                <select class="admin-select" @bind="_newDepartmentId">
+                    <option value="">Không chọn</option>
+                    @foreach (var dept in Store.Departments.Where(d => d.Status == "active").OrderBy(d => d.Code))
+                    {
+                        <option value="@dept.DepartmentId">@dept.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _createOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="CreateOrder">Tạo chỉ định</button>
+    </FooterContent>
+</AdminModal>
+
+@code {
+    private const int _pageSize = 10;
+    private int _page = 1;
+    private int _total;
+    private IReadOnlyList<Sql.TechnicalOrder> _pagedItems = Array.Empty<Sql.TechnicalOrder>();
+    private string _search = string.Empty;
+    private string _statusFilter = string.Empty;
+    private string _departmentFilter = string.Empty;
+    private string _serviceFilter = string.Empty;
+    private string _fromIso = AdminDateTimeDisplay.Today().AddDays(-30).ToString("yyyy-MM-dd");
+    private string _toIso = AdminDateTimeDisplay.Today().ToString("yyyy-MM-dd");
+
+    private bool _drawerOpen;
+    private Sql.TechnicalOrder? _selected;
+
+    private bool _createOpen;
+    private string _newServiceId = string.Empty;
+    private string _newPatientId = string.Empty;
+    private string _newEncounterId = string.Empty;
+    private string _newDepartmentId = string.Empty;
+
+    private string _usageResourceId = string.Empty;
+    private decimal _usageQuantity = 1;
+    private string _usageUnit = "piece";
+    private bool _usageFinal = true;
+    private string _usageReason = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+        Paginate();
+    }
+
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        if (_selected is not null)
+        {
+            _selected = Store.TechnicalOrders.FirstOrDefault(o => o.TechnicalOrderId == _selected.TechnicalOrderId);
+        }
+        Paginate();
+        StateHasChanged();
+    });
+
+    private void Paginate()
+    {
+        var deptId = ParseGuid(_departmentFilter);
+        var serviceId = ParseGuid(_serviceFilter);
+        var from = DateOnly.TryParse(_fromIso, out var parsedFrom) ? parsedFrom : (DateOnly?)null;
+        var to = DateOnly.TryParse(_toIso, out var parsedTo) ? parsedTo : (DateOnly?)null;
+
+        var all = Store.TechnicalOrders
+            .Where(o => string.IsNullOrEmpty(_statusFilter) || o.OrderStatus == _statusFilter)
+            .Where(o => !deptId.HasValue || o.OrderingDepartmentId == deptId.Value)
+            .Where(o => !serviceId.HasValue || o.TechnicalServiceId == serviceId.Value)
+            .Where(o => !from.HasValue || AdminDateTimeDisplay.ToDisplayTime(o.OrderedAt).Date >= from.Value.ToDateTime(TimeOnly.MinValue).Date)
+            .Where(o => !to.HasValue || AdminDateTimeDisplay.ToDisplayTime(o.OrderedAt).Date <= to.Value.ToDateTime(TimeOnly.MinValue).Date)
+            .Where(MatchesSearch)
+            .OrderByDescending(o => o.OrderedAt)
+            .ToList();
+        _total = all.Count;
+        var totalPages = Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
+        _page = Math.Clamp(_page, 1, totalPages);
+        _pagedItems = all.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void ResetAndPaginate()
+    {
+        _page = 1;
+        Paginate();
+    }
+
+    private void OnFromChanged(ChangeEventArgs args)
+    {
+        _fromIso = args.Value?.ToString() ?? string.Empty;
+        ResetAndPaginate();
+    }
+
+    private void OnToChanged(ChangeEventArgs args)
+    {
+        _toIso = args.Value?.ToString() ?? string.Empty;
+        ResetAndPaginate();
+    }
+
+    private bool MatchesSearch(Sql.TechnicalOrder order)
+    {
+        if (string.IsNullOrWhiteSpace(_search)) return true;
+        var key = _search.Trim();
+        return GetServiceName(order.TechnicalServiceId).Contains(key, StringComparison.OrdinalIgnoreCase)
+            || GetPatientName(order.PatientRefId).Contains(key, StringComparison.OrdinalIgnoreCase)
+            || GetEncounterCode(order.EncounterRefId).Contains(key, StringComparison.OrdinalIgnoreCase)
+            || GetDeptName(order.OrderingDepartmentId).Contains(key, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void OpenCreate()
+    {
+        if (!Guard.CanDo("SCR_ORDERS:CREATE", "tạo chỉ định"))
+        {
+            return;
+        }
+
+        _newServiceId = string.Empty;
+        _newPatientId = string.Empty;
+        _newEncounterId = string.Empty;
+        _newDepartmentId = string.Empty;
+        _createOpen = true;
+    }
+
+    private void CreateOrder()
+    {
+        if (!Guard.CanDo("SCR_ORDERS:CREATE", "tạo chỉ định"))
+        {
+            return;
+        }
+
+        if (!Guid.TryParse(_newServiceId, out var serviceId))
+        {
+            Toasts.Show("Thiếu dịch vụ", "Vui lòng chọn dịch vụ kỹ thuật.", ToastVariant.Warning);
+            return;
+        }
+
+        var service = Store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == serviceId);
+        var procedureVersionId = service?.LinkedProcedureId is Guid procId
+            ? Store.ProcedureVersions
+                .Where(v => v.ProcedureId == procId && v.StatusCode == "active")
+                .OrderByDescending(v => v.VersionNo)
+                .FirstOrDefault()?.ProcedureVersionId
+            : null;
+        var encounterId = ParseGuid(_newEncounterId);
+        var patientId = ParseGuid(_newPatientId);
+        if (encounterId.HasValue)
+        {
+            patientId = Store.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == encounterId.Value)?.PatientRefId ?? patientId;
+        }
+
+        try
+        {
+            var order = new Sql.TechnicalOrder
+            {
+                TechnicalServiceId = serviceId,
+                ProcedureVersionId = procedureVersionId,
+                PatientRefId = patientId,
+                EncounterRefId = encounterId,
+                OrderingDepartmentId = ParseGuid(_newDepartmentId),
+                OrderedBy = UserContext.CurrentUser?.UserId,
+                OrderStatus = "ordered",
+                OrderedAt = DateTime.UtcNow
+            };
+            Store.AddTechnicalOrder(order);
+            AppendOrderAudit(order, "create_order");
+            Toasts.Show("Đã tạo chỉ định", GetServiceName(serviceId), ToastVariant.Success);
+            _createOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể tạo chỉ định", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void OpenDetail(Sql.TechnicalOrder order)
+    {
+        _selected = order;
+        ResetUsageForm();
+        _drawerOpen = true;
+    }
+
+    private void SetStatus(Sql.TechnicalOrder order, string status)
+    {
+        if (!Guard.CanDo("SCR_ORDERS:EXECUTE", "cập nhật trạng thái chỉ định"))
+        {
+            return;
+        }
+
+        try
+        {
+            OrderWorkflow.TransitionStatus(order, status, UserContext.CurrentUser?.UserId);
+            Toasts.Show("Đã cập nhật trạng thái", Lookup(Sql.MedLookups.OrderStatuses, status), ToastVariant.Success);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể cập nhật trạng thái", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void ScheduleOrder(Sql.TechnicalOrder order) => SetStatus(order, "scheduled");
+    private void StartOrder(Sql.TechnicalOrder order) => SetStatus(order, "in_progress");
+    private void CompleteOrder(Sql.TechnicalOrder order) => SetStatus(order, "completed");
+    private void CancelOrder(Sql.TechnicalOrder order) => SetStatus(order, "cancelled");
+
+    private void GenerateSnapshots()
+    {
+        if (!Guard.CanDo("SCR_ORDERS:UPDATE", "tạo kiểm tra nguồn lực"))
+        {
+            return;
+        }
+
+        if (_selected is null) return;
+        var result = InventoryAvailability.CreateMissingSnapshots(_selected);
+        if (result.Added == 0 && result.Existing == 0)
+        {
+            Toasts.Show("Chưa có định mức", "Dịch vụ này chưa khai báo định mức nguồn lực.", ToastVariant.Warning);
+            return;
+        }
+
+        if (result.Added > 0)
+        {
+            AppendOrderAudit(_selected, "update");
+        }
+
+        if (result.Insufficient > 0)
+        {
+            Toasts.Show("Nguồn lực thiếu", $"{result.Insufficient} dòng cần bổ sung từ kho/dược/vật tư.", ToastVariant.Warning);
+            return;
+        }
+
+        Toasts.Show("Đã kiểm tra nguồn lực", $"{result.Added} snapshot mới, {result.Existing} snapshot đã có.", ToastVariant.Success);
+    }
+
+    private void AddUsage()
+    {
+        if (!Guard.CanDo("SCR_ORDERS:UPDATE", "ghi nhận sử dụng thực tế"))
+        {
+            return;
+        }
+
+        if (_selected is null || !Guid.TryParse(_usageResourceId, out var resourceId) || _usageQuantity < 0)
+        {
+            Toasts.Show("Sử dụng thực tế chưa hợp lệ", "Chọn tài nguyên và nhập số lượng không âm.", ToastVariant.Warning);
+            return;
+        }
+
+        var expectedUnit = Store.TechnicalResourceNorms
+            .FirstOrDefault(n => n.TechnicalServiceId == _selected.TechnicalServiceId && n.ResourceId == resourceId)
+            ?.UnitCode
+            ?? Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == resourceId)?.DefaultUnitCode;
+        if (!AdminBusinessDisplay.UnitsCompatible(expectedUnit, _usageUnit))
+        {
+            Toasts.Show("Đơn vị không phù hợp",
+                $"Tài nguyên này đang theo đơn vị chuẩn {LookupUnit(expectedUnit)}. Vui lòng chọn đơn vị cùng nhóm.",
+                ToastVariant.Warning);
+            return;
+        }
+
+        try
+        {
+            Store.AddActualResourceUsage(new Sql.ActualResourceUsage
+            {
+                TechnicalOrderId = _selected.TechnicalOrderId,
+                ResourceId = resourceId,
+                ActualQuantity = _usageQuantity,
+                UnitCode = _usageUnit,
+                VarianceReason = string.IsNullOrWhiteSpace(_usageReason) ? null : _usageReason.Trim(),
+                IsFinal = _usageFinal,
+                CapturedBy = UserContext.CurrentUser?.UserId
+            });
+            AppendOrderAudit(_selected, "update");
+            Toasts.Show("Đã ghi nhận sử dụng thực tế", GetResourceName(resourceId), ToastVariant.Success);
+            ResetUsageForm();
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể ghi nhận sử dụng", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private void RemoveUsage(Sql.ActualResourceUsage usage)
+    {
+        if (!Guard.CanDo("SCR_ORDERS:DELETE", "xóa sử dụng thực tế"))
+        {
+            return;
+        }
+
+        try
+        {
+            Store.RemoveActualResourceUsage(usage.ActualResourceUsageId);
+            if (_selected is not null)
+            {
+                AppendOrderAudit(_selected, "delete");
+            }
+            Toasts.Show("Đã xóa sử dụng thực tế", GetResourceName(usage.ResourceId), ToastVariant.Info);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể xóa sử dụng", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private IEnumerable<Sql.ResourceCatalogItem> ResourcesForSelectedService()
+    {
+        if (_selected is null) return Array.Empty<Sql.ResourceCatalogItem>();
+        var ids = Store.TechnicalResourceNorms
+            .Where(n => n.TechnicalServiceId == _selected.TechnicalServiceId)
+            .Select(n => n.ResourceId)
+            .ToHashSet();
+        return Store.ResourceCatalog.Where(r => ids.Contains(r.ResourceId)).OrderBy(r => r.ResourceCode);
+    }
+
+    private IEnumerable<CompareRow> CompareRows()
+    {
+        if (_selected is null) yield break;
+        var usages = Store.ActualResourceUsages
+            .Where(u => u.TechnicalOrderId == _selected.TechnicalOrderId && u.IsFinal)
+            .GroupBy(u => u.ResourceId)
+            .ToDictionary(g => g.Key, g => g.Sum(u => u.ActualQuantity));
+
+        foreach (var norm in Store.TechnicalResourceNorms.Where(n => n.TechnicalServiceId == _selected.TechnicalServiceId))
+        {
+            var actual = usages.TryGetValue(norm.ResourceId, out var value) ? value : 0;
+            yield return new CompareRow(GetResourceName(norm.ResourceId), norm.StandardQuantity, actual, actual - norm.StandardQuantity, norm.UnitCode);
+        }
+    }
+
+    private void ResetUsageForm()
+    {
+        _usageResourceId = string.Empty;
+        _usageQuantity = 1;
+        _usageUnit = "piece";
+        _usageFinal = true;
+        _usageReason = string.Empty;
+    }
+
+    private void SyncUsageUnit()
+    {
+        if (Guid.TryParse(_usageResourceId, out var resourceId))
+        {
+            var norm = _selected is null
+                ? null
+                : Store.TechnicalResourceNorms.FirstOrDefault(n => n.TechnicalServiceId == _selected.TechnicalServiceId && n.ResourceId == resourceId);
+            _usageUnit = norm?.UnitCode ?? Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == resourceId)?.DefaultUnitCode ?? "piece";
+        }
+    }
+
+    private string GetServiceName(Guid svcId) => Store.TechnicalServices.FirstOrDefault(s => s.TechnicalServiceId == svcId)?.Name ?? "—";
+    private string GetPatientName(Guid? patientId) => patientId.HasValue ? Store.PatientRefs.FirstOrDefault(p => p.PatientRefId == patientId.Value)?.DisplayName ?? "—" : "—";
+    private string GetEncounterCode(Guid? encounterId) => encounterId.HasValue ? Store.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == encounterId.Value)?.ExternalEncounterId ?? "—" : "—";
+    private string GetDeptName(Guid? deptId) => deptId.HasValue ? Store.Departments.FirstOrDefault(d => d.DepartmentId == deptId.Value)?.Name ?? "—" : "—";
+    private string GetResourceName(Guid resourceId) => Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == resourceId)?.Name ?? "—";
+    private void SyncEncounterPatient()
+    {
+        if (Guid.TryParse(_newEncounterId, out var encounterId))
+        {
+            var encounter = Store.EncounterRefs.FirstOrDefault(e => e.EncounterRefId == encounterId);
+            if (encounter is not null)
+            {
+                _newPatientId = encounter.PatientRefId.ToString();
+            }
+        }
+    }
+
+    private IReadOnlyList<Sql.UnitEntry> UsageUnitOptions()
+    {
+        if (!Guid.TryParse(_usageResourceId, out var resourceId))
+        {
+            return Sql.MedLookups.UnitCatalog;
+        }
+
+        var normUnit = _selected is null
+            ? null
+            : Store.TechnicalResourceNorms.FirstOrDefault(n => n.TechnicalServiceId == _selected.TechnicalServiceId && n.ResourceId == resourceId)?.UnitCode;
+        var resourceUnit = Store.ResourceCatalog.FirstOrDefault(r => r.ResourceId == resourceId)?.DefaultUnitCode;
+        return AdminBusinessDisplay.CompatibleUnits(normUnit ?? resourceUnit);
+    }
+
+    private static Guid? ParseGuid(string value) => Guid.TryParse(value, out var id) ? id : null;
+    private static string Lookup(IReadOnlyList<Sql.LookupEntry> entries, string? code) => entries.FirstOrDefault(e => e.Code == code)?.Name ?? code ?? "—";
+    private static string LookupUnit(string? code) => Sql.MedLookups.UnitCatalog.FirstOrDefault(u => u.Code == code)?.Name ?? code ?? "—";
+    private static string OrderTone(string status) => status switch
+    {
+        "completed" => "tone-success",
+        "resource_warning" or "scheduled" => "tone-warning",
+        "in_progress" => "tone-primary",
+        "cancelled" => "tone-danger",
+        _ => "tone-muted"
+    };
+    private static string AvailabilityTone(string status) => status switch
+    {
+        "available" => "tone-success",
+        "insufficient" => "tone-danger",
+        "adapter_error" => "tone-warning",
+        _ => "tone-muted"
+    };
+
+    private IReadOnlyList<Sql.AuditLog> OrderAuditLogs()
+        => _selected is null
+            ? Array.Empty<Sql.AuditLog>()
+            : Store.AuditLogs
+                .Where(a => a.TargetId == _selected.TechnicalOrderId.ToString()
+                    && string.Equals(a.TargetType, "technical_order", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(a => a.OccurredAt)
+                .Take(20)
+                .ToList();
+
+    private void AppendOrderAudit(Sql.TechnicalOrder order, string actionCode)
+    {
+        Audit.Append(new Sql.AuditLog
+        {
+            CorrelationId = Guid.NewGuid(),
+            ActorUserId = UserContext.CurrentUser?.UserId,
+            ActorUsername = UserContext.CurrentUser?.Username,
+            ActionCode = actionCode,
+            TargetType = "technical_order",
+            TargetId = order.TechnicalOrderId.ToString(),
+            DepartmentId = order.OrderingDepartmentId
+        });
+    }
+
+    private static string OrderAuditLabel(string actionCode) => actionCode switch
+    {
+        "create_order" => "Tạo chỉ định",
+        "complete_order" => "Hoàn thành chỉ định",
+        "cancel_order" => "Hủy chỉ định",
+        "update" => "Cập nhật",
+        "delete" => "Xóa dữ liệu liên quan",
+        _ => actionCode
+    };
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+
+    private sealed record CompareRow(string ResourceName, decimal Standard, decimal Actual, decimal Variance, string UnitCode);
+}

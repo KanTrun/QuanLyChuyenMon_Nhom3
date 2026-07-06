@@ -1,0 +1,506 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@using TelemedicineLandingPage.Services.Admin.Sql
+@using TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Notifications
+@inject IAdminNavigationState NavState
+@inject IThemeBus ThemeBus
+@inject IUserPreferencesService Preferences
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject ICurrentUserContext UserContext
+@inject NavGate Gate
+@inject BrowserSessionService BrowserSession
+@inject IToastService Toasts
+@implements IAsyncDisposable
+
+<header class="admin-topbar" role="banner">
+    <div class="admin-topbar-left">
+        <button type="button" class="admin-topbar-icon-button"
+                aria-label="Thu gọn thanh điều hướng"
+                title="Thu gọn thanh điều hướng"
+                @onclick="OnHamburgerClick">
+            <span aria-hidden="true">@Icon("menu")</span>
+        </button>
+        <nav class="admin-breadcrumb" aria-label="Đường dẫn">
+            <span class="admin-breadcrumb-parent">@_breadcrumbParent</span>
+            <span class="admin-breadcrumb-separator" aria-hidden="true">/</span>
+            <span class="admin-breadcrumb-current">@_breadcrumbCurrent</span>
+        </nav>
+    </div>
+
+    <div class="admin-topbar-right">
+        <button type="button" class="admin-search-trigger" @onclick="OpenPalette" aria-label="Mở tìm kiếm nhanh">
+            <span class="admin-search-trigger-icon" aria-hidden="true">@Icon("search")</span>
+            <span class="admin-search-trigger-label">Tìm kiếm nhanh...</span>
+            <span class="admin-search-trigger-chip" aria-hidden="true">Ctrl K</span>
+        </button>
+
+        <div class="admin-topbar-flyout-host">
+            <button type="button" class="admin-topbar-icon-button"
+                    aria-label="Thông báo (@NavState.UnreadNotifications chưa đọc)"
+                    title="Thông báo"
+                    @onclick="ToggleNotifications"
+                    @onclick:stopPropagation="true">
+                <span aria-hidden="true">@Icon("bell")</span>
+                @if (NavState.UnreadNotifications > 0)
+                {
+                    <span class="admin-topbar-badge" aria-hidden="true">@NavState.UnreadNotifications</span>
+                }
+            </button>
+            @if (_isNotificationsOpen)
+            {
+                <div class="admin-flyout admin-flyout-notifications" id="admin-flyout-notifications" role="dialog" aria-label="Thông báo gần đây">
+                    <div class="admin-flyout-header">
+                        <span class="admin-flyout-title">Thông báo gần đây</span>
+                        <span class="admin-flyout-meta">@NavState.UnreadNotifications chưa đọc</span>
+                    </div>
+                    <ul class="admin-flyout-list">
+                        @if (NavState.NotificationPreviews.Count == 0)
+                        {
+                            <li class="admin-flyout-item is-empty">
+                                <span class="admin-flyout-item-body">Không có thông báo gần đây.</span>
+                            </li>
+                        }
+                        else
+                        {
+                            @foreach (var note in NavState.NotificationPreviews)
+                            {
+                                <li>
+                                    <button type="button"
+                                            class="@($"admin-flyout-item admin-flyout-item-button{(note.IsUnread ? " is-unread" : string.Empty)}")"
+                                            @onclick="() => OpenNotification(note)">
+                                        <span class="admin-flyout-item-title">@note.Title</span>
+                                        <span class="admin-flyout-item-body">@note.Body</span>
+                                        <span class="admin-flyout-item-meta">@note.Timestamp</span>
+                                    </button>
+                                </li>
+                            }
+                        }
+                    </ul>
+                    <div class="admin-flyout-footer-actions">
+                        <button type="button" class="admin-flyout-action" @onclick="OnMarkAllRead">Đánh dấu tất cả đã đọc</button>
+                        <a class="admin-flyout-footer-link" href="/thong-bao" @onclick="CloseFlyouts">Xem tất cả thông báo</a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <button type="button" class="admin-topbar-icon-button"
+                aria-label="@(_theme == "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối")"
+                title="@(_theme == "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối")"
+                @onclick="OnToggleTheme">
+            <span aria-hidden="true">@Icon(_theme == "dark" ? "sun" : "moon")</span>
+        </button>
+
+        <button type="button" class="admin-topbar-icon-button"
+                aria-label="@(_isFullscreen ? "Thoát toàn màn hình" : "Bật toàn màn hình")"
+                title="@(_isFullscreen ? "Thoát toàn màn hình" : "Bật toàn màn hình")"
+                @onclick="OnToggleFullscreen">
+            <span aria-hidden="true">@Icon(_isFullscreen ? "fullscreen-exit" : "fullscreen")</span>
+        </button>
+
+        <div class="admin-topbar-flyout-host admin-topbar-user">
+            <button type="button" class="admin-user-trigger"
+                    aria-haspopup="menu"
+                    aria-expanded="@(_isUserMenuOpen ? "true" : "false")"
+                    @onclick="ToggleUserMenu"
+                    @onclick:stopPropagation="true">
+                <span class="admin-user-avatar" aria-hidden="true">@_userInitials</span>
+                <span class="admin-user-name">@_currentUserName</span>
+                <span class="admin-user-caret" aria-hidden="true">@Icon("chevron-down")</span>
+            </button>
+            @if (_isUserMenuOpen)
+            {
+                <div class="admin-flyout admin-flyout-user" id="admin-flyout-user" role="menu">
+                    <div class="admin-flyout-header">
+                        <span class="admin-flyout-title">@_currentUserName</span>
+                    </div>
+                    <a class="admin-flyout-menu-item" href="@ProfileUrl" role="menuitem" @onclick="CloseFlyouts">
+                        <span class="admin-flyout-menu-icon" aria-hidden="true">@Icon("user")</span>
+                        Hồ sơ cá nhân
+                    </a>
+                    <a class="admin-flyout-menu-item" href="/admin/cai-dat" role="menuitem" @onclick="CloseFlyouts">
+                        <span class="admin-flyout-menu-icon" aria-hidden="true">@Icon("settings")</span>
+                        Tùy chọn
+                    </a>
+                    <div class="admin-flyout-divider" role="separator"></div>
+                    <button type="button" class="admin-flyout-menu-item admin-flyout-menu-danger" role="menuitem" @onclick="HandleLogout">
+                        <span class="admin-flyout-menu-icon" aria-hidden="true">@Icon("logout")</span>
+                        Đăng xuất
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</header>
+
+@code {
+    private bool _isNotificationsOpen;
+    private bool _isUserMenuOpen;
+    private bool _isFullscreen;
+    private string _theme = "light";
+    private bool _initialThemeRead;
+    private string _breadcrumbParent = "Tổng quan";
+    private string _breadcrumbCurrent = "Bảng điều khiển";
+    private string _currentUserName = "Đang tải...";
+    private string _userInitials = "..";
+    private HubConnection? _notificationHub;
+    private string? _notificationSessionToken;
+    private string ProfileUrl => Gate.GetDisplayRoute("/admin/ho-so");
+
+    private static readonly Dictionary<string, (string Parent, string Current)> BreadcrumbMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["/admin"] = ("Tổng quan", "Bảng điều khiển"),
+        ["/admin/quy-trinh"] = ("Quy trình", "Quy trình kỹ thuật"),
+        ["/admin/quy-trinh/tao"] = ("Quy trình", "Tạo mới"),
+        ["/admin/quy-trinh/phe-duyet"] = ("Quy trình", "Phê duyệt"),
+        ["/admin/phan-quyen"] = ("Phân quyền", "Gán theo trang"),
+        ["/admin/danh-muc"] = ("Danh mục", "Kỹ thuật chuyên môn"),
+        ["/admin/phac-do"] = ("Phác đồ", "Lâm sàng"),
+        ["/admin/bao-cao"] = ("Báo cáo", "Tổng hợp"),
+        ["/admin/bao-cao/tieu-thu"] = ("Báo cáo", "Tiêu thụ vật tư"),
+        ["/admin/lam-sang"] = ("Lâm sàng", "Bảng điều phối"),
+        ["/admin/cai-dat"] = ("Cài đặt", "Tài khoản"),
+        ["/phe-duyet"] = ("Phê duyệt quyền", "Hộp yêu cầu"),
+        ["/tai-nguyen"] = ("Tài nguyên", "Danh mục và định mức"),
+        ["/dieu-phoi"] = ("Điều phối", "Chỉ định kỹ thuật"),
+        ["/phac-do-pro"] = ("Phác đồ", "Không gian phác đồ"),
+        ["/lam-sang"] = ("Lâm sàng", "Bệnh nhân và phác đồ"),
+        ["/thong-bao"] = ("Thông báo", "Trung tâm thông báo"),
+        ["/admin/he-thong/man-hinh"] = ("Hệ thống", "Màn hình"),
+        ["/admin/ho-so"] = ("Hồ sơ", "Cá nhân"),
+    };
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        NavState.StateChanged += OnNavStateChanged;
+        ThemeBus.ToggleRequested += OnThemeToggleRequested;
+        ThemeBus.ThemeChanged += OnThemeChanged;
+        ThemeBus.MotionChanged += OnMotionChanged;
+        ThemeBus.ExportConsumptionRequested += OnExportConsumptionRequested;
+        UserContext.StateChanged += OnUserChanged;
+        UpdateBreadcrumb(Navigation.Uri);
+        RefreshUserDisplay();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialThemeRead)
+        {
+            _initialThemeRead = true;
+            try
+            {
+                _theme = await JS.InvokeAsync<string>("qlcmShell.getThemePreference");
+                _isFullscreen = await JS.InvokeAsync<bool>("qlcmShell.isFullscreen");
+                StateHasChanged();
+            }
+            catch (JSDisconnectedException)
+            {
+                // Circuit closed; nothing else to do.
+            }
+            catch (Exception)
+            {
+                // Defaults already set.
+            }
+        }
+
+        if (firstRender)
+        {
+            await EnsureNotificationHubAsync();
+        }
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs args)
+    {
+        UpdateBreadcrumb(args.Location);
+        // Closing flyouts on navigation keeps the chrome tidy.
+        _isNotificationsOpen = false;
+        _isUserMenuOpen = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnNavStateChanged() => InvokeAsync(StateHasChanged);
+
+    private async void OnThemeToggleRequested()
+    {
+        try
+        {
+            _theme = await JS.InvokeAsync<string>("qlcmShell.toggleTheme");
+            Preferences.Update(Preferences.Current with { Theme = _theme });
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
+    }
+
+    private async void OnThemeChanged(string theme)
+    {
+        try
+        {
+            _theme = await JS.InvokeAsync<string>("qlcmShell.setTheme", theme);
+            Preferences.Update(Preferences.Current with { Theme = _theme });
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
+    }
+
+    private async void OnMotionChanged(bool enabled)
+    {
+        try
+        {
+            await JS.InvokeAsync<string>("qlcmShell.setMotionPreference", enabled);
+            Preferences.Update(Preferences.Current with { AnimationsEnabled = enabled });
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
+    }
+
+    private void OnExportConsumptionRequested()
+    {
+        InvokeAsync(() =>
+        {
+            Navigation.NavigateTo(Gate.GetDisplayRoute("/admin/bao-cao/tieu-thu?xuat=1"));
+        });
+    }
+
+    private void UpdateBreadcrumb(string uri)
+    {
+        var path = ToRelative(uri);
+        if (BreadcrumbMap.TryGetValue(ToBreadcrumbKey(path), out var crumb))
+        {
+            _breadcrumbParent = crumb.Parent;
+            _breadcrumbCurrent = crumb.Current;
+        }
+        else
+        {
+            _breadcrumbParent = "Quản trị";
+            _breadcrumbCurrent = "Trang";
+        }
+    }
+
+    private static string ToBreadcrumbKey(string path)
+    {
+        if (string.Equals(path, "/qlcm", StringComparison.OrdinalIgnoreCase))
+        {
+            return "/admin";
+        }
+
+        return path.StartsWith("/qlcm/", StringComparison.OrdinalIgnoreCase)
+            ? "/admin" + path["/qlcm".Length..]
+            : path;
+    }
+
+    private static string ToRelative(string uri)
+    {
+        try
+        {
+            return new Uri(uri).AbsolutePath;
+        }
+        catch
+        {
+            return "/admin";
+        }
+    }
+
+    private void OnHamburgerClick() => NavState.ToggleSidebar();
+
+    private void OpenPalette() => NavState.OpenPalette();
+
+    private void ToggleNotifications()
+    {
+        _isNotificationsOpen = !_isNotificationsOpen;
+        if (_isNotificationsOpen)
+        {
+            _isUserMenuOpen = false;
+        }
+    }
+
+    private void ToggleUserMenu()
+    {
+        _isUserMenuOpen = !_isUserMenuOpen;
+        if (_isUserMenuOpen)
+        {
+            _isNotificationsOpen = false;
+        }
+    }
+
+    private void CloseFlyouts()
+    {
+        _isNotificationsOpen = false;
+        _isUserMenuOpen = false;
+    }
+
+    private void OnMarkAllRead()
+    {
+        NavState.MarkAllNotificationsRead();
+        _isNotificationsOpen = false;
+    }
+
+    private void OpenNotification(AdminNotificationStub note)
+    {
+        NavState.MarkNotificationRead(note.NotificationId);
+        CloseFlyouts();
+        Navigation.NavigateTo($"/thong-bao?notificationId={note.NotificationId:D}");
+    }
+
+    private async Task OnToggleTheme()
+    {
+        try
+        {
+            _theme = await JS.InvokeAsync<string>("qlcmShell.toggleTheme");
+            Preferences.Update(Preferences.Current with { Theme = _theme });
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
+    }
+
+    private async Task OnToggleFullscreen()
+    {
+        try
+        {
+            if (_isFullscreen)
+            {
+                await JS.InvokeVoidAsync("qlcmShell.exitFullscreen");
+                _isFullscreen = false;
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("qlcmShell.enterFullscreen");
+                _isFullscreen = true;
+            }
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception)
+        {
+            // Some browsers refuse fullscreen without a user gesture; ignore.
+        }
+    }
+
+    private RenderFragment Icon(string name) => builder => AdminIcons.Render(builder, name);
+
+    private async Task HandleLogout()
+    {
+        await BrowserSession.SignOutAsync();
+        CloseFlyouts();
+        Navigation.NavigateTo("/login", forceLoad: false);
+    }
+
+    private void OnUserChanged() => _ = InvokeAsync(async () =>
+    {
+        RefreshUserDisplay();
+        await EnsureNotificationHubAsync();
+        StateHasChanged();
+    });
+
+    private void RefreshUserDisplay()
+    {
+        var user = UserContext.CurrentUser;
+        if (user is not null)
+        {
+            _currentUserName = user.FullName;
+            var parts = user.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            _userInitials = parts.Length >= 2
+                ? $"{parts[0][0]}{parts[^1][0]}"
+                : user.FullName[..Math.Min(2, user.FullName.Length)];
+        }
+        else
+        {
+            _currentUserName = "Chưa đăng nhập";
+            _userInitials = "??";
+        }
+    }
+
+    private async Task EnsureNotificationHubAsync()
+    {
+        var user = UserContext.CurrentUser;
+        if (user is null)
+        {
+            return;
+        }
+
+        _notificationHub ??= BuildNotificationHub();
+
+        try
+        {
+            if (_notificationHub.State == HubConnectionState.Disconnected)
+            {
+                _notificationSessionToken = null;
+                await _notificationHub.StartAsync();
+            }
+
+            var sessionToken = await BrowserSession.GetCurrentSessionTokenAsync();
+            if (string.IsNullOrWhiteSpace(sessionToken))
+            {
+                _notificationSessionToken = null;
+                return;
+            }
+
+            if (_notificationHub.State == HubConnectionState.Connected &&
+                !string.Equals(_notificationSessionToken, sessionToken, StringComparison.Ordinal))
+            {
+                if (!string.IsNullOrWhiteSpace(_notificationSessionToken))
+                {
+                    await _notificationHub.InvokeAsync("LeaveUserGroup", _notificationSessionToken);
+                }
+
+                await _notificationHub.InvokeAsync("JoinUserGroup", sessionToken);
+                _notificationSessionToken = sessionToken;
+            }
+        }
+        catch (Exception)
+        {
+            _notificationSessionToken = null;
+        }
+    }
+
+    private HubConnection BuildNotificationHub()
+    {
+        var hub = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/hubs/notification"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hub.On<NotificationEnvelope>("ReceiveNotification", notification =>
+        {
+            _ = InvokeAsync(() =>
+            {
+                Toasts.Show(notification.Title, notification.Body, ToastVariant.Info);
+                StateHasChanged();
+            });
+        });
+
+        hub.Reconnected += async _ =>
+        {
+            _notificationSessionToken = null;
+            if (UserContext.CurrentUser is not null)
+            {
+                var sessionToken = await BrowserSession.GetCurrentSessionTokenAsync();
+                if (!string.IsNullOrWhiteSpace(sessionToken))
+                {
+                    await hub.InvokeAsync("JoinUserGroup", sessionToken);
+                    _notificationSessionToken = sessionToken;
+                }
+            }
+        };
+
+        return hub;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        NavState.StateChanged -= OnNavStateChanged;
+        ThemeBus.ToggleRequested -= OnThemeToggleRequested;
+        ThemeBus.ThemeChanged -= OnThemeChanged;
+        ThemeBus.MotionChanged -= OnMotionChanged;
+        ThemeBus.ExportConsumptionRequested -= OnExportConsumptionRequested;
+        UserContext.StateChanged -= OnUserChanged;
+
+        if (_notificationHub is not null)
+        {
+            await _notificationHub.DisposeAsync();
+        }
+    }
+}

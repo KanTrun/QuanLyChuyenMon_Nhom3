@@ -1,0 +1,492 @@
+@using System.Text.Json
+@using TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin.Sql
+@inject IMedDataStore Store
+@inject IToastService Toasts
+@inject AdminActionGuard Guard
+@inject ICurrentUserContext UserContext
+@inject PermissionChangeRequestService RequestService
+@inject EffectivePermissionResolver PermissionResolver
+@inject NavGate Gate
+@implements IDisposable
+
+<article class="admin-panel page-access-panel">
+    <header class="admin-panel-head">
+        <div>
+            <h2 class="admin-panel-title">Phân quyền theo trang</h2>
+            <p class="admin-panel-subtitle">
+                Chọn người dùng, chọn vai trò cần chỉnh, rồi bật/tắt từng trang. Mỗi thay đổi gửi phê duyệt — không cần tìm trong danh sách 100+ quyền chi tiết.
+            </p>
+        </div>
+    </header>
+
+    <div class="page-access-toolbar">
+        <div class="admin-form-field">
+            <label class="admin-form-field-label" for="page-access-user">Người dùng</label>
+            <input id="page-access-user"
+                   class="admin-input"
+                   placeholder="Tìm theo tên, username..."
+                   @bind="_userSearch"
+                   @bind:event="oninput" />
+            @if (_selectedUser is null)
+            {
+                <div class="page-access-user-list" role="listbox" aria-label="Danh sách người dùng">
+                    @foreach (var user in FilteredUsers().Take(8))
+                    {
+                        <button type="button" class="page-access-user-option" @onclick="() => SelectUser(user)">
+                            <strong>@user.FullName</strong>
+                            <span>@user.Username · @(user.DepartmentName ?? "Chưa gán khoa")</span>
+                        </button>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="page-access-selected-user">
+                    <div>
+                        <strong>@_selectedUser.FullName</strong>
+                        <span>@_selectedUser.Username</span>
+                    </div>
+                    <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" @onclick="ClearUser">Đổi người dùng</button>
+                </div>
+            }
+        </div>
+
+        @if (_selectedUser is not null)
+        {
+            <div class="admin-form-field">
+                <label class="admin-form-field-label" for="page-access-role">Chỉnh qua vai trò</label>
+                <select id="page-access-role" class="admin-select" value="@_selectedRoleId" @onchange="OnRoleChanged">
+                    @if (_userRoles.Count == 0)
+                    {
+                        <option value="">Chưa có vai trò</option>
+                    }
+                    else
+                    {
+                        @foreach (var role in _userRoles)
+                        {
+                            <option value="@role.RoleId">@role.Name</option>
+                        }
+                    }
+                </select>
+                <span class="admin-form-field-hint">Quyền trang được ghi vào vai trò đã chọn. Người dùng thấy trang nếu bất kỳ vai trò nào cho phép.</span>
+            </div>
+
+            <div class="admin-form-field">
+                <label class="admin-form-field-label" for="page-access-search">Lọc trang</label>
+                <input id="page-access-search" class="admin-input" placeholder="Tìm tên trang, module..." @bind="_pageSearch" @bind:event="oninput" />
+            </div>
+        }
+    </div>
+
+    @if (_selectedUser is null)
+    {
+        <div class="page-access-empty">
+            <strong>Bắt đầu bằng việc chọn người dùng</strong>
+            <p>Gõ tên hoặc username ở ô trên, sau đó bật các trang mà người đó được phép mở trong sidebar.</p>
+        </div>
+    }
+    else if (_userRoles.Count == 0)
+    {
+        <div class="page-access-empty">
+            <strong>@_selectedUser.FullName chưa có vai trò</strong>
+            <p>Vào tab <em>Tài khoản</em> để gán vai trò trước, hoặc gán vai trò Tiến sĩ / Bác sĩ phù hợp.</p>
+        </div>
+    }
+    else if (_selectedRoleId is null)
+    {
+        <div class="page-access-empty">
+            <strong>Chọn vai trò để chỉnh quyền trang</strong>
+        </div>
+    }
+    else
+    {
+        <div class="page-access-presets" aria-label="Gán nhanh theo nhóm nghiệp vụ">
+            <span class="page-access-presets-label">Gán nhanh (quyền trang + thao tác cần thiết):</span>
+            @foreach (var preset in PageAccessCatalog.Presets)
+            {
+                <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" @onclick="() => ApplyPreset(preset.Key)">
+                    @preset.Key
+                </button>
+            }
+        </div>
+
+        @foreach (var group in FilteredPageGroups())
+        {
+            <section class="page-access-module" aria-label="@group.Key">
+                <header class="page-access-module-head">
+                    <h3>@group.Key</h3>
+                    <span>@group.Count() trang</span>
+                </header>
+                <div class="page-access-grid">
+                    @foreach (var row in group)
+                    {
+                        var roleEnabled = IsRolePageEnabled(row);
+                        var userVisible = IsUserPageVisible(row);
+                        <article class="page-access-card @(roleEnabled ? "is-enabled" : null)">
+                            <div class="page-access-card-copy">
+                                <strong>@row.ScreenName</strong>
+                                <span>@row.Route</span>
+                            </div>
+                            <div class="page-access-card-meta">
+                                @if (row.IsSelfService)
+                                {
+                                    <AdminBadge Tone="tone-info">Luôn mở</AdminBadge>
+                                }
+                                else if (userVisible && !roleEnabled)
+                                {
+                                    <AdminBadge Tone="tone-muted">Từ vai trò khác</AdminBadge>
+                                }
+                                else
+                                {
+                                    <AdminBadge Tone="@(userVisible ? "tone-success" : "tone-secondary")">
+                                        @(userVisible ? "Đang thấy" : "Chưa thấy")
+                                    </AdminBadge>
+                                }
+                            </div>
+                            <label class="page-access-toggle" title="@(row.IsSelfService ? "Hồ sơ cá nhân luôn mở với mọi tài khoản" : null)">
+                                <input type="checkbox"
+                                       checked="@roleEnabled"
+                                       disabled="@(row.IsSelfService || row.ViewPermission is null || _isSaving)"
+                                       @onchange="e => TogglePageAsync(row, e)" />
+                                <span>@(roleEnabled ? "Đã gán" : "Chưa gán")</span>
+                            </label>
+                        </article>
+                    }
+                </div>
+            </section>
+        }
+    }
+</article>
+
+@code {
+    private List<PageAccessCatalog.PageAccessRow> _pages = new();
+    private List<UserRow> _users = new();
+    private List<RoleOption> _userRoles = new();
+    private UserRow? _selectedUser;
+    private Guid? _selectedRoleId;
+    private string _userSearch = "";
+    private string _pageSearch = "";
+    private bool _isSaving;
+    private IReadOnlyList<EffectivePermissionResolver.ResolvedPermission> _userPermissions = Array.Empty<EffectivePermissionResolver.ResolvedPermission>();
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnStoreChanged;
+        Reload();
+    }
+
+    private void OnStoreChanged() => InvokeAsync(() =>
+    {
+        Reload();
+        StateHasChanged();
+    });
+
+    private void Reload()
+    {
+        _pages = PageAccessCatalog.BuildRows(Store.Screens, Store.Permissions).ToList();
+        _users = Store.Users
+            .Where(user => user.Status == "active")
+            .OrderBy(user => user.FullName)
+            .Select(user => new UserRow
+            {
+                UserId = user.UserId,
+                Username = user.Username,
+                FullName = user.FullName,
+                DepartmentName = user.PrimaryDepartmentId.HasValue
+                    ? Store.Departments.FirstOrDefault(d => d.DepartmentId == user.PrimaryDepartmentId.Value)?.Name
+                    : null
+            })
+            .ToList();
+
+        if (_selectedUser is not null)
+        {
+            _selectedUser = _users.FirstOrDefault(user => user.UserId == _selectedUser.UserId);
+            LoadUserRoles();
+            _userPermissions = PermissionResolver.Resolve(_selectedUser!.UserId);
+        }
+    }
+
+    private IEnumerable<UserRow> FilteredUsers()
+    {
+        var query = _userSearch.Trim();
+        var source = _users.AsEnumerable();
+        if (query.Length > 0)
+        {
+            source = source.Where(user =>
+                user.FullName.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || user.Username.Contains(query, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return source;
+    }
+
+    private IEnumerable<IGrouping<string, PageAccessCatalog.PageAccessRow>> FilteredPageGroups()
+    {
+        var query = _pageSearch.Trim();
+        var rows = _pages.AsEnumerable();
+        if (query.Length > 0)
+        {
+            rows = rows.Where(page =>
+                page.ScreenName.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || page.ModuleName.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || page.Route.Contains(query, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return rows.GroupBy(page => page.ModuleName);
+    }
+
+    private void SelectUser(UserRow user)
+    {
+        _selectedUser = user;
+        _userSearch = user.FullName;
+        LoadUserRoles();
+        _userPermissions = PermissionResolver.Resolve(user.UserId);
+    }
+
+    private void ClearUser()
+    {
+        _selectedUser = null;
+        _userSearch = "";
+        _userRoles.Clear();
+        _selectedRoleId = null;
+        _userPermissions = Array.Empty<EffectivePermissionResolver.ResolvedPermission>();
+    }
+
+    private void LoadUserRoles()
+    {
+        if (_selectedUser is null)
+        {
+            _userRoles.Clear();
+            _selectedRoleId = null;
+            return;
+        }
+
+        var roleIds = Store.UserRoles
+            .Where(assignment => assignment.UserId == _selectedUser.UserId && assignment.EffectiveTo is null)
+            .Select(assignment => assignment.RoleId)
+            .Distinct()
+            .ToList();
+
+        _userRoles = Store.Roles
+            .Where(role => roleIds.Contains(role.RoleId))
+            .OrderBy(role => role.Name)
+            .Select(role => new RoleOption(role.RoleId, role.Name))
+            .ToList();
+
+        _selectedRoleId = _userRoles.FirstOrDefault()?.RoleId;
+    }
+
+    private void OnRoleChanged(ChangeEventArgs args)
+    {
+        _selectedRoleId = Guid.TryParse(args.Value?.ToString(), out var roleId) ? roleId : null;
+    }
+
+    private bool IsRolePageEnabled(PageAccessCatalog.PageAccessRow page)
+    {
+        if (page.IsSelfService || _selectedRoleId is null || page.ViewPermission is null)
+        {
+            return page.IsSelfService;
+        }
+
+        return Store.RolePermissions.Any(assignment =>
+            assignment.RoleId == _selectedRoleId.Value
+            && assignment.PermissionId == page.ViewPermission.PermissionId
+            && assignment.EffectiveTo is null
+            && string.Equals(assignment.EffectCode, "allow", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool IsUserPageVisible(PageAccessCatalog.PageAccessRow page)
+    {
+        if (page.IsSelfService)
+        {
+            return true;
+        }
+
+        return Gate.CanUserAccess(_selectedUser!.UserId, page.Route, PermissionResolver);
+    }
+
+    private async Task TogglePageAsync(PageAccessCatalog.PageAccessRow page, ChangeEventArgs args)
+    {
+        if (_selectedRoleId is null || page.ViewPermission is null || page.IsSelfService)
+        {
+            return;
+        }
+
+        var enabled = args.Value is bool value && value;
+        if (!Guard.CanDo(enabled ? "SCR_PERMISSIONS:UPDATE" : "SCR_PERMISSIONS:DELETE", enabled ? "gán quyền trang" : "thu hồi quyền trang"))
+        {
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            var bundle = PageAccessCatalog.GetBundlePermissions(page, Store.Permissions);
+            if (enabled)
+            {
+                foreach (var permission in bundle)
+                {
+                    if (Store.RolePermissions.Any(assignment =>
+                            assignment.RoleId == _selectedRoleId.Value
+                            && assignment.PermissionId == permission.PermissionId
+                            && assignment.EffectiveTo is null
+                            && string.Equals(assignment.EffectCode, "allow", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
+
+                    SubmitRolePermissionChange("grant", permission.PermissionId, null);
+                }
+
+                Toasts.Show("Đã gửi yêu cầu", $"Bật trang {page.ScreenName} cho vai trò.", ToastVariant.Success);
+            }
+            else
+            {
+                foreach (var permission in bundle)
+                {
+                    var existing = Store.RolePermissions.FirstOrDefault(assignment =>
+                        assignment.RoleId == _selectedRoleId.Value
+                        && assignment.PermissionId == permission.PermissionId
+                        && assignment.DepartmentScopeType == "global"
+                        && assignment.DepartmentId is null
+                        && assignment.EffectiveTo is null);
+
+                    if (existing is null)
+                    {
+                        continue;
+                    }
+
+                    SubmitRolePermissionChange("revoke", permission.PermissionId, existing);
+                }
+
+                Toasts.Show("Đã gửi yêu cầu", $"Tắt trang {page.ScreenName} khỏi vai trò.", ToastVariant.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể gửi yêu cầu", ex.GetBaseException().Message, ToastVariant.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task ApplyPreset(string presetName)
+    {
+        if (_selectedRoleId is null || !PageAccessCatalog.Presets.TryGetValue(presetName, out var screenCodes))
+        {
+            return;
+        }
+
+        if (!Guard.CanDo("SCR_PERMISSIONS:UPDATE", $"gán bộ quyền {presetName}"))
+        {
+            return;
+        }
+
+        var granted = 0;
+        foreach (var screenCode in screenCodes)
+        {
+            var page = _pages.FirstOrDefault(item => string.Equals(item.ScreenCode, screenCode, StringComparison.OrdinalIgnoreCase));
+            if (page is null || page.IsSelfService || IsRolePageEnabled(page))
+            {
+                continue;
+            }
+
+            try
+            {
+                foreach (var permission in PageAccessCatalog.GetBundlePermissions(page, Store.Permissions))
+                {
+                    if (Store.RolePermissions.Any(assignment =>
+                            assignment.RoleId == _selectedRoleId.Value
+                            && assignment.PermissionId == permission.PermissionId
+                            && assignment.EffectiveTo is null
+                            && string.Equals(assignment.EffectCode, "allow", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
+
+                    SubmitRolePermissionChange("grant", permission.PermissionId, null);
+                    granted++;
+                }
+            }
+            catch
+            {
+                // Skip duplicates or invalid rows; the approval queue still captures successful items.
+            }
+        }
+
+        if (granted > 0)
+        {
+            Toasts.Show("Đã gửi yêu cầu", $"Gán nhanh {presetName}: {granted} trang.", ToastVariant.Success);
+        }
+        else
+        {
+            Toasts.Show("Không có thay đổi", $"Bộ {presetName} đã được gán đủ hoặc không áp dụng.", ToastVariant.Info);
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private void SubmitRolePermissionChange(string operation, Guid permissionId, RolePermission? before)
+    {
+        var actor = UserContext.CurrentUser?.UserId
+            ?? throw new InvalidOperationException("Người thao tác không xác định.");
+        if (_selectedRoleId is null)
+        {
+            throw new InvalidOperationException("Chưa chọn vai trò.");
+        }
+
+        var role = _userRoles.FirstOrDefault(item => item.RoleId == _selectedRoleId.Value);
+        var reason = operation == "grant"
+            ? $"Bật truy cập trang cho vai trò {role?.Name ?? "đã chọn"} (phân quyền nhanh)."
+            : $"Tắt truy cập trang khỏi vai trò {role?.Name ?? "đã chọn"} (phân quyền nhanh).";
+
+        var request = RequestService.CreateDraft(
+            actor,
+            "role",
+            _selectedRoleId,
+            null,
+            null,
+            reason,
+            DateTime.UtcNow);
+
+        RequestService.AddItem(request.PermissionChangeRequestId, new PermissionChangeItem
+        {
+            PermissionChangeRequestId = request.PermissionChangeRequestId,
+            PermissionId = permissionId,
+            OperationCode = operation,
+            EffectCode = "allow",
+            DepartmentScopeType = "global",
+            DepartmentId = null,
+            BeforeJson = before is null ? null : JsonSerializer.Serialize(new
+            {
+                before.EffectCode,
+                before.DepartmentScopeType,
+                before.DepartmentId
+            }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                EffectCode = "allow",
+                DepartmentScopeType = "global",
+                DepartmentId = (Guid?)null
+            })
+        });
+        RequestService.SubmitForApproval(request.PermissionChangeRequestId, actor);
+    }
+
+    public void Dispose() => Store.StateChanged -= OnStoreChanged;
+
+    private sealed class UserRow
+    {
+        public Guid UserId { get; init; }
+        public string Username { get; init; } = "";
+        public string FullName { get; init; } = "";
+        public string? DepartmentName { get; init; }
+    }
+
+    private sealed record RoleOption(Guid RoleId, string Name);
+}

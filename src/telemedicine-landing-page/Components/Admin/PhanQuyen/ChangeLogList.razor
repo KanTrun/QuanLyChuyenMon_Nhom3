@@ -1,0 +1,170 @@
+@using Microsoft.EntityFrameworkCore
+@using TelemedicineLandingPage.Data
+@using TelemedicineLandingPage.Models.Admin.Sql
+@inject MedDbContext Db
+
+<article class="admin-panel">
+    <header class="admin-panel-head">
+        <div>
+            <h2 class="admin-panel-title">Lịch sử thay đổi phân quyền</h2>
+            <p class="admin-panel-subtitle">Tổng @_logs.Count thay đổi đã ghi nhận.</p>
+        </div>
+    </header>
+
+    @if (_logs.Count == 0)
+    {
+        <div class="admin-empty" style="padding:24px;">
+            <div class="admin-empty-title">Chưa có thay đổi nào</div>
+            <div class="admin-empty-body">Mọi cập nhật quyền vai trò hoặc tài khoản sẽ được ghi nhận tại đây.</div>
+        </div>
+    }
+    else
+    {
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Hành động</th>
+                        <th>Đối tượng</th>
+                        <th>Mô tả</th>
+                        <th>Người thực hiện</th>
+                        <th>Thời điểm</th>
+                        <th>Chi tiết</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in _logs)
+                    {
+                        <tr>
+                            <td class="admin-table-cell-strong">@FormatActionCode(log.ActionCode)</td>
+                            <td>
+                                <AdminBadge Tone="tone-secondary">@FormatTargetType(log.TargetType)</AdminBadge>
+                            </td>
+                            <td>@ExtractDescription(log)</td>
+                            <td class="admin-table-cell-muted">@(log.ActorUsername ?? "Hệ thống")</td>
+                            <td class="admin-table-cell-muted">@log.OccurredAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(log.AfterJson) || !string.IsNullOrEmpty(log.BeforeJson))
+                                {
+                                    <details>
+                                        <summary style="cursor:pointer; color:var(--color-primary-deep); font-weight:600;">Xem JSON</summary>
+                                        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                                            @if (!string.IsNullOrEmpty(log.BeforeJson))
+                                            {
+                                                <div>
+                                                    <div class="admin-form-field-hint">Trước</div>
+                                                    <pre class="admin-json-block">@log.BeforeJson</pre>
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(log.AfterJson))
+                                            {
+                                                <div>
+                                                    <div class="admin-form-field-hint">Sau</div>
+                                                    <pre class="admin-json-block">@log.AfterJson</pre>
+                                                </div>
+                                            }
+                                        </div>
+                                    </details>
+                                }
+                                else
+                                {
+                                    <span class="admin-table-cell-muted">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</article>
+
+@code {
+    private List<AuditLog> _logs = new();
+
+    protected override void OnInitialized()
+    {
+        _logs = Db.AuditLogs
+            .Where(a => a.TargetType == "role_permission" ||
+                        a.TargetType == "group_permission" ||
+                        a.TargetType == "user_permission_override" ||
+                        a.TargetType == "user_role" ||
+                        a.TargetType == "permission_change_request" ||
+                        a.TargetType == "permission_change_item")
+            .OrderByDescending(a => a.OccurredAt)
+            .Take(50)
+            .ToList();
+    }
+
+    private static string FormatActionCode(string actionCode) => actionCode switch
+    {
+        "login" => "Đăng nhập",
+        "logout" => "Đăng xuất",
+        "create" => "Tạo mới",
+        "update" => "Cập nhật",
+        "delete" => "Xóa",
+        "assign_role" => "Gán vai trò",
+        "remove_role" => "Hủy vai trò",
+        "assign_permission" => "Gán quyền",
+        "remove_permission" => "Hủy quyền",
+        "revoke" => "Thu hồi",
+        "approve" => "Phê duyệt",
+        "reject" => "Từ chối",
+        "submit" => "Gửi duyệt",
+        "publish" => "Ban hành",
+        "archive" => "Lưu trữ",
+        _ => actionCode
+    };
+
+    private static string FormatTargetType(string targetType) => targetType switch
+    {
+        "session" => "Phiên đăng nhập",
+        "user" => "Tài khoản",
+        "user_role" => "Phân quyền",
+        "procedure" => "Quy trình",
+        "procedure_version" => "Phiên bản quy trình",
+        "department" => "Khoa/Phòng",
+        "role_permission" => "Quyền vai trò",
+        "group_permission" => "Quyền nhóm",
+        "user_permission_override" => "Ghi đè cá nhân",
+        "permission_change_request" => "Yêu cầu đổi quyền",
+        "permission_change_item" => "Chi tiết đổi quyền",
+        _ => targetType
+    };
+
+    private static string ExtractDescription(AuditLog log)
+    {
+        var json = log.AfterJson ?? log.BeforeJson;
+        if (string.IsNullOrEmpty(json)) return "—";
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            // For role assignment/removal: {"role":"...", "user":"..."}
+            if (root.TryGetProperty("role", out var roleProp) && root.TryGetProperty("user", out var userProp))
+            {
+                var roleName = roleProp.GetString();
+                var userName = userProp.GetString();
+                var verb = log.ActionCode == "remove_role" ? "Hủy" : "Gán";
+                return $"{verb} vai trò \"{roleName}\" cho {userName}";
+            }
+
+            // For user creation: {"username":"..."}
+            if (root.TryGetProperty("username", out var unameProp))
+            {
+                return $"Tài khoản: {unameProp.GetString()}";
+            }
+
+            // For profile update: {"field":"..."}
+            if (root.TryGetProperty("field", out var fieldProp))
+            {
+                return $"Trường: {fieldProp.GetString()}";
+            }
+        }
+        catch { }
+
+        return "—";
+    }
+}

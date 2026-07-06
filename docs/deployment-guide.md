@@ -1,0 +1,94 @@
+# Deployment Guide
+
+## Docker Compose
+Use Docker Compose for local full-stack startup: Blazor web host, SQL Server, and database initialization.
+
+### Services
+| Service | Purpose |
+|---|---|
+| `web` | ASP.NET Core Blazor app exposing port `8080` in the container |
+| `sqlserver` | SQL Server 2022 Developer with persistent named volume |
+| `db-init` | One-shot sqlcmd runner for schema and seed scripts |
+
+### Run
+```powershell
+docker compose up --build
+```
+
+Open `http://localhost:8080`.
+
+For an existing local database volume, use:
+
+```powershell
+docker compose up --build -d
+```
+
+Do not run `docker compose down --volumes` unless you intentionally want to erase SQL Server data.
+
+### LAN multi-PC access (no domain)
+Run Compose on one host; other PCs on the same LAN open `http://<server-ipv4>:8080`. Data, accounts, uploads and realtime notifications stay in sync because all clients share one web instance and SQL Server.
+
+See [lan-deployment.md](lan-deployment.md) for firewall scripts, client URLs and troubleshooting.
+
+### Local Bootstrap Admin
+| Username | Password |
+|---|---|
+| `admin` | `Admin@2026` |
+
+The bootstrap migration reactivates this local admin account when an older Docker volume was locked by the null-password migration.
+
+### Configuration
+| Variable | Default | Purpose |
+|---|---|---|
+| `APP_HTTP_PORT` | `8080` | Host port for the web app |
+| `DB_PORT` | `14333` | Host port for SQL Server |
+| `MSSQL_SA_PASSWORD` | `QlcmDev_ChangeMe_2026!` | Local SQL Server SA password |
+| `CHATBOT_API_KEY` | empty | Optional Gemini API key |
+| `CHATBOT_PROVIDER` | `Gemini` | Chatbot provider (`Gemini` or `Anthropic`) |
+| `CHATBOT_MODEL` | `gemini-2.5-flash` | Provider-compatible model |
+| `CHATBOT_BASE_URL` | `https://generativelanguage.googleapis.com` | Provider endpoint mapped into `Chatbot:BaseUrl` |
+| `CHATBOT_MAX_TOKENS` | `4096` | Bounded chatbot output budget for longer grounded answers |
+
+### Internal Procedure Documents
+Procedure confirmation is internal and requires no external provider configuration. The application records signer account, role, timestamp and the SHA-256 content hash for writer, checker and approver signoffs.
+
+Docker mounts `procedure-source-pdfs/` read-only at `/app/App_Data/procedure-attachments/imported`, persists user uploads from `procedure-uploads/` at `/app/App_Data/procedure-attachments/uploads`, and persists Data Protection keys at `app-data/dpkeys/` (stable browser sessions across container restarts).
+
+Creating a procedure produces `v01`. Updating from the procedure table produces the next immutable draft (`v02`, `v03`...). Existing active versions remain active until the new version is published. The publish lifecycle then marks the previous active version `superseded`.
+
+### Chatbot Credential and Privacy Guard
+Create a user-owned Gemini key manually in [Google AI Studio](https://aistudio.google.com/api-keys), restrict the key to Gemini API, and inject it only through environment variables or user-secrets. Never commit a key.
+
+For Docker teammates, put the key in local `.env` as `CHATBOT_API_KEY`; Compose maps `CHATBOT_API_KEY`, `CHATBOT_PROVIDER`, `CHATBOT_MODEL`, `CHATBOT_BASE_URL`, and `CHATBOT_MAX_TOKENS` into the web container. Do not edit files inside the running container.
+
+Free-tier prompts and responses may be used to improve Google products. The runtime privacy guard blocks likely patient identifiers and medical-advice prompts locally before transport. Treat this as a supplemental guard, not permission to send sensitive data. Keep chatbot usage limited to sanitized software-operation guidance. Do not send patient records, prescriptions, case details, notification content, or audit payloads.
+
+`gemini-2.5-flash` remains the stable default. Re-check [Gemini models](https://ai.google.dev/gemini-api/docs/models) and [deprecations](https://ai.google.dev/gemini-api/docs/deprecations) before production rollout.
+
+The app container uses:
+
+```text
+Server=sqlserver,1433;Database=MedicalProcedureManagement;User Id=sa;Password=<MSSQL_SA_PASSWORD>;TrustServerCertificate=True;Encrypt=False;
+```
+
+### Database Init
+`db-init` waits for SQL Server, checks for `MedicalProcedureManagement.med.departments`, and only runs schema/seed scripts when the database is not initialized.
+
+Scripts run in order:
+1. `MedicalProcedureManagement.sql`
+2. `scripts/seed-lookup-catalogs.sql`
+3. `scripts/seed-realistic-data.sql`
+4. `scripts/seed-hospital-data.sql`
+5. `scripts/migrations/*.sql`
+
+Current migrations add Identity bootstrap, onboarding status, internal signatures and structured procedure documents. They are written to run on existing Docker volumes.
+
+To rebuild a fresh database:
+
+```powershell
+docker compose down --volumes
+docker compose up --build
+```
+
+### Unresolved Questions
+None.

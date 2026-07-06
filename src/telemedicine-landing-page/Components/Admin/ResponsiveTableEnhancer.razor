@@ -1,0 +1,26 @@
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("qlcmShell.enhanceResponsiveTables");
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit closed.
+        }
+        catch (InvalidOperationException)
+        {
+            // Prerender / static render without JS.
+        }
+        catch (Exception)
+        {
+            // Ignore interop glitches during navigation.
+        }
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}

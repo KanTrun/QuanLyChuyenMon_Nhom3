@@ -1,0 +1,113 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@* Right-side off-canvas panel. Mounted INSIDE .admin-shell-modal-host so the
+   sidebar stays visible. ESC + backdrop + X all close. *@
+
+@if (IsOpen)
+{
+    <div class="admin-drawer-backdrop" @onclick="OnBackdropClick" role="presentation"></div>
+    <aside class="admin-drawer @SizeClass" role="dialog" aria-modal="true" aria-label="@Title" @onkeydown="OnKeyDown" tabindex="-1" @ref="_panelRef">
+        <header class="admin-drawer-header">
+            <div class="admin-drawer-title">
+                @if (!string.IsNullOrEmpty(Eyebrow))
+                {
+                    <span class="admin-drawer-eyebrow">@Eyebrow</span>
+                }
+                <h2>@Title</h2>
+                @if (!string.IsNullOrEmpty(Subtitle))
+                {
+                    <p>@Subtitle</p>
+                }
+            </div>
+            <button type="button" class="admin-drawer-close" @onclick="OnCloseClick" aria-label="Đóng">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+            </button>
+        </header>
+        <div class="admin-drawer-body">
+            @ChildContent
+        </div>
+        @if (FooterContent is not null)
+        {
+            <footer class="admin-drawer-footer">@FooterContent</footer>
+        }
+    </aside>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+    [Parameter] public string SizeClass { get; set; } = "admin-drawer-default";
+
+    private ElementReference _panelRef;
+    private bool _wasOpen;
+    private bool _scrollLocked;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsOpen && !_wasOpen)
+        {
+            _wasOpen = true;
+            try
+            {
+                await JS.InvokeVoidAsync("qlcmShell.lockBodyScroll", true);
+                _scrollLocked = true;
+                await _panelRef.FocusAsync();
+            }
+            catch (JSDisconnectedException) { }
+            catch (Exception) { }
+        }
+        else if (!IsOpen && _wasOpen)
+        {
+            _wasOpen = false;
+            if (_scrollLocked)
+            {
+                _scrollLocked = false;
+                try
+                {
+                    await JS.InvokeVoidAsync("qlcmShell.lockBodyScroll", false);
+                }
+                catch (JSDisconnectedException) { }
+                catch (Exception) { }
+            }
+        }
+    }
+
+    private async Task OnCloseClick() => await CloseAsync();
+
+    private async Task OnBackdropClick() => await CloseAsync();
+
+    private async Task OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape" || args.Key == "Esc")
+        {
+            await CloseAsync();
+        }
+    }
+
+    private async Task CloseAsync()
+    {
+        if (!IsOpen) return;
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_scrollLocked)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("qlcmShell.lockBodyScroll", false);
+            }
+            catch (JSDisconnectedException) { }
+            catch (Exception) { }
+        }
+    }
+}

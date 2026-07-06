@@ -7,12 +7,14 @@
     color-scheme: light;
 
     /* ── Primary Palette (Soft Medical) ── */
-    --color-primary: #3182CE;
-    --color-primary-light: #63B3ED;
-    --color-primary-deep: #2B6CB0;
-    
+    --color-primary: #5B9BD5;
+    --color-primary-light: #8FB8E0;
+    --color-primary-deep: #4A7BB7;
+    --color-primary-soft: #E8F1FB;
+    --color-primary-tint: #F4F8FD;
+
     /* ── Secondary Palette (Calming Teal) ── */
-    --color-secondary: #319795;
+    --color-secondary: #5DADE2;
     --color-secondary-light: #4FD1C5;
     --color-secondary-deep: #285E61;
 
@@ -24,6 +26,7 @@
 
     /* ── Surface & Background (Soft UI) ── */
     --color-ink: #2D3748;
+   --signature-pad-ink: #2D3748;
     --color-muted: #718096;
     --color-subtle: #A0AEC0;
     --color-page: #F7FAFC; /* Clean, very light blue/gray */
@@ -31,6 +34,9 @@
     --color-soft: #EDF2F7;
     --color-ivory: #FFFFFF;
     --color-warm-gray: #E2E8F0;
+    --color-sidebar-bg: #DDE8F5;
+    --color-sidebar-hover: #C8D9EC;
+    --color-border-subtle: #E7ECF3;
 
     /* ── Soft Accents ── */
     --color-mint: #E6FFFA;
@@ -46,13 +52,13 @@
     --glass-border-dark: rgba(255, 255, 255, 0.1);
 
     /* ── Shadows (Soft UI) ── */
-    --shadow-soft: 0 10px 25px rgba(49, 130, 206, 0.05);
+    --shadow-soft: 0 10px 25px rgba(91, 155, 213, 0.05);
     --shadow-medium: 0 10px 30px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
     --shadow-strong: 0 20px 40px rgba(0, 0, 0, 0.08);
-    --shadow-accent: 0 8px 20px rgba(49, 130, 206, 0.15);
+    --shadow-accent: 0 8px 20px rgba(91, 155, 213, 0.18);
     --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.02);
-    --shadow-glow: 0 0 20px rgba(49, 130, 206, 0.1);
-    --shadow-card-hover: 0 15px 35px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(49, 130, 206, 0.05);
+    --shadow-glow: 0 0 20px rgba(91, 155, 213, 0.12);
+    --shadow-card-hover: 0 15px 35px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(91, 155, 213, 0.05);
 
     /* ── Radius ── */
     --radius-sm: 8px;
@@ -67,15 +73,77 @@
     --font-body: "Inter", "Segoe UI", sans-serif;
 
     /* ── Motion ── */
-    --motion-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    --motion-standard: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    --motion-expressive: 500ms cubic-bezier(0.2, 0, 0, 1);
-    --motion-spring: 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    --motion-fast: 90ms cubic-bezier(0.4, 0, 0.2, 1);
+    --motion-standard: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    --motion-expressive: 260ms cubic-bezier(0.2, 0, 0, 1);
+    --motion-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    --motion-subtle: 100ms cubic-bezier(0.32, 0.72, 0, 1);
+    --motion-modal: 120ms cubic-bezier(0.16, 1, 0.3, 1);
 
     /* ── Gradients ── */
-    --gradient-primary: linear-gradient(135deg, #3182CE, #63B3ED);
-    --gradient-secondary: linear-gradient(135deg, #319795, #4FD1C5);
-    --gradient-hero: linear-gradient(160deg, #EBF8FF 0%, #F7FAFC 100%);
+    --gradient-primary: linear-gradient(135deg, #5B9BD5, #8FB8E0);
+    --gradient-secondary: linear-gradient(135deg, #5DADE2, #4FD1C5);
+    --gradient-hero: linear-gradient(160deg, #E8F1FB 0%, #F4F8FD 100%);
     --gradient-warm: linear-gradient(180deg, #F7FAFC, #FFFFFF);
     --gradient-section: linear-gradient(180deg, rgba(247, 250, 252, 0), rgba(237, 242, 247, 0.5));
+}
+
+/* ═══════════════════════════════════════════════════
+   DARK THEME — token override
+   Re-targets every body / surface / text token so any
+   component built on the token system inherits a high
+   contrast dark palette automatically.
+   ═══════════════════════════════════════════════════ */
+
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    /* Surfaces */
+    --color-page: #0F172A;
+    --color-surface: #1E293B;
+    --color-soft: #334155;
+    --color-ivory: #1E293B;
+    --color-warm-gray: #475569;
+    --color-sidebar-bg: #08111F;
+    --color-sidebar-hover: #13233A;
+    --color-border-subtle: #334155;
+
+    /* Text */
+    --color-ink: #F1F5F9;
+   --signature-pad-ink: #F8FAFC;
+    --color-muted: #CBD5E1;
+    --color-subtle: #94A3B8;
+
+    /* Primary tints used for hover backgrounds and panels */
+    --color-primary-soft: #1E2A44;
+    --color-primary-tint: #1A2236;
+
+    /* Brighten the deep / link primary so it stays readable
+       on dark surfaces (default #4A7BB7 fades into navy). */
+    --color-primary-deep: #93C5FD;
+    --color-primary-light: #BFDBFE;
+
+    /* Soft accents used for hero background blocks */
+    --color-mint: #1E2A2C;
+    --color-sky: #1A2236;
+    --color-blue: #1A2236;
+    --color-coral-soft: #2A1E1E;
+
+    /* Glass */
+    --glass-bg: rgba(30, 41, 59, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.08);
+
+    /* Shadows tuned for dark surfaces */
+    --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.4);
+    --shadow-medium: 0 10px 30px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-strong: 0 20px 40px rgba(0, 0, 0, 0.55);
+    --shadow-accent: 0 8px 20px rgba(91, 155, 213, 0.32);
+    --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+    --shadow-glow: 0 0 20px rgba(91, 155, 213, 0.3);
+    --shadow-card-hover: 0 15px 35px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(91, 155, 213, 0.18);
+
+    /* Gradients on dark backgrounds */
+    --gradient-hero: linear-gradient(160deg, #1E293B 0%, #0F172A 100%);
+    --gradient-warm: linear-gradient(180deg, #0F172A, #1E293B);
+    --gradient-section: linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(30, 41, 59, 0.5));
 }

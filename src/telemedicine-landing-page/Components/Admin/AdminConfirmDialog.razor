@@ -1,0 +1,54 @@
+@inject IConfirmDialogService Confirm
+@implements IDisposable
+
+@if (Confirm.Pending is { } request)
+{
+    <div class="admin-modal-backdrop" @onclick="() => Resolve(request, false)" role="presentation"></div>
+    <div class="admin-modal admin-confirm" role="dialog" aria-modal="true" aria-labelledby="@_titleId" @onkeydown="(e) => OnKey(e, request)">
+        <header class="admin-modal-head">
+            <h2 id="@_titleId">@request.Title</h2>
+        </header>
+        <div class="admin-modal-body">
+            @((MarkupString)System.Net.WebUtility.HtmlEncode(request.Body).Replace("\n", "<br />"))
+        </div>
+        <footer class="admin-modal-foot">
+            <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => Resolve(request, false)">@request.CancelText</button>
+            <button type="button"
+                    class="admin-btn @(request.IsDanger ? "admin-btn-danger" : "admin-btn-primary")"
+                    @onclick="() => Resolve(request, true)">@request.ConfirmText</button>
+        </footer>
+    </div>
+}
+
+@code {
+    private readonly string _titleId = $"confirm-title-{Guid.NewGuid():N}";
+
+    protected override void OnInitialized()
+    {
+        Confirm.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    private void Resolve(ConfirmRequest request, bool result)
+    {
+        Confirm.Resolve(request.Id, result);
+    }
+
+    private void OnKey(KeyboardEventArgs args, ConfirmRequest request)
+    {
+        if (args.Key == "Escape" || args.Key == "Esc")
+        {
+            Resolve(request, false);
+        }
+        else if (args.Key == "Enter")
+        {
+            Resolve(request, true);
+        }
+    }
+
+    public void Dispose()
+    {
+        Confirm.StateChanged -= OnStateChanged;
+    }
+}

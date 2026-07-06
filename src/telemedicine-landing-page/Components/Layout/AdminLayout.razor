@@ -1,0 +1,261 @@
+@inherits LayoutComponentBase
+@implements IAsyncDisposable
+@using TelemedicineLandingPage.Services.Admin.Sql
+@inject IAdminNavigationState NavState
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject ICurrentUserContext UserContext
+@inject NavGate Gate
+@inject IAdminNavigationState NavState
+@inject LoadingService Loading
+@inject BrowserSessionService BrowserSession
+
+<RealtimeDataRefreshBridge />
+
+@if (UserContext.CurrentUser is null)
+{
+    <div class="admin-auth-redirect" style="display:flex;align-items:center;justify-content:center;height:100vh;">
+        <p>Đang chuyển hướng đến trang đăng nhập...</p>
+    </div>
+}
+else
+{
+    <div class="admin-shell" data-collapsed="@(NavState.IsSidebarCollapsed ? "true" : "false")">
+        @if (NavState.IsSidebarCollapsed)
+        {
+            <div class="admin-sidebar-overlay" @onclick="OnSidebarOverlayClick" aria-hidden="true"></div>
+        }
+
+        <AdminSidebar />
+
+        <div class="admin-main-column">
+            <AdminTopBar />
+
+            <main class="admin-content" id="main-content">
+                @if (_isAuthorized)
+                {
+                    @Body
+                }
+                else
+                {
+                    <section class="admin-page">
+                        <article class="admin-panel" style="padding:20px;">
+                            <h1 class="admin-page-title">Không có quyền truy cập</h1>
+                            <p class="admin-page-subtitle">Tài khoản hiện tại chưa được cấp quyền cho chức năng này. Vui lòng dùng khu vực được cấp quyền hoặc liên hệ quản trị hệ thống.</p>
+                        </article>
+                    </section>
+                }
+            </main>
+
+            <div class="admin-shell-modal-host">
+                <CommandPaletteModal />
+                <AdminConfirmDialog />
+                <AdminToast />
+                <ChatbotLauncher />
+                <ChatbotPanel />
+            </div>
+        </div>
+
+    <AdminLoadingOverlay IsVisible="Loading.IsLoading" Message="Loading.Message" />
+    <ResponsiveTableEnhancer />
+</div>
+}
+
+<div id="blazor-error-ui" data-nosnippet>
+    Đã xảy ra lỗi không mong muốn.
+    <a href="." class="reload">Tải lại</a>
+    <span class="dismiss">x</span>
+</div>
+
+@code {
+    private DotNetObjectReference<AdminLayout>? _dotnetRef;
+    private int _hotkeyHandle = -1;
+    private bool _hotkeysRegistered;
+    private bool _sessionRestoreAttempted;
+    private bool _isAuthorized = true;
+    private string _currentPath = "/admin";
+
+    protected override void OnInitialized()
+    {
+        NavState.StateChanged += OnStateChanged;
+        Loading.StateChanged += OnLoadingChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        UserContext.StateChanged += OnUserChanged;
+        if (UserContext.CurrentUser is not null)
+        {
+            _sessionRestoreAttempted = true;
+            EvaluateRouteAccess();
+        }
+        else
+        {
+            _isAuthorized = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_sessionRestoreAttempted)
+        {
+            _sessionRestoreAttempted = true;
+            try
+            {
+                var restored = await BrowserSession.RestoreCurrentUserAsync();
+                EvaluateRouteAccess();
+                if (!restored.IsAuthenticated && UserContext.CurrentUser is null)
+                {
+                    Navigation.NavigateTo(GetLoginRoute(restored.Status), forceLoad: false);
+                    return;
+                }
+
+                StateHasChanged();
+            }
+            catch (JSDisconnectedException) { return; }
+            catch (Exception)
+            {
+                Navigation.NavigateTo(GetLoginRoute(BrowserSessionRestoreStatus.MissingOrInvalid), forceLoad: false);
+                return;
+            }
+        }
+
+        if (firstRender && UserContext.CurrentUser is not null)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("qlcmShell.initResponsiveTables");
+            }
+            catch (JSDisconnectedException) { }
+            catch (Exception) { }
+        }
+
+        if (_hotkeysRegistered || UserContext.CurrentUser is null)
+        {
+            return;
+        }
+
+        _hotkeysRegistered = true;
+        _dotnetRef = DotNetObjectReference.Create(this);
+        try
+        {
+            _hotkeyHandle = await JS.InvokeAsync<int>("qlcmShell.registerHotkeys", _dotnetRef);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { }
+    }
+
+    [JSInvokable]
+    public Task OnTogglePalette()
+    {
+        NavState.TogglePalette();
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task OnNavigateHotkey(int digit)
+    {
+        if (NavState.HotkeyMap.TryGetValue(digit, out var url) && Gate.CanAccess(url))
+        {
+            Navigation.NavigateTo(Gate.GetDisplayRoute(url));
+        }
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task OnEscape()
+    {
+        if (NavState.IsPaletteOpen)
+        {
+            NavState.ClosePalette();
+        }
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task OnToggleChatbot()
+    {
+        NavState.ToggleChatbot();
+        return Task.CompletedTask;
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+    private void OnLoadingChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs args)
+    {
+        EvaluateRouteAccess();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnUserChanged()
+    {
+        EvaluateRouteAccess();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void EvaluateRouteAccess()
+    {
+        if (UserContext.CurrentUser is null)
+        {
+            _isAuthorized = false;
+            return;
+        }
+
+        var currentUri = new Uri(Navigation.Uri);
+        _currentPath = currentUri.AbsolutePath;
+        var currentRoute = currentUri.PathAndQuery;
+        _isAuthorized = Gate.CanAccess(currentRoute);
+        if (_isAuthorized)
+        {
+            var displayRoute = Gate.GetDisplayRoute(currentRoute);
+            if (!string.Equals(displayRoute, currentRoute, StringComparison.OrdinalIgnoreCase))
+            {
+                Navigation.NavigateTo(displayRoute, replace: true);
+            }
+        }
+        else
+        {
+            var fallback = Gate.GetFirstAccessibleRoute(NavState.NavItems);
+            if (!string.Equals(fallback, "/AccessDenied", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(fallback, currentRoute, StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(fallback, _currentPath, StringComparison.OrdinalIgnoreCase))
+            {
+                Navigation.NavigateTo(fallback, replace: true);
+            }
+        }
+    }
+
+    private static string GetLoginRoute(BrowserSessionRestoreStatus status) => status switch
+    {
+        BrowserSessionRestoreStatus.Expired => "/login?reason=expired",
+        BrowserSessionRestoreStatus.ReplacedByNewLogin => "/login?reason=replaced",
+        BrowserSessionRestoreStatus.UserUnavailable => "/login?reason=disabled",
+        _ => "/login"
+    };
+
+    private void OnSidebarOverlayClick()
+    {
+        if (NavState.IsSidebarCollapsed)
+        {
+            NavState.ToggleSidebar();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        NavState.StateChanged -= OnStateChanged;
+        Loading.StateChanged -= OnLoadingChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+        UserContext.StateChanged -= OnUserChanged;
+
+        if (_hotkeyHandle >= 0)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("qlcmShell.unregisterHotkeys", _hotkeyHandle);
+            }
+            catch (JSDisconnectedException) { }
+            catch (Exception) { }
+        }
+
+        _dotnetRef?.Dispose();
+    }
+}

@@ -1,0 +1,293 @@
+@page "/admin/quy-trinh/lich-su"
+@page "/qlcm/quy-trinh/lich-su"
+@page "/admin/quy-trinh/{ProcedureId:guid}/lich-su"
+@page "/qlcm/quy-trinh/{ProcedureId:guid}/lich-su"
+@layout AdminLayout
+@using Sql = TelemedicineLandingPage.Models.Admin.Sql
+@using TelemedicineLandingPage.Services.Admin
+@inject IMedDataStore Store
+@inject ProcedureLifecycleService Lifecycle
+@inject ICurrentUserContext UserContext
+@inject IConfirmDialogService Confirm
+@inject IToastService Toasts
+@inject AdminActionGuard Guard
+@inject IProcedureDocumentExportService ProcedureExport
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<PageTitle>@PageTitleText | QLCM Pro</PageTitle>
+
+<section class="admin-page">
+    <header class="admin-page-header">
+        <div>
+            <span class="admin-page-eyebrow">Quy trình</span>
+            <h1 class="admin-page-title">@PageHeading</h1>
+            <p class="admin-page-subtitle">@PageSubtitle</p>
+            @if (_procedure is not null && _activeVersion is not null)
+            {
+                <div class="procedure-history-active-badge">
+                    Bản đang hiệu lực:
+                    <AdminBadge Tone="tone-success">@(_activeVersion.VersionLabel ?? $"v{_activeVersion.VersionNo}")</AdminBadge>
+                </div>
+            }
+        </div>
+        <div class="admin-page-actions">
+            @if (_procedure is not null)
+            {
+                <a class="admin-btn admin-btn-ghost" href="/qlcm/quy-trinh">Danh sách quy trình</a>
+                <button type="button" class="admin-btn admin-btn-ghost" @onclick="GoToProcedureList">Xem quy trình</button>
+            }
+            else
+            {
+                <a class="admin-btn admin-btn-ghost" href="/qlcm/quy-trinh">Quay lại danh sách</a>
+            }
+        </div>
+    </header>
+
+    @if (_procedure is null && ProcedureId.HasValue)
+    {
+        <div class="admin-empty">
+            <div class="admin-empty-title">Không tìm thấy quy trình</div>
+            <div class="admin-empty-body">Mã quy trình không tồn tại hoặc bạn không có quyền xem.</div>
+        </div>
+    }
+    else if (_procedure is null)
+    {
+        <div class="admin-filter-bar is-compact">
+            <div class="admin-filter-field">
+                <label class="admin-filter-label" for="history-search">Tìm kiếm</label>
+                <input id="history-search" class="admin-input" type="search" placeholder="Mã hoặc tên quy trình" @bind="_search" @bind:event="oninput" @bind:after="RecomputeIndex" />
+            </div>
+        </div>
+
+        <AdminDataTable TItem="HistoryIndexRow"
+                        Items="_paged"
+                        ColumnCount="5"
+                        CurrentPage="_page"
+                        PageSize="_pageSize"
+                        TotalItems="_indexRows.Count"
+                        CurrentPageChanged="p => { _page = p; PaginateIndex(); }"
+                        EmptyTitle="Không có quy trình nào"
+                        EmptyBody="Chưa có quy trình có nhiều phiên bản hoặc không khớp bộ lọc.">
+            <HeaderTemplate>
+                <th>Mã</th>
+                <th>Tên quy trình</th>
+                <th>Số phiên bản</th>
+                <th>Tóm tắt phiên bản</th>
+                <th style="text-align:right;">Hành động</th>
+            </HeaderTemplate>
+            <RowTemplate Context="row">
+                <tr>
+                    <td class="admin-table-cell-strong">@row.Procedure.ProcedureCode</td>
+                    <td>@row.Procedure.Name</td>
+                    <td>@row.VersionCount</td>
+                    <td class="admin-table-cell-muted">@ProcedureVersionSummaryFormatter.FormatVersionSummary(row.Versions)</td>
+                    <td style="text-align:right;">
+                        <a class="admin-btn admin-btn-sm admin-btn-primary" href="/qlcm/quy-trinh/@row.Procedure.ProcedureId/lich-su">Xem lịch sử</a>
+                    </td>
+                </tr>
+            </RowTemplate>
+        </AdminDataTable>
+    }
+    else
+    {
+        <ProcedureVersionHistoryPanel ProcedureId="_procedure.ProcedureId"
+                                      @bind-SelectedVersionId="_detailVersionId"
+                                      OnExport="ExportVersionAsync"
+                                      OnRollbackRequested="OpenRollbackModal"
+                                      ShowFullPageLink="false"
+                                      ShowEffectiveColumns="true"
+                                      Title="Toàn bộ phiên bản"
+                                      Hint="Chọn phiên bản để xem chi tiết, in/PDF hoặc khôi phục hiệu lực bản cũ khi bản mới ban hành sai." />
+
+        @if (_detailVersionId is Guid detailVersionId)
+        {
+            <ProcedureVersionDetailPanel ProcedureVersionId="detailVersionId" />
+        }
+    }
+</section>
+
+<AdminModal IsOpen="_rollbackOpen" IsOpenChanged="v => _rollbackOpen = v" Title="Khôi phục hiệu lực phiên bản cũ">
+    <ChildContent>
+        @if (_rollbackTarget is not null && _activeVersion is not null)
+        {
+            <p style="margin:0 0 1rem;">
+                Bản <strong>@(_rollbackTarget.VersionLabel ?? $"v{_rollbackTarget.VersionNo}")</strong>
+                sẽ trở lại <strong>đang hiệu lực</strong>.
+                Bản hiện tại <strong>@(_activeVersion.VersionLabel ?? $"v{_activeVersion.VersionNo}")</strong>
+                sẽ được <strong>lưu trữ</strong>.
+            </p>
+            <label class="admin-form-field-label" for="rollback-reason">Lý do khôi phục (bắt buộc)</label>
+            <textarea id="rollback-reason" class="admin-textarea" rows="3" placeholder="VD: Bản mới ban hành sai nội dung bước kiểm tra." @bind="_rollbackReason"></textarea>
+        }
+    </ChildContent>
+    <FooterContent>
+        <button type="button" class="admin-btn admin-btn-ghost" @onclick="() => _rollbackOpen = false">Hủy</button>
+        <button type="button" class="admin-btn admin-btn-primary" @onclick="ConfirmRollbackAsync" disabled="@string.IsNullOrWhiteSpace(_rollbackReason)">Khôi phục hiệu lực</button>
+    </FooterContent>
+</AdminModal>
+
+@code {
+    [Parameter] public Guid? ProcedureId { get; set; }
+
+    private const int _pageSize = 10;
+    private int _page = 1;
+    private string _search = string.Empty;
+    private Sql.ProfessionalProcedure? _procedure;
+    private Sql.ProcedureVersion? _activeVersion;
+    private Guid? _detailVersionId;
+    private IReadOnlyList<HistoryIndexRow> _indexRows = Array.Empty<HistoryIndexRow>();
+    private IReadOnlyList<HistoryIndexRow> _paged = Array.Empty<HistoryIndexRow>();
+    private bool _rollbackOpen;
+    private Sql.ProcedureVersion? _rollbackTarget;
+    private string _rollbackReason = string.Empty;
+
+    private string PageTitleText => _procedure is null ? "Lịch sử phiên bản" : $"Lịch sử — {_procedure.ProcedureCode}";
+    private string PageHeading => _procedure is null ? "Lịch sử phiên bản quy trình" : $"Lịch sử phiên bản — {_procedure.Name}";
+    private string PageSubtitle => _procedure is null
+        ? "Danh sách quy trình có nhiều phiên bản hoặc đang có bản chờ duyệt song song."
+        : $"{_procedure.ProcedureCode} • Xem, in và khôi phục các phiên bản đã lưu.";
+
+    protected override void OnInitialized()
+    {
+        Store.StateChanged += OnChanged;
+        LoadProcedure();
+        RecomputeIndex();
+    }
+
+    protected override void OnParametersSet()
+    {
+        LoadProcedure();
+    }
+
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        LoadProcedure();
+        RecomputeIndex();
+        StateHasChanged();
+    });
+
+    private void LoadProcedure()
+    {
+        if (!ProcedureId.HasValue)
+        {
+            _procedure = null;
+            _activeVersion = null;
+            _detailVersionId = null;
+            return;
+        }
+
+        _procedure = Store.Procedures.FirstOrDefault(p => p.ProcedureId == ProcedureId.Value);
+        _activeVersion = _procedure is null ? null : Lifecycle.GetActiveVersion(_procedure.ProcedureId);
+        _detailVersionId ??= _activeVersion?.ProcedureVersionId
+            ?? Store.ProcedureVersions
+                .Where(v => v.ProcedureId == ProcedureId.Value)
+                .OrderByDescending(v => v.VersionNo)
+                .Select(v => (Guid?)v.ProcedureVersionId)
+                .FirstOrDefault();
+    }
+
+    private void GoToProcedureList()
+    {
+        if (_procedure is not null)
+        {
+            Navigation.NavigateTo($"/qlcm/quy-trinh/{_procedure.ProcedureId}");
+        }
+    }
+
+    private void RecomputeIndex()
+    {
+        if (ProcedureId.HasValue)
+            return;
+
+        var search = _search.Trim();
+        _indexRows = Store.Procedures
+            .Where(p => p.Status != "archived")
+            .Select(p =>
+            {
+                var versions = Store.ProcedureVersions.Where(v => v.ProcedureId == p.ProcedureId).ToList();
+                return new HistoryIndexRow(p, versions);
+            })
+            .Where(row => row.VersionCount > 0)
+            .Where(row => string.IsNullOrWhiteSpace(search)
+                || row.Procedure.ProcedureCode.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || row.Procedure.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(row => row.VersionCount)
+            .ThenBy(row => row.Procedure.ProcedureCode)
+            .ToList();
+        PaginateIndex();
+    }
+
+    private void PaginateIndex()
+    {
+        var totalPages = Math.Max(1, (int)Math.Ceiling(_indexRows.Count / (double)_pageSize));
+        _page = Math.Clamp(_page, 1, totalPages);
+        _paged = _indexRows.Skip((_page - 1) * _pageSize).Take(_pageSize).ToList();
+    }
+
+    private void OpenRollbackModal(Sql.ProcedureVersion version)
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "khôi phục phiên bản")) return;
+        _rollbackTarget = version;
+        _rollbackReason = string.Empty;
+        _rollbackOpen = true;
+    }
+
+    private void ConfirmRollbackAsync()
+    {
+        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "khôi phục phiên bản")) return;
+        if (_rollbackTarget is null || string.IsNullOrWhiteSpace(_rollbackReason)) return;
+
+        try
+        {
+            Lifecycle.RollbackToVersion(
+                _rollbackTarget.ProcedureVersionId,
+                UserContext.CurrentUser?.UserId ?? Guid.Empty,
+                _rollbackReason.Trim());
+            LoadProcedure();
+            _detailVersionId = _rollbackTarget.ProcedureVersionId;
+            Toasts.Show(
+                "Đã khôi phục hiệu lực",
+                $"{_rollbackTarget.VersionLabel ?? $"v{_rollbackTarget.VersionNo}"} đang hiệu lực trở lại.",
+                ToastVariant.Success);
+            _rollbackOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể khôi phục phiên bản", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private async Task ExportVersionAsync(Sql.ProcedureVersion version)
+    {
+        try
+        {
+            var html = ProcedureExport.BuildProcedureDocumentHtml(version.ProcedureVersionId, DateTime.UtcNow, Navigation.BaseUri);
+            var code = Store.Procedures.FirstOrDefault(p => p.ProcedureId == version.ProcedureId)?.ProcedureCode ?? "quy-trinh";
+            var fileName = $"{SafeFileNamePart(code)}-{SafeFileNamePart(version.VersionLabel ?? $"v{version.VersionNo}")}.html";
+            var ok = await JS.InvokeAsync<bool>("qlcmShell.openPrintableHtml", fileName, html);
+            Toasts.Show(
+                ok ? "Đã mở bản in A4" : "Không thể mở bản in",
+                ok ? "Chọn In / Lưu PDF trong tab bản xem trước." : "Trình duyệt đã từ chối mở hoặc tải tệp.",
+                ok ? ToastVariant.Success : ToastVariant.Warning);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Show("Không thể xuất quy trình", ex.Message, ToastVariant.Error);
+        }
+    }
+
+    private static string SafeFileNamePart(string? value)
+    {
+        var safe = new string((value ?? string.Empty).Where(c => char.IsLetterOrDigit(c) || c is '-' or '_').ToArray());
+        return string.IsNullOrWhiteSpace(safe) ? "quy-trinh" : safe;
+    }
+
+    public void Dispose() => Store.StateChanged -= OnChanged;
+
+    private sealed record HistoryIndexRow(Sql.ProfessionalProcedure Procedure, IReadOnlyList<Sql.ProcedureVersion> Versions)
+    {
+        public int VersionCount => Versions.Count;
+    }
+}
