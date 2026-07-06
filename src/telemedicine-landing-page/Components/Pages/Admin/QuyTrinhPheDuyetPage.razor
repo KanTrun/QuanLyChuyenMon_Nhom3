@@ -9,6 +9,7 @@
 @inject IConfirmDialogService Confirm
 @inject IToastService Toasts
 @inject AdminActionGuard Guard
+@inject ProcedureWorkflowGuard WorkflowGuard
 @inject ProcedureSignoffService Signoffs
 @inject IProcedureDocumentExportService ProcedureExport
 @inject IJSRuntime JS
@@ -584,7 +585,8 @@
 
     private async Task PrepareApproveAsync(ApprovalRow row)
     {
-        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "phê duyệt quy trình")) return;
+        var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (!WorkflowGuard.CanPublish(row.Version.ProcedureVersionId, userId, "phê duyệt quy trình")) return;
         var ok = await Confirm.ShowAsync("Phê duyệt quy trình", $"Phê duyệt và ban hành \"{row.Version.Title}\"?", confirmText: "Phê duyệt");
         if (!ok) return;
         if (!Signoffs.HasCurrentSignoff(row.Version.ProcedureVersionId, "checker"))
@@ -594,7 +596,6 @@
         }
         if (!CanApprove(row))
         {
-            var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
             Signoffs.CanUserSign(row.Version.ProcedureVersionId, "approver", userId, out var reason);
             Toasts.Show("Không thể phê duyệt", reason ?? "Tài khoản hiện tại không đủ điều kiện ban hành.", ToastVariant.Warning);
             return;
@@ -619,8 +620,19 @@
 
     private void OpenSignModal(Sql.ProcedureVersion version, string role, bool publishAfterSign = false)
     {
-        if (!Guard.CanDo("SCR_PROCEDURES:APPROVE", "ký xác nhận quy trình")) return;
         var userId = UserContext.CurrentUser?.UserId ?? Guid.Empty;
+        if (publishAfterSign)
+        {
+            if (!WorkflowGuard.CanPublish(version.ProcedureVersionId, userId, "phê duyệt và ban hành quy trình"))
+            {
+                return;
+            }
+        }
+        else if (!WorkflowGuard.CanSign(version.ProcedureVersionId, role, userId, "ký xác nhận quy trình"))
+        {
+            return;
+        }
+
         if (!Signoffs.CanUserSign(version.ProcedureVersionId, role, userId, out var reason))
         {
             Toasts.Show("Không thể ký", reason ?? "Tài khoản hiện tại không đủ điều kiện ký vai trò này.", ToastVariant.Warning);

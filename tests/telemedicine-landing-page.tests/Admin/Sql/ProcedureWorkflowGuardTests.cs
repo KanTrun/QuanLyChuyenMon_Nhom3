@@ -20,6 +20,7 @@ public sealed class ProcedureWorkflowGuardTests : IDisposable
             Username = "tiensi.writer2",
             FullName = "Tiến sĩ Writer 2",
             Status = "active",
+            OnboardingStatus = "active",
             PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
         });
         _db.SaveChanges();
@@ -75,6 +76,7 @@ public sealed class ProcedureWorkflowGuardTests : IDisposable
             Username = "outsider",
             FullName = "Người ngoài",
             Status = "active",
+            OnboardingStatus = "active",
             PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
         });
         _db.SaveChanges();
@@ -85,6 +87,85 @@ public sealed class ProcedureWorkflowGuardTests : IDisposable
 
         Assert.False(signoffs.CanUserSign(created.Version.ProcedureVersionId, "writer", outsiderId, out _));
         Assert.False(workflowGuard.CanSign(created.Version.ProcedureVersionId, "writer", outsiderId));
+    }
+
+    [Fact]
+    public void Checker_CanSign_WithProcedureApprovalViewPermission()
+    {
+        var store = new MedDbDataStore(_db);
+        var snapshots = new ProcedureDocumentSnapshotService(store);
+        var signoffs = new ProcedureSignoffService(store, snapshots);
+        var authoring = new ProcedureAuthoringService(store, snapshots);
+        var created = authoring.CreateVersion(CreateTwoWriterCommand(_writer2Id));
+
+        signoffs.Sign(
+            created.Version.ProcedureVersionId,
+            "writer",
+            MedDataStoreSeed.AdminUserId,
+            "admin",
+            "Quản trị viên",
+            ValidSignature);
+        signoffs.Sign(
+            created.Version.ProcedureVersionId,
+            "writer",
+            _writer2Id,
+            "tiensi.writer2",
+            "Tiến sĩ Writer 2",
+            ValidSignature);
+
+        var checkerId = Guid.Parse("f0000000-0000-0000-0000-000000000097");
+        _db.Users.Add(new AppUser
+        {
+            UserId = checkerId,
+            Username = "bsa.checker",
+            FullName = "BS A",
+            Status = "active",
+            OnboardingStatus = "active",
+            PrimaryDepartmentId = MedDataStoreSeed.DeptNoiId
+        });
+        var approvalViewPermissionId = Guid.Parse("e0000000-0000-0000-0000-000000000099");
+        var approvalScreenId = Guid.Parse("d0000000-0000-0000-0000-000000000099");
+        _db.Screens.Add(new ScreenCatalog
+        {
+            ScreenId = approvalScreenId,
+            ScreenCode = "SCR_PROCEDURE_APPROVAL",
+            Name = "Phê duyệt quy trình",
+            Route = "/qlcm/quy-trinh/phe-duyet",
+            ModuleCode = "PROC"
+        });
+        _db.Permissions.Add(new MedPermission
+        {
+            PermissionId = approvalViewPermissionId,
+            PermissionCode = "SCR_PROCEDURE_APPROVAL:VIEW",
+            ScreenId = approvalScreenId,
+            ActionCode = "view"
+        });
+        _db.RolePermissions.Add(new RolePermission
+        {
+            RoleId = MedDataStoreSeed.RoleClinicalId,
+            PermissionId = approvalViewPermissionId,
+            EffectCode = "allow",
+            DepartmentScopeType = "global",
+            Priority = 300
+        });
+        _db.UserRoles.Add(new UserRole
+        {
+            UserId = checkerId,
+            RoleId = MedDataStoreSeed.RoleClinicalId,
+            DepartmentId = MedDataStoreSeed.DeptNoiId
+        });
+        _db.SaveChanges();
+        store.UpdateProcedureVersion(created.Version with { StatusCode = "pending_review" });
+        _db.SaveChanges();
+
+        var context = new CurrentUserContext(_db, new EffectivePermissionResolver(_db));
+        context.SetCurrentUser(checkerId);
+        var workflowGuard = CreateWorkflowGuard(store, context, signoffs);
+
+        Assert.False(context.HasPermission("SCR_PROCEDURES:APPROVE"));
+        Assert.True(context.HasPermission("SCR_PROCEDURE_APPROVAL:VIEW"));
+        Assert.True(signoffs.CanUserSign(created.Version.ProcedureVersionId, "checker", checkerId, out _));
+        Assert.True(workflowGuard.CanSign(created.Version.ProcedureVersionId, "checker", checkerId));
     }
 
     private ProcedureWorkflowGuard CreateWorkflowGuard(

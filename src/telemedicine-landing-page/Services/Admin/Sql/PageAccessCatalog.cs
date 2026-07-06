@@ -18,7 +18,7 @@ public static class PageAccessCatalog
     {
         ["SCR_PROCEDURES"] = ["view", "create", "update"],
         ["SCR_PROCEDURE_CREATE"] = ["view", "create"],
-        ["SCR_PROCEDURE_APPROVAL"] = ["view", "approve"],
+        ["SCR_PROCEDURE_APPROVAL"] = ["view", "approve", "publish"],
         ["SCR_PROCEDURES_WORKSPACE"] = ["view", "approve"],
         ["SCR_PROTOCOLS"] = ["view", "create", "update"],
         ["SCR_PROTOCOLS_WORKSPACE"] = ["view", "execute"],
